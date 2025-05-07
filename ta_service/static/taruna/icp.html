@@ -673,7 +673,7 @@
 			async function loadICPData() {
 				const userId = localStorage.getItem('userId');
 				try {
-					const response = await fetch(`http://localhost:8082/icp?user_id=${userId}`);
+					const response = await fetch(`http://104.43.89.154:8082/icp?user_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -704,7 +704,7 @@
 												</a>
 												<a class="dropdown-item" href="/taruna/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
 												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
-												<a class="dropdown-item" href="http://localhost:8082/download?path=${icp.file_path}" download>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -724,7 +724,7 @@
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					
-					const response = await fetch('http://localhost:8080/logout', {
+					const response = await fetch('http://104.43.89.154:8080/logout', {
 						method: 'POST',
 						headers: {
 							'Authorization': token ? `Bearer ${token}` : '',
@@ -798,7 +798,7 @@
 				
 				console.log('Fetching dosen data...');
 				
-				fetch('http://localhost:8081/dosen', {
+				fetch('http://104.43.89.154:8081/dosen', {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -834,7 +834,7 @@
 				const userId = localStorage.getItem('userId');
 
 				// Ambil data user dari API
-				fetch(`http://localhost:8081/users?id=${userId}`, {
+				fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -861,7 +861,7 @@
 				});
 
 				// Validasi token dengan server
-				fetch('http://localhost:8080/taruna/dashboard', { // Ubah ke endpoint taruna
+				fetch('http://104.43.89.154:8080/taruna/dashboard', { // Ubah ke endpoint taruna
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -920,7 +920,7 @@
 						console.log(pair[0] + ': ' + pair[1]);
 					}
 					
-					const response = await fetch('http://localhost:8082/upload/icp', {
+					const response = await fetch('http://104.43.89.154:8082/upload/icp', {
 						method: 'POST',
 						body: formData
 					});

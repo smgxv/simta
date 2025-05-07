@@ -105,7 +105,7 @@
 
             // Load dosen list
             try {
-                const dosenResponse = await fetch('http://localhost:8081/dosen', {
+                const dosenResponse = await fetch('http://104.43.89.154:8081/dosen', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -138,7 +138,7 @@
 
                 // Load ICP data setelah dosen list dimuat
                 try {
-                    const icpResponse = await fetch(`http://localhost:8082/icp/${icpId}`, {
+                    const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
                         headers: {
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
@@ -193,7 +193,7 @@
                 formData.append('user_id', userId);
                 
                 try {
-                    const response = await fetch('http://localhost:8082/icp/edit', {
+                    const response = await fetch('http://104.43.89.154:8082/icp/edit', {
                         method: 'PUT',
                         body: formData
                     });
