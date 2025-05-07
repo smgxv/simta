@@ -36,7 +36,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("=== Memulai proses login ===")
 
 	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080") // atau domain frontend Anda
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
