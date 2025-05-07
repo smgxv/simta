@@ -12,7 +12,7 @@ import (
 // Fungsi DBConn digunakan untuk menginisialisasi koneksi ke database
 func DBConn() (db *sql.DB, err error) {
 	// Mengambil konfigurasi dari environment variables
-	dbHost := getEnv("DB_HOST", "db")
+	dbHost := getEnv("DB_HOST", "mysql")
 	dbUser := getEnv("DB_USER", "root")
 	dbPass := getEnv("DB_PASSWORD", "root")
 	dbName := getEnv("DB_NAME", "go_tugasakhir")
