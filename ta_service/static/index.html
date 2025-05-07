@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 400px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .error {
+            color: red;
+            display: none;
+        }
+        .token-container {
+            margin-top: 20px;
+            display: none;
+        }
+        .token-text {
+            word-break: break-all;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .success {
+            color: green;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <button onclick="goToUsers()">Lihat Users</button>
+        
+        <h2>Login</h2>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" placeholder="Masukkan email">
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" placeholder="Masukkan password">
+        </div>
+        <button onclick="login()">Login</button>
+        <p id="error" class="error"></p>
+        
+        <div id="tokenContainer" class="token-container">
+            <h3>JWT Token:</h3>
+            <div id="token" class="token-text"></div>
+            <p class="success">Login berhasil! Redirecting ke halaman users...</p>
+            
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorElement = document.getElementById('error');
+        const tokenContainer = document.getElementById('tokenContainer');
+        const tokenElement = document.getElementById('token');
+
+        try {
+            const response = await fetch('http://localhost:8080/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+
+                if (!response.ok) {
+                    throw new Error('Login failed');
+                }
+
+                const data = await response.json();
+                // Simpan token
+                localStorage.setItem('token', data.token);
+                
+                // Tampilkan token
+                errorElement.style.display = 'none';
+                tokenContainer.style.display = 'block';
+                tokenElement.textContent = data.token;
+
+                // Redirect otomatis setelah 5 detik
+                setTimeout(() => {
+                    goToUsers();
+                }, 5000);
+
+            } catch (error) {
+                errorElement.style.display = 'block';
+                errorElement.textContent = error.message;
+                tokenContainer.style.display = 'none';
+            }
+        }
+
+        function goToUsers() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Anda harus login terlebih dahulu!');
+                return;
+            }
+            window.location.href = 'http://localhost:8081/users';
+        }
+
+        function logout() {
+            // Hapus token dari localStorage
+            localStorage.removeItem('token');
+
+            // Sembunyikan tokenContainer
+            const tokenContainer = document.getElementById('tokenContainer');
+            tokenContainer.style.display = 'none';
+
+            // Redirect ke halaman login
+            alert('Logout berhasil!');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

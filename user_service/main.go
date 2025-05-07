@@ -1,0 +1,23 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"user_service/handlers"
+	"user_service/middleware"
+)
+
+// ... existing code ...
+func main() {
+	http.HandleFunc("/users", middleware.AuthMiddleware(handlers.UserHandler))
+	http.HandleFunc("/users/add", middleware.AuthMiddleware(handlers.AddUser))
+	http.HandleFunc("/users/edit", middleware.AuthMiddleware(handlers.EditUser))
+	http.HandleFunc("/users/detail", middleware.AuthMiddleware(handlers.GetUserDetail))
+	http.HandleFunc("/users/delete", middleware.AuthMiddleware(handlers.DeleteUser))
+
+	http.HandleFunc("/dosen", middleware.AuthMiddleware(handlers.GetAllDosen))
+
+	fmt.Println("API Server running on port 8081...")
+	log.Fatal(http.ListenAndServe(":8081", nil))
+}

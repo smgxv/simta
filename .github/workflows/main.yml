@@ -1,0 +1,84 @@
+name : CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  running-tests:
+    name: Running Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+
+  build-image:
+    needs: running-tests
+    name: Build Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/ta-service
+
+  deployment:
+    needs: build-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop ta-service || true && docker rm ta-service || true
+            docker pull smgxv/ta-service
+            docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+
+  build-user-service:
+    needs: running-tests
+    name: Build User Service Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/user-service -f user_service/Dockerfile user_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/user-service
+
+  deploy-user-service:
+    needs: build-user-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy User Service to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop user-service || true && docker rm user-service || true
+            docker pull smgxv/user-service
+            docker run -d -p 8081:8081 --name user-service smgxv/user-service
+

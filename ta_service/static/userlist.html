@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Pengguna</title>
+    <style>
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .login-form {
+            margin-bottom: 20px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            display: none;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        input, button {
+            margin: 5px;
+            padding: 5px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            border: none;
+            color: white;
+        }
+        .show-btn {
+            background-color: #4CAF50;
+        }
+        .show-btn:hover {
+            background-color: #45a049;
+        }
+        .logout-btn {
+            background-color: #ff4444;
+        }
+        .logout-btn:hover {
+            background-color: #cc0000;
+        }
+        .button-group {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sistem Data Pengguna</h1>
+        
+        <!-- Tombol Tampilkan Data dipindah ke luar area login -->
+        <div class="button-group">
+            <button class="btn show-btn" onclick="fetchAndDisplayUsers()">Tampilkan Data</button>
+        </div>
+
+        <div class="login-form" id="loginForm">
+            <!-- <h2>Login</h2> -->
+            <!-- <input type="email" id="email" placeholder="Email"> -->
+            <!-- <input type="password" id="password" placeholder="Password"> -->
+            <!-- <button onclick="login()">Login</button> -->
+            <div id="error" class="error"></div>
+        </div>
+
+        <!-- Tabel untuk menampilkan data -->
+        <table id="userTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama Lengkap</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody id="userList">
+            </tbody>
+        </table>
+
+        <!-- Area untuk user yang sudah login -->
+        <div id="userData" style="display: none;">
+            <div class="header">
+                <div class="button-group">
+                    <button class="btn logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variabel untuk timeout dan refresh token
+        let timeoutId;
+        let refreshTokenId;
+        const TIMEOUT_DURATION = 15 * 1000; // 15 detik
+        const REFRESH_INTERVAL = 10 * 1000; // Refresh setiap 10 detik
+    
+        // Fungsi untuk refresh token
+        async function refreshToken() {
+            try {
+                const currentToken = sessionStorage.getItem('token');
+                const response = await fetch('http://localhost:8080/refresh-token', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+    
+                if (!response.ok) {
+                    throw new Error('Failed to refresh token');
+                }
+    
+                const data = await response.json();
+                sessionStorage.setItem('token', data.token);
+                return true;
+            } catch (error) {
+                console.error('Error refreshing token:', error);
+                return false;
+            }
+        }
+    
+        // Fungsi untuk mereset timer
+        function resetTimer() {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(handleInactivity, TIMEOUT_DURATION);
+        }
+    
+        // Fungsi untuk memulai refresh token interval
+        function startRefreshTokenInterval() {
+            clearInterval(refreshTokenId);
+            refreshTokenId = setInterval(async () => {
+                const success = await refreshToken();
+                if (!success) {
+                    handleInactivity();
+                }
+            }, REFRESH_INTERVAL);
+        }
+    
+        // Fungsi yang dipanggil ketika timeout tercapai
+        function handleInactivity() {
+            clearInterval(refreshTokenId);
+            alert('Sesi Anda telah berakhir karena tidak aktif selama 15 detik');
+            logout();
+        }
+    
+        // Event listeners untuk aktivitas user
+        document.addEventListener('mousemove', function() {
+            resetTimer();
+        });
+        document.addEventListener('keypress', function() {
+            resetTimer();
+        });
+        document.addEventListener('click', function() {
+            resetTimer();
+        });
+        document.addEventListener('scroll', function() {
+            resetTimer();
+        });
+    
+        // Update window.onload
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('role');
+            const currentPath = window.location.pathname;
+            
+            // Tambahkan flag untuk mencegah redirect loop
+            const isRedirecting = sessionStorage.getItem('isRedirecting');
+            
+            if (!token || !role) {
+                if (!isRedirecting) {
+                    sessionStorage.setItem('isRedirecting', 'true');
+                    window.location.replace('/loginusers');
+                }
+                return;
+            }
+
+            // Hapus flag redirect setelah berhasil load
+            sessionStorage.removeItem('isRedirecting');
+
+            // Periksa role
+            const userRole = role.toLowerCase();
+            if (userRole !== 'admin' && userRole !== 'dosen') {
+                if (!isRedirecting) {
+                    sessionStorage.setItem('isRedirecting', 'true');
+                    alert('Anda tidak memiliki akses ke halaman ini');
+                    logout();
+                }
+                return;
+            }
+
+            // Verifikasi token dengan backend
+            fetch('http://localhost:8081/users', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Token tidak valid');
+                }
+                showUserData();
+                fetchAndDisplayUsers();
+                resetTimer();
+                startRefreshTokenInterval();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (!isRedirecting) {
+                    sessionStorage.setItem('isRedirecting', 'true');
+                    logout();
+                }
+            });
+        }
+
+
+        // Update fetchAndDisplayUsers
+        async function fetchAndDisplayUsers() {
+            const table = document.getElementById('userTable');
+            const showBtn = document.querySelector('.show-btn');
+            const errorElement = document.getElementById('error');
+
+            try {
+                const token = localStorage.getItem('token');
+                
+                const response = await fetch('http://localhost:8081/users', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                
+                if (response.status === 401) {
+                    throw new Error('Sesi telah berakhir. Silakan login kembali');
+                }
+
+                if (!response.ok) {
+                    throw new Error('Gagal mengambil data');
+                }
+
+                const users = await response.json();
+                table.style.display = 'table';
+                showBtn.textContent = 'Sembunyikan Data';
+                displayUsers(users);
+                errorElement.textContent = '';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                errorElement.textContent = error.message;
+                table.style.display = 'none';
+                showBtn.textContent = 'Tampilkan Data';
+                
+                if (error.message.includes('Sesi telah berakhir')) {
+                    setTimeout(() => {
+                        logout();
+                    }, 2000);
+                }
+            }
+        }
+
+        // Update fungsi logout
+        function logout() {
+            clearTimeout(timeoutId);
+            clearInterval(refreshTokenId);
+            localStorage.clear();
+            sessionStorage.clear(); // Hapus semua data session
+            document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            window.location.replace('/loginusers');
+        }
+
+
+        function showLoginForm() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('userData').style.display = 'none';
+        }
+
+        function showUserData() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('userData').style.display = 'block';
+        }
+
+        function displayUsers(users) {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            
+            if (!Array.isArray(users)) {
+                console.error('Users data is not an array:', users);
+                return;
+            }
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.nama_lengkap}</td>
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td>${user.role}</td>
+                `;
+                userList.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>

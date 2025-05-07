@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<!-- Website - www.codingnepalweb.com -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Login | Secure SIMTA</title>
+    <link rel="stylesheet" href="style/css/style.css" />
+    <script src="../custom-scripts.js" defer></script>
+    
+	  <link rel="icon" type="image/png" href="style/images/logo.png"/>
+
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+
+  </head>
+  <body style="background-image: url('style/images/background.png') no-repeat center center fixed;">
+    
+    <section class="wrapper">
+
+        <div class="form signup">
+            <header>Signup</header>
+            <form action="#" method="POST">
+              <div class="form-grid">
+                  <div>
+                      <input type="text" name="fullname" placeholder="Full Name" required />
+                  </div>
+                  <div>
+                      <select name="role" required>
+                          <option value="" disabled selected>Select Role</option>
+                          <option value="Dosen">Dosen</option>
+                          <option value="Taruna">Taruna</option>
+                      </select>
+                  </div>
+                  <div>
+                      <input type="email" name="email" placeholder="Email Address" required />
+                  </div>
+                  <div>
+                      <input type="text" name="username" placeholder="Username" required />
+                  </div>
+                  <div>
+                      <input type="password" name="password" placeholder="Password" required />
+                  </div>
+                  <div>
+                      <input type="password" name="confirm_password" placeholder="Confirm Password" required />
+                  </div>
+              </div>
+              <div class="checkbox">
+                  <input type="checkbox" id="signupCheck" required />
+                  <label for="signupCheck">I accept all terms & conditions</label>
+              </div>
+              <input type="submit" value="Signup" />
+          </form>
+          </div>
+    
+          <div class="form login">
+            <header>Login</header>
+            <form onsubmit="event.preventDefault(); login();">
+              <div class="form-grid">
+                <div>
+                  <input type="text" placeholder="Email address" id="email" required />
+                </div>
+                <div>
+                  <input type="password" placeholder="Password" id="password" required />
+                </div>
+                <div>
+                  <a href="#">Forgot password?</a>
+                </div>
+                <!-- <input type="submit" value="Login" /> -->
+                <button type="submit">Login</button>
+                <div id="error" class="error"></div>
+              </div>
+            </form>
+          </div>
+
+          
+        
+          <!-- Button to return to the homepage -->
+          <button class="home-btn" onclick="window.location.href='/dashboard';">Home</button>
+
+        <script>
+            const wrapper = document.querySelector(".wrapper"),
+            signupHeader = document.querySelector(".signup header"),
+            loginHeader = document.querySelector(".login header");
+
+            // Initially set to show the login form
+            wrapper.classList.add("active");  // Show login form by default
+
+            loginHeader.addEventListener("click", () => {
+            wrapper.classList.add("active"); // Show login
+            });
+            signupHeader.addEventListener("click", () => {
+            wrapper.classList.remove("active"); // Show signup
+            });
+
+            // Fungsi login yang sudah ada tetap sama
+            async function login() {
+              const email = document.getElementById('email').value;
+              const password = document.getElementById('password').value;
+              const errorElement = document.getElementById('error');
+
+              console.log('Mencoba login...'); // Debug log
+              
+              try {
+                  const response = await fetch('http://localhost:8080/login', {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                          email: email,
+                          password: password
+                      })
+                  });
+
+                  const data = await response.json();
+                  console.log('Response dari server:', data); // Debug log
+
+                  if (!response.ok || data.error) {
+                      throw new Error(data.error || 'Login gagal');
+                  }
+
+                  // Simpan token dan status login
+                  localStorage.setItem('isLoggedIn', 'true');
+                  localStorage.setItem('token', data.token);
+                  localStorage.setItem('role', data.role); // Simpan role user
+                  localStorage.setItem('userId', data.id); // Simpan ID user
+
+                  // Set token sebagai cookie
+                  document.cookie = `token=${data.token}; path=/`;
+                  
+                  console.log('Login berhasil, melakukan redirect...'); // Debug log
+
+                  // Hapus flag redirect jika ada
+                  sessionStorage.removeItem('isRedirecting');
+                  
+                  // Redirect berdasarkan role
+                  const userRole = data.role.toLowerCase();
+                  if (userRole === 'admin') {
+                      window.location.replace('/admin/dashboard');
+                  } else if (userRole === 'dosen') {
+                      window.location.replace('/userlist');
+                  } else if (userRole === 'taruna') {
+                      window.location.replace('/taruna/dashboard');
+                  } else {
+                      console.log('Role tidak dikenal:', userRole);
+                      throw new Error('Role tidak valid');
+                  }
+
+              } catch (error) {
+                  console.error('Error:', error);
+                  errorElement.textContent = error.message || 'Terjadi kesalahan saat login';
+              }
+          }
+
+          // Hapus atau modifikasi event listener DOMContentLoaded
+          // karena ini bisa menyebabkan redirect yang tidak diinginkan
+          document.addEventListener('DOMContentLoaded', function() {
+              // Hapus flag redirect saat halaman login dimuat
+              sessionStorage.removeItem('isRedirecting');
+          });
+
+        </script>
+    </section>
+  </body>
+</html>

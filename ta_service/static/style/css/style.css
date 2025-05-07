@@ -1,0 +1,271 @@
+/* Import Google font - Poppins */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: url("../images/background.png") no-repeat center center fixed; /* Background image */
+  background-size: cover; /* Ensures the image covers the entire background */
+  font-family: "Poppins", sans-serif; /* Keeps your existing font settings */
+}
+
+.wrapper {
+  position: relative;
+  max-width: 800px; /* Lebar ditingkatkan */
+  width: 100%;
+  border-radius: 12px;
+  padding: 20px 40px 120px;
+  background: #4070f4;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.form.login {
+  position: absolute;
+  left: 50%;
+  bottom: -86%;
+  transform: translateX(-50%);
+  width: calc(100% + 300px);
+  padding: 20px 160px;
+  border-radius: 50%;
+  height: 100%;
+  background: #fff;
+  transition: all 0.6s ease;
+}
+
+.wrapper.active .form.login {
+  bottom: -15%;
+  border-radius: 35%;
+  box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Add margin-top to the form to create space between header and input fields */
+.form header {
+  font-size: 30px;
+  text-align: center;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 30px; /* Add margin-bottom for spacing */
+}
+
+/* For Login form header */
+.form.login header {
+  color: #333;
+  opacity: 0.6;
+}
+
+/* For Signup form header */
+.form.signup header {
+  margin-bottom: 30px; /* Adjust the space between header and input */
+}
+
+.wrapper form {
+  margin-top: 20px; /* You can adjust this value */
+}
+
+.wrapper.active .form.login header {
+  opacity: 1;
+}
+
+.wrapper.active .signup header {
+  opacity: 0.6;
+}
+
+/* General form-grid for both signup and login */
+.form-grid {
+  display: grid;
+  gap: 20px; /* Space between form fields */
+}
+
+/* Login form grid (fields stacked vertically) */
+.form.login .form-grid {
+  grid-template-columns: 1fr; /* Stack fields vertically */
+}
+
+/* Signup form grid (fields aligned horizontally) */
+.form.signup .form-grid {
+  grid-template-columns: 1fr 1fr; /* Keep fields in two columns */
+}
+
+.form-grid div {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure inputs take full width */
+form input {
+  height: 60px;
+  outline: none;
+  border: none;
+  padding: 0 20px;
+  font-size: 16px;
+  font-weight: 400;
+  color: #333;
+  border-radius: 8px;
+  background: #fff;
+  width: 100%;
+}
+
+.form.login input {
+  border: 1px solid #aaa;
+}
+
+.form.login input:focus {
+  box-shadow: 0 1px 0 #ddd;
+}
+
+/* Set the width of login input fields to be independent of the wrapper */
+.form.login form input {
+  width: 400px; /* Adjust the width as per your design */
+  margin: 0 auto; /* Center the inputs horizontally */
+}
+
+/* Adjust the submit button to match input width */
+.form.login input[type="submit"] {
+  width: 400px; /* Same width as input fields */
+  margin: 20px auto 0; /* Center the button horizontally */
+}
+
+/* Checkbox */
+form .checkbox {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox input[type="checkbox"] {
+  height: 16px;
+  width: 16px;
+  accent-color: #fff;
+  cursor: pointer;
+}
+
+form .checkbox label {
+  cursor: pointer;
+  color: #fff;
+}
+
+/* Link styling */
+form a {
+  color: #333;
+  text-decoration: none;
+}
+
+form a:hover {
+  text-decoration: underline;
+}
+
+/* Style the anchor link inside the login form */
+.form.login a {
+  margin: 20px auto; /* Center the link horizontally */
+  font-size: 16px; /* Adjust font size */
+  font-weight: 500; /* Adjust font weight */
+  text-align: center; /* Center text */
+}
+
+/* Change the appearance of the anchor when hovered */
+
+
+/* Submit button */
+form input[type="submit"] {
+  margin-top: 15px;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+}
+
+.form.login input[type="submit"] {
+  background: #4070f4;
+  color: #fff;
+  border: none;
+}
+
+/* Button style for the "Home" button in the right corner */
+.home-btn {
+  position: fixed;
+  top: 20px;
+  right: 60px;
+  padding: 10px 20px;
+  background-color: #4070f4;
+  color: #fff;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+}
+
+.home-btn:hover {
+  background-color: #3360cc;
+}
+
+/* Wrapper for alerts */
+.alert-wrapper {
+  position: absolute; /* Pastikan alert diatur sebagai elemen terpisah */
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 800px; /* Sama dengan lebar wrapper */
+  z-index: 1000; /* Pastikan alert ada di atas elemen lain */
+}
+
+/* Alert styling */
+.alert {
+  margin: 10px auto; /* Memberi jarak dari tepi atas */
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.alert.alert-danger {
+  background-color: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+}
+
+/* Dropdown styling */
+select {
+  height: 60px; /* Sama dengan input lainnya */
+  outline: none;
+  border: none;
+  padding: 0 20px;
+  font-size: 16px;
+  font-weight: 400;
+  color: #333;
+  border-radius: 8px;
+  background: #fff;
+  width: 100%; /* Sama dengan input lainnya */
+  cursor: pointer;
+  box-shadow: 0 1px 0 #ddd; /* Tambahkan efek shadow */
+}
+
+/* Dropdown saat difokuskan */
+select:focus {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Efek focus */
+  border: none;
+}
+
+/* Pilihan teks default */
+select option:first-child {
+  color: #aaa; /* Warna placeholder */
+}
+
+/* Gaya tambahan untuk tampilan lebih modern */
+select::-ms-expand {
+  display: none; /* Hilangkan tombol bawaan browser */
+}
