@@ -259,13 +259,13 @@
         }
     
         // Fetch data user yang akan diedit
-        fetch(`http://localhost:8081/users/edit?id=${userId}`, {
+        fetch(`http://104.43.89.154:8081/users/edit?id=${userId}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
-                'Origin': 'http://localhost:8080'
+                'Origin': 'http://104.43.89.154:8080'
             }
         })
         .then(response => response.json())
@@ -322,7 +322,7 @@
 
             console.log('Sending data:', userData);
 
-            fetch(`http://localhost:8081/users/edit`, {
+            fetch(`http://104.43.89.154:8081/users/edit`, {
                 method: 'PUT',
                 headers: {
                     'Accept': 'application/json',

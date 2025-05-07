@@ -658,7 +658,7 @@
 			// Fungsi untuk memeriksa status autentikasi
 			async function checkAuth() {
 				try {
-					const response = await fetch('http://localhost:8080/admin/check-auth', {
+					const response = await fetch('http://104.43.89.154:8080/admin/check-auth', {
 						method: 'GET',
 						headers: {
 							'Authorization': `Bearer ${token}`
