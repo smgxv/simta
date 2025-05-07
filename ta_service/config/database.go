@@ -14,7 +14,7 @@ func DBConn() (db *sql.DB, err error) {
 	// Mengambil konfigurasi dari environment variables
 	dbHost := getEnv("DB_HOST", "mysql")
 	dbUser := getEnv("DB_USER", "root")
-	dbPass := getEnv("DB_PASSWORD", "root")
+	dbPass := getEnv("DB_PASSWORD", "password")
 	dbName := getEnv("DB_NAME", "go_tugasakhir")
 
 	// Format DSN untuk MySQL
