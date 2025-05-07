@@ -144,6 +144,8 @@
                       window.location.replace('/userlist');
                   } else if (userRole === 'taruna') {
                       window.location.replace('/taruna/dashboard');
+                  } else if (userRole === 'dosen') {
+                      window.location.replace('/dosen/dashboard');
                   } else {
                       console.log('Role tidak dikenal:', userRole);
                       throw new Error('Role tidak valid');
