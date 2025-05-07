@@ -58,6 +58,14 @@ func RoleRedirectMiddleware(next http.Handler) http.Handler {
 				http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
 				return
 			}
+		case "dosen":
+			// Dosen hanya boleh mengakses path /dosen/*
+			if !strings.HasPrefix(path, "/dosen/") {
+				log.Printf("🚫 Akses ditolak: Dosen mencoba mengakses %s", path)
+				// Redirect ke dosen dashboard
+				http.Redirect(w, r, "/dosen/dashboard", http.StatusSeeOther)
+				return
+			}
 		default:
 			log.Printf("🚫 ERROR: Role tidak valid: %s", claims.Role)
 			http.Redirect(w, r, "/loginusers", http.StatusSeeOther)

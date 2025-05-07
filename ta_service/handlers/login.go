@@ -154,6 +154,9 @@ func getDashboardURL(role string) string {
 	if role == "taruna" {
 		return "/taruna/dashboard"
 	}
+	if role == "dosen" {
+		return "/dosen/dashboard"
+	}
 	return "/admin/dashboard"
 }
 

@@ -48,18 +48,31 @@ func main() {
 	http.Handle("/admin/vendors/scripts/", http.StripPrefix("/admin/vendors/scripts/", http.FileServer(http.Dir("static/admin/vendors/scripts"))))
 	http.Handle("/admin/vendors/styles/", http.StripPrefix("/admin/vendors/styles/", http.FileServer(http.Dir("static/admin/vendors/styles"))))
 
-	// Menyajikan file statis dari direktori admin/src
+	// Menyajikan file statis dari direktori taruna/src
 	http.Handle("/taruna/src/fonts/", http.StripPrefix("/taruna/src/fonts/", http.FileServer(http.Dir("static/taruna/src/fonts"))))
 	http.Handle("/taruna/src/images/", http.StripPrefix("/taruna/src/images/", http.FileServer(http.Dir("static/taruna/src/images"))))
 	http.Handle("/taruna/src/plugins/", http.StripPrefix("/taruna/src/plugins/", http.FileServer(http.Dir("static/taruna/src/plugins"))))
 	http.Handle("/taruna/src/scripts/", http.StripPrefix("/taruna/src/scripts/", http.FileServer(http.Dir("static/taruna/src/scripts"))))
 	http.Handle("/taruna/src/styles/", http.StripPrefix("/taruna/src/styles/", http.FileServer(http.Dir("static/taruna/src/styles"))))
 
-	// Menyajikan file statis dari direktori admin/vendors
+	// Menyajikan file statis dari direktori taruna/vendors
 	http.Handle("/taruna/vendors/fonts/", http.StripPrefix("/taruna/vendors/fonts/", http.FileServer(http.Dir("static/taruna/vendors/fonts"))))
 	http.Handle("/taruna/vendors/images/", http.StripPrefix("/taruna/vendors/images/", http.FileServer(http.Dir("static/taruna/vendors/images"))))
 	http.Handle("/taruna/vendors/scripts/", http.StripPrefix("/taruna/vendors/scripts/", http.FileServer(http.Dir("static/taruna/vendors/scripts"))))
 	http.Handle("/taruna/vendors/styles/", http.StripPrefix("/taruna/vendors/styles/", http.FileServer(http.Dir("static/taruna/vendors/styles"))))
+
+	// Menyajikan file statis dari direktori dosen/src
+	http.Handle("/dosen/src/fonts/", http.StripPrefix("/dosen/src/fonts/", http.FileServer(http.Dir("static/dosen/src/fonts"))))
+	http.Handle("/dosen/src/images/", http.StripPrefix("/dosen/src/images/", http.FileServer(http.Dir("static/dosen/src/images"))))
+	http.Handle("/dosen/src/plugins/", http.StripPrefix("/dosen/src/plugins/", http.FileServer(http.Dir("static/dosen/src/plugins"))))
+	http.Handle("/dosen/src/scripts/", http.StripPrefix("/dosen/src/scripts/", http.FileServer(http.Dir("static/dosen/src/scripts"))))
+	http.Handle("/dosen/src/styles/", http.StripPrefix("/dosen/src/styles/", http.FileServer(http.Dir("static/dosen/src/styles"))))
+
+	// Menyajikan file statis dari direktori dosen/vendors
+	http.Handle("/dosen/vendors/fonts/", http.StripPrefix("/dosen/vendors/fonts/", http.FileServer(http.Dir("static/dosen/vendors/fonts"))))
+	http.Handle("/dosen/vendors/images/", http.StripPrefix("/dosen/vendors/images/", http.FileServer(http.Dir("static/dosen/vendors/images"))))
+	http.Handle("/dosen/vendors/scripts/", http.StripPrefix("/dosen/vendors/scripts/", http.FileServer(http.Dir("static/dosen/vendors/scripts"))))
+	http.Handle("/dosen/vendors/styles/", http.StripPrefix("/dosen/vendors/styles/", http.FileServer(http.Dir("static/dosen/vendors/styles"))))
 
 	// Membuat router baru
 	router := mux.NewRouter()
@@ -103,6 +116,14 @@ func main() {
 	tarunaRoutes.HandleFunc("/dashboard", controllers.TarunaDashboard).Methods("GET", "OPTIONS")
 	tarunaRoutes.HandleFunc("/icp", controllers.ICP).Methods("GET", "OPTIONS")
 	tarunaRoutes.HandleFunc("/editicp", controllers.EditICP).Methods("GET", "OPTIONS")
+
+	// Tambahkan routes untuk dosen
+	dosenRoutes := router.PathPrefix("/dosen").Subrouter()
+	dosenRoutes.Use(middleware.RoleRedirectMiddleware)
+
+	// Route dashboard dosen
+	dosenRoutes.HandleFunc("/dashboard", controllers.DosenDashboard).Methods("GET", "OPTIONS")
+	dosenRoutes.HandleFunc("/reviewicp", controllers.ReviewICP).Methods("GET", "OPTIONS")
 
 	// Tambahkan router ke http.Handle
 	http.Handle("/", router) // Tambahkan ini untuk menggunakan router mux
