@@ -140,9 +140,11 @@
                   const userRole = data.role.toLowerCase();
                   if (userRole === 'admin') {
                       window.location.replace('/admin/dashboard');
-                  } else if (userRole === 'dosen') {
-                      window.location.replace('/userlist');
-                  } else if (userRole === 'taruna') {
+                  } 
+                //       else if (userRole === 'dosen') {
+                //       window.location.replace('/userlist');
+                //   } 
+                  else if (userRole === 'taruna') {
                       window.location.replace('/taruna/dashboard');
                   } else if (userRole === 'dosen') {
                       window.location.replace('/dosen/dashboard');
