@@ -170,7 +170,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 			Timeout: 10 * time.Second,
 		}
 
-		apiURL := "http://api_service:8081/users/detail?id=" + userID
+		apiURL := "http://104.43.89.154:8081/users/detail?id=" + userID
 		log.Printf("Mencoba mengakses API: %s", apiURL)
 
 		req, err := http.NewRequest("GET", apiURL, nil)
