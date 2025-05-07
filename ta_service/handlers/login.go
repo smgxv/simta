@@ -97,7 +97,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Buat request ke API users
 	client := &http.Client{}
-	apiURL := getEnv("API_SERVICE_URL", "http://user_service:8081")
+	apiURL := getEnv("API_SERVICE_URL", "http://104.43.89.154:8081")
 	reqAPI, err := http.NewRequest("GET", apiURL+"/users", nil)
 	if err != nil {
 		log.Println("❌ ERROR: Gagal membuat request ke API users:", err)

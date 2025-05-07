@@ -10,9 +10,9 @@ import (
 )
 
 func ConnectDB() (*sql.DB, error) {
-	dbHost := getEnv("DB_HOST", "db")
+	dbHost := getEnv("DB_HOST", "mysql")
 	dbUser := getEnv("DB_USER", "root")
-	dbPass := getEnv("DB_PASSWORD", "root")
+	dbPass := getEnv("DB_PASSWORD", "password")
 	dbName := getEnv("DB_NAME", "go_tugasakhir")
 	dbPort := getEnv("DB_PORT", "3306")
 

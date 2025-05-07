@@ -48,6 +48,8 @@ jobs:
             docker stop ta-service || true && docker rm ta-service || true
             docker pull smgxv/ta-service
             docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+            docker network connect simta_net ta-service
+
 
   build-user-service:
     needs: running-tests
@@ -81,4 +83,6 @@ jobs:
             docker stop user-service || true && docker rm user-service || true
             docker pull smgxv/user-service
             docker run -d -p 8081:8081 --name user-service smgxv/user-service
+            docker network connect simta_net user-service
+
 
