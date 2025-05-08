@@ -631,7 +631,8 @@
 					return;
 				}
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/icp/dosen/${dosenID}`);
+					// Ambil data ICP berdasarkan dosen_id
+					const response = await fetch(`http://104.43.89.154:8082/icp?dosen_id=${dosenID}`);
 					const data = await response.json();
 
 					if (data.status === 'success') {
@@ -680,6 +681,7 @@
 				}
 			}
 
+			document.addEventListener('DOMContentLoaded', loadICPData);
 			
 			// Fungsi Logout
 			async function logout() {
