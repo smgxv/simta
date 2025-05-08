@@ -623,89 +623,7 @@
 		<!-- End Google Tag Manager (noscript) -->
 
 		<script>
-			// Fungsi untuk memuat data ICP
-			async function loadICPData() {
-				// Ambil userId dari localStorage (hasil login)
-				const userId = localStorage.getItem('userId');
-				if (!userId) {
-					showAlert('User ID tidak ditemukan!', 'danger');
-					return;
-				}
-
-				// Cari id dosen yang memiliki user_id = userId
-				let dosenID = null;
-				try {
-					const res = await fetch('http://104.43.89.154:8081/dosen');
-					const data = await res.json();
-					if (data.status === 'success') {
-						// Cari dosen dengan user_id = userId
-						const dosen = data.data.find(d => String(d.user_id) === String(userId));
-						if (dosen) {
-							dosenID = dosen.id;
-							localStorage.setItem('dosenID', dosenID); // Simpan supaya tidak fetch ulang
-						} else {
-							showAlert('Dosen tidak ditemukan untuk user ini!', 'danger');
-							return;
-						}
-					} else {
-						showAlert('Gagal mengambil data dosen!', 'danger');
-						return;
-					}
-				} catch (error) {
-					showAlert('Gagal mengambil data dosen!', 'danger');
-					return;
-				}
-
-				// Ambil data ICP berdasarkan dosenID
-				try {
-					const response = await fetch(`http://104.43.89.154:8082/icp/dosen/${dosenID}`);
-					const data = await response.json();
-					if (data.status === 'success') {
-						const tbody = document.querySelector('.data-table tbody');
-						tbody.innerHTML = '';
-						data.data.forEach(icp => {
-							const statusClass = {
-								'pending': 'badge badge-warning',
-								'approved': 'badge badge-success',
-								'rejected': 'badge badge-danger'
-							}[icp.status] || 'badge badge-secondary';
-
-							tbody.innerHTML += `
-								<tr>
-									<td>${icp.nama_taruna || '-'}</td>
-									<td>${icp.kelas || '-'}</td>
-									<td>${icp.topik_penelitian}</td>
-									<td>${icp.file_path}</td>
-									<td><span class="${statusClass}">${icp.status}</span></td>
-									<td>
-										<div class="dropdown">
-											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-											href="#" role="button" data-toggle="dropdown">
-												<i class="dw dw-more"></i>
-											</a>
-											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="${icp.file_path}" target="_blank">
-													<i class="dw dw-eye"></i> View
-												</a>
-												<a class="dropdown-item" href="/dosen/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
-												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
-													<i class="dw dw-download"></i> Download
-												</a>
-											</div>
-										</div>
-									</td>
-								</tr>
-							`;
-						});
-					} else {
-						showAlert('Gagal memuat data ICP', 'danger');
-					}
-				} catch (error) {
-					showAlert('Gagal memuat data ICP', 'danger');
-				}
-			}
-
+			
 			// Fungsi Logout
 			async function logout() {
 				try {
@@ -817,7 +735,7 @@
 					return;
 				}
 
-				// Ambil ID user dari token
+				// Ambil ID user dari localStorage
 				const userId = localStorage.getItem('userId');
 
 				// Ambil data user dari API
@@ -838,6 +756,24 @@
 					if (usernameElement) {
 						usernameElement.textContent = user.username || user.nama_lengkap || 'User';
 					}
+
+					// --- Tambahan: Ambil id dosen berdasarkan userId ---
+					fetch('http://104.43.89.154:8081/dosen', {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					})
+					.then(response => response.json())
+					.then(data => {
+						if (data.status === 'success' && Array.isArray(data.data)) {
+							// Cari dosen dengan user_id = userId
+							const dosen = data.data.find(d => String(d.user_id) === String(userId));
+							if (dosen) {
+								localStorage.setItem('dosenID', dosen.id); // Simpan id dosen
+							}
+						}
+					});
+					// --- End tambahan ---
 				})
 				.catch(error => {
 					console.error('Error:', error);
@@ -865,80 +801,6 @@
 						e.preventDefault();
 						logout();
 					});
-				}
-			});
-		
-			// Update nama file saat file dipilih
-			document.querySelector('.custom-file-input').addEventListener('change', function(e) {
-				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
-				var label = document.querySelector('.custom-file-label');
-				label.textContent = fileName;
-				
-				var selectedFileDiv = document.getElementById('selectedFileName');
-				if (e.target.files[0]) {
-					selectedFileDiv.textContent = 'File terpilih: ' + fileName;
-					selectedFileDiv.style.display = 'block';
-				} else {
-					selectedFileDiv.style.display = 'none';
-				}
-			});
-
-			// Panggil loadICPData saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', loadICPData);
-
-			// Handle form submission
-			document.getElementById('icpForm').addEventListener('submit', async function(e) {
-				e.preventDefault();
-				
-				// Tampilkan loading state
-				const submitButton = this.querySelector('button[type="submit"]');
-				submitButton.disabled = true;
-				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-				
-				try {
-					const formData = new FormData(this);
-					
-					// Tambahkan user_id dari localStorage
-					const userId = localStorage.getItem('userId');
-					formData.append('user_id', userId);
-					
-					// Log FormData untuk debugging
-					for (let pair of formData.entries()) {
-						console.log(pair[0] + ': ' + pair[1]);
-					}
-					
-					const response = await fetch('http://104.43.89.154:8082/upload/icp', {
-						method: 'POST',
-						body: formData
-					});
-					
-					const data = await response.json();
-					
-					if (response.ok) {
-						// Tampilkan pesan sukses
-						showAlert('ICP berhasil diunggah', 'success');
-						
-						// Reset form
-						this.reset();
-						document.querySelector('.custom-file-label').textContent = 'Choose file';
-						document.getElementById('selectedFileName').style.display = 'none';
-						
-						// Refresh tabel jika ada
-						if (typeof refreshTable === 'function') {
-							refreshTable();
-						}
-
-						loadICPData(); // Refresh tabel
-					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
-					}
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
-				} finally {
-					// Reset button state
-					submitButton.disabled = false;
-					submitButton.innerHTML = 'Tambah ICP';
 				}
 			});
 
