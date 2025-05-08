@@ -726,7 +726,7 @@
 				});
 			});
 
-			// Tambahkan pengecekan autentikasi saat halaman dimuat
+			// Tambahkan pengecekan autentikasi dan mapping dosenID saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
 				// Cek token
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -770,10 +770,15 @@
 							const dosen = data.data.find(d => String(d.user_id) === String(userId));
 							if (dosen) {
 								localStorage.setItem('dosenID', dosen.id); // Simpan id dosen
+								console.log('dosenID aktif:', dosen.id);
+							} else {
+								console.warn('Dosen dengan user_id', userId, 'tidak ditemukan.');
 							}
 						}
+					})
+					.catch(error => {
+						console.error('Gagal mengambil data dosen:', error);
 					});
-					// --- End tambahan ---
 				})
 				.catch(error => {
 					console.error('Error:', error);
@@ -817,31 +822,6 @@
 					alertContainer.style.display = 'none';
 				}, 5000);
 			}
-
-			document.addEventListener('DOMContentLoaded', async function() {
-				// Cek apakah sudah ada dosenID di localStorage
-				if (!localStorage.getItem('dosenID')) {
-					const userId = localStorage.getItem('userId');
-					if (userId) {
-						try {
-							// Ambil data dosen dari API
-							const res = await fetch('http://104.43.89.154:8081/dosen');
-							const data = await res.json();
-							if (data.status === 'success' && Array.isArray(data.data)) {
-								// Cari dosen dengan user_id = userId
-								const dosen = data.data.find(d => String(d.user_id) === String(userId));
-								if (dosen) {
-									localStorage.setItem('dosenID', dosen.id); // Simpan id dosen
-									// Anda bisa panggil loadICPData() di sini jika ingin langsung refresh tabel
-									// loadICPData();
-								}
-							}
-						} catch (err) {
-							console.error('Gagal mengambil data dosen:', err);
-						}
-					}
-				}
-			});
 
 		</script>
 
