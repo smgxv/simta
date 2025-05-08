@@ -25,7 +25,7 @@ func (d *DosenModel) CreateDosen(userID int, namaLengkap, jurusan string) error 
 
 func (d *DosenModel) GetAllDosen() ([]map[string]interface{}, error) {
 	rows, err := d.db.Query(`
-        SELECT d.id, d.nama_lengkap, d.jurusan 
+        SELECT d.id, d.user_id, d.nama_lengkap, d.jurusan 
         FROM dosen d
         JOIN users u ON d.user_id = u.id
         WHERE u.role = 'Dosen'
@@ -37,16 +37,17 @@ func (d *DosenModel) GetAllDosen() ([]map[string]interface{}, error) {
 
 	var dosens []map[string]interface{}
 	for rows.Next() {
-		var id int
+		var id, userID int
 		var namaLengkap, jurusan string
 
-		err := rows.Scan(&id, &namaLengkap, &jurusan)
+		err := rows.Scan(&id, &userID, &namaLengkap, &jurusan)
 		if err != nil {
 			return nil, err
 		}
 
 		dosen := map[string]interface{}{
 			"id":           id,
+			"user_id":      userID,
 			"nama_lengkap": namaLengkap,
 			"jurusan":      jurusan,
 		}
