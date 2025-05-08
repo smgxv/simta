@@ -625,25 +625,38 @@
 		<script>
 			// Fungsi untuk memuat data ICP
 			async function loadICPData() {
-				let dosenID = localStorage.getItem('dosenID');
-				if (!dosenID) {
-					const userId = localStorage.getItem('userId');
-					if (userId) {
-						const res = await fetch(`http://104.43.89.154:8081/dosen`);
-						const data = await res.json();
-						if (data.status === 'success') {
-							const dosen = data.data.find(d => String(d.user_id) === String(userId));
-							if (dosen) {
-								dosenID = dosen.id;
-								localStorage.setItem('dosenID', dosenID); // Simpan supaya tidak fetch ulang
-							}
-						}
-					}
-				}
-				if (!dosenID) {
-					showAlert('Dosen ID tidak ditemukan!', 'danger');
+				// Ambil userId dari localStorage (hasil login)
+				const userId = localStorage.getItem('userId');
+				if (!userId) {
+					showAlert('User ID tidak ditemukan!', 'danger');
 					return;
 				}
+
+				// Cari id dosen yang memiliki user_id = userId
+				let dosenID = null;
+				try {
+					const res = await fetch('http://104.43.89.154:8081/dosen');
+					const data = await res.json();
+					if (data.status === 'success') {
+						// Cari dosen dengan user_id = userId
+						const dosen = data.data.find(d => String(d.user_id) === String(userId));
+						if (dosen) {
+							dosenID = dosen.id;
+							localStorage.setItem('dosenID', dosenID); // Simpan supaya tidak fetch ulang
+						} else {
+							showAlert('Dosen tidak ditemukan untuk user ini!', 'danger');
+							return;
+						}
+					} else {
+						showAlert('Gagal mengambil data dosen!', 'danger');
+						return;
+					}
+				} catch (error) {
+					showAlert('Gagal mengambil data dosen!', 'danger');
+					return;
+				}
+
+				// Ambil data ICP berdasarkan dosenID
 				try {
 					const response = await fetch(`http://104.43.89.154:8082/icp/dosen/${dosenID}`);
 					const data = await response.json();
@@ -685,9 +698,10 @@
 								</tr>
 							`;
 						});
+					} else {
+						showAlert('Gagal memuat data ICP', 'danger');
 					}
 				} catch (error) {
-					console.error('Error:', error);
 					showAlert('Gagal memuat data ICP', 'danger');
 				}
 			}
