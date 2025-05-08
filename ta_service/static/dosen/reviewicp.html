@@ -818,6 +818,31 @@
 				}, 5000);
 			}
 
+			document.addEventListener('DOMContentLoaded', async function() {
+				// Cek apakah sudah ada dosenID di localStorage
+				if (!localStorage.getItem('dosenID')) {
+					const userId = localStorage.getItem('userId');
+					if (userId) {
+						try {
+							// Ambil data dosen dari API
+							const res = await fetch('http://104.43.89.154:8081/dosen');
+							const data = await res.json();
+							if (data.status === 'success' && Array.isArray(data.data)) {
+								// Cari dosen dengan user_id = userId
+								const dosen = data.data.find(d => String(d.user_id) === String(userId));
+								if (dosen) {
+									localStorage.setItem('dosenID', dosen.id); // Simpan id dosen
+									// Anda bisa panggil loadICPData() di sini jika ingin langsung refresh tabel
+									// loadICPData();
+								}
+							}
+						} catch (err) {
+							console.error('Gagal mengambil data dosen:', err);
+						}
+					}
+				}
+			});
+
 		</script>
 
 		<style>
