@@ -625,12 +625,9 @@
 		<script>
 			// Fungsi untuk memuat data ICP
 			async function loadICPData() {
-				// Ganti userId menjadi dosenID
 				let dosenID = localStorage.getItem('dosenID');
-				// Jika dosenID belum ada, mapping otomatis dari userId ke dosen.id (opsional)
 				if (!dosenID) {
 					const userId = localStorage.getItem('userId');
-					// Fetch dosen by user_id
 					if (userId) {
 						const res = await fetch(`http://104.43.89.154:8081/dosen`);
 						const data = await res.json();
