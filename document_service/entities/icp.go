@@ -10,5 +10,7 @@ type ICP struct {
 	Status          string `json:"status"`
 	CreatedAt       string `json:"created_at"`
 	UpdatedAt       string `json:"updated_at"`
-	DosenNama       string `json:"dosen_nama"` // Tambahkan field ini
+	DosenNama       string `json:"dosen_nama"`
+	NamaTaruna      string `json:"nama_taruna"` // Tambahkan field ini
+	Kelas           string `json:"kelas"`       // Tambahkan field ini
 }

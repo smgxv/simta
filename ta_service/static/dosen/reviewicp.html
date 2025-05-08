@@ -625,7 +625,7 @@
 		<script>
 			// Fungsi untuk memuat data ICP
 			async function loadICPData() {
-				const userId = localStorage.getItem('userId');
+				const userId = localStorage.getItem('dosenID');
 				try {
 					// Mengambil data ICP berdasarkan dosen_id (user yang sedang login)
 					const response = await fetch(`http://104.43.89.154:8082/icp/dosen/${userId}`);
