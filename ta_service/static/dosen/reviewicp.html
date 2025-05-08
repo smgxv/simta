@@ -557,7 +557,7 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Idea Concept Project</h4>
+									<h4>Review Idea Concept Project</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
@@ -565,53 +565,13 @@
 											<a href="/dosen/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											ICP
+											Review ICP
 										</li>
 									</ol>
 								</nav>
 							</div>
 						</div>
 					</div>
-
-					<!-- Default Basic Forms Start -->
-					<div class="pd-20 card-box mb-30">
-
-						<div class="clearfix">
-							<div class="pull-left">
-								<h4 class="text-blue h4">Idea Concept Project</h4>
-								<p class="mb-30">Unggah file Idea Concept Project Anda</p>
-							</div>
-						</div>
-
-						<form id="icpForm" enctype="multipart/form-data">
-							<div class="form-group">
-								<label>Dosen Pembimbing</label>
-								<select class="form-control" id="dosenSelect" name="dosen_id">
-									<option value="" disabled selected>Pilih Dosen Pembimbing</option>
-								</select>
-							</div>
-							<div class="form-group">
-								<label>Topik Penelitian</label>
-								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
-							</div>
-							<div class="form-group">
-								<label>Keterangan</label>
-								<textarea class="form-control" name="keterangan" required></textarea>
-							</div>
-							<div class="form-group">
-								<label>File ICP (PDF)</label>
-								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="icpFile" name="file" accept=".pdf" required>
-									<label class="custom-file-label" for="icpFile">Choose file</label>
-								</div>
-								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
-							</div>
-							<button type="submit" class="btn btn-primary">Tambah ICP</button>
-						</form>
-
-
-					</div>
-					<!-- Simple Datatable End -->
 
 					<!-- Simple Datatable start -->
 					<div class="card-box mb-30">
@@ -622,8 +582,10 @@
 							<table class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
+										<th class="table-plus datatable-nosort">Nama Taruna</th>
+										<th class="table-plus datatable-nosort">Kelas</th>
 										<th class="table-plus datatable-nosort">Topik</th>
-										<th class="table-plus datatable-nosort">Dosen Pembimbing</th>
+										<th class="table-plus datatable-nosort">File ICP</th>
 										<th class="table-plus datatable-nosort">Status</th>
 										<th class="datatable-nosort">Action</th>
 									</tr>
@@ -665,7 +627,8 @@
 			async function loadICPData() {
 				const userId = localStorage.getItem('userId');
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/icp?user_id=${userId}`);
+					// Mengambil data ICP berdasarkan dosen_id (user yang sedang login)
+					const response = await fetch(`http://104.43.89.154:8082/icp/dosen/${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -681,8 +644,10 @@
 
 							tbody.innerHTML += `
 								<tr>
+									<td>${icp.nama_taruna}</td>
+									<td>${icp.kelas}</td>
 									<td>${icp.topik_penelitian}</td>
-									<td>${icp.dosen_nama}</td>
+									<td>${icp.file_path}</td>
 									<td><span class="${statusClass}">${icp.status}</span></td>
 									<td>
 										<div class="dropdown">
@@ -708,6 +673,7 @@
 					}
 				} catch (error) {
 					console.error('Error:', error);
+					showAlert('Gagal memuat data ICP', 'danger');
 				}
 			}
 
