@@ -625,16 +625,34 @@
 		<script>
 			// Fungsi untuk memuat data ICP
 			async function loadICPData() {
-				const userId = localStorage.getItem('dosenID');
+				// Ganti userId menjadi dosenID
+				let dosenID = localStorage.getItem('dosenID');
+				// Jika dosenID belum ada, mapping otomatis dari userId ke dosen.id (opsional)
+				if (!dosenID) {
+					const userId = localStorage.getItem('userId');
+					// Fetch dosen by user_id
+					if (userId) {
+						const res = await fetch(`http://104.43.89.154:8081/dosen`);
+						const data = await res.json();
+						if (data.status === 'success') {
+							const dosen = data.data.find(d => String(d.user_id) === String(userId));
+							if (dosen) {
+								dosenID = dosen.id;
+								localStorage.setItem('dosenID', dosenID); // Simpan supaya tidak fetch ulang
+							}
+						}
+					}
+				}
+				if (!dosenID) {
+					showAlert('Dosen ID tidak ditemukan!', 'danger');
+					return;
+				}
 				try {
-					// Mengambil data ICP berdasarkan dosen_id (user yang sedang login)
-					const response = await fetch(`http://104.43.89.154:8082/icp/dosen/${userId}`);
+					const response = await fetch(`http://104.43.89.154:8082/icp/dosen/${dosenID}`);
 					const data = await response.json();
-					
 					if (data.status === 'success') {
 						const tbody = document.querySelector('.data-table tbody');
 						tbody.innerHTML = '';
-						
 						data.data.forEach(icp => {
 							const statusClass = {
 								'pending': 'badge badge-warning',
@@ -644,8 +662,8 @@
 
 							tbody.innerHTML += `
 								<tr>
-									<td>${icp.nama_taruna}</td>
-									<td>${icp.kelas}</td>
+									<td>${icp.nama_taruna || '-'}</td>
+									<td>${icp.kelas || '-'}</td>
 									<td>${icp.topik_penelitian}</td>
 									<td>${icp.file_path}</td>
 									<td><span class="${statusClass}">${icp.status}</span></td>
