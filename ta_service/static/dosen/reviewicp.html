@@ -633,7 +633,7 @@
 				}
 				try {
 					// Ambil data ICP berdasarkan dosen_id (query string)
-					const response = await fetch(`http://104.43.89.154:8082/icp?dosen_id=${dosenID}`);
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`);
 					const data = await response.json();
 
 					if (data.status === 'success') {
