@@ -624,6 +624,7 @@
 
 		<script>
 			// Fungsi untuk memuat data ICP berdasarkan dosenID
+			// Fungsi untuk memuat data ICP berdasarkan dosenID
 			async function loadICPData() {
 				const dosenID = localStorage.getItem('dosenID');
 				if (!dosenID) {
@@ -631,7 +632,7 @@
 					return;
 				}
 				try {
-					// Ambil data ICP berdasarkan dosen_id
+					// Ambil data ICP berdasarkan dosen_id (query string)
 					const response = await fetch(`http://104.43.89.154:8082/icp?dosen_id=${dosenID}`);
 					const data = await response.json();
 
@@ -680,7 +681,6 @@
 					showAlert('Gagal memuat data ICP', 'danger');
 				}
 			}
-
 			document.addEventListener('DOMContentLoaded', loadICPData);
 			
 			// Fungsi Logout

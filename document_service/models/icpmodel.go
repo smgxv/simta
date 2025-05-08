@@ -148,8 +148,8 @@ func (m *ICPModel) GetByDosenID(dosenID string) ([]entities.ICP, error) {
 			&icp.Status,
 			&icp.CreatedAt,
 			&icp.UpdatedAt,
-			&icp.NamaTaruna, // Tambahkan field ini di struct ICP
-			&icp.Kelas,      // Tambahkan field ini di struct ICP
+			&icp.NamaTaruna,
+			&icp.Kelas,
 		)
 		if err != nil {
 			return nil, err
