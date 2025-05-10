@@ -627,7 +627,7 @@
 			async function loadICPData() {
 				const dosenID = localStorage.getItem('dosenID');
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/icp?dosen_id=${dosenID}`);
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -873,6 +873,8 @@
 					alertContainer.style.display = 'none';
 				}, 5000);
 			}
+
+			document.addEventListener('DOMContentLoaded', loadICPData);
 
 		</script>
 

@@ -125,7 +125,7 @@ func (m *ICPModel) GetByDosenID(dosenID string) ([]entities.ICP, error) {
             i.keterangan, i.file_path, i.status, i.created_at,
             i.updated_at, t.nama_lengkap as nama_taruna, t.kelas
         FROM icp i
-        LEFT JOIN taruna t ON i.user_id = t.id
+        LEFT JOIN taruna t ON i.user_id = t.user_id
         WHERE i.dosen_id = ?
     `
 
