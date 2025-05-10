@@ -587,7 +587,6 @@
 							<table class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
-										<th class="table-plus datatable-nosort">Nama Taruna</th>
 										<th class="table-plus datatable-nosort">Topik</th>
 										<th class="table-plus datatable-nosort">File ICP</th>
 										<th class="table-plus datatable-nosort">Status</th>
@@ -646,7 +645,6 @@
 						data.data.forEach(icp => {
 							const tr = document.createElement('tr');
 							tr.innerHTML = `
-								<td>${icp.nama_taruna}</td>
 								<td>${icp.topik_penelitian}</td>
 								<td><a href="${icp.file_path}" target="_blank">Download</a></td>
 								<td><span class="badge badge-warning">${icp.status}</span></td>
