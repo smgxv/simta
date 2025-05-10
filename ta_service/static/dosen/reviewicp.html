@@ -626,19 +626,14 @@
 			// Fungsi untuk memuat data ICP berdasarkan dosenID
 			async function loadICPData() {
 				const dosenID = localStorage.getItem('dosenID');
-				if (!dosenID) {
-					showAlert('Dosen ID tidak ditemukan!', 'danger');
-					return;
-				}
 				try {
-					// Ambil data ICP berdasarkan dosen_id (query string)
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`);
+					const response = await fetch(`http://104.43.89.154:8082/icp?dosen_id=${dosenID}`);
 					const data = await response.json();
-
+					
 					if (data.status === 'success') {
 						const tbody = document.querySelector('.data-table tbody');
 						tbody.innerHTML = '';
-
+						
 						data.data.forEach(icp => {
 							const statusClass = {
 								'pending': 'badge badge-warning',
@@ -648,8 +643,8 @@
 
 							tbody.innerHTML += `
 								<tr>
-									<td>${icp.nama_taruna || '-'}</td>
-									<td>${icp.kelas || '-'}</td>
+									<td>${icp.nama_taruna}</td>
+									<td>${icp.kelas}</td>
 									<td>${icp.topik_penelitian}</td>
 									<td>${icp.file_path}</td>
 									<td><span class="${statusClass}">${icp.status}</span></td>
@@ -663,9 +658,9 @@
 												<a class="dropdown-item" href="${icp.file_path}" target="_blank">
 													<i class="dw dw-eye"></i> View
 												</a>
-												<a class="dropdown-item" href="/dosen/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
+												<a class="dropdown-item" href="/taruna/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
 												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
+												<a class="dropdown-item" href="http://localhost:8082/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -677,10 +672,8 @@
 					}
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Gagal memuat data ICP', 'danger');
 				}
 			}
-			document.addEventListener('DOMContentLoaded', loadICPData);
 			
 			// Fungsi Logout
 			async function logout() {
