@@ -579,11 +579,15 @@
 							<h4 class="text-blue h4">List ICP</h4>
 						</div>
 						<div class="pb-20">
+							<div id="loadingSpinner" class="text-center" style="display: none;">
+								<div class="spinner-border text-primary" role="status">
+									<span class="sr-only">Loading...</span>
+								</div>
+							</div>
 							<table class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
 										<th class="table-plus datatable-nosort">Nama Taruna</th>
-										<th class="table-plus datatable-nosort">Kelas</th>
 										<th class="table-plus datatable-nosort">Topik</th>
 										<th class="table-plus datatable-nosort">File ICP</th>
 										<th class="table-plus datatable-nosort">Status</th>
@@ -625,14 +629,45 @@
 		<script>
 			// Fungsi untuk memuat data ICP berdasarkan dosenID
 			async function loadICPData() {
-				const dosenID = localStorage.getItem('dosenID');
+				const loadingSpinner = document.getElementById('loadingSpinner');
+				const tbody = document.querySelector('.data-table tbody');
+				
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`);
+					loadingSpinner.style.display = 'block';
+					tbody.innerHTML = '';
+					
+					const dosenID = localStorage.getItem('dosenID');
+					if (!dosenID) {
+						throw new Error('ID Dosen tidak ditemukan');
+					}
+
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					if (!token) {
+						throw new Error('Token tidak ditemukan');
+					}
+
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`, {
+						headers: {
+							'Authorization': `Bearer ${token}`,
+							'Content-Type': 'application/json'
+						}
+					});
+					
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					
 					const data = await response.json();
 					
 					if (data.status === 'success') {
-						const tbody = document.querySelector('.data-table tbody');
-						tbody.innerHTML = '';
+						if (data.data.length === 0) {
+							tbody.innerHTML = `
+								<tr>
+									<td colspan="5" class="text-center">Tidak ada data ICP yang ditemukan</td>
+								</tr>
+							`;
+							return;
+						}
 						
 						data.data.forEach(icp => {
 							const statusClass = {
@@ -643,11 +678,10 @@
 
 							tbody.innerHTML += `
 								<tr>
-									<td>${icp.nama_taruna}</td>
-									<td>${icp.kelas}</td>
-									<td>${icp.topik_penelitian}</td>
-									<td>${icp.file_path}</td>
-									<td><span class="${statusClass}">${icp.status}</span></td>
+									<td>${icp.nama_taruna || '-'}</td>
+									<td>${icp.topik_penelitian || '-'}</td>
+									<td>${icp.file_path || '-'}</td>
+									<td><span class="${statusClass}">${icp.status || 'pending'}</span></td>
 									<td>
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
@@ -660,7 +694,7 @@
 												</a>
 												<a class="dropdown-item" href="/taruna/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
 												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
-												<a class="dropdown-item" href="http://localhost:8082/download?path=${icp.file_path}" download>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -669,9 +703,21 @@
 								</tr>
 							`;
 						});
+					} else {
+						throw new Error(data.message || 'Gagal memuat data ICP');
 					}
 				} catch (error) {
 					console.error('Error:', error);
+					tbody.innerHTML = `
+						<tr>
+							<td colspan="5" class="text-center text-danger">
+								Error: ${error.message}
+							</td>
+						</tr>
+					`;
+					showAlert('Gagal memuat data ICP: ' + error.message, 'danger');
+				} finally {
+					loadingSpinner.style.display = 'none';
 				}
 			}
 			
