@@ -117,18 +117,16 @@ func (m *ICPModel) Update(icp *entities.ICP) error {
 	return err
 }
 
-// Tambahkan fungsi baru
 func (m *ICPModel) GetByDosenID(dosenID string) ([]entities.ICP, error) {
 	query := `
-        SELECT 
-            i.id, i.user_id, i.dosen_id, i.topik_penelitian,
-            i.keterangan, i.file_path, i.status, i.created_at,
-            i.updated_at, t.nama_lengkap as nama_taruna, t.kelas
-        FROM icp i
-        LEFT JOIN taruna t ON i.user_id = t.user_id
-        WHERE i.dosen_id = ?
-    `
-
+		SELECT 
+			i.id, i.user_id, i.dosen_id, i.topik_penelitian, i.keterangan, 
+			i.file_path, i.status, i.created_at, i.updated_at,
+			t.nama_lengkap, t.kelas
+		FROM icp i
+		LEFT JOIN taruna t ON i.user_id = t.user_id
+		WHERE i.dosen_id = ?
+	`
 	rows, err := m.db.Query(query, dosenID)
 	if err != nil {
 		return nil, err
@@ -139,17 +137,9 @@ func (m *ICPModel) GetByDosenID(dosenID string) ([]entities.ICP, error) {
 	for rows.Next() {
 		var icp entities.ICP
 		err := rows.Scan(
-			&icp.ID,
-			&icp.UserID,
-			&icp.DosenID,
-			&icp.TopikPenelitian,
-			&icp.Keterangan,
-			&icp.FilePath,
-			&icp.Status,
-			&icp.CreatedAt,
-			&icp.UpdatedAt,
-			&icp.NamaTaruna,
-			&icp.Kelas,
+			&icp.ID, &icp.UserID, &icp.DosenID, &icp.TopikPenelitian, &icp.Keterangan,
+			&icp.FilePath, &icp.Status, &icp.CreatedAt, &icp.UpdatedAt,
+			&icp.NamaTaruna, &icp.Kelas,
 		)
 		if err != nil {
 			return nil, err
