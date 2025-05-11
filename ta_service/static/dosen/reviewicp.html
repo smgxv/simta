@@ -887,17 +887,58 @@
 			// Panggil loadICPData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', loadICPData);
 
-			// Untuk Accept
-			// await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=approved`, {
-			// 	method: 'POST',
-			// 	headers: { 'Content-Type': 'application/json' }
-			// });
+			// Event delegation untuk tombol Accept dan Reject
+			document.addEventListener('click', async function(e) {
+				if (e.target.closest('.accept-icp-btn')) {
+					e.preventDefault();
+					const btn = e.target.closest('.accept-icp-btn');
+					const icpId = btn.getAttribute('data-id');
+					if (!icpId) return;
 
-			// // Untuk Reject
-			// await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=rejected`, {
-			// 	method: 'POST',
-			// 	headers: { 'Content-Type': 'application/json' }
-			// });
+					if (!confirm('Yakin ingin meng-approve ICP ini?')) return;
+
+					try {
+						const response = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=approved`, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' }
+						});
+						const data = await response.json();
+						if (data.status === 'success') {
+							showAlert('ICP berhasil di-approve', 'success');
+							loadICPData(); // Refresh tabel
+						} else {
+							showAlert(data.message || 'Gagal meng-approve ICP', 'danger');
+						}
+					} catch (error) {
+						showAlert('Terjadi kesalahan pada server', 'danger');
+					}
+				}
+
+				if (e.target.closest('.reject-icp-btn')) {
+					e.preventDefault();
+					const btn = e.target.closest('.reject-icp-btn');
+					const icpId = btn.getAttribute('data-id');
+					if (!icpId) return;
+
+					if (!confirm('Yakin ingin menolak ICP ini?')) return;
+
+					try {
+						const response = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=rejected`, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' }
+						});
+						const data = await response.json();
+						if (data.status === 'success') {
+							showAlert('ICP berhasil di-reject', 'success');
+							loadICPData(); // Refresh tabel
+						} else {
+							showAlert(data.message || 'Gagal menolak ICP', 'danger');
+						}
+					} catch (error) {
+						showAlert('Terjadi kesalahan pada server', 'danger');
+					}
+				}
+			});
 			
 			// Pastikan event listener untuk tombol logout terpasang dengan benar
 			document.addEventListener('DOMContentLoaded', function() {
