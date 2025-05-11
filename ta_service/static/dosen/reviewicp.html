@@ -621,93 +621,54 @@
 		<!-- End Google Tag Manager (noscript) -->
 
 		<script>
-			// async function loadICPData() {
-			// 	const dosenID = localStorage.getItem('dosenID');
-			// 	try {
-			// 		const response = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`);
-			// 		const data = await response.json();
-					
-			// 		if (data.status === 'success') {
-			// 			const tbody = document.querySelector('.data-table tbody');
-			// 			tbody.innerHTML = '';
-						
-			// 			data.data.forEach(icp => {
-			// 				const statusClass = {
-			// 					'pending': 'badge badge-warning',
-			// 					'approved': 'badge badge-success',
-			// 					'rejected': 'badge badge-danger'
-			// 				}[icp.status] || 'badge badge-secondary';
-
-			// 				tbody.innerHTML += `
-			// 					<tr>
-			// 						<td>${icp.topik_penelitian}</td>
-			// 						<td>${icp.nama_taruna}</td>
-			// 						<td><span class="${statusClass}">${icp.status}</span></td>
-			// 						<td>
-			// 							<div class="dropdown">
-			// 								<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-			// 								href="#" role="button" data-toggle="dropdown">
-			// 									<i class="dw dw-more"></i>
-			// 								</a>
-			// 								<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-			// 									<a class="dropdown-item" href="${icp.file_path}" target="_blank">
-			// 										<i class="dw dw-eye"></i> View
-			// 									</a>
-			// 									<a class="dropdown-item" href="/taruna/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
-			// 									<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
-			// 									<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
-			// 										<i class="dw dw-download"></i> Download
-			// 									</a>
-			// 								</div>
-			// 							</div>
-			// 						</td>
-			// 					</tr>
-			// 				`;
-			// 			});
-			// 		}
-			// 	} catch (error) {
-			// 		console.error('Error:', error);
-			// 	}
-			// }
-
-			document.addEventListener('DOMContentLoaded', function() {
+			async function loadICPData() {
 				const dosenID = localStorage.getItem('dosenID');
-				if (!dosenID) return;
-
-				fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`)
-					.then(response => response.json())
-					.then(data => {
+				try {
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`);
+					const data = await response.json();
+					
+					if (data.status === 'success') {
 						const tbody = document.querySelector('.data-table tbody');
 						tbody.innerHTML = '';
-						if (data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
-							data.data.forEach(icp => {
-								const statusClass = {
-									'pending': 'badge badge-warning',
-									'approved': 'badge badge-success',
-									'rejected': 'badge badge-danger'
-								}[icp.status] || 'badge badge-secondary';
+						
+						data.data.forEach(icp => {
+							const statusClass = {
+								'pending': 'badge badge-warning',
+								'approved': 'badge badge-success',
+								'rejected': 'badge badge-danger'
+							}[icp.status] || 'badge badge-secondary';
 
-								tbody.innerHTML += `
-									<tr>
-										<td>${icp.topik_penelitian || '-'}</td>
-										<td>${icp.nama_taruna || '-'}</td>
-										<td><span class="${statusClass}">${icp.status || '-'}</span></td>
-										<td>
-											<a href="http://104.43.89.154:8082/${icp.file_path}" target="_blank" class="btn btn-sm btn-primary">Download</a>
-										</td>
-									</tr>
-								`;
-							});
-						} else {
-							tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Tidak ada data ICP</td></tr>`;
-						}
-					})
-					.catch(err => {
-						const tbody = document.querySelector('.data-table tbody');
-						tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Gagal mengambil data ICP</td></tr>`;
-						console.error(err);
-					});
-			});
+							tbody.innerHTML += `
+								<tr>
+									<td>${icp.topik_penelitian}</td>
+									<td>${icp.nama_taruna}</td>
+									<td><span class="${statusClass}">${icp.status}</span></td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+											href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item" href="${icp.file_path}" target="_blank">
+													<i class="dw dw-eye"></i> View
+												</a>
+												<a class="dropdown-item" href="/taruna/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
+												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
+													<i class="dw dw-download"></i> Download
+												</a>
+											</div>
+										</div>
+									</td>
+								</tr>
+							`;
+						});
+					}
+				} catch (error) {
+					console.error('Error:', error);
+				}
+			}
 			
 			// Fungsi Logout
 			async function logout() {
