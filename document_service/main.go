@@ -24,7 +24,10 @@ func main() {
 	r.HandleFunc("/download", handlers.DownloadFileHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/icp/{id}", handlers.GetICPByIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/icp/edit", handlers.EditICPHandler).Methods("PUT", "OPTIONS")
+
+	// Route untuk review ICP
 	r.HandleFunc("/reviewicp", handlers.GetICPByDosenIDHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/accepticp", handlers.AcceptICPHandler).Methods("POST", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{

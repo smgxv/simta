@@ -655,8 +655,9 @@
 												<a class="dropdown-item" href="${icp.file_path}" target="_blank">
 													<i class="dw dw-eye"></i> View
 												</a>
-												<a class="dropdown-item" href="/taruna/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
-												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
+												<a class="dropdown-item accept-icp-btn" href="#" data-id="${icp.id}">
+													<i class="dw dw-edit2"></i> Accept
+												</a>
 												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
@@ -818,6 +819,36 @@
 				}).catch(() => {
 					window.location.replace('/loginusers');
 				});
+			});
+
+			// Event delegation untuk tombol Accept
+			document.addEventListener('click', async function(e) {
+				if (e.target.closest('.accept-icp-btn')) {
+					e.preventDefault();
+					const btn = e.target.closest('.accept-icp-btn');
+					const icpId = btn.getAttribute('data-id');
+					if (!icpId) return;
+
+					if (!confirm('Yakin ingin meng-approve ICP ini?')) return;
+
+					try {
+						const response = await fetch(`http://104.43.89.154:8082/accepticp?id=${icpId}`, {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							}
+						});
+						const data = await response.json();
+						if (data.status === 'success') {
+							showAlert('ICP berhasil di-approve', 'success');
+							loadICPData(); // Refresh tabel
+						} else {
+							showAlert(data.message || 'Gagal meng-approve ICP', 'danger');
+						}
+					} catch (error) {
+						showAlert('Terjadi kesalahan pada server', 'danger');
+					}
+				}
 			});
 
 			// Panggil loadICPData saat halaman dimuat
