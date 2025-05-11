@@ -888,16 +888,16 @@
 			document.addEventListener('DOMContentLoaded', loadICPData);
 
 			// Untuk Accept
-			await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=approved`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' }
-			});
+			// await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=approved`, {
+			// 	method: 'POST',
+			// 	headers: { 'Content-Type': 'application/json' }
+			// });
 
-			// Untuk Reject
-			await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=rejected`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' }
-			});
+			// // Untuk Reject
+			// await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=rejected`, {
+			// 	method: 'POST',
+			// 	headers: { 'Content-Type': 'application/json' }
+			// });
 			
 			// Pastikan event listener untuk tombol logout terpasang dengan benar
 			document.addEventListener('DOMContentLoaded', function() {
