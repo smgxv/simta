@@ -626,33 +626,42 @@
 		<!-- End Google Tag Manager (noscript) -->
 
 		<script>
-
 			document.addEventListener('DOMContentLoaded', function() {
 				const dosenID = localStorage.getItem('dosenID');
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 				if (!dosenID) return;
 
-				fetch(`http://104.43.89.154:8082/icp/bydosen?dosen_id=${dosenID}`, {
+				fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`, {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
 				})
 				.then(response => response.json())
 				.then(data => {
-					if (data.status === 'success') {
-						const tbody = document.querySelector('table.data-table tbody');
-						tbody.innerHTML = '';
+					const tbody = document.querySelector('table.data-table tbody');
+					tbody.innerHTML = '';
+					if (data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
 						data.data.forEach(icp => {
 							const tr = document.createElement('tr');
 							tr.innerHTML = `
-								<td>${icp.topik_penelitian}</td>
-								<td><a href="${icp.file_path}" target="_blank">Download</a></td>
-								<td><span class="badge badge-warning">${icp.status}</span></td>
+								<td>${icp.topik_penelitian || '-'}</td>
+								<td>${icp.file_path ? `<a href="${icp.file_path}" target="_blank">Download</a>` : '-'}</td>
+								<td><span class="badge badge-warning">${icp.status || '-'}</span></td>
 								<td><!-- Action button di sini --></td>
 							`;
 							tbody.appendChild(tr);
 						});
+					} else {
+						// Jika data kosong, tampilkan pesan
+						const tr = document.createElement('tr');
+						tr.innerHTML = `<td colspan="4" style="text-align:center;">Tidak ada data ICP</td>`;
+						tbody.appendChild(tr);
 					}
+				})
+				.catch(err => {
+					const tbody = document.querySelector('table.data-table tbody');
+					tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Gagal mengambil data ICP</td></tr>`;
+					console.error(err);
 				});
 			});
 			

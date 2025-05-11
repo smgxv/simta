@@ -1,9 +1,7 @@
 package main
 
 import (
-	"database/sql"
 	"document_service/handlers"
-	"document_service/models"
 	"log"
 	"net/http"
 	"os"
@@ -13,15 +11,6 @@ import (
 )
 
 func main() {
-	// Koneksi ke database
-	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/go_tugasakhir")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	icpModel := models.NewICPModel(db) // <-- Tambahkan inisialisasi ini
-
 	r := mux.NewRouter()
 
 	// Buat direktori uploads jika belum ada
@@ -35,7 +24,7 @@ func main() {
 	r.HandleFunc("/download", handlers.DownloadFileHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/icp/{id}", handlers.GetICPByIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/icp/edit", handlers.EditICPHandler).Methods("PUT", "OPTIONS")
-	r.HandleFunc("/icp/bydosen", handlers.GetICPByDosenIDHandler(icpModel)).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewicp", handlers.GetICPByDosenIDHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{
