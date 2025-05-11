@@ -579,16 +579,11 @@
 							<h4 class="text-blue h4">List ICP</h4>
 						</div>
 						<div class="pb-20">
-							<div id="loadingSpinner" class="text-center" style="display: none;">
-								<div class="spinner-border text-primary" role="status">
-									<span class="sr-only">Loading...</span>
-								</div>
-							</div>
 							<table class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
 										<th class="table-plus datatable-nosort">Topik</th>
-										<th class="table-plus datatable-nosort">File ICP</th>
+										<th class="table-plus datatable-nosort">Nama Taruna</th>
 										<th class="table-plus datatable-nosort">Status</th>
 										<th class="datatable-nosort">Action</th>
 									</tr>
@@ -626,44 +621,54 @@
 		<!-- End Google Tag Manager (noscript) -->
 
 		<script>
-			document.addEventListener('DOMContentLoaded', function() {
+			async function loadICPData() {
 				const dosenID = localStorage.getItem('dosenID');
-				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				if (!dosenID) return;
-
-				fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`, {
-					headers: {
-						'Authorization': `Bearer ${token}`
-					}
-				})
-				.then(response => response.json())
-				.then(data => {
-					const tbody = document.querySelector('table.data-table tbody');
-					tbody.innerHTML = '';
-					if (data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
+				try {
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`);
+					const data = await response.json();
+					
+					if (data.status === 'success') {
+						const tbody = document.querySelector('.data-table tbody');
+						tbody.innerHTML = '';
+						
 						data.data.forEach(icp => {
-							const tr = document.createElement('tr');
-							tr.innerHTML = `
-								<td>${icp.topik_penelitian || '-'}</td>
-								<td>${icp.file_path ? `<a href="${icp.file_path}" target="_blank">Download</a>` : '-'}</td>
-								<td><span class="badge badge-warning">${icp.status || '-'}</span></td>
-								<td><!-- Action button di sini --></td>
+							const statusClass = {
+								'pending': 'badge badge-warning',
+								'approved': 'badge badge-success',
+								'rejected': 'badge badge-danger'
+							}[icp.status] || 'badge badge-secondary';
+
+							tbody.innerHTML += `
+								<tr>
+									<td>${icp.topik_penelitian}</td>
+									<td>${icp.nama_taruna}</td>
+									<td><span class="${statusClass}">${icp.status}</span></td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+											href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item" href="${icp.file_path}" target="_blank">
+													<i class="dw dw-eye"></i> View
+												</a>
+												<a class="dropdown-item" href="/taruna/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
+												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
+													<i class="dw dw-download"></i> Download
+												</a>
+											</div>
+										</div>
+									</td>
+								</tr>
 							`;
-							tbody.appendChild(tr);
 						});
-					} else {
-						// Jika data kosong, tampilkan pesan
-						const tr = document.createElement('tr');
-						tr.innerHTML = `<td colspan="4" style="text-align:center;">Tidak ada data ICP</td>`;
-						tbody.appendChild(tr);
 					}
-				})
-				.catch(err => {
-					const tbody = document.querySelector('table.data-table tbody');
-					tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Gagal mengambil data ICP</td></tr>`;
-					console.error(err);
-				});
-			});
+				} catch (error) {
+					console.error('Error:', error);
+				}
+			}
 			
 			// Fungsi Logout
 			async function logout() {
@@ -738,34 +743,6 @@
 					alert('Gagal logout. Silakan coba lagi.');
 				}
 			}
-
-			document.addEventListener('DOMContentLoaded', function() {
-				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				
-				console.log('Fetching dosen data...');
-				
-				fetch('http://104.43.89.154:8081/dosen', {
-					headers: {
-						'Authorization': `Bearer ${token}`
-					}
-				})
-				.then(response => response.json())
-				.then(data => {
-					const dosenSelect = document.getElementById('dosenSelect');
-					
-					if (data.status === 'success' && Array.isArray(data.data)) {
-						data.data.forEach(dosen => {
-							const option = document.createElement('option');
-							option.value = dosen.id;
-							option.textContent = `${dosen.nama_lengkap} - ${dosen.jurusan}`;
-							dosenSelect.appendChild(option);
-						});
-					}
-				})
-				.catch(error => {
-					console.error('Error:', error);
-				});
-			});
 
 			// Tambahkan pengecekan autentikasi dan mapping dosenID saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
