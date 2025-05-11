@@ -825,64 +825,76 @@
 			});
 
 			// Event delegation untuk tombol Accept
-			document.addEventListener('click', async function(e) {
-				if (e.target.closest('.accept-icp-btn')) {
-					e.preventDefault();
-					const btn = e.target.closest('.accept-icp-btn');
-					const icpId = btn.getAttribute('data-id');
-					if (!icpId) return;
+			// document.addEventListener('click', async function(e) {
+			// 	if (e.target.closest('.accept-icp-btn')) {
+			// 		e.preventDefault();
+			// 		const btn = e.target.closest('.accept-icp-btn');
+			// 		const icpId = btn.getAttribute('data-id');
+			// 		if (!icpId) return;
 
-					if (!confirm('Yakin ingin meng-approve ICP ini?')) return;
+			// 		if (!confirm('Yakin ingin meng-approve ICP ini?')) return;
 
-					try {
-						const response = await fetch(`http://104.43.89.154:8082/accepticp?id=${icpId}`, {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json'
-							}
-						});
-						const data = await response.json();
-						if (data.status === 'success') {
-							showAlert('ICP berhasil di-approve', 'success');
-							loadICPData(); // Refresh tabel
-						} else {
-							showAlert(data.message || 'Gagal meng-approve ICP', 'danger');
-						}
-					} catch (error) {
-						showAlert('Terjadi kesalahan pada server', 'danger');
-					}
-				}
-			});
+			// 		try {
+			// 			const response = await fetch(`http://104.43.89.154:8082/accepticp?id=${icpId}`, {
+			// 				method: 'POST',
+			// 				headers: {
+			// 					'Content-Type': 'application/json'
+			// 				}
+			// 			});
+			// 			const data = await response.json();
+			// 			if (data.status === 'success') {
+			// 				showAlert('ICP berhasil di-approve', 'success');
+			// 				loadICPData(); // Refresh tabel
+			// 			} else {
+			// 				showAlert(data.message || 'Gagal meng-approve ICP', 'danger');
+			// 			}
+			// 		} catch (error) {
+			// 			showAlert('Terjadi kesalahan pada server', 'danger');
+			// 		}
+			// 	}
+			// });
 
 			// Event delegation untuk tombol Reject
-			document.addEventListener('click', async function(e) {
-				if (e.target.closest('.reject-icp-btn')) {
-					e.preventDefault();
-					const btn = e.target.closest('.reject-icp-btn');
-					const icpId = btn.getAttribute('data-id');
-					if (!icpId) return;
+			// document.addEventListener('click', async function(e) {
+			// 		if (e.target.closest('.reject-icp-btn')) {
+			// 			e.preventDefault();
+			// 			const btn = e.target.closest('.reject-icp-btn');
+			// 			const icpId = btn.getAttribute('data-id');
+			// 			if (!icpId) return;
 
-				if (!confirm('Yakin ingin menolak ICP ini?')) return;
+			// 		if (!confirm('Yakin ingin menolak ICP ini?')) return;
 
-				try {
-					const response = await fetch(`http://104.43.89.154:8082/rejecticp?id=${icpId}`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						}
-					});
-					const data = await response.json();
-					if (data.status === 'success') {
-						showAlert('ICP berhasil di-reject', 'success');
-						loadICPData(); // Refresh tabel
-					} else {
-						showAlert(data.message || 'Gagal menolak ICP', 'danger');
-					}
-				} catch (error) {
-					showAlert('Terjadi kesalahan pada server', 'danger');
-				}
-			}
-		});
+			// 		try {
+			// 			const response = await fetch(`http://104.43.89.154:8082/rejecticp?id=${icpId}`, {
+			// 				method: 'POST',
+			// 				headers: {
+			// 					'Content-Type': 'application/json'
+			// 				}
+			// 			});
+			// 			const data = await response.json();
+			// 			if (data.status === 'success') {
+			// 				showAlert('ICP berhasil di-reject', 'success');
+			// 				loadICPData(); // Refresh tabel
+			// 			} else {
+			// 				showAlert(data.message || 'Gagal menolak ICP', 'danger');
+			// 			}
+			// 		} catch (error) {
+			// 			showAlert('Terjadi kesalahan pada server', 'danger');
+			// 		}
+			// 	}
+			// });
+
+			// Untuk Accept
+			await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=approved`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' }
+			});
+
+			// Untuk Reject
+			await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=rejected`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' }
+			});
 
 			// Panggil loadICPData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', loadICPData);

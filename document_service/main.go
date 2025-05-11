@@ -27,8 +27,9 @@ func main() {
 
 	// Route untuk review ICP
 	r.HandleFunc("/reviewicp", handlers.GetICPByDosenIDHandler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/accepticp", handlers.AcceptICPHandler).Methods("POST", "OPTIONS")
-	r.HandleFunc("/rejecticp", handlers.RejectICPHandler).Methods("POST", "OPTIONS")
+	// r.HandleFunc("/accepticp", handlers.AcceptICPHandler).Methods("POST", "OPTIONS")
+	// r.HandleFunc("/rejecticp", handlers.RejectICPHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/updateicpstatus", handlers.UpdateICPStatusHandler).Methods("POST", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{

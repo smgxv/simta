@@ -39,40 +39,74 @@ func GetICPByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler untuk mengubah status ICP menjadi "approved"
-func AcceptICPHandler(w http.ResponseWriter, r *http.Request) {
-	// Ambil parameter id ICP
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "ID is required", http.StatusBadRequest)
-		return
-	}
+// func AcceptICPHandler(w http.ResponseWriter, r *http.Request) {
+// 	// Ambil parameter id ICP
+// 	id := r.URL.Query().Get("id")
+// 	if id == "" {
+// 		http.Error(w, "ID is required", http.StatusBadRequest)
+// 		return
+// 	}
 
-	db, err := config.GetDB()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
+// 	db, err := config.GetDB()
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+// 	defer db.Close()
 
-	// Update status ICP menjadi "approved"
-	_, err = db.Exec("UPDATE icp SET status = 'approved' WHERE id = ?", id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+// 	// Update status ICP menjadi "approved"
+// 	_, err = db.Exec("UPDATE icp SET status = 'approved' WHERE id = ?", id)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  "success",
-		"message": "ICP berhasil di-approve",
-	})
-}
+// 	json.NewEncoder(w).Encode(map[string]interface{}{
+// 		"status":  "success",
+// 		"message": "ICP berhasil di-approve",
+// 	})
+// }
 
 // Handler untuk mengubah status ICP menjadi "rejected"
-func RejectICPHandler(w http.ResponseWriter, r *http.Request) {
-	// Ambil parameter id ICP
+// func RejectICPHandler(w http.ResponseWriter, r *http.Request) {
+// 	// Ambil parameter id ICP
+// 	id := r.URL.Query().Get("id")
+// 	if id == "" {
+// 		http.Error(w, "ID is required", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	db, err := config.GetDB()
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+// 	defer db.Close()
+
+// 	// Update status ICP menjadi "rejected"
+// 	_, err = db.Exec("UPDATE icp SET status = 'rejected' WHERE id = ?", id)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	json.NewEncoder(w).Encode(map[string]interface{}{
+// 		"status":  "success",
+// 		"message": "ICP berhasil di-reject",
+// 	})
+// }
+
+func UpdateICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "ID is required", http.StatusBadRequest)
+	status := r.URL.Query().Get("status")
+	if id == "" || status == "" {
+		http.Error(w, "ID dan status diperlukan", http.StatusBadRequest)
+		return
+	}
+
+	// Validasi status hanya boleh "approved" atau "rejected"
+	if status != "approved" && status != "rejected" {
+		http.Error(w, "Status tidak valid", http.StatusBadRequest)
 		return
 	}
 
@@ -83,15 +117,21 @@ func RejectICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Update status ICP menjadi "rejected"
-	_, err = db.Exec("UPDATE icp SET status = 'rejected' WHERE id = ?", id)
+	_, err = db.Exec("UPDATE icp SET status = ? WHERE id = ?", status, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	msg := "ICP berhasil diupdate"
+	if status == "approved" {
+		msg = "ICP berhasil di-approve"
+	} else if status == "rejected" {
+		msg = "ICP berhasil di-reject"
+	}
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "ICP berhasil di-reject",
+		"message": msg,
 	})
 }
