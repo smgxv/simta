@@ -657,6 +657,7 @@
 												</a>
 												<a class="dropdown-item accept-icp-btn" href="#" data-id="${icp.id}">
 													<i class="dw dw-edit2"></i> Accept
+													<i class="dw dw-delete-3"></i> Reject
 												</a>
 												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
@@ -850,6 +851,36 @@
 					}
 				}
 			});
+
+			// Event delegation untuk tombol Reject
+			document.addEventListener('click', async function(e) {
+				if (e.target.closest('.reject-icp-btn')) {
+					e.preventDefault();
+					const btn = e.target.closest('.reject-icp-btn');
+					const icpId = btn.getAttribute('data-id');
+					if (!icpId) return;
+
+				if (!confirm('Yakin ingin menolak ICP ini?')) return;
+
+				try {
+					const response = await fetch(`http://104.43.89.154:8082/rejecticp?id=${icpId}`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					});
+					const data = await response.json();
+					if (data.status === 'success') {
+						showAlert('ICP berhasil di-reject', 'success');
+						loadICPData(); // Refresh tabel
+					} else {
+						showAlert(data.message || 'Gagal menolak ICP', 'danger');
+					}
+				} catch (error) {
+					showAlert('Terjadi kesalahan pada server', 'danger');
+				}
+			}
+		});
 
 			// Panggil loadICPData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', loadICPData);

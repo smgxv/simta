@@ -66,3 +66,32 @@ func AcceptICPHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "ICP berhasil di-approve",
 	})
 }
+
+// Handler untuk mengubah status ICP menjadi "rejected"
+func RejectICPHandler(w http.ResponseWriter, r *http.Request) {
+	// Ambil parameter id ICP
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "ID is required", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Update status ICP menjadi "rejected"
+	_, err = db.Exec("UPDATE icp SET status = 'rejected' WHERE id = ?", id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "success",
+		"message": "ICP berhasil di-reject",
+	})
+}
