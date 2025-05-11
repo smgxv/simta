@@ -816,6 +816,9 @@
 				});
 			});
 
+			// Panggil loadICPData saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', loadICPData);
+			
 			// Pastikan event listener untuk tombol logout terpasang dengan benar
 			document.addEventListener('DOMContentLoaded', function() {
 				const logoutButton = document.querySelector('a[onclick="logout()"]');
