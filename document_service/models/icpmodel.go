@@ -137,6 +137,8 @@ func (m *ICPModel) GetByDosenID(dosenID string) ([]entities.ICP, error) {
 	var icps []entities.ICP
 	for rows.Next() {
 		var icp entities.ICP
+		var namaTaruna sql.NullString
+		var kelas sql.NullString
 		err := rows.Scan(
 			&icp.ID,
 			&icp.UserID,
@@ -147,11 +149,21 @@ func (m *ICPModel) GetByDosenID(dosenID string) ([]entities.ICP, error) {
 			&icp.Status,
 			&icp.CreatedAt,
 			&icp.UpdatedAt,
-			&icp.NamaTaruna,
-			&icp.Kelas,
+			&namaTaruna,
+			&kelas,
 		)
 		if err != nil {
 			return nil, err
+		}
+		if namaTaruna.Valid {
+			icp.NamaTaruna = namaTaruna.String
+		} else {
+			icp.NamaTaruna = ""
+		}
+		if kelas.Valid {
+			icp.Kelas = kelas.String
+		} else {
+			icp.Kelas = ""
 		}
 		icps = append(icps, icp)
 	}

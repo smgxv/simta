@@ -53,3 +53,12 @@ func (u UserModel) Where(user *entities.User, fieldName, fieldValue string) erro
 
 	return nil
 }
+
+func (u UserModel) GetDosenIDByUserID(userID int64) (int64, error) {
+	var dosenID int64
+	err := u.db.QueryRow("SELECT id FROM dosen WHERE user_id = ?", userID).Scan(&dosenID)
+	if err != nil {
+		return 0, err
+	}
+	return dosenID, nil
+}

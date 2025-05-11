@@ -25,6 +25,7 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Email       string          `json:"email"`
 	ID          int64           `json:"id"`
+	DosenID     int64           `json:"dosen_id"`
 	Token       string          `json:"token"`
 	Users       []entities.User `json:"users"` // Tambahkan field Users
 	Role        string          `json:"role"`
@@ -127,10 +128,16 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("📊 Berhasil mengambil data %d users", len(users))
 
+	var dosenID int64 = 0
+	if user.Role == "dosen" {
+		dosenID, _ = userModel.GetDosenIDByUserID(user.ID)
+	}
+
 	// Buat response
 	response := LoginResponse{
 		Email:       user.Email,
 		ID:          user.ID,
+		DosenID:     dosenID,
 		Token:       token,
 		Role:        user.Role,
 		Success:     true,
