@@ -882,16 +882,17 @@
 				.then(data => {
 					if (data.status === 'success' && Array.isArray(data.data)) {
 						icpDataGlobal = data.data; // Simpan data ICP ke variabel global
-						const uniqueSet = new Set();
+						const uniqueTaruna = new Map();
 						data.data.forEach(icp => {
-							const uniqueKey = `${icp.taruna_id}|${icp.nama_taruna}`;
-							if (!uniqueSet.has(uniqueKey)) {
-								uniqueSet.add(uniqueKey);
-								const option = document.createElement('option');
-								option.value = icp.taruna_id;
-								option.textContent = icp.nama_taruna;
-								tarunaSelect.appendChild(option);
+							if (!uniqueTaruna.has(icp.taruna_id)) {
+								uniqueTaruna.set(icp.taruna_id, icp.nama_taruna);
 							}
+						});
+						uniqueTaruna.forEach((nama_taruna, taruna_id) => {
+							const option = document.createElement('option');
+							option.value = taruna_id;
+							option.textContent = nama_taruna;
+							tarunaSelect.appendChild(option);
 						});
 					}
 				})
