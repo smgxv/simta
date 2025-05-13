@@ -884,13 +884,14 @@
 						icpDataGlobal = data.data; // Simpan data ICP ke variabel global
 						const uniqueTaruna = new Map();
 						data.data.forEach(icp => {
-							if (!uniqueTaruna.has(icp.taruna_id)) {
-								uniqueTaruna.set(icp.taruna_id, icp.nama_taruna);
+							const idTaruna = icp.taruna_id || icp.user_id;
+							if (idTaruna && !uniqueTaruna.has(idTaruna)) {
+								uniqueTaruna.set(idTaruna, icp.nama_taruna);
 							}
 						});
-						uniqueTaruna.forEach((nama_taruna, taruna_id) => {
+						uniqueTaruna.forEach((nama_taruna, idTaruna) => {
 							const option = document.createElement('option');
-							option.value = taruna_id;
+							option.value = idTaruna;
 							option.textContent = nama_taruna;
 							tarunaSelect.appendChild(option);
 						});
@@ -909,7 +910,8 @@
 
 				const topikSet = new Set();
 				icpDataGlobal.forEach(icp => {
-					if (String(icp.taruna_id) === String(tarunaId) && !topikSet.has(icp.topik_penelitian)) {
+					const idTaruna = icp.taruna_id || icp.user_id;
+					if (String(idTaruna) === String(tarunaId) && !topikSet.has(icp.topik_penelitian)) {
 						topikSet.add(icp.topik_penelitian);
 						const option = document.createElement('option');
 						option.value = icp.topik_penelitian;
