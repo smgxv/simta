@@ -877,12 +877,14 @@
 				.then(response => response.json())
 				.then(data => {
 					if (data.status === 'success' && Array.isArray(data.data)) {
-						const tarunaSet = new Set();
+						// Gunakan Set untuk kombinasi unik taruna_id + topik_penelitian
+						const uniqueSet = new Set();
 						data.data.forEach(icp => {
-							if (!tarunaSet.has(icp.taruna_id)) {
-								tarunaSet.add(icp.taruna_id);
+							const uniqueKey = `${icp.taruna_id}|${icp.topik_penelitian}`;
+							if (!uniqueSet.has(uniqueKey)) {
+								uniqueSet.add(uniqueKey);
 								const option = document.createElement('option');
-								option.value = icp.taruna_id;
+								option.value = icp.id; // gunakan id ICP agar unik
 								option.textContent = `${icp.nama_taruna} - ${icp.topik_penelitian}`;
 								tarunaSelect.appendChild(option);
 							}
