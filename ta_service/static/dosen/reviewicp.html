@@ -610,12 +610,14 @@
 							<div class="form-group">
 								<label>Nama Taruna</label>
 								<select class="form-control" id="tarunaSelect" name="taruna_id" required>
-									<!-- Isi dengan data taruna -->
+									<option value="" disabled selected>Pilih Taruna</option>
 								</select>
 							</div>
 							<div class="form-group">
 								<label>Topik Penelitian</label>
-								<input type="text" class="form-control" name="topik_penelitian" required>
+								<select class="form-control" id="topikPenelitianSelect" name="topik_penelitian" required>
+									<option value="" disabled selected>Pilih Topik Penelitian</option>
+								</select>
 							</div>
 							<div class="form-group">
 								<label>Keterangan</label>
@@ -656,6 +658,8 @@
 		<!-- End Google Tag Manager (noscript) -->
 
 		<script>
+			let icpDataGlobal = [];
+
 			async function loadICPData() {
 				const dosenID = localStorage.getItem('dosenID');
 				console.log('Memuat ICP untuk dosenID:', dosenID); // Debug
@@ -877,15 +881,15 @@
 				.then(response => response.json())
 				.then(data => {
 					if (data.status === 'success' && Array.isArray(data.data)) {
-						// Gunakan Set untuk kombinasi unik taruna_id + topik_penelitian
+						icpDataGlobal = data.data; // Simpan data ICP ke variabel global
 						const uniqueSet = new Set();
 						data.data.forEach(icp => {
-							const uniqueKey = `${icp.taruna_id}|${icp.topik_penelitian}`;
+							const uniqueKey = `${icp.taruna_id}|${icp.nama_taruna}`;
 							if (!uniqueSet.has(uniqueKey)) {
 								uniqueSet.add(uniqueKey);
 								const option = document.createElement('option');
-								option.value = icp.id; // gunakan id ICP agar unik
-								option.textContent = `${icp.nama_taruna} - ${icp.topik_penelitian}`;
+								option.value = icp.taruna_id;
+								option.textContent = icp.nama_taruna;
 								tarunaSelect.appendChild(option);
 							}
 						});
@@ -895,6 +899,24 @@
 					console.error('Error:', error);
 				});
 			}
+
+			// Event listener untuk update topik penelitian saat taruna dipilih
+			document.getElementById('tarunaSelect').addEventListener('change', function() {
+				const tarunaId = this.value;
+				const topikSelect = document.getElementById('topikPenelitianSelect');
+				topikSelect.innerHTML = '<option value="" disabled selected>Pilih Topik Penelitian</option>';
+
+				const topikSet = new Set();
+				icpDataGlobal.forEach(icp => {
+					if (String(icp.taruna_id) === String(tarunaId) && !topikSet.has(icp.topik_penelitian)) {
+						topikSet.add(icp.topik_penelitian);
+						const option = document.createElement('option');
+						option.value = icp.topik_penelitian;
+						option.textContent = icp.topik_penelitian;
+						topikSelect.appendChild(option);
+					}
+				});
+			});
 
 			// Panggil loadICPData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', loadICPData);
