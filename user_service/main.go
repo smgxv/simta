@@ -17,6 +17,7 @@ func main() {
 	http.HandleFunc("/users/delete", middleware.AuthMiddleware(handlers.DeleteUser))
 
 	http.HandleFunc("/dosen", middleware.AuthMiddleware(handlers.GetAllDosen))
+	http.HandleFunc("/taruna", middleware.AuthMiddleware(handlers.GetAllTaruna))
 
 	fmt.Println("API Server running on port 8081...")
 	log.Fatal(http.ListenAndServe(":8081", nil))
