@@ -862,10 +862,11 @@
 			// Menampilkan nama taruna
 			document.addEventListener('DOMContentLoaded', function() {
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				const dosenID = localStorage.getItem('dosenID');
 				
-				console.log('Fetching dosen data...');
+				console.log('Fetching taruna data for dosen:', dosenID);
 				
-				fetch('http://104.43.89.154:8081/taruna', {
+				fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`, {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -875,10 +876,14 @@
 					const tarunaSelect = document.getElementById('tarunaSelect');
 					
 					if (data.status === 'success' && Array.isArray(data.data)) {
-						data.data.forEach(dosen => {
+						// Hapus opsi default
+						tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Taruna</option>';
+						
+						// Tambahkan hanya taruna yang mengirimkan ICP
+						data.data.forEach(icp => {
 							const option = document.createElement('option');
-							option.value = dosen.id;
-							option.textContent = `${dosen.nama_lengkap} - ${dosen.jurusan}`;
+							option.value = icp.taruna_id;
+							option.textContent = `${icp.nama_taruna} - ${icp.topik_penelitian}`;
 							tarunaSelect.appendChild(option);
 						});
 					}
