@@ -863,9 +863,9 @@
 			document.addEventListener('DOMContentLoaded', function() {
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 				const dosenID = localStorage.getItem('dosenID');
-				
-				console.log('Fetching taruna data for dosen:', dosenID);
-				
+				const tarunaSelect = document.getElementById('tarunaSelect');
+				tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Taruna</option>';
+
 				fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`, {
 					headers: {
 						'Authorization': `Bearer ${token}`
@@ -873,18 +873,17 @@
 				})
 				.then(response => response.json())
 				.then(data => {
-					const tarunaSelect = document.getElementById('tarunaSelect');
-					
 					if (data.status === 'success' && Array.isArray(data.data)) {
-						// Hapus opsi default
-						tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Taruna</option>';
-						
-						// Tambahkan hanya taruna yang mengirimkan ICP
+						// Buat set untuk menghindari duplikasi taruna
+						const tarunaSet = new Set();
 						data.data.forEach(icp => {
-							const option = document.createElement('option');
-							option.value = icp.taruna_id;
-							option.textContent = `${icp.nama_taruna} - ${icp.topik_penelitian}`;
-							tarunaSelect.appendChild(option);
+							if (!tarunaSet.has(icp.taruna_id)) {
+								tarunaSet.add(icp.taruna_id);
+								const option = document.createElement('option');
+								option.value = icp.taruna_id;
+								option.textContent = `${icp.nama_taruna} - ${icp.topik_penelitian}`;
+								tarunaSelect.appendChild(option);
+							}
 						});
 					}
 				})
