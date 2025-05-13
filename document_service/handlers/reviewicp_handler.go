@@ -2,9 +2,16 @@ package handlers
 
 import (
 	"document_service/config"
+	"document_service/entities"
 	"document_service/models"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
+	"time"
 )
 
 // Handler untuk mengambil ICP berdasarkan dosen_id
@@ -76,5 +83,93 @@ func UpdateICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": msg,
+	})
+}
+
+func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	dosenID := r.FormValue("dosen_id")
+	tarunaID := r.FormValue("taruna_id")
+	topikPenelitian := r.FormValue("topik_penelitian")
+	keterangan := r.FormValue("keterangan")
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Error retrieving file: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	uploadDir := "uploads/reviewicp"
+	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+		http.Error(w, "Error creating upload directory: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	filename := fmt.Sprintf("REVIEW_ICP_%s_%s_%s",
+		dosenID,
+		time.Now().Format("20060102150405"),
+		handler.Filename)
+	filePath := filepath.Join(uploadDir, filename)
+
+	dst, err := os.Create(filePath)
+	if err != nil {
+		http.Error(w, "Error creating file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		http.Error(w, "Error saving file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	dosenIDInt, _ := strconv.Atoi(dosenID)
+	tarunaIDInt, _ := strconv.Atoi(tarunaID)
+
+	reviewICP := &entities.ReviewICP{
+		DosenID:         dosenIDInt,
+		TarunaID:        tarunaIDInt,
+		TopikPenelitian: topikPenelitian,
+		Keterangan:      keterangan,
+		FilePath:        filePath,
+	}
+
+	reviewICPModel := models.NewReviewICPModel(db)
+	if err := reviewICPModel.Create(reviewICP); err != nil {
+		os.Remove(filePath)
+		http.Error(w, "Error saving to database: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "success",
+		"message": "Review ICP berhasil diunggah",
+		"data": map[string]interface{}{
+			"file_path": filePath,
+		},
 	})
 }

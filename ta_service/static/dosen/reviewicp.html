@@ -606,24 +606,24 @@
 							</div>
 						</div>
 
-						<form id="icpForm" enctype="multipart/form-data">
+						<form id="reviewIcpForm" enctype="multipart/form-data">
 							<div class="form-group">
 								<label>Nama Taruna</label>
-								<select class="form-control" id="tarunaSelect" name="taruna_id">
-									<option value="" disabled selected>Pilih Taruna</option>
+								<select class="form-control" id="tarunaSelect" name="taruna_id" required>
+									<!-- Isi dengan data taruna -->
 								</select>
 							</div>
 							<div class="form-group">
+								<label>Topik Penelitian</label>
+								<input type="text" class="form-control" name="topik_penelitian" required>
+							</div>
+							<div class="form-group">
 								<label>Keterangan</label>
-								<textarea class="form-control" name="keterangan" required></textarea>
+								<textarea class="form-control" name="keterangan"></textarea>
 							</div>
 							<div class="form-group">
 								<label>File Review ICP (PDF)</label>
-								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="icpFile" name="file" accept=".pdf" required>
-									<label class="custom-file-label" for="icpFile">Choose file</label>
-								</div>
-								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
+								<input type="file" class="form-control" name="file" accept=".pdf" required>
 							</div>
 							<button type="submit" class="btn btn-primary">UPLOAD</button>
 						</form>
@@ -862,6 +862,7 @@
 				});
 			});
 
+			// Fungsi untuk memuat dropdown taruna
 			function loadTarunaDropdown() {
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 				const dosenID = localStorage.getItem('dosenID');
@@ -951,6 +952,26 @@
 				}
 			});
 			
+			// Handle form submission
+			document.getElementById('reviewIcpForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+				const formData = new FormData(this);
+				formData.append('dosen_id', localStorage.getItem('dosenID'));
+				// ...tambahkan field lain jika perlu
+
+				const response = await fetch('http://104.43.89.154:8082/upload/reviewicp', {
+					method: 'POST',
+					body: formData
+				});
+				const data = await response.json();
+				if (data.status === 'success') {
+					alert('Review ICP berhasil diunggah!');
+					this.reset();
+				} else {
+					alert('Gagal upload: ' + data.message);
+				}
+			});
+
 			// Pastikan event listener untuk tombol logout terpasang dengan benar
 			document.addEventListener('DOMContentLoaded', function() {
 				const logoutButton = document.querySelector('a[onclick="logout()"]');
@@ -962,6 +983,7 @@
 				}
 			});
 
+			// Fungsi untuk menampilkan alert
 			function showAlert(message, type) {
 				const alertContainer = document.getElementById('alertContainer');
 				const alertMessage = document.getElementById('alertMessage');
