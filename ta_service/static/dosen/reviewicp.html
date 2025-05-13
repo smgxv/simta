@@ -832,6 +832,7 @@
 								console.log('dosenID aktif:', dosen.id);
 								// Panggil loadICPData di sini setelah dosenID sudah pasti ada
 								loadICPData();
+								loadTarunaDropdown();
 							} else {
 								console.warn('Dosen dengan user_id', userId, 'tidak ditemukan.');
 							}
@@ -859,8 +860,7 @@
 				});
 			});
 
-			// Menampilkan nama taruna
-			document.addEventListener('DOMContentLoaded', function() {
+			function loadTarunaDropdown() {
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 				const dosenID = localStorage.getItem('dosenID');
 				const tarunaSelect = document.getElementById('tarunaSelect');
@@ -874,7 +874,6 @@
 				.then(response => response.json())
 				.then(data => {
 					if (data.status === 'success' && Array.isArray(data.data)) {
-						// Buat set untuk menghindari duplikasi taruna
 						const tarunaSet = new Set();
 						data.data.forEach(icp => {
 							if (!tarunaSet.has(icp.taruna_id)) {
@@ -890,7 +889,7 @@
 				.catch(error => {
 					console.error('Error:', error);
 				});
-			});
+			}
 
 			// Panggil loadICPData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', loadICPData);
