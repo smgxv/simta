@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"document_service/config"
-	"document_service/entities"
 	"document_service/models"
 	"encoding/json"
 	"fmt"
@@ -199,20 +198,23 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Insert review ICP dalam transaksi
+	// Insert review ICP dalam transaksi dengan status "on review"
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
-	reviewICP := &entities.ReviewICP{
-		DosenID:         dosenIDInt,
-		TarunaID:        tarunaIDInt,
-		TopikPenelitian: topikPenelitian,
-		Keterangan:      keterangan,
-		FilePath:        filePath,
-	}
+	now := time.Now().Format("2006-01-02 15:04:05")
+	_, err = tx.Exec(`
+		INSERT INTO review_icp (
+			dosen_id, taruna_id, topik_penelitian, 
+			keterangan, file_path, status, 
+			created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		dosenIDInt, tarunaIDInt, topikPenelitian,
+		keterangan, filePath, "on review",
+		now, now,
+	)
 
-	reviewICPModel := models.NewReviewICPModel(db)
-	if err := reviewICPModel.Create(reviewICP); err != nil {
+	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
