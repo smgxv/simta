@@ -55,7 +55,7 @@ func UpdateICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validasi status hanya boleh "approved" atau "rejected"
-	if status != "approved" && status != "rejected" {
+	if status != "approved" && status != "rejected" && status != "on review" {
 		http.Error(w, "Status tidak valid", http.StatusBadRequest)
 		return
 	}
@@ -78,6 +78,8 @@ func UpdateICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 		msg = "ICP berhasil di-approve"
 	} else if status == "rejected" {
 		msg = "ICP berhasil di-reject"
+	} else if status == "on review" {
+		msg = "ICP berhasil diubah ke status review"
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -164,10 +166,17 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Update status ICP menjadi "on review"
+	_, err = db.Exec("UPDATE icp SET status = 'on review' WHERE user_id = ? AND topik_penelitian = ?", tarunaID, topikPenelitian)
+	if err != nil {
+		http.Error(w, "Error updating ICP status: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Review ICP berhasil diunggah",
+		"message": "Review ICP berhasil diunggah dan status diperbarui",
 		"data": map[string]interface{}{
 			"file_path": filePath,
 		},
