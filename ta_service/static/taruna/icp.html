@@ -636,6 +636,29 @@
 					</div>
 					<!-- Simple Datatable End -->
 
+					<!-- Simple Datatable start -->
+					<div class="card-box mb-30">
+						<div class="pd-20">
+							<h4 class="text-blue h4">List ICP On Review</h4>
+						</div>
+						<div class="pb-20">
+							<table class="data-table table stripe hover nowrap">
+								<thead>
+									<tr>
+										<th class="table-plus datatable-nosort">Topik</th>
+										<th class="table-plus datatable-nosort">Dosen Pembimbing</th>
+										<th class="table-plus datatable-nosort">Status</th>
+										<th class="datatable-nosort">Action</th>
+									</tr>
+								</thead>
+								<tbody>
+									
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<!-- Simple Datatable End -->
+
 				</div>
 
 			</div>
@@ -698,6 +721,50 @@
 												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
 												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
+												</a>
+											</div>
+										</div>
+									</td>
+								</tr>
+							`;
+						});
+					}
+				} catch (error) {
+					console.error('Error:', error);
+				}
+			}
+
+			// Fungsi untuk memuat data ICP yang sedang di-review
+			async function loadICPReviewData() {
+				const userId = localStorage.getItem('userId');
+				if (!userId) return;
+				
+				try {
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp/list?taruna_id=${userId}`);
+					const data = await response.json();
+					
+					if (data.status === 'success') {
+						const tbody = document.querySelector('.card-box:last-child .data-table tbody');
+						tbody.innerHTML = '';
+						
+						data.data.forEach(review => {
+							tbody.innerHTML += `
+								<tr>
+									<td>${review.topik_penelitian}</td>
+									<td>${review.dosen_nama || '-'}</td>
+									<td><span class="badge badge-secondary">on review</span></td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+											   href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item" href="${review.file_path}" target="_blank">
+													<i class="dw dw-eye"></i> View Review
+												</a>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
+													<i class="dw dw-download"></i> Download Review
 												</a>
 											</div>
 										</div>
@@ -888,8 +955,11 @@
 				}
 			});
 
-			// Panggil loadICPData saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', loadICPData);
+			// Panggil loadICPData dan loadICPReviewData saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', () => {
+				loadICPData();
+				loadICPReviewData();
+			});
 
 			// Handle form submission
 			document.getElementById('icpForm').addEventListener('submit', async function(e) {

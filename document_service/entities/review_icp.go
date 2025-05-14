@@ -11,4 +11,5 @@ type ReviewICP struct {
 	CreatedAt       string `json:"created_at"`
 	UpdatedAt       string `json:"updated_at"`
 	NamaTaruna      string `json:"nama_taruna"`
+	DosenNama       string `json:"dosen_nama"`
 }

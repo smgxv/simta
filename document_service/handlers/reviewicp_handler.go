@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"document_service/config"
+	"document_service/entities"
 	"document_service/models"
 	"encoding/json"
 	"fmt"
@@ -250,8 +251,10 @@ func GetReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	dosenID := r.URL.Query().Get("dosen_id")
-	if dosenID == "" {
-		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
+	tarunaID := r.URL.Query().Get("taruna_id")
+
+	if dosenID == "" && tarunaID == "" {
+		http.Error(w, "Either dosen_id or taruna_id is required", http.StatusBadRequest)
 		return
 	}
 
@@ -263,7 +266,14 @@ func GetReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	reviewModel := models.NewReviewICPModel(db)
-	reviews, err := reviewModel.GetByDosenID(dosenID)
+
+	var reviews []entities.ReviewICP
+	if dosenID != "" {
+		reviews, err = reviewModel.GetByDosenID(dosenID)
+	} else {
+		reviews, err = reviewModel.GetByTarunaID(tarunaID)
+	}
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
