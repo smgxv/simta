@@ -54,8 +54,8 @@ func UpdateICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validasi status hanya boleh "approved" atau "rejected"
-	if status != "approved" && status != "rejected" && status != "on review" {
+	// Validasi status hanya boleh "approved", "rejected", atau "on_review"
+	if status != "approved" && status != "rejected" && status != "on_review" {
 		http.Error(w, "Status tidak valid", http.StatusBadRequest)
 		return
 	}
@@ -78,7 +78,7 @@ func UpdateICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 		msg = "ICP berhasil di-approve"
 	} else if status == "rejected" {
 		msg = "ICP berhasil di-reject"
-	} else if status == "on review" {
+	} else if status == "on_review" {
 		msg = "ICP berhasil diubah ke status review"
 	}
 
@@ -188,7 +188,7 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update status ICP dalam transaksi
-	_, err = tx.Exec("UPDATE icp SET status = 'on review' WHERE user_id = ? AND topik_penelitian = ?", tarunaID, topikPenelitian)
+	_, err = tx.Exec("UPDATE icp SET status = 'on_review' WHERE user_id = ? AND topik_penelitian = ?", tarunaID, topikPenelitian)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)

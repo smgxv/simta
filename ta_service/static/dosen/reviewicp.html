@@ -677,7 +677,7 @@
 								'pending': 'badge badge-warning',
 								'approved': 'badge badge-success',
 								'rejected': 'badge badge-danger',
-								'on review': 'badge badge-secondary'
+								'on_review': 'badge badge-secondary'
 							}[icp.status] || 'badge badge-secondary';
 
 							tbody.innerHTML += `
@@ -993,7 +993,7 @@
 					const uploadData = await uploadResponse.json();
 					
 					if (uploadData.status === 'success') {
-						// Update status ICP menjadi on review
+						// Update status ICP menjadi on_review
 						const tarunaId = formData.get('taruna_id');
 						const topikPenelitian = formData.get('topik_penelitian');
 						
@@ -1004,9 +1004,12 @@
 						);
 						
 						if (matchingICP) {
-							const updateStatusResponse = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${matchingICP.id}&status=on review`, {
+							const updateStatusResponse = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${matchingICP.id}&status=on_review`, {
 								method: 'POST',
-								headers: { 'Content-Type': 'application/json' }
+								headers: { 
+									'Content-Type': 'application/json',
+									'Authorization': `Bearer ${token}`
+								}
 							});
 							const updateStatusData = await updateStatusResponse.json();
 							
