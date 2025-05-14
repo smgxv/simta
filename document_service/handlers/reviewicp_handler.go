@@ -196,13 +196,10 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update status ICP dalam transaksi
-	status := "on review"
-	if !isDosenReview {
-		status = "pending" // Reset status to pending when taruna submits revision
-	}
-
+	// Status selalu "on review" baik untuk review dosen maupun revisi taruna
+	// Status hanya berubah ketika dosen melakukan approve/reject
 	_, err = tx.Exec("UPDATE icp SET status = ? WHERE user_id = ? AND topik_penelitian = ?",
-		status, tarunaID, topikPenelitian)
+		"on review", tarunaID, topikPenelitian)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
@@ -225,7 +222,7 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 			created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		dosenIDInt, tarunaIDInt, topikPenelitian,
-		keterangan, filePath, status,
+		keterangan, filePath, "on review",
 		now, now,
 	)
 
