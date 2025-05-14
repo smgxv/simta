@@ -27,6 +27,7 @@ func main() {
 
 	// Route untuk review ICP
 	r.HandleFunc("/reviewicp", handlers.GetICPByDosenIDHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewicp/list", handlers.GetReviewICPHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/updateicpstatus", handlers.UpdateICPStatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload/reviewicp", handlers.UploadReviewICPHandler).Methods("POST", "OPTIONS")
 

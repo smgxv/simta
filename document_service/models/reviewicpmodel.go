@@ -35,3 +35,47 @@ func (m *ReviewICPModel) Create(review *entities.ReviewICP) error {
 	)
 	return err
 }
+
+func (m *ReviewICPModel) GetByDosenID(dosenID string) ([]entities.ReviewICP, error) {
+	query := `
+		SELECT 
+			r.id, r.dosen_id, r.taruna_id, r.topik_penelitian,
+			r.keterangan, r.file_path, r.status, r.created_at,
+			r.updated_at, t.nama_lengkap as nama_taruna
+		FROM review_icp r
+		LEFT JOIN taruna t ON r.taruna_id = t.user_id
+		WHERE r.dosen_id = ?
+	`
+
+	rows, err := m.db.Query(query, dosenID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var reviews []entities.ReviewICP
+	for rows.Next() {
+		var review entities.ReviewICP
+		var namaTaruna sql.NullString
+		err := rows.Scan(
+			&review.ID,
+			&review.DosenID,
+			&review.TarunaID,
+			&review.TopikPenelitian,
+			&review.Keterangan,
+			&review.FilePath,
+			&review.Status,
+			&review.CreatedAt,
+			&review.UpdatedAt,
+			&namaTaruna,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if namaTaruna.Valid {
+			review.NamaTaruna = namaTaruna.String
+		}
+		reviews = append(reviews, review)
+	}
+	return reviews, nil
+}

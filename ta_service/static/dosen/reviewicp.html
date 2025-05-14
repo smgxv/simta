@@ -633,6 +633,30 @@
 					</div>
 					<!-- Simple Datatable End -->
 
+					
+					<!-- Simple Datatable start -->
+					<div class="card-box mb-30">
+						<div class="pd-20">
+							<h4 class="text-blue h4">List ICP ON REVIEW</h4>
+						</div>
+						<div class="pb-20">
+							<table class="data-table table stripe hover nowrap">
+								<thead>
+									<tr>
+										<th class="table-plus datatable-nosort">Topik</th>
+										<th class="table-plus datatable-nosort">Nama Taruna</th>
+										<th class="table-plus datatable-nosort">Status</th>
+										<th class="datatable-nosort">Action</th>
+									</tr>
+								</thead>
+								<tbody>
+									
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<!-- Simple Datatable End -->
+
 				</div>
 
 			</div>
@@ -944,6 +968,7 @@
 						if (data.status === 'success') {
 							showAlert('ICP berhasil di-approve', 'success');
 							loadICPData(); // Refresh tabel
+							loadICPReviewData(); // Tambahkan ini
 						} else {
 							showAlert(data.message || 'Gagal meng-approve ICP', 'danger');
 						}
@@ -969,6 +994,7 @@
 						if (data.status === 'success') {
 							showAlert('ICP berhasil di-reject', 'success');
 							loadICPData(); // Refresh tabel
+							loadICPReviewData(); // Tambahkan ini
 						} else {
 							showAlert(data.message || 'Gagal menolak ICP', 'danger');
 						}
@@ -1016,7 +1042,8 @@
 							if (updateStatusData.status === 'success') {
 								showAlert('Review ICP berhasil diunggah dan status diperbarui', 'success');
 								this.reset();
-								loadICPData(); // Refresh tabel
+								loadICPData();
+								loadICPReviewData(); // Tambahkan ini untuk refresh tabel review
 							} else {
 								showAlert('Review berhasil diunggah tetapi gagal memperbarui status', 'warning');
 							}
@@ -1058,6 +1085,59 @@
 					alertContainer.style.display = 'none';
 				}, 5000);
 			}
+
+			// Fungsi untuk memuat data ICP yang sedang di-review
+			async function loadICPReviewData() {
+				const dosenID = localStorage.getItem('dosenID');
+				if (!dosenID) return;
+				
+				try {
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp/list?dosen_id=${dosenID}`);
+					const data = await response.json();
+					
+					if (data.status === 'success') {
+						const tbody = document.querySelector('.card-box:last-child .data-table tbody');
+						tbody.innerHTML = '';
+						
+						data.data.forEach(review => {
+							const statusClass = 'badge badge-secondary';
+							
+							tbody.innerHTML += `
+								<tr>
+									<td>${review.topik_penelitian}</td>
+									<td>${review.nama_taruna}</td>
+									<td><span class="${statusClass}">${review.status}</span></td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+											   href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item" href="${review.file_path}" target="_blank">
+													<i class="dw dw-eye"></i> View
+												</a>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
+													<i class="dw dw-download"></i> Download
+												</a>
+											</div>
+										</div>
+									</td>
+								</tr>
+							`;
+						});
+					}
+				} catch (error) {
+					console.error('Error:', error);
+				}
+			}
+
+			// Panggil loadICPReviewData saat halaman dimuat dan setelah upload review
+			document.addEventListener('DOMContentLoaded', () => {
+				loadICPData();
+				loadICPReviewData();
+				loadTarunaDropdown();
+			});
 
 		</script>
 

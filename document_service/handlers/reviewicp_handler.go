@@ -243,3 +243,34 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
+
+// Handler untuk mengambil daftar review ICP
+func GetReviewICPHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Content-Type", "application/json")
+
+	dosenID := r.URL.Query().Get("dosen_id")
+	if dosenID == "" {
+		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	reviewModel := models.NewReviewICPModel(db)
+	reviews, err := reviewModel.GetByDosenID(dosenID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   reviews,
+	})
+}
