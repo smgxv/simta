@@ -683,6 +683,39 @@
 		></noscript>
 		<!-- End Google Tag Manager (noscript) -->
 
+		<!-- Add this modal before the closing body tag -->
+		<div class="modal fade" id="uploadRevisionModal" tabindex="-1" role="dialog" aria-labelledby="uploadRevisionModalLabel" aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="uploadRevisionModalLabel">Upload Revisi ICP</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<form id="revisionForm" enctype="multipart/form-data">
+							<input type="hidden" id="revisionDosenId" name="dosen_id">
+							<input type="hidden" id="revisionTopikPenelitian" name="topik_penelitian">
+							
+							<div class="form-group">
+								<label>Keterangan Revisi</label>
+								<textarea class="form-control" name="keterangan" required></textarea>
+							</div>
+							<div class="form-group">
+								<label>File Revisi ICP (PDF)</label>
+								<input type="file" class="form-control" name="file" accept=".pdf" required>
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+						<button type="button" class="btn btn-primary" onclick="submitRevision()">Upload Revisi</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<script>
 			// Fungsi untuk memuat data ICP
 			async function loadICPData() {
@@ -765,6 +798,9 @@
 												</a>
 												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
 													<i class="dw dw-download"></i> Download Review
+												</a>
+												<a class="dropdown-item" href="#" onclick="openUploadRevisionModal(${review.dosen_id}, '${review.topik_penelitian}')">
+													<i class="dw dw-upload"></i> Upload Revisi
 												</a>
 											</div>
 										</div>
@@ -1016,6 +1052,42 @@
 					submitButton.innerHTML = 'Tambah ICP';
 				}
 			});
+
+			// Add function to open upload modal
+			function openUploadRevisionModal(dosenId, topikPenelitian) {
+				document.getElementById('revisionDosenId').value = dosenId;
+				document.getElementById('revisionTopikPenelitian').value = topikPenelitian;
+				$('#uploadRevisionModal').modal('show');
+			}
+
+			// Add function to submit revision
+			async function submitRevision() {
+				const form = document.getElementById('revisionForm');
+				const formData = new FormData(form);
+				formData.append('taruna_id', localStorage.getItem('userId'));
+				
+				try {
+					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp', {
+						method: 'POST',
+						body: formData
+					});
+					
+					const data = await response.json();
+					
+					if (data.status === 'success') {
+						showAlert('Revisi berhasil diunggah', 'success');
+						$('#uploadRevisionModal').modal('hide');
+						form.reset();
+						loadICPData();
+						loadICPReviewData();
+					} else {
+						showAlert(data.message || 'Gagal mengunggah revisi', 'danger');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Terjadi kesalahan pada server', 'danger');
+				}
+			}
 
 			function showAlert(message, type) {
 				const alertContainer = document.getElementById('alertContainer');

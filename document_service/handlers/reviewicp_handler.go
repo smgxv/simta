@@ -141,7 +141,15 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filename := fmt.Sprintf("REVIEW_ICP_%s_%s_%s",
+	// Determine if this is a dosen review or taruna revision based on the request origin
+	isDosenReview := r.Header.Get("X-User-Role") == "dosen"
+	filePrefix := "REVIEW_ICP"
+	if !isDosenReview {
+		filePrefix = "REVISI_ICP"
+	}
+
+	filename := fmt.Sprintf("%s_%s_%s_%s",
+		filePrefix,
 		dosenID,
 		time.Now().Format("20060102150405"),
 		handler.Filename)
@@ -188,7 +196,13 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update status ICP dalam transaksi
-	_, err = tx.Exec("UPDATE icp SET status = ? WHERE user_id = ? AND topik_penelitian = ?", "on review", tarunaID, topikPenelitian)
+	status := "on review"
+	if !isDosenReview {
+		status = "pending" // Reset status to pending when taruna submits revision
+	}
+
+	_, err = tx.Exec("UPDATE icp SET status = ? WHERE user_id = ? AND topik_penelitian = ?",
+		status, tarunaID, topikPenelitian)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
@@ -199,7 +213,7 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Insert review ICP dalam transaksi dengan status "on review"
+	// Insert review ICP dalam transaksi
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
@@ -211,7 +225,7 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 			created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		dosenIDInt, tarunaIDInt, topikPenelitian,
-		keterangan, filePath, "on review",
+		keterangan, filePath, status,
 		now, now,
 	)
 
