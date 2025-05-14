@@ -92,7 +92,8 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
@@ -101,7 +102,10 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseMultipartForm(10 << 20) // 10 MB
 	if err != nil {
-		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error parsing form: " + err.Error(),
+		})
 		return
 	}
 
@@ -110,16 +114,30 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
+	if dosenID == "" || tarunaID == "" || topikPenelitian == "" {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Missing required fields",
+		})
+		return
+	}
+
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, "Error retrieving file: "+err.Error(), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error retrieving file: " + err.Error(),
+		})
 		return
 	}
 	defer file.Close()
 
 	uploadDir := "uploads/reviewicp"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
-		http.Error(w, "Error creating upload directory: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error creating upload directory: " + err.Error(),
+		})
 		return
 	}
 
@@ -131,23 +149,57 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	dst, err := os.Create(filePath)
 	if err != nil {
-		http.Error(w, "Error creating file: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error creating file: " + err.Error(),
+		})
 		return
 	}
 	defer dst.Close()
 
 	if _, err := io.Copy(dst, file); err != nil {
-		http.Error(w, "Error saving file: "+err.Error(), http.StatusInternalServerError)
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error saving file: " + err.Error(),
+		})
 		return
 	}
 
 	db, err := config.GetDB()
 	if err != nil {
-		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Database error: " + err.Error(),
+		})
 		return
 	}
 	defer db.Close()
 
+	tx, err := db.Begin()
+	if err != nil {
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to start transaction: " + err.Error(),
+		})
+		return
+	}
+
+	// Update status ICP dalam transaksi
+	_, err = tx.Exec("UPDATE icp SET status = 'on review' WHERE user_id = ? AND topik_penelitian = ?", tarunaID, topikPenelitian)
+	if err != nil {
+		tx.Rollback()
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to update ICP status: " + err.Error(),
+		})
+		return
+	}
+
+	// Insert review ICP dalam transaksi
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
@@ -161,19 +213,26 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	reviewICPModel := models.NewReviewICPModel(db)
 	if err := reviewICPModel.Create(reviewICP); err != nil {
+		tx.Rollback()
 		os.Remove(filePath)
-		http.Error(w, "Error saving to database: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error saving to database: " + err.Error(),
+		})
 		return
 	}
 
-	// Update status ICP menjadi "on review"
-	_, err = db.Exec("UPDATE icp SET status = 'on review' WHERE user_id = ? AND topik_penelitian = ?", tarunaID, topikPenelitian)
-	if err != nil {
-		http.Error(w, "Error updating ICP status: "+err.Error(), http.StatusInternalServerError)
+	// Commit transaksi
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to commit transaction: " + err.Error(),
+		})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": "Review ICP berhasil diunggah dan status diperbarui",
