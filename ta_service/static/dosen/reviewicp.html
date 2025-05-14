@@ -676,7 +676,8 @@
 							const statusClass = {
 								'pending': 'badge badge-warning',
 								'approved': 'badge badge-success',
-								'rejected': 'badge badge-danger'
+								'rejected': 'badge badge-danger',
+								'on review': 'badge badge-secondary'
 							}[icp.status] || 'badge badge-secondary';
 
 							tbody.innerHTML += `
@@ -982,18 +983,50 @@
 				e.preventDefault();
 				const formData = new FormData(this);
 				formData.append('dosen_id', localStorage.getItem('dosenID'));
-				// ...tambahkan field lain jika perlu
-
-				const response = await fetch('http://104.43.89.154:8082/upload/reviewicp', {
-					method: 'POST',
-					body: formData
-				});
-				const data = await response.json();
-				if (data.status === 'success') {
-					alert('Review ICP berhasil diunggah!');
-					this.reset();
-				} else {
-					alert('Gagal upload: ' + data.message);
+				
+				try {
+					// Upload file revisi
+					const uploadResponse = await fetch('http://104.43.89.154:8082/upload/reviewicp', {
+						method: 'POST',
+						body: formData
+					});
+					const uploadData = await uploadResponse.json();
+					
+					if (uploadData.status === 'success') {
+						// Update status ICP menjadi on review
+						const tarunaId = formData.get('taruna_id');
+						const topikPenelitian = formData.get('topik_penelitian');
+						
+						// Cari ICP yang sesuai
+						const matchingICP = icpDataGlobal.find(icp => 
+							String(icp.taruna_id) === String(tarunaId) && 
+							icp.topik_penelitian === topikPenelitian
+						);
+						
+						if (matchingICP) {
+							const updateStatusResponse = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${matchingICP.id}&status=on review`, {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' }
+							});
+							const updateStatusData = await updateStatusResponse.json();
+							
+							if (updateStatusData.status === 'success') {
+								showAlert('Review ICP berhasil diunggah dan status diperbarui', 'success');
+								this.reset();
+								loadICPData(); // Refresh tabel
+							} else {
+								showAlert('Review berhasil diunggah tetapi gagal memperbarui status', 'warning');
+							}
+						} else {
+							showAlert('Review berhasil diunggah', 'success');
+							this.reset();
+						}
+					} else {
+						showAlert('Gagal upload: ' + uploadData.message, 'danger');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Terjadi kesalahan pada server', 'danger');
 				}
 			});
 
@@ -1041,6 +1074,10 @@
 		}
 		.badge-danger {
 			background-color: #dc3545;
+			color: #fff;
+		}
+		.badge-secondary {
+			background-color: #bdbdbd;
 			color: #fff;
 		}
 		</style>
