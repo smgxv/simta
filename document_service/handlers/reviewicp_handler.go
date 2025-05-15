@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -531,7 +532,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == "OPTIONS" {
@@ -542,6 +543,18 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Log request details for debugging
 	log.Printf("Received request to upload taruna revision")
 	log.Printf("Content-Type: %s", r.Header.Get("Content-Type"))
+	log.Printf("Request Method: %s", r.Method)
+
+	// Create uploads directory if it doesn't exist
+	uploadDir := "uploads/reviewicp/taruna"
+	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+		log.Printf("Error creating directory: %v", err)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error creating upload directory: " + err.Error(),
+		})
+		return
+	}
 
 	err := r.ParseMultipartForm(10 << 20) // 10 MB
 	if err != nil {
@@ -555,8 +568,8 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Log form values for debugging
 	log.Printf("Form values:")
-	for key, value := range r.Form {
-		log.Printf("%s: %v", key, value)
+	for key, values := range r.Form {
+		log.Printf("%s: %v", key, values)
 	}
 
 	dosenID := r.FormValue("dosen_id")
@@ -565,20 +578,22 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	if dosenID == "" || tarunaID == "" || icpID == "" || topikPenelitian == "" {
-		missingFields := []string{}
-		if dosenID == "" {
-			missingFields = append(missingFields, "dosen_id")
-		}
-		if tarunaID == "" {
-			missingFields = append(missingFields, "taruna_id")
-		}
-		if icpID == "" {
-			missingFields = append(missingFields, "icp_id")
-		}
-		if topikPenelitian == "" {
-			missingFields = append(missingFields, "topik_penelitian")
-		}
+	// Validate required fields
+	missingFields := []string{}
+	if dosenID == "" {
+		missingFields = append(missingFields, "dosen_id")
+	}
+	if tarunaID == "" {
+		missingFields = append(missingFields, "taruna_id")
+	}
+	if icpID == "" {
+		missingFields = append(missingFields, "icp_id")
+	}
+	if topikPenelitian == "" {
+		missingFields = append(missingFields, "topik_penelitian")
+	}
+
+	if len(missingFields) > 0 {
 		log.Printf("Missing required fields: %v", missingFields)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -587,8 +602,10 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get the file
 	file, handler, err := r.FormFile("file")
 	if err != nil {
+		log.Printf("Error getting file: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Error retrieving file: " + err.Error(),
@@ -597,15 +614,16 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	uploadDir := "uploads/reviewicp/taruna"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+	// Validate file type
+	if !strings.HasSuffix(strings.ToLower(handler.Filename), ".pdf") {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": "Only PDF files are allowed",
 		})
 		return
 	}
 
+	// Create unique filename
 	filename := fmt.Sprintf("REVISI_ICP_TARUNA_%s_%s_%s_%s",
 		tarunaID,
 		dosenID,
@@ -613,8 +631,10 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		handler.Filename)
 	filePath := filepath.Join(uploadDir, filename)
 
+	// Create the file
 	dst, err := os.Create(filePath)
 	if err != nil {
+		log.Printf("Error creating file: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Error creating file: " + err.Error(),
@@ -623,8 +643,10 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer dst.Close()
 
+	// Copy the file
 	if _, err := io.Copy(dst, file); err != nil {
 		os.Remove(filePath)
+		log.Printf("Error copying file: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Error saving file: " + err.Error(),
@@ -632,9 +654,11 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Start database transaction
 	db, err := config.GetDB()
 	if err != nil {
 		os.Remove(filePath)
+		log.Printf("Database error: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Database error: " + err.Error(),
@@ -646,6 +670,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	tx, err := db.Begin()
 	if err != nil {
 		os.Remove(filePath)
+		log.Printf("Transaction error: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Failed to start transaction: " + err.Error(),
@@ -664,7 +689,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		cycleNumber = 1
 	}
 
-	// Insert review ICP taruna dalam transaksi
+	// Insert review ICP taruna
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 	icpIDInt, _ := strconv.Atoi(icpID)
@@ -682,6 +707,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
+		log.Printf("Insert error: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Error saving to database: " + err.Error(),
@@ -689,12 +715,13 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update status ICP dalam transaksi
+	// Update ICP status
 	_, err = tx.Exec("UPDATE icp SET status = ? WHERE id = ?",
 		"on review", icpID)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
+		log.Printf("Update error: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Failed to update ICP status: " + err.Error(),
@@ -702,10 +729,11 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Commit transaksi
+	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
+		log.Printf("Commit error: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Failed to commit transaction: " + err.Error(),
@@ -713,6 +741,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Success response
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": "Revisi ICP berhasil diunggah",

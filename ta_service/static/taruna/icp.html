@@ -1104,55 +1104,76 @@
 					
 					// Get taruna data
 					const tarunaResponse = await fetch(`http://104.43.89.154:8081/users/taruna?user_id=${userId}`);
+					if (!tarunaResponse.ok) {
+						throw new Error('Gagal mengambil data taruna');
+					}
 					const tarunaData = await tarunaResponse.json();
 					
-					console.log('Taruna Data:', tarunaData); // Debug log
+					console.log('Taruna Data:', tarunaData);
 					
-					if (!tarunaData.status === 'success' || !tarunaData.data) {
-						showAlert('Tidak dapat menemukan data taruna', 'danger');
+					if (!tarunaData.data || !tarunaData.data.id) {
+						showAlert('Data taruna tidak valid', 'danger');
 						return;
 					}
 					
 					formData.append('taruna_id', tarunaData.data.id);
 					
-					// Get ICP ID based on topik_penelitian
+					// Get ICP data
 					const icpResponse = await fetch(`http://104.43.89.154:8082/icp?user_id=${userId}`);
+					if (!icpResponse.ok) {
+						throw new Error('Gagal mengambil data ICP');
+					}
 					const icpData = await icpResponse.json();
 					
-					console.log('ICP Data:', icpData); // Debug log
+					console.log('ICP Data:', icpData);
 					
-					if (!icpData.status === 'success' || !icpData.data) {
-						showAlert('Tidak dapat menemukan data ICP', 'danger');
+					if (!icpData.data || !Array.isArray(icpData.data)) {
+						showAlert('Data ICP tidak valid', 'danger');
 						return;
 					}
 					
-					const icp = icpData.data.find(i => i.topik_penelitian === formData.get('topik_penelitian'));
+					const topikPenelitian = document.getElementById('revisionTopikPenelitian').value;
+					const icp = icpData.data.find(i => i.topik_penelitian === topikPenelitian);
 					if (!icp) {
-						showAlert('ICP tidak ditemukan', 'danger');
+						showAlert('ICP dengan topik tersebut tidak ditemukan', 'danger');
 						return;
 					}
 					
 					// Log form data before sending
-					console.log('Form Data:');
+					console.log('Form Data before:');
 					for (let pair of formData.entries()) {
 						console.log(pair[0] + ': ' + pair[1]);
 					}
 					
 					formData.append('icp_id', icp.id);
 					
-					const response = await fetch('http://104.43.89.154:8082/upload/revisiicp/taruna', {
+					// Log form data after adding icp_id
+					console.log('Form Data after:');
+					for (let pair of formData.entries()) {
+						console.log(pair[0] + ': ' + pair[1]);
+					}
+					
+					// Make sure we're using the correct URL
+					const uploadUrl = 'http://104.43.89.154:8082/upload/revisiicp/taruna';
+					console.log('Uploading to:', uploadUrl);
+					
+					const response = await fetch(uploadUrl, {
 						method: 'POST',
-						body: formData
+						body: formData,
+						headers: {
+							// Don't set Content-Type header when sending FormData
+							'Accept': 'application/json'
+						}
 					});
 					
 					if (!response.ok) {
 						const errorText = await response.text();
 						console.error('Server response:', errorText);
-						throw new Error(`HTTP error! status: ${response.status}`);
+						throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
 					}
 					
 					const data = await response.json();
-					console.log('Response Data:', data); // Debug log
+					console.log('Response Data:', data);
 					
 					if (data.status === 'success') {
 						showAlert('Revisi berhasil diunggah', 'success');
@@ -1164,8 +1185,8 @@
 						showAlert(data.message || 'Gagal mengunggah revisi', 'danger');
 					}
 				} catch (error) {
-					console.error('Error detail:', error); // Detailed error log
-					showAlert('Terjadi kesalahan pada server: ' + error.message, 'danger');
+					console.error('Error detail:', error);
+					showAlert('Terjadi kesalahan: ' + error.message, 'danger');
 				}
 			}
 
