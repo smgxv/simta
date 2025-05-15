@@ -331,6 +331,27 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get ICP ID based on taruna_id and topik_penelitian
+	db, err := config.GetDB()
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Database error: " + err.Error(),
+		})
+		return
+	}
+	defer db.Close()
+
+	var icpID int
+	err = db.QueryRow("SELECT id FROM icp WHERE user_id = ? AND topik_penelitian = ?", tarunaID, topikPenelitian).Scan(&icpID)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "ICP not found for the given taruna and topic",
+		})
+		return
+	}
+
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -375,17 +396,6 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := config.GetDB()
-	if err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Database error: " + err.Error(),
-		})
-		return
-	}
-	defer db.Close()
-
 	tx, err := db.Begin()
 	if err != nil {
 		os.Remove(filePath)
@@ -397,8 +407,8 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update status ICP dalam transaksi
-	_, err = tx.Exec("UPDATE icp SET status = ? WHERE user_id = ? AND topik_penelitian = ?",
-		"on review", tarunaID, topikPenelitian)
+	_, err = tx.Exec("UPDATE icp SET status = ? WHERE id = ?",
+		"on review", icpID)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
@@ -409,20 +419,29 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get current cycle number
+	var cycleNumber int = 1
+	err = tx.QueryRow(`
+		SELECT COALESCE(MAX(cycle_number), 0) + 1 
+		FROM review_icp_dosen 
+		WHERE icp_id = ?`, icpID).Scan(&cycleNumber)
+	if err != nil {
+		// If error, default to 1
+		cycleNumber = 1
+	}
+
 	// Insert review ICP dosen dalam transaksi
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
-	now := time.Now().Format("2006-01-02 15:04:05")
 	_, err = tx.Exec(`
 		INSERT INTO review_icp_dosen (
-			icp_id, dosen_id, taruna_id, topik_penelitian, 
-			keterangan, file_path, cycle_number,
+			icp_id, taruna_id, dosen_id, cycle_number,
+			topik_penelitian, file_path, komentar,
 			created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		0, dosenIDInt, tarunaIDInt, topikPenelitian,
-		keterangan, filePath, 1,
-		now, now,
+		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+		icpID, tarunaIDInt, dosenIDInt, cycleNumber,
+		topikPenelitian, filePath, keterangan,
 	)
 
 	if err != nil {

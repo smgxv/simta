@@ -41,8 +41,8 @@ func (m *ReviewICPDosenModel) Create(review *entities.ReviewICP) error {
 func (m *ReviewICPDosenModel) GetByDosenID(dosenID string) ([]entities.ReviewICP, error) {
 	query := `
 		SELECT 
-			r.id, r.icp_id, r.dosen_id, r.taruna_id, r.topik_penelitian,
-			r.keterangan, r.file_path, r.cycle_number, r.created_at,
+			r.id, r.icp_id, r.taruna_id, r.dosen_id, r.cycle_number,
+			r.topik_penelitian, r.file_path, r.komentar, r.created_at,
 			r.updated_at, t.nama_lengkap as nama_taruna
 		FROM review_icp_dosen r
 		LEFT JOIN taruna t ON r.taruna_id = t.user_id
@@ -63,12 +63,12 @@ func (m *ReviewICPDosenModel) GetByDosenID(dosenID string) ([]entities.ReviewICP
 		err := rows.Scan(
 			&review.ID,
 			&review.ICPID,
-			&review.DosenID,
 			&review.TarunaID,
-			&review.TopikPenelitian,
-			&review.Keterangan,
-			&review.FilePath,
+			&review.DosenID,
 			&review.CycleNumber,
+			&review.TopikPenelitian,
+			&review.FilePath,
+			&review.Keterangan,
 			&review.CreatedAt,
 			&review.UpdatedAt,
 			&namaTaruna,
@@ -87,8 +87,8 @@ func (m *ReviewICPDosenModel) GetByDosenID(dosenID string) ([]entities.ReviewICP
 func (m *ReviewICPDosenModel) GetByTarunaID(tarunaID string) ([]entities.ReviewICP, error) {
 	query := `
 		SELECT 
-			r.id, r.icp_id, r.dosen_id, r.taruna_id, r.topik_penelitian,
-			r.keterangan, r.file_path, r.cycle_number, r.created_at,
+			r.id, r.icp_id, r.taruna_id, r.dosen_id, r.cycle_number,
+			r.topik_penelitian, r.file_path, r.komentar, r.created_at,
 			r.updated_at, d.nama_lengkap as dosen_nama
 		FROM review_icp_dosen r
 		LEFT JOIN dosen d ON r.dosen_id = d.id
@@ -109,12 +109,12 @@ func (m *ReviewICPDosenModel) GetByTarunaID(tarunaID string) ([]entities.ReviewI
 		err := rows.Scan(
 			&review.ID,
 			&review.ICPID,
-			&review.DosenID,
 			&review.TarunaID,
-			&review.TopikPenelitian,
-			&review.Keterangan,
-			&review.FilePath,
+			&review.DosenID,
 			&review.CycleNumber,
+			&review.TopikPenelitian,
+			&review.FilePath,
+			&review.Keterangan,
 			&review.CreatedAt,
 			&review.UpdatedAt,
 			&dosenNama,
