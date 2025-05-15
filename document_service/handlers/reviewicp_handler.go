@@ -319,11 +319,11 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dosenID := r.FormValue("dosen_id")
-	tarunaID := r.FormValue("taruna_id")
+	userID := r.FormValue("taruna_id") // This is actually the user_id from the frontend
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	if dosenID == "" || tarunaID == "" || topikPenelitian == "" {
+	if dosenID == "" || userID == "" || topikPenelitian == "" {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Missing required fields",
@@ -331,7 +331,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get ICP ID based on taruna_id and topik_penelitian
+	// Get ICP ID based on user_id and topik_penelitian
 	db, err := config.GetDB()
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -342,9 +342,9 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// First get the user_id from taruna table
-	var userID int
-	err = db.QueryRow("SELECT user_id FROM taruna WHERE id = ?", tarunaID).Scan(&userID)
+	// First get the taruna_id from taruna table
+	var tarunaID int
+	err = db.QueryRow("SELECT id FROM taruna WHERE user_id = ?", userID).Scan(&tarunaID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -444,7 +444,6 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Insert review ICP dosen dalam transaksi
 	dosenIDInt, _ := strconv.Atoi(dosenID)
-	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
 	_, err = tx.Exec(`
 		INSERT INTO review_icp_dosen (
@@ -452,7 +451,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 			topik_penelitian, file_path, komentar,
 			created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-		icpID, tarunaIDInt, dosenIDInt, cycleNumber,
+		icpID, tarunaID, dosenIDInt, cycleNumber,
 		topikPenelitian, filePath, keterangan,
 	)
 

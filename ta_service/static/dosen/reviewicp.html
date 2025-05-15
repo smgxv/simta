@@ -910,14 +910,13 @@
 						icpDataGlobal = data.data; // Simpan data ICP ke variabel global
 						const uniqueTaruna = new Map();
 						data.data.forEach(icp => {
-							const idTaruna = icp.taruna_id || icp.user_id;
-							if (idTaruna && !uniqueTaruna.has(idTaruna)) {
-								uniqueTaruna.set(idTaruna, icp.nama_taruna);
+							if (icp.user_id && !uniqueTaruna.has(icp.user_id)) {
+								uniqueTaruna.set(icp.user_id, icp.nama_taruna);
 							}
 						});
-						uniqueTaruna.forEach((nama_taruna, idTaruna) => {
+						uniqueTaruna.forEach((nama_taruna, userId) => {
 							const option = document.createElement('option');
-							option.value = idTaruna;
+							option.value = userId;
 							option.textContent = nama_taruna;
 							tarunaSelect.appendChild(option);
 						});
@@ -930,14 +929,13 @@
 
 			// Event listener untuk update topik penelitian saat taruna dipilih
 			document.getElementById('tarunaSelect').addEventListener('change', function() {
-				const tarunaId = this.value;
+				const userId = this.value;
 				const topikSelect = document.getElementById('topikPenelitianSelect');
 				topikSelect.innerHTML = '<option value="" disabled selected>Pilih Topik Penelitian</option>';
 
 				const topikSet = new Set();
 				icpDataGlobal.forEach(icp => {
-					const idTaruna = icp.taruna_id || icp.user_id;
-					if (String(idTaruna) === String(tarunaId) && !topikSet.has(icp.topik_penelitian)) {
+					if (String(icp.user_id) === String(userId) && !topikSet.has(icp.topik_penelitian)) {
 						topikSet.add(icp.topik_penelitian);
 						const option = document.createElement('option');
 						option.value = icp.topik_penelitian;
