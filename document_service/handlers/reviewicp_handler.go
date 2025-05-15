@@ -295,3 +295,193 @@ func GetReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		"data":   reviews,
 	})
 }
+
+// Handler untuk upload review ICP oleh dosen
+func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error parsing form: " + err.Error(),
+		})
+		return
+	}
+
+	dosenID := r.FormValue("dosen_id")
+	tarunaID := r.FormValue("taruna_id")
+	topikPenelitian := r.FormValue("topik_penelitian")
+	keterangan := r.FormValue("keterangan")
+
+	if dosenID == "" || tarunaID == "" || topikPenelitian == "" {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Missing required fields",
+		})
+		return
+	}
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error retrieving file: " + err.Error(),
+		})
+		return
+	}
+	defer file.Close()
+
+	uploadDir := "uploads/reviewicp/dosen"
+	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error creating upload directory: " + err.Error(),
+		})
+		return
+	}
+
+	filename := fmt.Sprintf("REVIEW_ICP_DOSEN_%s_%s_%s",
+		dosenID,
+		time.Now().Format("20060102150405"),
+		handler.Filename)
+	filePath := filepath.Join(uploadDir, filename)
+
+	dst, err := os.Create(filePath)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error creating file: " + err.Error(),
+		})
+		return
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error saving file: " + err.Error(),
+		})
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Database error: " + err.Error(),
+		})
+		return
+	}
+	defer db.Close()
+
+	tx, err := db.Begin()
+	if err != nil {
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to start transaction: " + err.Error(),
+		})
+		return
+	}
+
+	// Update status ICP dalam transaksi
+	_, err = tx.Exec("UPDATE icp SET status = ? WHERE user_id = ? AND topik_penelitian = ?",
+		"on review", tarunaID, topikPenelitian)
+	if err != nil {
+		tx.Rollback()
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to update ICP status: " + err.Error(),
+		})
+		return
+	}
+
+	// Insert review ICP dosen dalam transaksi
+	dosenIDInt, _ := strconv.Atoi(dosenID)
+	tarunaIDInt, _ := strconv.Atoi(tarunaID)
+
+	now := time.Now().Format("2006-01-02 15:04:05")
+	_, err = tx.Exec(`
+		INSERT INTO review_icp_dosen (
+			icp_id, dosen_id, taruna_id, topik_penelitian, 
+			keterangan, file_path, cycle_number,
+			created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		0, dosenIDInt, tarunaIDInt, topikPenelitian,
+		keterangan, filePath, 1,
+		now, now,
+	)
+
+	if err != nil {
+		tx.Rollback()
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error saving to database: " + err.Error(),
+		})
+		return
+	}
+
+	// Commit transaksi
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to commit transaction: " + err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "success",
+		"message": "Review ICP dosen berhasil diunggah dan status diperbarui",
+		"data": map[string]interface{}{
+			"file_path": filePath,
+		},
+	})
+}
+
+// Handler untuk mengambil daftar review ICP dosen
+func GetReviewICPDosenHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Content-Type", "application/json")
+
+	dosenID := r.URL.Query().Get("dosen_id")
+	if dosenID == "" {
+		http.Error(w, "dosen_id is required", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	reviewModel := models.NewReviewICPDosenModel(db)
+	reviews, err := reviewModel.GetByDosenID(dosenID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   reviews,
+	})
+}

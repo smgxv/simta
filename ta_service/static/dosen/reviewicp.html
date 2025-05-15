@@ -645,7 +645,8 @@
 									<tr>
 										<th class="table-plus datatable-nosort">Topik</th>
 										<th class="table-plus datatable-nosort">Nama Taruna</th>
-										<th class="table-plus datatable-nosort">Status</th>
+										<th class="table-plus datatable-nosort">Perbeikan ke-</th>
+										<th class="table-plus datatable-nosort">Keterangan</th>
 										<th class="datatable-nosort">Action</th>
 									</tr>
 								</thead>
@@ -1011,46 +1012,18 @@
 				formData.append('dosen_id', localStorage.getItem('dosenID'));
 				
 				try {
-					// Upload file revisi
-					const uploadResponse = await fetch('http://104.43.89.154:8082/upload/reviewicp', {
+					// Upload file revisi ke endpoint dosen
+					const uploadResponse = await fetch('http://104.43.89.154:8082/upload/reviewicp/dosen', {
 						method: 'POST',
 						body: formData
 					});
 					const uploadData = await uploadResponse.json();
 					
 					if (uploadData.status === 'success') {
-						// Update status ICP menjadi on_review
-						const tarunaId = formData.get('taruna_id');
-						const topikPenelitian = formData.get('topik_penelitian');
-						
-						// Cari ICP yang sesuai
-						const matchingICP = icpDataGlobal.find(icp => 
-							String(icp.taruna_id) === String(tarunaId) && 
-							icp.topik_penelitian === topikPenelitian
-						);
-						
-						if (matchingICP) {
-							const updateStatusResponse = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${matchingICP.id}&status=on review`, {
-								method: 'POST',
-								headers: { 
-									'Content-Type': 'application/json',
-									'Authorization': `Bearer ${token}`
-								}
-							});
-							const updateStatusData = await updateStatusResponse.json();
-							
-							if (updateStatusData.status === 'success') {
-								showAlert('Review ICP berhasil diunggah dan status diperbarui', 'success');
-								this.reset();
-								loadICPData();
-								loadICPReviewData(); // Tambahkan ini untuk refresh tabel review
-							} else {
-								showAlert('Review berhasil diunggah tetapi gagal memperbarui status', 'warning');
-							}
-						} else {
-							showAlert('Review berhasil diunggah', 'success');
-							this.reset();
-						}
+						showAlert('Review ICP berhasil diunggah dan status diperbarui', 'success');
+						this.reset();
+						loadICPData();
+						loadICPReviewData();
 					} else {
 						showAlert('Gagal upload: ' + uploadData.message, 'danger');
 					}
@@ -1092,7 +1065,8 @@
 				if (!dosenID) return;
 				
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp/list?dosen_id=${dosenID}`);
+					// Menggunakan endpoint untuk mengambil data review ICP dosen
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?dosen_id=${dosenID}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -1100,13 +1074,12 @@
 						tbody.innerHTML = '';
 						
 						data.data.forEach(review => {
-							const statusClass = 'badge badge-secondary';
-							
 							tbody.innerHTML += `
 								<tr>
 									<td>${review.topik_penelitian}</td>
 									<td>${review.nama_taruna}</td>
-									<td><span class="${statusClass}">${review.status}</span></td>
+									<td>${review.cycle_number || 1}</td>
+									<td>${review.keterangan || '-'}</td>
 									<td>
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
