@@ -790,50 +790,64 @@
 				if (!userId) return;
 				
 				try {
-					// Dapatkan taruna_id terlebih dahulu
-					const tarunaId = await getTarunaId(userId);
-					if (!tarunaId) {
-						console.error('Tidak dapat menemukan taruna_id');
+					// Get taruna data from taruna table
+					const tarunaResponse = await fetch(`http://104.43.89.154:8081/users/taruna?user_id=${userId}`);
+					const tarunaData = await tarunaResponse.json();
+					
+					if (!tarunaData.status === 'success' || !tarunaData.data) {
+						console.error('Could not find taruna data');
 						return;
 					}
-
-					// Gunakan taruna_id untuk mengambil data review
+					
+					const tarunaId = tarunaData.data.id;
+					
+					// Get review data using taruna_id
 					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${tarunaId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
-						const tbody = document.querySelector('.card-box:last-child .data-table tbody');
+						const tbody = document.querySelector('.card-box:last-child table tbody');
 						tbody.innerHTML = '';
 						
-						data.data.forEach(review => {
-							tbody.innerHTML += `
-								<tr>
-									<td>${review.topik_penelitian}</td>
-									<td>${review.dosen_nama || '-'}</td>
-									<td>${review.cycle_number || 1}</td>
-									<td>${review.keterangan || '-'}</td>
-									<td>
-										<div class="dropdown">
-											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-											   href="#" role="button" data-toggle="dropdown">
-												<i class="dw dw-more"></i>
-											</a>
-											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="${review.file_path}" target="_blank">
-													<i class="dw dw-eye"></i> View Review
+						if (data.data && data.data.length > 0) {
+							data.data.forEach(review => {
+								tbody.innerHTML += `
+									<tr>
+										<td>${review.topik_penelitian || '-'}</td>
+										<td>${review.dosen_nama || '-'}</td>
+										<td>${review.cycle_number || 1}</td>
+										<td>${review.keterangan || '-'}</td>
+										<td>
+											<div class="dropdown">
+												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												   href="#" role="button" data-toggle="dropdown">
+													<i class="dw dw-more"></i>
 												</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
-													<i class="dw dw-download"></i> Download Review
-												</a>
-												<a class="dropdown-item" href="#" onclick="openUploadRevisionModal(${review.dosen_id}, '${review.topik_penelitian}')">
-													<i class="dw dw-upload"></i> Upload Revisi
-												</a>
+												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+													<a class="dropdown-item" href="${review.file_path}" target="_blank">
+														<i class="dw dw-eye"></i> View Review
+													</a>
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
+														<i class="dw dw-download"></i> Download Review
+													</a>
+													<a class="dropdown-item" href="#" onclick="openUploadRevisionModal(${review.dosen_id}, '${review.topik_penelitian}')">
+														<i class="dw dw-upload"></i> Upload Revisi
+													</a>
+												</div>
 											</div>
-										</div>
-									</td>
+										</td>
+									</tr>
+								`;
+							});
+						} else {
+							tbody.innerHTML = `
+								<tr>
+									<td colspan="5" class="text-center">Tidak ada data review</td>
 								</tr>
 							`;
-						});
+						}
+					} else {
+						showAlert('Gagal memuat data review: ' + (data.message || 'Unknown error'), 'danger');
 					}
 				} catch (error) {
 					console.error('Error:', error);
@@ -1094,13 +1108,17 @@
 				
 				try {
 					const userId = localStorage.getItem('userId');
-					const tarunaId = await getTarunaId(userId);
-					if (!tarunaId) {
+					
+					// Get taruna data
+					const tarunaResponse = await fetch(`http://104.43.89.154:8081/users/taruna?user_id=${userId}`);
+					const tarunaData = await tarunaResponse.json();
+					
+					if (!tarunaData.status === 'success' || !tarunaData.data) {
 						showAlert('Tidak dapat menemukan data taruna', 'danger');
 						return;
 					}
 					
-					formData.append('taruna_id', tarunaId);
+					formData.append('taruna_id', tarunaData.data.id);
 					
 					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp', {
 						method: 'POST',
@@ -1113,8 +1131,8 @@
 						showAlert('Revisi berhasil diunggah', 'success');
 						$('#uploadRevisionModal').modal('hide');
 						form.reset();
-						loadICPData();
-						loadICPReviewData();
+						await loadICPData();
+						await loadICPReviewData();
 					} else {
 						showAlert(data.message || 'Gagal mengunggah revisi', 'danger');
 					}
