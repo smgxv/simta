@@ -790,19 +790,8 @@
 				if (!userId) return;
 				
 				try {
-					// Get taruna data from taruna table
-					const tarunaResponse = await fetch(`http://104.43.89.154:8081/users/taruna?user_id=${userId}`);
-					const tarunaData = await tarunaResponse.json();
-					
-					if (!tarunaData.status === 'success' || !tarunaData.data) {
-						console.error('Could not find taruna data');
-						return;
-					}
-					
-					const tarunaId = tarunaData.data.id;
-					
-					// Get review data using taruna_id
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${tarunaId}`);
+					// Get review data using user_id directly
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {

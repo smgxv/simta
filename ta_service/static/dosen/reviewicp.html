@@ -638,7 +638,7 @@
 					<div class="card-box mb-30">
 						<div class="pd-20">
 							<h4 class="text-blue h4">List ICP ON REVIEW</h4>
-						</div>
+				</div>
 						<div class="pb-20">
 							<table class="data-table table stripe hover nowrap">
 								<thead>
@@ -654,7 +654,7 @@
 									
 								</tbody>
 							</table>
-						</div>
+			</div>
 					</div>
 					<!-- Simple Datatable End -->
 
@@ -1008,21 +1008,21 @@
 				e.preventDefault();
 				const formData = new FormData(this);
 				formData.append('dosen_id', localStorage.getItem('dosenID'));
-				
+
 				try {
 					// Upload file revisi ke endpoint dosen
 					const uploadResponse = await fetch('http://104.43.89.154:8082/upload/reviewicp/dosen', {
-						method: 'POST',
-						body: formData
-					});
+					method: 'POST',
+					body: formData
+				});
 					const uploadData = await uploadResponse.json();
 					
 					if (uploadData.status === 'success') {
 						showAlert('Review ICP berhasil diunggah dan status diperbarui', 'success');
-						this.reset();
+					this.reset();
 						loadICPData();
 						loadICPReviewData();
-					} else {
+				} else {
 						showAlert('Gagal upload: ' + uploadData.message, 'danger');
 					}
 				} catch (error) {
