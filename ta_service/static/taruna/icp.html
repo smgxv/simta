@@ -774,7 +774,19 @@
 				if (!userId) return;
 				
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${userId}`);
+					// First get the taruna_id from user_id
+					const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`);
+					const tarunaData = await tarunaResponse.json();
+					
+					if (!tarunaData.data || !tarunaData.data.id) {
+						console.error('Could not find taruna_id for user');
+						return;
+					}
+					
+					const tarunaId = tarunaData.data.id;
+					
+					// Now use the taruna_id to get review data
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${tarunaId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -1066,9 +1078,20 @@
 			async function submitRevision() {
 				const form = document.getElementById('revisionForm');
 				const formData = new FormData(form);
-				formData.append('taruna_id', localStorage.getItem('userId'));
 				
 				try {
+					// Get taruna_id from user_id
+					const userId = localStorage.getItem('userId');
+					const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`);
+					const tarunaData = await tarunaResponse.json();
+					
+					if (!tarunaData.data || !tarunaData.data.id) {
+						showAlert('Could not find taruna data', 'danger');
+						return;
+					}
+					
+					formData.append('taruna_id', tarunaData.data.id);
+					
 					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp', {
 						method: 'POST',
 						body: formData
