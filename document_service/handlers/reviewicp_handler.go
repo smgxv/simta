@@ -533,45 +533,42 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "*")
-	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	// Log request details for debugging
-	log.Printf("Received request to upload taruna revision")
-	log.Printf("Content-Type: %s", r.Header.Get("Content-Type"))
-	log.Printf("Request Method: %s", r.Method)
+	w.Header().Set("Content-Type", "application/json")
 
-	// Create uploads directory if it doesn't exist
+	// Log request details
+	log.Printf("Received %s request to %s", r.Method, r.URL.Path)
+	log.Printf("Content-Type: %s", r.Header.Get("Content-Type"))
+	log.Printf("Content-Length: %s", r.Header.Get("Content-Length"))
+
+	// Create uploads directory
 	uploadDir := "uploads/reviewicp/taruna"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		log.Printf("Error creating directory: %v", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
-		})
+		http.Error(w, fmt.Sprintf("Error creating upload directory: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
-	if err != nil {
+	// Parse multipart form
+	maxSize := int64(10 << 20) // 10 MB
+	if err := r.ParseMultipartForm(maxSize); err != nil {
 		log.Printf("Error parsing form: %v", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
-		})
+		http.Error(w, fmt.Sprintf("Error parsing form: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	// Log form values for debugging
-	log.Printf("Form values:")
+	// Log form values
+	log.Printf("Form values received:")
 	for key, values := range r.Form {
 		log.Printf("%s: %v", key, values)
 	}
 
+	// Get and validate form values
 	dosenID := r.FormValue("dosen_id")
 	tarunaID := r.FormValue("taruna_id")
 	icpID := r.FormValue("icp_id")
@@ -579,26 +576,23 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	keterangan := r.FormValue("keterangan")
 
 	// Validate required fields
-	missingFields := []string{}
-	if dosenID == "" {
-		missingFields = append(missingFields, "dosen_id")
-	}
-	if tarunaID == "" {
-		missingFields = append(missingFields, "taruna_id")
-	}
-	if icpID == "" {
-		missingFields = append(missingFields, "icp_id")
-	}
-	if topikPenelitian == "" {
-		missingFields = append(missingFields, "topik_penelitian")
-	}
-
-	if len(missingFields) > 0 {
-		log.Printf("Missing required fields: %v", missingFields)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": fmt.Sprintf("Missing required fields: %v", missingFields),
-		})
+	if dosenID == "" || tarunaID == "" || icpID == "" || topikPenelitian == "" {
+		missingFields := []string{}
+		if dosenID == "" {
+			missingFields = append(missingFields, "dosen_id")
+		}
+		if tarunaID == "" {
+			missingFields = append(missingFields, "taruna_id")
+		}
+		if icpID == "" {
+			missingFields = append(missingFields, "icp_id")
+		}
+		if topikPenelitian == "" {
+			missingFields = append(missingFields, "topik_penelitian")
+		}
+		msg := fmt.Sprintf("Missing required fields: %v", missingFields)
+		log.Printf(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
@@ -606,20 +600,16 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		log.Printf("Error getting file: %v", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
-		})
+		http.Error(w, fmt.Sprintf("Error retrieving file: %v", err), http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
 	// Validate file type
 	if !strings.HasSuffix(strings.ToLower(handler.Filename), ".pdf") {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Only PDF files are allowed",
-		})
+		msg := "Only PDF files are allowed"
+		log.Printf(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
@@ -635,10 +625,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	dst, err := os.Create(filePath)
 	if err != nil {
 		log.Printf("Error creating file: %v", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
+		http.Error(w, fmt.Sprintf("Error creating file: %v", err), http.StatusInternalServerError)
 		return
 	}
 	defer dst.Close()
@@ -647,10 +634,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	if _, err := io.Copy(dst, file); err != nil {
 		os.Remove(filePath)
 		log.Printf("Error copying file: %v", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
-		})
+		http.Error(w, fmt.Sprintf("Error saving file: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -659,10 +643,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		os.Remove(filePath)
 		log.Printf("Database error: %v", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Database error: " + err.Error(),
-		})
+		http.Error(w, fmt.Sprintf("Database error: %v", err), http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -671,10 +652,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		os.Remove(filePath)
 		log.Printf("Transaction error: %v", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Failed to start transaction: " + err.Error(),
-		})
+		http.Error(w, fmt.Sprintf("Failed to start transaction: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -685,8 +663,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		FROM review_icp_taruna 
 		WHERE icp_id = ?`, icpID).Scan(&cycleNumber)
 	if err != nil {
-		// If error, default to 1
-		cycleNumber = 1
+		cycleNumber = 1 // Default to 1 if error
 	}
 
 	// Insert review ICP taruna
@@ -708,10 +685,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		tx.Rollback()
 		os.Remove(filePath)
 		log.Printf("Insert error: %v", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
-		})
+		http.Error(w, fmt.Sprintf("Error saving to database: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -722,10 +696,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		tx.Rollback()
 		os.Remove(filePath)
 		log.Printf("Update error: %v", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Failed to update ICP status: " + err.Error(),
-		})
+		http.Error(w, fmt.Sprintf("Failed to update ICP status: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -734,20 +705,23 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		tx.Rollback()
 		os.Remove(filePath)
 		log.Printf("Commit error: %v", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Failed to commit transaction: " + err.Error(),
-		})
+		http.Error(w, fmt.Sprintf("Failed to commit transaction: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// Success response
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	// Send success response
+	response := map[string]interface{}{
 		"status":  "success",
 		"message": "Revisi ICP berhasil diunggah",
 		"data": map[string]interface{}{
 			"file_path":    filePath,
 			"cycle_number": cycleNumber,
 		},
-	})
+	}
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Error encoding response: %v", err)
+		http.Error(w, fmt.Sprintf("Error sending response: %v", err), http.StatusInternalServerError)
+		return
+	}
 }
