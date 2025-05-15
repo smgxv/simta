@@ -84,7 +84,7 @@ func (m *ReviewICPDosenModel) GetByDosenID(dosenID string) ([]entities.ReviewICP
 	return reviews, nil
 }
 
-func (m *ReviewICPDosenModel) GetByTarunaID(tarunaID string) ([]entities.ReviewICP, error) {
+func (m *ReviewICPDosenModel) GetByTarunaID(userID string) ([]entities.ReviewICP, error) {
 	query := `
 		SELECT 
 			r.id, r.icp_id, r.taruna_id, r.dosen_id, r.cycle_number,
@@ -92,11 +92,12 @@ func (m *ReviewICPDosenModel) GetByTarunaID(tarunaID string) ([]entities.ReviewI
 			r.updated_at, d.nama_lengkap as dosen_nama
 		FROM review_icp_dosen r
 		LEFT JOIN dosen d ON r.dosen_id = d.id
-		WHERE r.taruna_id = ?
+		LEFT JOIN taruna t ON r.taruna_id = t.id
+		WHERE t.user_id = ?
 		ORDER BY r.created_at DESC
 	`
 
-	rows, err := m.db.Query(query, tarunaID)
+	rows, err := m.db.Query(query, userID)
 	if err != nil {
 		return nil, err
 	}
