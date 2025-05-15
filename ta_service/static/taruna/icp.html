@@ -647,7 +647,8 @@
 									<tr>
 										<th class="table-plus datatable-nosort">Topik</th>
 										<th class="table-plus datatable-nosort">Dosen Pembimbing</th>
-										<th class="table-plus datatable-nosort">Status</th>
+										<th class="table-plus datatable-nosort">Perbaikan ke-</th>
+										<th class="table-plus datatable-nosort">Keterangan</th>
 										<th class="datatable-nosort">Action</th>
 									</tr>
 								</thead>
@@ -773,7 +774,7 @@
 				if (!userId) return;
 				
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp/list?taruna_id=${userId}`);
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -785,7 +786,8 @@
 								<tr>
 									<td>${review.topik_penelitian}</td>
 									<td>${review.dosen_nama || '-'}</td>
-									<td><span class="badge badge-secondary">on review</span></td>
+									<td>${review.cycle_number || 1}</td>
+									<td>${review.keterangan || '-'}</td>
 									<td>
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
