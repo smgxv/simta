@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -528,7 +529,7 @@ func GetReviewICPDosenHandler(w http.ResponseWriter, r *http.Request) {
 // Handler untuk upload revisi ICP oleh taruna
 func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
@@ -538,13 +539,24 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Log request details for debugging
+	log.Printf("Received request to upload taruna revision")
+	log.Printf("Content-Type: %s", r.Header.Get("Content-Type"))
+
 	err := r.ParseMultipartForm(10 << 20) // 10 MB
 	if err != nil {
+		log.Printf("Error parsing form: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Error parsing form: " + err.Error(),
 		})
 		return
+	}
+
+	// Log form values for debugging
+	log.Printf("Form values:")
+	for key, value := range r.Form {
+		log.Printf("%s: %v", key, value)
 	}
 
 	dosenID := r.FormValue("dosen_id")
@@ -554,9 +566,23 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	keterangan := r.FormValue("keterangan")
 
 	if dosenID == "" || tarunaID == "" || icpID == "" || topikPenelitian == "" {
+		missingFields := []string{}
+		if dosenID == "" {
+			missingFields = append(missingFields, "dosen_id")
+		}
+		if tarunaID == "" {
+			missingFields = append(missingFields, "taruna_id")
+		}
+		if icpID == "" {
+			missingFields = append(missingFields, "icp_id")
+		}
+		if topikPenelitian == "" {
+			missingFields = append(missingFields, "topik_penelitian")
+		}
+		log.Printf("Missing required fields: %v", missingFields)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Missing required fields",
+			"message": fmt.Sprintf("Missing required fields: %v", missingFields),
 		})
 		return
 	}

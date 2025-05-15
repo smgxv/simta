@@ -1097,10 +1097,16 @@
 				
 				try {
 					const userId = localStorage.getItem('userId');
+					if (!userId) {
+						showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
+						return;
+					}
 					
 					// Get taruna data
 					const tarunaResponse = await fetch(`http://104.43.89.154:8081/users/taruna?user_id=${userId}`);
 					const tarunaData = await tarunaResponse.json();
+					
+					console.log('Taruna Data:', tarunaData); // Debug log
 					
 					if (!tarunaData.status === 'success' || !tarunaData.data) {
 						showAlert('Tidak dapat menemukan data taruna', 'danger');
@@ -1113,6 +1119,8 @@
 					const icpResponse = await fetch(`http://104.43.89.154:8082/icp?user_id=${userId}`);
 					const icpData = await icpResponse.json();
 					
+					console.log('ICP Data:', icpData); // Debug log
+					
 					if (!icpData.status === 'success' || !icpData.data) {
 						showAlert('Tidak dapat menemukan data ICP', 'danger');
 						return;
@@ -1124,6 +1132,12 @@
 						return;
 					}
 					
+					// Log form data before sending
+					console.log('Form Data:');
+					for (let pair of formData.entries()) {
+						console.log(pair[0] + ': ' + pair[1]);
+					}
+					
 					formData.append('icp_id', icp.id);
 					
 					const response = await fetch('http://104.43.89.154:8082/upload/revisiicp/taruna', {
@@ -1131,7 +1145,14 @@
 						body: formData
 					});
 					
+					if (!response.ok) {
+						const errorText = await response.text();
+						console.error('Server response:', errorText);
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					
 					const data = await response.json();
+					console.log('Response Data:', data); // Debug log
 					
 					if (data.status === 'success') {
 						showAlert('Revisi berhasil diunggah', 'success');
@@ -1143,8 +1164,8 @@
 						showAlert(data.message || 'Gagal mengunggah revisi', 'danger');
 					}
 				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Terjadi kesalahan pada server', 'danger');
+					console.error('Error detail:', error); // Detailed error log
+					showAlert('Terjadi kesalahan pada server: ' + error.message, 'danger');
 				}
 			}
 
