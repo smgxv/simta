@@ -718,6 +718,22 @@
 		</div>
 
 		<script>
+			// Fungsi untuk mendapatkan taruna_id dari user_id
+			async function getTarunaId(userId) {
+				try {
+					const response = await fetch(`http://104.43.89.154:8081/taruna/byuserid/${userId}`);
+					const data = await response.json();
+					if (data.status === 'success' && data.data) {
+						return data.data.id;
+					}
+					throw new Error('Tidak dapat menemukan taruna_id');
+				} catch (error) {
+					console.error('Error getting taruna_id:', error);
+					showAlert('Gagal mendapatkan data taruna', 'danger');
+					return null;
+				}
+			}
+
 			// Fungsi untuk memuat data ICP
 			async function loadICPData() {
 				const userId = localStorage.getItem('userId');
@@ -774,7 +790,15 @@
 				if (!userId) return;
 				
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${userId}`);
+					// Dapatkan taruna_id terlebih dahulu
+					const tarunaId = await getTarunaId(userId);
+					if (!tarunaId) {
+						console.error('Tidak dapat menemukan taruna_id');
+						return;
+					}
+
+					// Gunakan taruna_id untuk mengambil data review
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${tarunaId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -813,6 +837,7 @@
 					}
 				} catch (error) {
 					console.error('Error:', error);
+					showAlert('Gagal memuat data review', 'danger');
 				}
 			}
 
@@ -1066,9 +1091,17 @@
 			async function submitRevision() {
 				const form = document.getElementById('revisionForm');
 				const formData = new FormData(form);
-				formData.append('taruna_id', localStorage.getItem('userId'));
 				
 				try {
+					const userId = localStorage.getItem('userId');
+					const tarunaId = await getTarunaId(userId);
+					if (!tarunaId) {
+						showAlert('Tidak dapat menemukan data taruna', 'danger');
+						return;
+					}
+					
+					formData.append('taruna_id', tarunaId);
+					
 					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp', {
 						method: 'POST',
 						body: formData
