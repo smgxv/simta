@@ -31,6 +31,7 @@ func main() {
 	r.HandleFunc("/reviewicp/dosen/list", handlers.GetReviewICPDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/updateicpstatus", handlers.UpdateICPStatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload/reviewicp/dosen", handlers.UploadDosenReviewICPHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/upload/revisiicp/taruna", handlers.UploadTarunaRevisiICPHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload/reviewicp", handlers.UploadReviewICPHandler).Methods("POST", "OPTIONS")
 
 	// Setup CORS

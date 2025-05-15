@@ -1109,7 +1109,24 @@
 					
 					formData.append('taruna_id', tarunaData.data.id);
 					
-					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp', {
+					// Get ICP ID based on topik_penelitian
+					const icpResponse = await fetch(`http://104.43.89.154:8082/icp?user_id=${userId}`);
+					const icpData = await icpResponse.json();
+					
+					if (!icpData.status === 'success' || !icpData.data) {
+						showAlert('Tidak dapat menemukan data ICP', 'danger');
+						return;
+					}
+					
+					const icp = icpData.data.find(i => i.topik_penelitian === formData.get('topik_penelitian'));
+					if (!icp) {
+						showAlert('ICP tidak ditemukan', 'danger');
+						return;
+					}
+					
+					formData.append('icp_id', icp.id);
+					
+					const response = await fetch('http://104.43.89.154:8082/upload/revisiicp/taruna', {
 						method: 'POST',
 						body: formData
 					});
