@@ -450,7 +450,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = tx.Exec(`
 		INSERT INTO review_icp_dosen (
 			icp_id, taruna_id, dosen_id, cycle_number,
-			topik_penelitian, file_path, komentar,
+			topik_penelitian, file_path, keterangan,
 			created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
 		icpID, tarunaID, dosenIDInt, cycleNumber,
