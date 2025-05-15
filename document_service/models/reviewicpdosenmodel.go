@@ -45,7 +45,7 @@ func (m *ReviewICPDosenModel) GetByDosenID(dosenID string) ([]entities.ReviewICP
 			r.topik_penelitian, r.file_path, r.komentar, r.created_at,
 			r.updated_at, t.nama_lengkap as nama_taruna
 		FROM review_icp_dosen r
-		LEFT JOIN taruna t ON r.taruna_id = t.user_id
+		LEFT JOIN taruna t ON r.taruna_id = t.id
 		WHERE r.dosen_id = ?
 		ORDER BY r.created_at DESC
 	`

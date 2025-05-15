@@ -342,8 +342,20 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// First get the user_id from taruna table
+	var userID int
+	err = db.QueryRow("SELECT user_id FROM taruna WHERE id = ?", tarunaID).Scan(&userID)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Taruna not found: " + err.Error(),
+		})
+		return
+	}
+
+	// Then get the ICP ID using the user_id
 	var icpID int
-	err = db.QueryRow("SELECT id FROM icp WHERE user_id = ? AND topik_penelitian = ?", tarunaID, topikPenelitian).Scan(&icpID)
+	err = db.QueryRow("SELECT id FROM icp WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&icpID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
