@@ -1127,12 +1127,12 @@
 
 			// Fungsi untuk memuat data ICP yang sedang di-review
 			async function loadICPReviewData() {
-				const userId = localStorage.getItem('userId');
-				if (!userId) return;
+				const dosenID = localStorage.getItem('dosenID');
+				if (!dosenID) return;
 				
 				try {
 					// Get review data from review_icp_taruna table
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${userId}`);
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenID}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {

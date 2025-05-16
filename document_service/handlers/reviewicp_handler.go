@@ -714,3 +714,117 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
+
+// Handler untuk mengambil daftar revisi ICP taruna dari table review_icp_taruna
+func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Content-Type", "application/json")
+
+	dosenID := r.URL.Query().Get("dosen_id")
+	tarunaID := r.URL.Query().Get("taruna_id")
+
+	if dosenID == "" && tarunaID == "" {
+		http.Error(w, "Either dosen_id or taruna_id is required", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	var query string
+	var args []interface{}
+
+	// Base query with joins to get taruna and dosen names
+	query = `
+		SELECT 
+			rit.*, 
+			t.nama_lengkap as taruna_nama,
+			d.nama_lengkap as dosen_nama,
+			i.id as icp_id
+		FROM review_icp_taruna rit
+		LEFT JOIN taruna t ON rit.taruna_id = t.id
+		LEFT JOIN dosen d ON rit.dosen_id = d.id
+		LEFT JOIN icp i ON rit.icp_id = i.id
+		WHERE 1=1
+	`
+
+	if dosenID != "" {
+		query += " AND rit.dosen_id = ?"
+		args = append(args, dosenID)
+	}
+	if tarunaID != "" {
+		query += " AND rit.taruna_id = ?"
+		args = append(args, tarunaID)
+	}
+
+	query += " ORDER BY rit.created_at DESC"
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var revisions []map[string]interface{}
+	for rows.Next() {
+		var revision struct {
+			ID              int
+			ICPID           int
+			TarunaID        int
+			DosenID         int
+			TopikPenelitian string
+			FilePath        string
+			Keterangan      string
+			CycleNumber     int
+			CreatedAt       string
+			UpdatedAt       string
+			TarunaNama      string
+			DosenNama       string
+		}
+
+		err := rows.Scan(
+			&revision.ID,
+			&revision.ICPID,
+			&revision.TarunaID,
+			&revision.DosenID,
+			&revision.TopikPenelitian,
+			&revision.FilePath,
+			&revision.Keterangan,
+			&revision.CycleNumber,
+			&revision.CreatedAt,
+			&revision.UpdatedAt,
+			&revision.TarunaNama,
+			&revision.DosenNama,
+			&revision.ICPID,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		revisions = append(revisions, map[string]interface{}{
+			"id":               revision.ID,
+			"icp_id":           revision.ICPID,
+			"taruna_id":        revision.TarunaID,
+			"dosen_id":         revision.DosenID,
+			"topik_penelitian": revision.TopikPenelitian,
+			"file_path":        revision.FilePath,
+			"keterangan":       revision.Keterangan,
+			"cycle_number":     revision.CycleNumber,
+			"created_at":       revision.CreatedAt,
+			"updated_at":       revision.UpdatedAt,
+			"taruna_nama":      revision.TarunaNama,
+			"dosen_nama":       revision.DosenNama,
+		})
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   revisions,
+	})
+}
