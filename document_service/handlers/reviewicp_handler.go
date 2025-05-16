@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"document_service/config"
 	"document_service/entities"
 	"document_service/models"
@@ -741,14 +742,21 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	// Base query with joins to get taruna and dosen names
 	query = `
 		SELECT 
-			rit.*, 
+			rit.id,
+			rit.icp_id,
+			rit.taruna_id,
+			rit.dosen_id,
+			rit.topik_penelitian,
+			rit.file_path,
+			rit.keterangan,
+			rit.cycle_number,
+			rit.created_at,
+			rit.updated_at,
 			t.nama_lengkap as taruna_nama,
-			d.nama_lengkap as dosen_nama,
-			i.id as icp_id
+			d.nama_lengkap as dosen_nama
 		FROM review_icp_taruna rit
 		LEFT JOIN taruna t ON rit.taruna_id = t.id
 		LEFT JOIN dosen d ON rit.dosen_id = d.id
-		LEFT JOIN icp i ON rit.icp_id = i.id
 		WHERE 1=1
 	`
 
@@ -783,8 +791,8 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			CycleNumber     int
 			CreatedAt       string
 			UpdatedAt       string
-			TarunaNama      string
-			DosenNama       string
+			TarunaNama      sql.NullString
+			DosenNama       sql.NullString
 		}
 
 		err := rows.Scan(
@@ -800,7 +808,6 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			&revision.UpdatedAt,
 			&revision.TarunaNama,
 			&revision.DosenNama,
-			&revision.ICPID,
 		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -818,8 +825,8 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			"cycle_number":     revision.CycleNumber,
 			"created_at":       revision.CreatedAt,
 			"updated_at":       revision.UpdatedAt,
-			"taruna_nama":      revision.TarunaNama,
-			"dosen_nama":       revision.DosenNama,
+			"taruna_nama":      revision.TarunaNama.String,
+			"dosen_nama":       revision.DosenNama.String,
 		})
 	}
 

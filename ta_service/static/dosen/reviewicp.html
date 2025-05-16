@@ -682,39 +682,6 @@
 		></noscript>
 		<!-- End Google Tag Manager (noscript) -->
 
-		<!-- Add this modal before the closing body tag -->
-		<div class="modal fade" id="uploadRevisionModal" tabindex="-1" role="dialog" aria-labelledby="uploadRevisionModalLabel" aria-hidden="true">
-			<div class="modal-dialog" role="document">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 class="modal-title" id="uploadRevisionModalLabel">Upload Revisi ICP</h5>
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-							<span aria-hidden="true">&times;</span>
-						</button>
-					</div>
-					<div class="modal-body">
-						<form id="revisionForm" enctype="multipart/form-data">
-							<input type="hidden" id="revisionDosenId" name="dosen_id">
-							<input type="hidden" id="revisionTopikPenelitian" name="topik_penelitian">
-							
-							<div class="form-group">
-								<label>Keterangan Revisi</label>
-								<textarea class="form-control" name="keterangan" required></textarea>
-							</div>
-							<div class="form-group">
-								<label>File Revisi ICP (PDF)</label>
-								<input type="file" class="form-control" name="file" accept=".pdf" required>
-							</div>
-						</form>
-					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-						<button type="button" class="btn btn-primary" onclick="submitRevision()">Upload Revisi</button>
-					</div>
-				</div>
-			</div>
-		</div>
-
 		<!-- Add upload review modal -->
 		<div class="modal fade" id="uploadReviewModal" tabindex="-1" role="dialog" aria-labelledby="uploadReviewModalLabel" aria-hidden="true">
 			<div class="modal-dialog" role="document">
