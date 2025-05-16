@@ -880,7 +880,14 @@
 						const dosen = data.data.find(d => String(d.user_id) === String(userId));
 						if (dosen) {
 							localStorage.setItem('dosenID', dosen.id);
+							localStorage.setItem('dosenName', dosen.nama_lengkap);
 							console.log('DosenID set:', dosen.id); // Debug log
+							
+							// Update nama dosen di header
+							const usernameElement = document.getElementById('username');
+							if (usernameElement) {
+								usernameElement.textContent = dosen.nama_lengkap;
+							}
 							
 							// Setelah dosenID tersedia, panggil fungsi-fungsi yang membutuhkannya
 							loadICPData();
@@ -914,13 +921,13 @@
 						icpDataGlobal = data.data; // Simpan data ICP ke variabel global
 						const uniqueTaruna = new Map();
 						data.data.forEach(icp => {
-							if (icp.user_id && !uniqueTaruna.has(icp.user_id)) {
-								uniqueTaruna.set(icp.user_id, icp.nama_taruna);
+							if (icp.taruna_id && !uniqueTaruna.has(icp.taruna_id)) {
+								uniqueTaruna.set(icp.taruna_id, icp.nama_taruna);
 							}
 						});
-						uniqueTaruna.forEach((nama_taruna, userId) => {
+						uniqueTaruna.forEach((nama_taruna, tarunaId) => {
 							const option = document.createElement('option');
-							option.value = userId;
+							option.value = tarunaId;
 							option.textContent = nama_taruna;
 							tarunaSelect.appendChild(option);
 						});
@@ -1011,22 +1018,35 @@
 			document.getElementById('reviewIcpForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 				const formData = new FormData(this);
-				formData.append('dosen_id', localStorage.getItem('dosenID'));
+				const dosenID = localStorage.getItem('dosenID');
+				
+				if (!dosenID) {
+					showAlert('Dosen ID tidak ditemukan. Silakan login ulang.', 'danger');
+					return;
+				}
+
+				formData.append('dosen_id', dosenID);
+
+				// Debug log
+				console.log('Submitting review with:', {
+					dosenId: formData.get('dosen_id'),
+					tarunaId: formData.get('taruna_id'),
+					topikPenelitian: formData.get('topik_penelitian')
+				});
 
 				try {
-					// Upload file revisi ke endpoint dosen
 					const uploadResponse = await fetch('http://104.43.89.154:8082/upload/reviewicp/dosen', {
-					method: 'POST',
-					body: formData
-				});
+						method: 'POST',
+						body: formData
+					});
 					const uploadData = await uploadResponse.json();
 					
 					if (uploadData.status === 'success') {
 						showAlert('Review ICP berhasil diunggah dan status diperbarui', 'success');
-				this.reset();
+						this.reset();
 						loadICPData();
 						loadICPReviewData();
-				} else {
+					} else {
 						showAlert('Gagal upload: ' + uploadData.message, 'danger');
 					}
 				} catch (error) {

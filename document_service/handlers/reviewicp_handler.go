@@ -343,20 +343,14 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// First get the user_id from taruna table
-	var userID int
-	err = db.QueryRow("SELECT user_id FROM taruna WHERE id = ?", tarunaID).Scan(&userID)
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Failed to get user_id from taruna: " + err.Error(),
-		})
-		return
-	}
-
-	// Get the ICP ID using user_id
+	// Get the ICP ID using taruna_id and topik_penelitian
 	var icpID int
-	err = db.QueryRow("SELECT id FROM icp WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&icpID)
+	err = db.QueryRow(`
+		SELECT i.id 
+		FROM icp i 
+		JOIN taruna t ON i.user_id = t.user_id 
+		WHERE t.id = ? AND i.topik_penelitian = ?`,
+		tarunaID, topikPenelitian).Scan(&icpID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
