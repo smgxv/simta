@@ -640,7 +640,7 @@
 							<h4 class="text-blue h4">Tabel Hasil Revisi Taruna</h4>
 						</div>
 						<div class="pb-20">
-							<table class="data-table table stripe hover nowrap">
+							<table id="revisiTable" class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
 										<th class="table-plus datatable-nosort">Topik</th>
@@ -651,7 +651,7 @@
 									</tr>
 								</thead>
 								<tbody>
-									
+									<!-- Data will be loaded here -->
 								</tbody>
 							</table>
 						</div>
@@ -1092,71 +1092,80 @@
 				}, 5000);
 			}
 
-			// Fungsi untuk memuat data ICP yang sedang di-review
-			async function loadICPReviewData() {
-				const dosenID = localStorage.getItem('dosenID');
-				if (!dosenID) return;
-				
-				try {
-					// Get review data from review_icp_taruna table
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenID}`);
-					const data = await response.json();
+				// Fungsi untuk memuat data ICP yang sedang di-review
+				async function loadICPReviewData() {
+					const dosenID = localStorage.getItem('dosenID');
+					console.log('Loading review data for dosenID:', dosenID); // Debug log
+					if (!dosenID) {
+						console.warn('DosenID not found in localStorage');
+						return;
+					}
 					
-					if (data.status === 'success') {
-						const tbody = document.querySelector('.card-box:last-child table tbody');
-						tbody.innerHTML = '';
+					try {
+						// Get review data from review_icp_taruna table
+						const response = await fetch(`http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenID}`);
+						const data = await response.json();
+						console.log('Review data received:', data); // Debug log
 						
-						if (data.data && data.data.length > 0) {
-							data.data.forEach(review => {
-								tbody.innerHTML += `
-									<tr>
-										<td>${review.topik_penelitian || '-'}</td>
-										<td>${review.taruna_nama || '-'}</td>
-										<td>${review.cycle_number || 1}</td>
-										<td>${review.keterangan || '-'}</td>
-										<td>
-											<div class="dropdown">
-												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												   href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
-												</a>
-												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="${review.file_path}" target="_blank">
-														<i class="dw dw-eye"></i> View Revisi
+						if (data.status === 'success') {
+							const tbody = document.querySelector('#revisiTable tbody');
+							if (!tbody) {
+								console.error('Table body not found');
+								return;
+							}
+							tbody.innerHTML = '';
+							
+							if (data.data && data.data.length > 0) {
+								data.data.forEach(review => {
+									tbody.innerHTML += `
+										<tr>
+											<td>${review.topik_penelitian || '-'}</td>
+											<td>${review.taruna_nama || '-'}</td>
+											<td>${review.cycle_number || 1}</td>
+											<td>${review.keterangan || '-'}</td>
+											<td>
+												<div class="dropdown">
+													<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+													href="#" role="button" data-toggle="dropdown">
+														<i class="dw dw-more"></i>
 													</a>
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
-														<i class="dw dw-download"></i> Download Revisi
-													</a>
-													<a class="dropdown-item" href="#" onclick="openUploadReviewModal(${review.taruna_id}, '${review.topik_penelitian}', ${review.cycle_number})">
-														<i class="dw dw-upload"></i> Upload Review Baru
-													</a>
-													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'approved')">
-														<i class="dw dw-check"></i> Approve ICP
-													</a>
-													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'rejected')">
-														<i class="dw dw-cancel"></i> Reject ICP
-													</a>
+													<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+														<a class="dropdown-item" href="${review.file_path}" target="_blank">
+															<i class="dw dw-eye"></i> View Revisi
+														</a>
+														<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
+															<i class="dw dw-download"></i> Download Revisi
+														</a>
+														<a class="dropdown-item" href="#" onclick="openUploadReviewModal(${review.taruna_id}, '${review.topik_penelitian}', ${review.cycle_number})">
+															<i class="dw dw-upload"></i> Upload Review Baru
+														</a>
+														<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'approved')">
+															<i class="dw dw-check"></i> Approve ICP
+														</a>
+														<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'rejected')">
+															<i class="dw dw-cancel"></i> Reject ICP
+														</a>
+													</div>
 												</div>
-											</div>
-										</td>
+											</td>
+										</tr>
+									`;
+								});
+							} else {
+								tbody.innerHTML = `
+									<tr>
+										<td colspan="5" class="text-center">Tidak ada data revisi</td>
 									</tr>
 								`;
-							});
+							}
 						} else {
-							tbody.innerHTML = `
-								<tr>
-									<td colspan="5" class="text-center">Tidak ada data revisi</td>
-								</tr>
-							`;
+							showAlert('Gagal memuat data revisi: ' + (data.message || 'Unknown error'), 'danger');
 						}
-					} else {
-						showAlert('Gagal memuat data revisi: ' + (data.message || 'Unknown error'), 'danger');
+					} catch (error) {
+						console.error('Error:', error);
+						showAlert('Gagal memuat data revisi', 'danger');
 					}
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Gagal memuat data revisi', 'danger');
 				}
-			}
 
 			// Function to open upload review modal
 			function openUploadReviewModal(tarunaId, topikPenelitian, currentCycle) {
@@ -1222,7 +1231,7 @@
 				}
 			}
 
-			// Panggil loadICPReviewData saat halaman dimuat dan setelah upload review
+			// Panggil loadICPReviewData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
 				loadICPData();
 				loadICPReviewData();
