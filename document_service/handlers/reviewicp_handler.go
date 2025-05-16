@@ -7,12 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -90,6 +88,7 @@ func UpdateICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Handler untuk mengupload review ICP oleh dosen ke table review_icp
 func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
@@ -258,7 +257,7 @@ func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk mengambil daftar review ICP
+// Handler untuk mengambil daftar review ICP dari table review_icp
 func GetReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
@@ -298,7 +297,7 @@ func GetReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk upload review ICP oleh dosen
+// Handler untuk upload review ICP oleh dosen ke table review_icp_dosen
 func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
@@ -487,7 +486,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk mengambil daftar review ICP dosen
+// Handler untuk mengambil daftar review ICP dosen dari table review_icp_dosen
 func GetReviewICPDosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
@@ -527,132 +526,138 @@ func GetReviewICPDosenHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk upload revisi ICP oleh taruna
+// Handler untuk upload revisi ICP oleh taruna ke table review_icp_taruna
 func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-
-	// Log request details
-	log.Printf("Received %s request to %s", r.Method, r.URL.Path)
-	log.Printf("Content-Type: %s", r.Header.Get("Content-Type"))
-	log.Printf("Content-Length: %s", r.Header.Get("Content-Length"))
-
-	// Create uploads directory
-	uploadDir := "uploads/reviewicp/taruna"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
-		log.Printf("Error creating directory: %v", err)
-		http.Error(w, fmt.Sprintf("Error creating upload directory: %v", err), http.StatusInternalServerError)
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error parsing form: " + err.Error(),
+		})
 		return
 	}
 
-	// Parse multipart form
-	maxSize := int64(10 << 20) // 10 MB
-	if err := r.ParseMultipartForm(maxSize); err != nil {
-		log.Printf("Error parsing form: %v", err)
-		http.Error(w, fmt.Sprintf("Error parsing form: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	// Log form values
-	log.Printf("Form values received:")
-	for key, values := range r.Form {
-		log.Printf("%s: %v", key, values)
-	}
-
-	// Get and validate form values
 	dosenID := r.FormValue("dosen_id")
-	tarunaID := r.FormValue("taruna_id")
-	icpID := r.FormValue("icp_id")
+	userID := r.FormValue("taruna_id") // This is actually the user_id from the frontend
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	// Validate required fields
-	if dosenID == "" || tarunaID == "" || icpID == "" || topikPenelitian == "" {
-		missingFields := []string{}
-		if dosenID == "" {
-			missingFields = append(missingFields, "dosen_id")
-		}
-		if tarunaID == "" {
-			missingFields = append(missingFields, "taruna_id")
-		}
-		if icpID == "" {
-			missingFields = append(missingFields, "icp_id")
-		}
-		if topikPenelitian == "" {
-			missingFields = append(missingFields, "topik_penelitian")
-		}
-		msg := fmt.Sprintf("Missing required fields: %v", missingFields)
-		log.Printf(msg)
-		http.Error(w, msg, http.StatusBadRequest)
+	if dosenID == "" || userID == "" || topikPenelitian == "" {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Missing required fields",
+		})
 		return
 	}
 
-	// Get the file
+	// Get ICP ID based on user_id and topik_penelitian
+	db, err := config.GetDB()
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Database error: " + err.Error(),
+		})
+		return
+	}
+	defer db.Close()
+
+	// First get the taruna_id from taruna table
+	var tarunaID int
+	err = db.QueryRow("SELECT id FROM taruna WHERE user_id = ?", userID).Scan(&tarunaID)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Taruna not found: " + err.Error(),
+		})
+		return
+	}
+
+	// Then get the ICP ID using the user_id
+	var icpID int
+	err = db.QueryRow("SELECT id FROM icp WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&icpID)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "ICP not found for the given taruna and topic",
+		})
+		return
+	}
+
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		log.Printf("Error getting file: %v", err)
-		http.Error(w, fmt.Sprintf("Error retrieving file: %v", err), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error retrieving file: " + err.Error(),
+		})
 		return
 	}
 	defer file.Close()
 
-	// Validate file type
-	if !strings.HasSuffix(strings.ToLower(handler.Filename), ".pdf") {
-		msg := "Only PDF files are allowed"
-		log.Printf(msg)
-		http.Error(w, msg, http.StatusBadRequest)
+	uploadDir := "uploads/reviewicp/taruna"
+	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error creating upload directory: " + err.Error(),
+		})
 		return
 	}
 
-	// Create unique filename
-	filename := fmt.Sprintf("REVISI_ICP_TARUNA_%s_%s_%s_%s",
-		tarunaID,
+	filename := fmt.Sprintf("REVISI_ICP_TARUNA_%s_%s_%s",
 		dosenID,
 		time.Now().Format("20060102150405"),
 		handler.Filename)
 	filePath := filepath.Join(uploadDir, filename)
 
-	// Create the file
 	dst, err := os.Create(filePath)
 	if err != nil {
-		log.Printf("Error creating file: %v", err)
-		http.Error(w, fmt.Sprintf("Error creating file: %v", err), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error creating file: " + err.Error(),
+		})
 		return
 	}
 	defer dst.Close()
 
-	// Copy the file
 	if _, err := io.Copy(dst, file); err != nil {
 		os.Remove(filePath)
-		log.Printf("Error copying file: %v", err)
-		http.Error(w, fmt.Sprintf("Error saving file: %v", err), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error saving file: " + err.Error(),
+		})
 		return
 	}
-
-	// Start database transaction
-	db, err := config.GetDB()
-	if err != nil {
-		os.Remove(filePath)
-		log.Printf("Database error: %v", err)
-		http.Error(w, fmt.Sprintf("Database error: %v", err), http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
 
 	tx, err := db.Begin()
 	if err != nil {
 		os.Remove(filePath)
-		log.Printf("Transaction error: %v", err)
-		http.Error(w, fmt.Sprintf("Failed to start transaction: %v", err), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to start transaction: " + err.Error(),
+		})
+		return
+	}
+
+	// Update status ICP dalam transaksi
+	_, err = tx.Exec("UPDATE icp SET status = ? WHERE id = ?",
+		"on review", icpID)
+	if err != nil {
+		tx.Rollback()
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to update ICP status: " + err.Error(),
+		})
 		return
 	}
 
@@ -663,13 +668,12 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		FROM review_icp_taruna 
 		WHERE icp_id = ?`, icpID).Scan(&cycleNumber)
 	if err != nil {
-		cycleNumber = 1 // Default to 1 if error
+		// If error, default to 1
+		cycleNumber = 1
 	}
 
-	// Insert review ICP taruna
+	// Insert review ICP taruna dalam transaksi
 	dosenIDInt, _ := strconv.Atoi(dosenID)
-	tarunaIDInt, _ := strconv.Atoi(tarunaID)
-	icpIDInt, _ := strconv.Atoi(icpID)
 
 	_, err = tx.Exec(`
 		INSERT INTO review_icp_taruna (
@@ -677,51 +681,36 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 			topik_penelitian, file_path, keterangan,
 			created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-		icpIDInt, tarunaIDInt, dosenIDInt, cycleNumber,
+		icpID, tarunaID, dosenIDInt, cycleNumber,
 		topikPenelitian, filePath, keterangan,
 	)
 
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
-		log.Printf("Insert error: %v", err)
-		http.Error(w, fmt.Sprintf("Error saving to database: %v", err), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error saving to database: " + err.Error(),
+		})
 		return
 	}
 
-	// Update ICP status
-	_, err = tx.Exec("UPDATE icp SET status = ? WHERE id = ?",
-		"on review", icpID)
-	if err != nil {
-		tx.Rollback()
-		os.Remove(filePath)
-		log.Printf("Update error: %v", err)
-		http.Error(w, fmt.Sprintf("Failed to update ICP status: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	// Commit transaction
+	// Commit transaksi
 	if err := tx.Commit(); err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
-		log.Printf("Commit error: %v", err)
-		http.Error(w, fmt.Sprintf("Failed to commit transaction: %v", err), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to commit transaction: " + err.Error(),
+		})
 		return
 	}
 
-	// Send success response
-	response := map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Revisi ICP berhasil diunggah",
+		"message": "Revisi ICP taruna berhasil diunggah dan status diperbarui",
 		"data": map[string]interface{}{
-			"file_path":    filePath,
-			"cycle_number": cycleNumber,
+			"file_path": filePath,
 		},
-	}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Error encoding response: %v", err)
-		http.Error(w, fmt.Sprintf("Error sending response: %v", err), http.StatusInternalServerError)
-		return
-	}
+	})
 }
