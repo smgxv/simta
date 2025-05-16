@@ -321,11 +321,11 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dosenID := r.FormValue("dosen_id")
-	userID := r.FormValue("taruna_id") // This is actually the user_id from the frontend
+	tarunaID := r.FormValue("taruna_id") // This is now the actual taruna_id
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	if dosenID == "" || userID == "" || topikPenelitian == "" {
+	if dosenID == "" || tarunaID == "" || topikPenelitian == "" {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Missing required fields",
@@ -333,7 +333,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get ICP ID based on user_id and topik_penelitian
+	// Get ICP ID based on taruna_id and topik_penelitian
 	db, err := config.GetDB()
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -344,24 +344,13 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// First get the taruna_id from taruna table
-	var tarunaID int
-	err = db.QueryRow("SELECT id FROM taruna WHERE user_id = ?", userID).Scan(&tarunaID)
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Taruna not found: " + err.Error(),
-		})
-		return
-	}
-
-	// Then get the ICP ID using the user_id
+	// Get the ICP ID using the taruna_id directly
 	var icpID int
-	err = db.QueryRow("SELECT id FROM icp WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&icpID)
+	err = db.QueryRow("SELECT id FROM icp WHERE taruna_id = ? AND topik_penelitian = ?", tarunaID, topikPenelitian).Scan(&icpID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "ICP not found for the given taruna and topic",
+			"message": "ICP not found for the given taruna and topic: " + err.Error(),
 		})
 		return
 	}
@@ -446,6 +435,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Insert review ICP dosen dalam transaksi
 	dosenIDInt, _ := strconv.Atoi(dosenID)
+	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
 	_, err = tx.Exec(`
 		INSERT INTO review_icp_dosen (
@@ -453,7 +443,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 			topik_penelitian, file_path, keterangan,
 			created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-		icpID, tarunaID, dosenIDInt, cycleNumber,
+		icpID, tarunaIDInt, dosenIDInt, cycleNumber,
 		topikPenelitian, filePath, keterangan,
 	)
 

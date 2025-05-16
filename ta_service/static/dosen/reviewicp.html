@@ -1023,7 +1023,7 @@
 					
 					if (uploadData.status === 'success') {
 						showAlert('Review ICP berhasil diunggah dan status diperbarui', 'success');
-					this.reset();
+				this.reset();
 						loadICPData();
 						loadICPReviewData();
 				} else {
@@ -1180,12 +1180,13 @@
 				const formData = new FormData(form);
 				
 				try {
-					const dosenId = localStorage.getItem('userId');
+					const dosenId = localStorage.getItem('dosenID');
 					if (!dosenId) {
 						showAlert('Dosen ID tidak ditemukan. Silakan login ulang.', 'danger');
 						return;
 					}
 
+					// Use dosenID instead of userId
 					formData.append('dosen_id', dosenId);
 					
 					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp/dosen', {
@@ -1199,6 +1200,7 @@
 						showAlert('Review berhasil diunggah', 'success');
 						$('#uploadReviewModal').modal('hide');
 						form.reset();
+						await loadICPData();
 						await loadICPReviewData();
 					} else {
 						showAlert(data.message || 'Gagal mengunggah review', 'danger');
