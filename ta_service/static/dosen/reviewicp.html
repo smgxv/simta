@@ -1147,6 +1147,7 @@
 
 			// Function to open upload review modal
 			function openUploadReviewModal(tarunaId, topikPenelitian, currentCycle) {
+				console.log('Opening modal with:', { tarunaId, topikPenelitian, currentCycle }); // Debug log
 				document.getElementById('reviewTarunaId').value = tarunaId;
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
 				document.getElementById('reviewCycleNumber').value = currentCycle + 1;
@@ -1186,7 +1187,13 @@
 						return;
 					}
 
-					// Use dosenID instead of userId
+					// Debug log
+					console.log('Submitting review with:', {
+						dosenId,
+						tarunaId: formData.get('taruna_id'),
+						topikPenelitian: formData.get('topik_penelitian')
+					});
+
 					formData.append('dosen_id', dosenId);
 					
 					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp/dosen', {

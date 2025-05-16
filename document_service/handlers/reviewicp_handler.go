@@ -321,7 +321,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dosenID := r.FormValue("dosen_id")
-	tarunaID := r.FormValue("taruna_id") // This is now the actual taruna_id
+	tarunaID := r.FormValue("taruna_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
@@ -333,7 +333,6 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get ICP ID based on taruna_id and topik_penelitian
 	db, err := config.GetDB()
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -344,9 +343,20 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Get the ICP ID using the taruna_id directly
+	// First get the user_id from taruna table
+	var userID int
+	err = db.QueryRow("SELECT user_id FROM taruna WHERE id = ?", tarunaID).Scan(&userID)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to get user_id from taruna: " + err.Error(),
+		})
+		return
+	}
+
+	// Get the ICP ID using user_id
 	var icpID int
-	err = db.QueryRow("SELECT id FROM icp WHERE taruna_id = ? AND topik_penelitian = ?", tarunaID, topikPenelitian).Scan(&icpID)
+	err = db.QueryRow("SELECT id FROM icp WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&icpID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
