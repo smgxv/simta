@@ -33,63 +33,11 @@ func GetICPByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Modifikasi query untuk mengambil nama taruna
-	query := `
-		SELECT i.*, t.nama_lengkap as nama_taruna
-		FROM icp i
-		LEFT JOIN taruna t ON i.user_id = t.user_id
-		WHERE i.dosen_id = ?
-	`
-
-	rows, err := db.Query(query, dosenID)
+	icpModel := models.NewICPModel(db)
+	icps, err := icpModel.GetByDosenID(dosenID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-	defer rows.Close()
-
-	var icps []map[string]interface{}
-	for rows.Next() {
-		var icp struct {
-			ID              int
-			UserID          int
-			DosenID         int
-			TopikPenelitian string
-			FilePath        string
-			Status          string
-			CreatedAt       string
-			UpdatedAt       string
-			NamaTaruna      sql.NullString
-		}
-
-		err := rows.Scan(
-			&icp.ID,
-			&icp.UserID,
-			&icp.DosenID,
-			&icp.TopikPenelitian,
-			&icp.FilePath,
-			&icp.Status,
-			&icp.CreatedAt,
-			&icp.UpdatedAt,
-			&icp.NamaTaruna,
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		icpMap := map[string]interface{}{
-			"id":               icp.ID,
-			"user_id":          icp.UserID,
-			"dosen_id":         icp.DosenID,
-			"topik_penelitian": icp.TopikPenelitian,
-			"file_path":        icp.FilePath,
-			"status":           icp.Status,
-			"created_at":       icp.CreatedAt,
-			"updated_at":       icp.UpdatedAt,
-			"nama_taruna":      icp.NamaTaruna.String,
-		}
-		icps = append(icps, icpMap)
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
