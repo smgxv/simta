@@ -740,10 +740,13 @@
 								'on review': 'badge badge-secondary'
 							}[icp.status] || 'badge badge-secondary';
 
+							// Debug log untuk melihat data taruna
+							console.log('ICP data:', icp);
+
 							tbody.innerHTML += `
 								<tr>
 									<td>${icp.topik_penelitian}</td>
-									<td>${icp.nama_taruna}</td>
+									<td>${icp.nama_taruna || 'Nama tidak tersedia'}</td>
 									<td><span class="${statusClass}">${icp.status}</span></td>
 									<td>
 										<div class="dropdown">
