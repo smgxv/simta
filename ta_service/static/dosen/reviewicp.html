@@ -855,75 +855,44 @@
 
 			// Tambahkan pengecekan autentikasi dan mapping dosenID saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
-				// Cek token
+				console.log('DOM Content Loaded'); // Debug log
+				
+				// Cek token dan ambil dosenID
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 				if (!token) {
+					console.warn('No token found');
 					window.location.replace('/loginusers');
 					return;
 				}
 
-				// Ambil ID user dari localStorage
 				const userId = localStorage.getItem('userId');
+				console.log('UserID:', userId); // Debug log
 
-				// Ambil data user dari API
-				fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
+				// Ambil data dosen dan set dosenID
+				fetch('http://104.43.89.154:8081/dosen', {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
 				})
-				.then(response => {
-					if (!response.ok) {
-						throw new Error('Gagal mengambil data user');
-					}
-					return response.json();
-				})
-				.then(user => {
-					// Update username di header
-					const usernameElement = document.getElementById('username');
-					if (usernameElement) {
-						usernameElement.textContent = user.username || user.nama_lengkap || 'User';
-					}
-
-					// --- Tambahan: Ambil id dosen berdasarkan userId ---
-					fetch('http://104.43.89.154:8081/dosen', {
-						headers: {
-							'Authorization': `Bearer ${token}`
+				.then(response => response.json())
+				.then(data => {
+					if (data.status === 'success' && Array.isArray(data.data)) {
+						const dosen = data.data.find(d => String(d.user_id) === String(userId));
+						if (dosen) {
+							localStorage.setItem('dosenID', dosen.id);
+							console.log('DosenID set:', dosen.id); // Debug log
+							
+							// Setelah dosenID tersedia, panggil fungsi-fungsi yang membutuhkannya
+							loadICPData();
+							loadICPReviewData();
+							loadTarunaDropdown();
+						} else {
+							console.warn('Dosen with user_id', userId, 'not found');
 						}
-					})
-					.then(response => response.json())
-					.then(data => {
-						if (data.status === 'success' && Array.isArray(data.data)) {
-							// Cari dosen dengan user_id = userId
-							const dosen = data.data.find(d => String(d.user_id) === String(userId));
-							if (dosen) {
-								localStorage.setItem('dosenID', dosen.id); // Simpan id dosen
-								console.log('dosenID aktif:', dosen.id);
-								// Panggil loadICPData di sini setelah dosenID sudah pasti ada
-								loadICPData();
-							} else {
-								console.warn('Dosen dengan user_id', userId, 'tidak ditemukan.');
-							}
-						}
-					})
-					.catch(error => {
-						console.error('Gagal mengambil data dosen:', error);
-					});
+					}
 				})
 				.catch(error => {
-					console.error('Error:', error);
-					const usernameElement = document.getElementById('username');
-					if (usernameElement) {
-						usernameElement.textContent = 'User';
-					}
-				});
-
-				// Validasi token dengan server
-				fetch('http://104.43.89.154:8080/dosen/dashboard', { // Ubah ke endpoint dosen
-					headers: {
-						'Authorization': `Bearer ${token}`
-					}
-				}).catch(() => {
-					window.location.replace('/loginusers');
+					console.error('Failed to fetch dosen data:', error);
 				});
 			});
 
@@ -1092,80 +1061,89 @@
 				}, 5000);
 			}
 
-				// Fungsi untuk memuat data ICP yang sedang di-review
-				async function loadICPReviewData() {
-					const dosenID = localStorage.getItem('dosenID');
-					console.log('Loading review data for dosenID:', dosenID); // Debug log
-					if (!dosenID) {
-						console.warn('DosenID not found in localStorage');
-						return;
-					}
+			// Fungsi untuk memuat data ICP yang sedang di-review
+			async function loadICPReviewData() {
+				console.log('loadICPReviewData function called'); // Debug log
+				const dosenID = localStorage.getItem('dosenID');
+				console.log('Loading review data for dosenID:', dosenID); // Debug log
+				if (!dosenID) {
+					console.warn('DosenID not found in localStorage');
+					return;
+				}
+				
+				try {
+					const url = `http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenID}`;
+					console.log('Fetching from URL:', url); // Debug log
 					
-					try {
-						// Get review data from review_icp_taruna table
-						const response = await fetch(`http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenID}`);
-						const data = await response.json();
-						console.log('Review data received:', data); // Debug log
+					// Get review data from review_icp_taruna table
+					const response = await fetch(url);
+					const data = await response.json();
+					console.log('Review data received:', data); // Debug log
+					
+					if (data.status === 'success') {
+						const tbody = document.querySelector('#revisiTable tbody');
+						console.log('Found tbody:', tbody); // Debug log
 						
-						if (data.status === 'success') {
-							const tbody = document.querySelector('#revisiTable tbody');
-							if (!tbody) {
-								console.error('Table body not found');
-								return;
-							}
-							tbody.innerHTML = '';
-							
-							if (data.data && data.data.length > 0) {
-								data.data.forEach(review => {
-									tbody.innerHTML += `
-										<tr>
-											<td>${review.topik_penelitian || '-'}</td>
-											<td>${review.taruna_nama || '-'}</td>
-											<td>${review.cycle_number || 1}</td>
-											<td>${review.keterangan || '-'}</td>
-											<td>
-												<div class="dropdown">
-													<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-													href="#" role="button" data-toggle="dropdown">
-														<i class="dw dw-more"></i>
-													</a>
-													<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-														<a class="dropdown-item" href="${review.file_path}" target="_blank">
-															<i class="dw dw-eye"></i> View Revisi
-														</a>
-														<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
-															<i class="dw dw-download"></i> Download Revisi
-														</a>
-														<a class="dropdown-item" href="#" onclick="openUploadReviewModal(${review.taruna_id}, '${review.topik_penelitian}', ${review.cycle_number})">
-															<i class="dw dw-upload"></i> Upload Review Baru
-														</a>
-														<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'approved')">
-															<i class="dw dw-check"></i> Approve ICP
-														</a>
-														<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'rejected')">
-															<i class="dw dw-cancel"></i> Reject ICP
-														</a>
-													</div>
-												</div>
-											</td>
-										</tr>
-									`;
-								});
-							} else {
-								tbody.innerHTML = `
+						if (!tbody) {
+							console.error('Table body not found');
+							return;
+						}
+						tbody.innerHTML = '';
+						
+						if (data.data && data.data.length > 0) {
+							console.log('Processing', data.data.length, 'reviews'); // Debug log
+							data.data.forEach(review => {
+								tbody.innerHTML += `
 									<tr>
-										<td colspan="5" class="text-center">Tidak ada data revisi</td>
+										<td>${review.topik_penelitian || '-'}</td>
+										<td>${review.taruna_nama || '-'}</td>
+										<td>${review.cycle_number || 1}</td>
+										<td>${review.keterangan || '-'}</td>
+										<td>
+											<div class="dropdown">
+												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												href="#" role="button" data-toggle="dropdown">
+													<i class="dw dw-more"></i>
+												</a>
+												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+													<a class="dropdown-item" href="${review.file_path}" target="_blank">
+														<i class="dw dw-eye"></i> View Revisi
+													</a>
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
+														<i class="dw dw-download"></i> Download Revisi
+													</a>
+													<a class="dropdown-item" href="#" onclick="openUploadReviewModal(${review.taruna_id}, '${review.topik_penelitian}', ${review.cycle_number})">
+														<i class="dw dw-upload"></i> Upload Review Baru
+													</a>
+													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'approved')">
+														<i class="dw dw-check"></i> Approve ICP
+													</a>
+													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'rejected')">
+														<i class="dw dw-cancel"></i> Reject ICP
+													</a>
+												</div>
+											</div>
+										</td>
 									</tr>
 								`;
-							}
+							});
+							console.log('Table rows added'); // Debug log
 						} else {
-							showAlert('Gagal memuat data revisi: ' + (data.message || 'Unknown error'), 'danger');
+							console.log('No review data found'); // Debug log
+							tbody.innerHTML = `
+								<tr>
+									<td colspan="5" class="text-center">Tidak ada data revisi</td>
+								</tr>
+							`;
 						}
-					} catch (error) {
-						console.error('Error:', error);
-						showAlert('Gagal memuat data revisi', 'danger');
+					} else {
+						showAlert('Gagal memuat data revisi: ' + (data.message || 'Unknown error'), 'danger');
 					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Gagal memuat data revisi', 'danger');
 				}
+			}
 
 			// Function to open upload review modal
 			function openUploadReviewModal(tarunaId, topikPenelitian, currentCycle) {
@@ -1230,13 +1208,6 @@
 					showAlert('Terjadi kesalahan: ' + error.message, 'danger');
 				}
 			}
-
-			// Panggil loadICPReviewData saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', () => {
-				loadICPData();
-				loadICPReviewData();
-				loadTarunaDropdown();
-			});
 
 		</script>
 
