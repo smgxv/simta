@@ -639,7 +639,7 @@
 					<!-- Simple Datatable start -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">List ICP On Review</h4>
+							<h4 class="text-blue h4">Tabel Hasil Review Dosen</h4>
 						</div>
 						<div class="pb-20">
 							<table class="data-table table stripe hover nowrap">
@@ -647,7 +647,7 @@
 									<tr>
 										<th class="table-plus datatable-nosort">Topik</th>
 										<th class="table-plus datatable-nosort">Dosen Pembimbing</th>
-										<th class="table-plus datatable-nosort">Perbaikan ke-</th>
+										<th class="table-plus datatable-nosort">Review ke-</th>
 										<th class="table-plus datatable-nosort">Keterangan</th>
 										<th class="datatable-nosort">Action</th>
 									</tr>
@@ -768,7 +768,7 @@
 				}
 			}
 
-			// Fungsi untuk memuat data ICP yang sedang di-review
+			// Fungsi untuk memuat data ICP hasil review dosen
 			async function loadICPReviewData() {
 				const userId = localStorage.getItem('userId');
 				if (!userId) return;

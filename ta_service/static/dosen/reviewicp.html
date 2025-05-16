@@ -601,7 +601,7 @@
 
 						<div class="clearfix">
 							<div class="pull-left">
-								<h4 class="text-blue h4">Reivew Idea Concept Project</h4>
+								<h4 class="text-blue h4">Review Idea Concept Project</h4>
 								<p class="mb-30">Unggah hasil Review Idea Concept Project</p>
 							</div>
 						</div>
@@ -637,15 +637,15 @@
 					<!-- Simple Datatable start -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">List ICP ON REVIEW</h4>
-				</div>
+							<h4 class="text-blue h4">Tabel Hasil Revisi Taruna</h4>
+						</div>
 						<div class="pb-20">
 							<table class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
 										<th class="table-plus datatable-nosort">Topik</th>
 										<th class="table-plus datatable-nosort">Nama Taruna</th>
-										<th class="table-plus datatable-nosort">Perbeikan ke-</th>
+										<th class="table-plus datatable-nosort">Revisi ke-</th>
 										<th class="table-plus datatable-nosort">Keterangan</th>
 										<th class="datatable-nosort">Action</th>
 									</tr>
@@ -654,7 +654,7 @@
 									
 								</tbody>
 							</table>
-			</div>
+						</div>
 					</div>
 					<!-- Simple Datatable End -->
 
@@ -682,9 +682,77 @@
 		></noscript>
 		<!-- End Google Tag Manager (noscript) -->
 
+		<!-- Add this modal before the closing body tag -->
+		<div class="modal fade" id="uploadRevisionModal" tabindex="-1" role="dialog" aria-labelledby="uploadRevisionModalLabel" aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="uploadRevisionModalLabel">Upload Revisi ICP</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<form id="revisionForm" enctype="multipart/form-data">
+							<input type="hidden" id="revisionDosenId" name="dosen_id">
+							<input type="hidden" id="revisionTopikPenelitian" name="topik_penelitian">
+							
+							<div class="form-group">
+								<label>Keterangan Revisi</label>
+								<textarea class="form-control" name="keterangan" required></textarea>
+							</div>
+							<div class="form-group">
+								<label>File Revisi ICP (PDF)</label>
+								<input type="file" class="form-control" name="file" accept=".pdf" required>
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+						<button type="button" class="btn btn-primary" onclick="submitRevision()">Upload Revisi</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Add upload review modal -->
+		<div class="modal fade" id="uploadReviewModal" tabindex="-1" role="dialog" aria-labelledby="uploadReviewModalLabel" aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="uploadReviewModalLabel">Upload Review ICP</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<form id="reviewForm" enctype="multipart/form-data">
+							<input type="hidden" id="reviewTarunaId" name="taruna_id">
+							<input type="hidden" id="reviewTopikPenelitian" name="topik_penelitian">
+							<input type="hidden" id="reviewCycleNumber" name="cycle_number">
+							
+							<div class="form-group">
+								<label>Keterangan Review</label>
+								<textarea class="form-control" name="keterangan" required></textarea>
+							</div>
+							<div class="form-group">
+								<label>File Review ICP (PDF)</label>
+								<input type="file" class="form-control" name="file" accept=".pdf" required>
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+						<button type="button" class="btn btn-primary" onclick="submitReview()">Upload Review</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<script>
 			let icpDataGlobal = [];
 
+			// Fungsi untuk memuat data ICP hasil review dosen
 			async function loadICPData() {
 				const dosenID = localStorage.getItem('dosenID');
 				console.log('Memuat ICP untuk dosenID:', dosenID); // Debug
@@ -1003,7 +1071,7 @@
 				}
 			});
 			
-			// Handle form submission
+			// Handle form submission untuk mengunggah review ICP
 			document.getElementById('reviewIcpForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 				const formData = new FormData(this);
@@ -1059,47 +1127,131 @@
 
 			// Fungsi untuk memuat data ICP yang sedang di-review
 			async function loadICPReviewData() {
-				const dosenID = localStorage.getItem('dosenID');
-				if (!dosenID) return;
+				const userId = localStorage.getItem('userId');
+				if (!userId) return;
 				
 				try {
-					// Menggunakan endpoint untuk mengambil data review ICP dosen
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?dosen_id=${dosenID}`);
+					// Get review data from review_icp_taruna table
+					const response = await fetch(`http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
-						const tbody = document.querySelector('.card-box:last-child .data-table tbody');
+						const tbody = document.querySelector('.card-box:last-child table tbody');
 						tbody.innerHTML = '';
 						
-						data.data.forEach(review => {
-							tbody.innerHTML += `
-								<tr>
-									<td>${review.topik_penelitian}</td>
-									<td>${review.nama_taruna}</td>
-									<td>${review.cycle_number || 1}</td>
-									<td>${review.keterangan || '-'}</td>
-									<td>
-										<div class="dropdown">
-											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-											   href="#" role="button" data-toggle="dropdown">
-												<i class="dw dw-more"></i>
-											</a>
-											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="${review.file_path}" target="_blank">
-													<i class="dw dw-eye"></i> View
+						if (data.data && data.data.length > 0) {
+							data.data.forEach(review => {
+								tbody.innerHTML += `
+									<tr>
+										<td>${review.topik_penelitian || '-'}</td>
+										<td>${review.taruna_nama || '-'}</td>
+										<td>${review.cycle_number || 1}</td>
+										<td>${review.keterangan || '-'}</td>
+										<td>
+											<div class="dropdown">
+												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												   href="#" role="button" data-toggle="dropdown">
+													<i class="dw dw-more"></i>
 												</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
-													<i class="dw dw-download"></i> Download
-												</a>
+												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+													<a class="dropdown-item" href="${review.file_path}" target="_blank">
+														<i class="dw dw-eye"></i> View Revisi
+													</a>
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
+														<i class="dw dw-download"></i> Download Revisi
+													</a>
+													<a class="dropdown-item" href="#" onclick="openUploadReviewModal(${review.taruna_id}, '${review.topik_penelitian}', ${review.cycle_number})">
+														<i class="dw dw-upload"></i> Upload Review Baru
+													</a>
+													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'approved')">
+														<i class="dw dw-check"></i> Approve ICP
+													</a>
+													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'rejected')">
+														<i class="dw dw-cancel"></i> Reject ICP
+													</a>
+												</div>
 											</div>
-										</div>
-									</td>
+										</td>
+									</tr>
+								`;
+							});
+						} else {
+							tbody.innerHTML = `
+								<tr>
+									<td colspan="5" class="text-center">Tidak ada data revisi</td>
 								</tr>
 							`;
-						});
+						}
+					} else {
+						showAlert('Gagal memuat data revisi: ' + (data.message || 'Unknown error'), 'danger');
 					}
 				} catch (error) {
 					console.error('Error:', error);
+					showAlert('Gagal memuat data revisi', 'danger');
+				}
+			}
+
+			// Function to open upload review modal
+			function openUploadReviewModal(tarunaId, topikPenelitian, currentCycle) {
+				document.getElementById('reviewTarunaId').value = tarunaId;
+				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
+				document.getElementById('reviewCycleNumber').value = currentCycle + 1;
+				$('#uploadReviewModal').modal('show');
+			}
+
+			// Function to update ICP status (approve/reject)
+			async function updateICPStatus(icpId, status) {
+				try {
+					const response = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=${status}`, {
+						method: 'POST'
+					});
+					
+					const data = await response.json();
+					
+					if (data.status === 'success') {
+						showAlert(`ICP berhasil di-${status}`, 'success');
+						await loadICPReviewData();
+					} else {
+						showAlert(data.message || `Gagal mengubah status ICP ke ${status}`, 'danger');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Terjadi kesalahan saat mengubah status ICP', 'danger');
+				}
+			}
+
+			// Function to submit new review
+			async function submitReview() {
+				const form = document.getElementById('reviewForm');
+				const formData = new FormData(form);
+				
+				try {
+					const dosenId = localStorage.getItem('userId');
+					if (!dosenId) {
+						showAlert('Dosen ID tidak ditemukan. Silakan login ulang.', 'danger');
+						return;
+					}
+
+					formData.append('dosen_id', dosenId);
+					
+					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp/dosen', {
+						method: 'POST',
+						body: formData
+					});
+					
+					const data = await response.json();
+					
+					if (data.status === 'success') {
+						showAlert('Review berhasil diunggah', 'success');
+						$('#uploadReviewModal').modal('hide');
+						form.reset();
+						await loadICPReviewData();
+					} else {
+						showAlert(data.message || 'Gagal mengunggah review', 'danger');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Terjadi kesalahan: ' + error.message, 'danger');
 				}
 			}
 
