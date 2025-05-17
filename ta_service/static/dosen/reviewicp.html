@@ -603,7 +603,7 @@
 					<div class="card-box mb-30">
 						<div class="pd-20">
 							<h4 class="text-blue h4">Tabel Hasil Revisi Taruna</h4>
-						</div>
+							</div>
 						<div class="pb-20">
 							<table id="revisiTable" class="data-table table stripe hover nowrap">
 								<thead>
@@ -619,7 +619,7 @@
 									<!-- Data will be loaded here -->
 								</tbody>
 							</table>
-						</div>
+							</div>
 					</div>
 					<!-- Simple Datatable End -->
 
@@ -709,7 +709,7 @@
 
 							// Create a unique ID for this row to update later
 							const rowId = `icp-row-${icp.id}`;
-							
+
 							tbody.innerHTML += `
 								<tr id="${rowId}">
 									<td>${icp.topik_penelitian}</td>
@@ -760,25 +760,7 @@
 										return;
 									}
 
-									// First get the ICP details to confirm it exists
-									const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
-										headers: {
-											'Authorization': `Bearer ${token}`,
-											'Content-Type': 'application/json'
-										}
-									});
-
-									if (!icpResponse.ok) {
-										throw new Error(`HTTP error! status: ${icpResponse.status}`);
-									}
-
-									const icpData = await icpResponse.json();
-									if (!icpData.data) {
-										showAlert('Data ICP tidak ditemukan', 'danger');
-										return;
-									}
-
-									// Then get the taruna data using user_id
+									// Get the taruna data using user_id
 									const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
 										headers: {
 											'Authorization': `Bearer ${token}`,
@@ -808,7 +790,27 @@
 											icpId,
 											userId: taruna.user_id
 										}); // Debug log
-										openUploadReviewModal(topik, taruna.id, icpId, 0);
+
+										// Get ICP data to verify the match
+										const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
+											headers: {
+												'Authorization': `Bearer ${token}`,
+												'Content-Type': 'application/json'
+											}
+										});
+
+										if (!icpResponse.ok) {
+											throw new Error(`HTTP error! status: ${icpResponse.status}`);
+										}
+
+										const icpData = await icpResponse.json();
+										
+										// Verify that the ICP belongs to this taruna
+										if (icpData.data && icpData.data.user_id === userId) {
+											openUploadReviewModal(topik, taruna.id, icpId, 0);
+										} else {
+											showAlert('Data ICP tidak sesuai dengan taruna', 'danger');
+										}
 									} else {
 										showAlert('Data taruna tidak ditemukan', 'danger');
 									}
@@ -915,23 +917,23 @@
 				console.log('UserID:', userId); // Debug log
 
 				// Ambil data dosen dan set dosenID
-				fetch('http://104.43.89.154:8081/dosen', {
-					headers: {
-						'Authorization': `Bearer ${token}`
-					}
-				})
-				.then(response => response.json())
-				.then(data => {
-					if (data.status === 'success' && Array.isArray(data.data)) {
-						const dosen = data.data.find(d => String(d.user_id) === String(userId));
-						if (dosen) {
+					fetch('http://104.43.89.154:8081/dosen', {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					})
+					.then(response => response.json())
+					.then(data => {
+						if (data.status === 'success' && Array.isArray(data.data)) {
+							const dosen = data.data.find(d => String(d.user_id) === String(userId));
+							if (dosen) {
 							localStorage.setItem('dosenID', dosen.id);
 							localStorage.setItem('dosenName', dosen.nama_lengkap);
 							console.log('DosenID set:', dosen.id); // Debug log
 							
 							// Update nama dosen di header
-							const usernameElement = document.getElementById('username');
-							if (usernameElement) {
+					const usernameElement = document.getElementById('username');
+					if (usernameElement) {
 								usernameElement.textContent = dosen.nama_lengkap;
 							}
 							
@@ -948,7 +950,7 @@
 				});
 			});
 
-			
+
 			// Panggil loadICPData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', loadICPData);
 
@@ -1006,7 +1008,7 @@
 					}
 				}
 			});
-			
+
 			// Pastikan event listener untuk tombol logout terpasang dengan benar
 			document.addEventListener('DOMContentLoaded', function() {
 				const logoutButton = document.querySelector('a[onclick="logout()"]');
@@ -1161,14 +1163,15 @@
 					}
 
 					// Debug log untuk melihat data yang akan dikirim
-					console.log('Form data before submission:', {
+					const submissionData = {
 						dosenId: dosenId,
 						icpId: formData.get('icp_id'),
 						tarunaId: formData.get('taruna_id'),
 						topikPenelitian: formData.get('topik_penelitian'),
 						keterangan: formData.get('keterangan'),
-						file: formData.get('file')
-					});
+						fileName: formData.get('file').name
+					};
+					console.log('Form data before submission:', submissionData);
 
 					formData.append('dosen_id', dosenId);
 					
