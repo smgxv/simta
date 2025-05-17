@@ -1085,36 +1085,40 @@
 						return;
 					}
 
-					// Debug log
-					console.log('Submitting review with:', {
-						dosenId,
+					// Debug log untuk melihat data yang akan dikirim
+					console.log('Form data before submission:', {
+						dosenId: dosenId,
 						tarunaId: formData.get('taruna_id'),
-						topikPenelitian: formData.get('topik_penelitian')
+						topikPenelitian: formData.get('topik_penelitian'),
+						keterangan: formData.get('keterangan'),
+						file: formData.get('file')
 					});
 
 					formData.append('dosen_id', dosenId);
 					
-					// First update the ICP status to "on review"
-					const icps = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenId}`).then(r => r.json());
-					const matchingIcp = icps.data.find(icp => 
-						icp.user_id === parseInt(formData.get('taruna_id')) && 
-						icp.topik_penelitian === formData.get('topik_penelitian')
-					);
-
-					if (matchingIcp) {
-						await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${matchingIcp.id}&status=on review`, {
-							method: 'POST'
-						});
-					}
-					
+					// Kirim request untuk upload review
 					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp/dosen', {
 						method: 'POST',
 						body: formData
 					});
 					
 					const data = await response.json();
-					
+					console.log('Upload response:', data); // Debug log untuk response
+
 					if (data.status === 'success') {
+						// Jika upload berhasil, update status ICP
+						const icps = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenId}`).then(r => r.json());
+						const matchingIcp = icps.data.find(icp => 
+							String(icp.user_id) === String(formData.get('taruna_id')) && 
+							icp.topik_penelitian === formData.get('topik_penelitian')
+						);
+
+						if (matchingIcp) {
+							await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${matchingIcp.id}&status=on review`, {
+								method: 'POST'
+							});
+						}
+
 						showAlert('Review berhasil diunggah', 'success');
 						$('#uploadReviewModal').modal('hide');
 						form.reset();
@@ -1124,7 +1128,7 @@
 						showAlert(data.message || 'Gagal mengunggah review', 'danger');
 					}
 				} catch (error) {
-					console.error('Error:', error);
+					console.error('Error details:', error); // Debug log untuk error
 					showAlert('Terjadi kesalahan: ' + error.message, 'danger');
 				}
 			}
