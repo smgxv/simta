@@ -751,7 +751,7 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	var query string
 	var args []interface{}
 
-	// Base query with joins to get taruna and dosen names
+	// Base query with joins to get taruna and dosen names, including user_id
 	query = `
 		SELECT 
 			rit.id,
@@ -765,6 +765,7 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			rit.created_at,
 			rit.updated_at,
 			t.nama_lengkap as taruna_nama,
+			t.user_id as user_id,
 			d.nama_lengkap as dosen_nama
 		FROM review_icp_taruna rit
 		LEFT JOIN taruna t ON rit.taruna_id = t.id
@@ -804,6 +805,7 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			CreatedAt       string
 			UpdatedAt       string
 			TarunaNama      sql.NullString
+			UserID          sql.NullInt64
 			DosenNama       sql.NullString
 		}
 
@@ -819,6 +821,7 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			&revision.CreatedAt,
 			&revision.UpdatedAt,
 			&revision.TarunaNama,
+			&revision.UserID,
 			&revision.DosenNama,
 		)
 		if err != nil {
@@ -838,6 +841,7 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			"created_at":       revision.CreatedAt,
 			"updated_at":       revision.UpdatedAt,
 			"taruna_nama":      revision.TarunaNama.String,
+			"user_id":          revision.UserID.Int64,
 			"dosen_nama":       revision.DosenNama.String,
 		})
 	}

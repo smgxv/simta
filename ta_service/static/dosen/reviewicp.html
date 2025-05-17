@@ -1089,7 +1089,7 @@
 													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Revisi
 													</a>
-													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.icp_id}, ${review.cycle_number})">
+													<a class="dropdown-item upload-review-btn" href="#" data-icp-id="${review.icp_id}" data-taruna-id="${review.taruna_id}" data-topik="${review.topik_penelitian}" data-cycle="${review.cycle_number}">
 														<i class="dw dw-upload"></i> Upload Review Baru
 													</a>
 													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'approved')">
@@ -1211,6 +1211,52 @@
 					showAlert('Terjadi kesalahan: ' + error.message, 'danger');
 				}
 			}
+
+			// Add click handlers for the new upload-review-btn buttons
+			document.querySelectorAll('#revisiTable .upload-review-btn').forEach(btn => {
+				btn.addEventListener('click', async (e) => {
+					e.preventDefault();
+					const icpId = btn.getAttribute('data-icp-id');
+					const tarunaId = btn.getAttribute('data-taruna-id');
+					const topik = btn.getAttribute('data-topik');
+					const cycle = parseInt(btn.getAttribute('data-cycle')) || 0;
+
+					try {
+						// Get token from localStorage or sessionStorage
+						const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+						if (!token) {
+							showAlert('Token tidak ditemukan. Silakan login ulang.', 'danger');
+							return;
+						}
+
+						// Get ICP data to get the correct user_id
+						const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
+							headers: {
+								'Authorization': `Bearer ${token}`,
+								'Content-Type': 'application/json'
+							}
+						});
+
+						if (!icpResponse.ok) {
+							throw new Error(`HTTP error! status: ${icpResponse.status}`);
+						}
+
+						const icpData = await icpResponse.json();
+						console.log('ICP data:', icpData);
+
+						if (!icpData.data) {
+							showAlert('Data ICP tidak ditemukan', 'danger');
+							return;
+						}
+
+						// Open modal with the correct data
+						openUploadReviewModal(topik, tarunaId, icpId, cycle, icpData.data.user_id);
+					} catch (error) {
+						console.error('Error:', error);
+						showAlert('Gagal mengambil data. Silakan coba lagi.', 'danger');
+					}
+				});
+			});
 
 		</script>
 
