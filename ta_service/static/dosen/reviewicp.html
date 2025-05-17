@@ -659,6 +659,7 @@
 					</div>
 					<div class="modal-body">
 						<form id="reviewForm" enctype="multipart/form-data">
+							<input type="hidden" id="reviewIcpId" name="icp_id">
 							<input type="hidden" id="reviewTarunaId" name="taruna_id">
 							<input type="hidden" id="reviewTopikPenelitian" name="topik_penelitian">
 							<input type="hidden" id="reviewCycleNumber" name="cycle_number">
@@ -723,7 +724,7 @@
 												<a class="dropdown-item" href="${icp.file_path}" target="_blank">
 													<i class="dw dw-eye"></i> View
 												</a>
-												<a class="dropdown-item" href="#" onclick="openUploadReviewModal(${icp.taruna_id}, '${icp.topik_penelitian}', 0, ${icp.user_id})">
+												<a class="dropdown-item" href="#" onclick="openUploadReviewModal(${icp.id}, ${icp.taruna_id}, '${icp.topik_penelitian}', 0)">
 													<i class="dw dw-upload"></i> Upload Review
 												</a>
 												<a class="dropdown-item accept-icp-btn" href="#" data-id="${icp.id}">
@@ -1044,9 +1045,10 @@
 			}
 
 			// Function to open upload review modal
-			function openUploadReviewModal(tarunaId, topikPenelitian, currentCycle, userId) {
-				console.log('Opening modal with:', { tarunaId, topikPenelitian, currentCycle, userId }); // Debug log
-				document.getElementById('reviewTarunaId').value = userId; // Use user_id instead of taruna_id
+			function openUploadReviewModal(icpId, tarunaId, topikPenelitian, currentCycle) {
+				console.log('Opening modal with:', { icpId, tarunaId, topikPenelitian, currentCycle }); // Debug log
+				document.getElementById('reviewIcpId').value = icpId;
+				document.getElementById('reviewTarunaId').value = tarunaId;
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
 				document.getElementById('reviewCycleNumber').value = currentCycle + 1;
 				$('#uploadReviewModal').modal('show');
@@ -1088,6 +1090,7 @@
 					// Debug log untuk melihat data yang akan dikirim
 					console.log('Form data before submission:', {
 						dosenId: dosenId,
+						icpId: formData.get('icp_id'),
 						tarunaId: formData.get('taruna_id'),
 						topikPenelitian: formData.get('topik_penelitian'),
 						keterangan: formData.get('keterangan'),
@@ -1096,6 +1099,11 @@
 
 					formData.append('dosen_id', dosenId);
 					
+					// Update status ICP menjadi "on review"
+					await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${formData.get('icp_id')}&status=on review`, {
+						method: 'POST'
+					});
+
 					// Kirim request untuk upload review
 					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp/dosen', {
 						method: 'POST',
@@ -1106,19 +1114,6 @@
 					console.log('Upload response:', data); // Debug log untuk response
 
 					if (data.status === 'success') {
-						// Jika upload berhasil, update status ICP
-						const icps = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenId}`).then(r => r.json());
-						const matchingIcp = icps.data.find(icp => 
-							String(icp.user_id) === String(formData.get('taruna_id')) && 
-							icp.topik_penelitian === formData.get('topik_penelitian')
-						);
-
-						if (matchingIcp) {
-							await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${matchingIcp.id}&status=on review`, {
-								method: 'POST'
-							});
-						}
-
 						showAlert('Review berhasil diunggah', 'success');
 						$('#uploadReviewModal').modal('hide');
 						form.reset();
