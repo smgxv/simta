@@ -753,18 +753,42 @@
 								const topik = btn.getAttribute('data-topik');
 
 								try {
-									const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`);
+									// Get token from localStorage or sessionStorage
+									const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+									if (!token) {
+										showAlert('Token tidak ditemukan. Silakan login ulang.', 'danger');
+										return;
+									}
+
+									const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+										headers: {
+											'Authorization': `Bearer ${token}`,
+											'Content-Type': 'application/json'
+										}
+									});
+
+									if (!tarunaResponse.ok) {
+										if (tarunaResponse.status === 401) {
+											showAlert('Sesi anda telah berakhir. Silakan login ulang.', 'danger');
+											setTimeout(() => {
+												window.location.href = '/loginusers';
+											}, 2000);
+											return;
+										}
+										throw new Error(`HTTP error! status: ${tarunaResponse.status}`);
+									}
+
 									const tarunaData = await tarunaResponse.json();
 
 									if (tarunaData.status === 'success' && tarunaData.data && tarunaData.data.length > 0) {
 										const taruna = tarunaData.data[0];
 										openUploadReviewModal(topik, taruna.id, icpId, 0);
 									} else {
-										showAlert('Tidak dapat menemukan data taruna', 'danger');
+										showAlert('Data taruna tidak ditemukan', 'danger');
 									}
 								} catch (error) {
 									console.error('Error fetching taruna data:', error);
-									showAlert('Gagal mengambil data taruna', 'danger');
+									showAlert('Gagal mengambil data taruna. Silakan coba lagi.', 'danger');
 								}
 							});
 						});
