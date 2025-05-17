@@ -322,6 +322,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	dosenID := r.FormValue("dosen_id")
 	tarunaID := r.FormValue("taruna_id")
+	userID := r.FormValue("user_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
@@ -343,18 +344,35 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Get the ICP ID using taruna_id and topik_penelitian
+	// Verify taruna_id and user_id match
+	var verifiedTarunaID int
+	err = db.QueryRow("SELECT id FROM taruna WHERE id = ? AND user_id = ?", tarunaID, userID).Scan(&verifiedTarunaID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "error",
+				"message": "Invalid taruna_id and user_id combination",
+			})
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Database error: " + err.Error(),
+		})
+		return
+	}
+
+	// Get the ICP ID using user_id and topik_penelitian
 	var icpID int
 	err = db.QueryRow(`
-		SELECT i.id 
-		FROM icp i 
-		JOIN taruna t ON i.user_id = t.user_id 
-		WHERE t.id = ? AND i.topik_penelitian = ?`,
-		tarunaID, topikPenelitian).Scan(&icpID)
+		SELECT id 
+		FROM icp 
+		WHERE user_id = ? AND topik_penelitian = ?`,
+		userID, topikPenelitian).Scan(&icpID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "ICP not found for the given taruna and topic: " + err.Error(),
+			"message": "ICP not found for the given user and topic: " + err.Error(),
 		})
 		return
 	}

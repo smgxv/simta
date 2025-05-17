@@ -663,6 +663,7 @@
 							<input type="hidden" id="reviewTarunaId" name="taruna_id">
 							<input type="hidden" id="reviewTopikPenelitian" name="topik_penelitian">
 							<input type="hidden" id="reviewCycleNumber" name="cycle_number">
+							<input type="hidden" id="reviewUserId" name="user_id">
 							
 							<div class="form-group">
 								<label>Keterangan Review</label>
@@ -760,8 +761,28 @@
 										return;
 									}
 
-									// Get the taruna data using user_id
-									const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+									// First get ICP data to get the correct user_id
+									const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
+										headers: {
+											'Authorization': `Bearer ${token}`,
+											'Content-Type': 'application/json'
+										}
+									});
+
+									if (!icpResponse.ok) {
+										throw new Error(`HTTP error! status: ${icpResponse.status}`);
+									}
+
+									const icpData = await icpResponse.json();
+									console.log('ICP data:', icpData); // Debug log
+
+									if (!icpData.data) {
+										showAlert('Data ICP tidak ditemukan', 'danger');
+										return;
+									}
+
+									// Get the taruna data using the user_id from ICP data
+									const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${icpData.data.user_id}`, {
 										headers: {
 											'Authorization': `Bearer ${token}`,
 											'Content-Type': 'application/json'
@@ -788,29 +809,11 @@
 											topik,
 											tarunaId: taruna.id,
 											icpId,
-											userId: taruna.user_id
+											userId: icpData.data.user_id
 										}); // Debug log
 
-										// Get ICP data to verify the match
-										const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
-											headers: {
-												'Authorization': `Bearer ${token}`,
-												'Content-Type': 'application/json'
-											}
-										});
-
-										if (!icpResponse.ok) {
-											throw new Error(`HTTP error! status: ${icpResponse.status}`);
-										}
-
-										const icpData = await icpResponse.json();
-										
-										// Verify that the ICP belongs to this taruna
-										if (icpData.data && icpData.data.user_id === userId) {
-											openUploadReviewModal(topik, taruna.id, icpId, 0);
-										} else {
-											showAlert('Data ICP tidak sesuai dengan taruna', 'danger');
-										}
+										// Store both taruna.id and user_id in the modal
+										openUploadReviewModal(topik, taruna.id, icpId, 0, icpData.data.user_id);
 									} else {
 										showAlert('Data taruna tidak ditemukan', 'danger');
 									}
@@ -1120,12 +1123,13 @@
 			}
 
 			// Function to open upload review modal
-			function openUploadReviewModal(topikPenelitian, tarunaId, icpId, currentCycle) {
-				console.log('Opening modal with:', { topikPenelitian, tarunaId, icpId, currentCycle }); // Debug log
+			function openUploadReviewModal(topikPenelitian, tarunaId, icpId, currentCycle, userId) {
+				console.log('Opening modal with:', { topikPenelitian, tarunaId, icpId, currentCycle, userId }); // Debug log
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
 				document.getElementById('reviewTarunaId').value = tarunaId;
 				document.getElementById('reviewIcpId').value = icpId;
 				document.getElementById('reviewCycleNumber').value = currentCycle + 1;
+				document.getElementById('reviewUserId').value = userId;
 				$('#uploadReviewModal').modal('show');
 			}
 
