@@ -760,6 +760,25 @@
 										return;
 									}
 
+									// First get the ICP details to confirm it exists
+									const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
+										headers: {
+											'Authorization': `Bearer ${token}`,
+											'Content-Type': 'application/json'
+										}
+									});
+
+									if (!icpResponse.ok) {
+										throw new Error(`HTTP error! status: ${icpResponse.status}`);
+									}
+
+									const icpData = await icpResponse.json();
+									if (!icpData.data) {
+										showAlert('Data ICP tidak ditemukan', 'danger');
+										return;
+									}
+
+									// Then get the taruna data using user_id
 									const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
 										headers: {
 											'Authorization': `Bearer ${token}`,
@@ -779,16 +798,23 @@
 									}
 
 									const tarunaData = await tarunaResponse.json();
+									console.log('Taruna data:', tarunaData); // Debug log
 
 									if (tarunaData.status === 'success' && tarunaData.data && tarunaData.data.length > 0) {
 										const taruna = tarunaData.data[0];
+										console.log('Opening modal with:', {
+											topik,
+											tarunaId: taruna.id,
+											icpId,
+											userId: taruna.user_id
+										}); // Debug log
 										openUploadReviewModal(topik, taruna.id, icpId, 0);
 									} else {
 										showAlert('Data taruna tidak ditemukan', 'danger');
 									}
 								} catch (error) {
-									console.error('Error fetching taruna data:', error);
-									showAlert('Gagal mengambil data taruna. Silakan coba lagi.', 'danger');
+									console.error('Error:', error);
+									showAlert('Gagal mengambil data. Silakan coba lagi.', 'danger');
 								}
 							});
 						});
@@ -1147,9 +1173,13 @@
 					formData.append('dosen_id', dosenId);
 					
 					// Update status ICP menjadi "on review"
-					await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${formData.get('icp_id')}&status=on review`, {
+					const statusResponse = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${formData.get('icp_id')}&status=on review`, {
 						method: 'POST'
 					});
+
+					if (!statusResponse.ok) {
+						throw new Error('Failed to update ICP status');
+					}
 
 					// Kirim request untuk upload review
 					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp/dosen', {
