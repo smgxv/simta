@@ -596,42 +596,7 @@
 					</div>
 					<!-- Simple Datatable End -->
 
-					<!-- Default Basic Forms Start -->
-					<div class="pd-20 card-box mb-30">
 
-						<div class="clearfix">
-							<div class="pull-left">
-								<h4 class="text-blue h4">Review Idea Concept Project</h4>
-								<p class="mb-30">Unggah hasil Review Idea Concept Project</p>
-							</div>
-						</div>
-
-						<form id="reviewIcpForm" enctype="multipart/form-data">
-							<div class="form-group">
-								<label>Nama Taruna</label>
-								<select class="form-control" id="tarunaSelect" name="taruna_id" required>
-									<option value="" disabled selected>Pilih Taruna</option>
-								</select>
-							</div>
-							<div class="form-group">
-								<label>Topik Penelitian</label>
-								<select class="form-control" id="topikPenelitianSelect" name="topik_penelitian" required>
-									<option value="" disabled selected>Pilih Topik Penelitian</option>
-								</select>
-							</div>
-							<div class="form-group">
-								<label>Keterangan</label>
-								<textarea class="form-control" name="keterangan"></textarea>
-							</div>
-							<div class="form-group">
-								<label>File Review ICP (PDF)</label>
-								<input type="file" class="form-control" name="file" accept=".pdf" required>
-							</div>
-							<button type="submit" class="btn btn-primary">UPLOAD</button>
-						</form>
-
-					</div>
-					<!-- Simple Datatable End -->
 
 					
 					<!-- Simple Datatable start -->
@@ -757,6 +722,9 @@
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
 												<a class="dropdown-item" href="${icp.file_path}" target="_blank">
 													<i class="dw dw-eye"></i> View
+												</a>
+												<a class="dropdown-item" href="#" onclick="openUploadReviewModal(${icp.taruna_id}, '${icp.topik_penelitian}', 0)">
+													<i class="dw dw-upload"></i> Upload Review
 												</a>
 												<a class="dropdown-item accept-icp-btn" href="#" data-id="${icp.id}">
 													<i class="dw dw-edit2"></i> Accept
@@ -941,24 +909,6 @@
 				});
 			}
 
-			// Event listener untuk update topik penelitian saat taruna dipilih
-			document.getElementById('tarunaSelect').addEventListener('change', function() {
-				const userId = this.value;
-				const topikSelect = document.getElementById('topikPenelitianSelect');
-				topikSelect.innerHTML = '<option value="" disabled selected>Pilih Topik Penelitian</option>';
-
-				const topikSet = new Set();
-				icpDataGlobal.forEach(icp => {
-					if (String(icp.user_id) === String(userId) && !topikSet.has(icp.topik_penelitian)) {
-						topikSet.add(icp.topik_penelitian);
-						const option = document.createElement('option');
-						option.value = icp.topik_penelitian;
-						option.textContent = icp.topik_penelitian;
-						topikSelect.appendChild(option);
-					}
-				});
-			});
-
 			// Panggil loadICPData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', loadICPData);
 
@@ -1017,46 +967,7 @@
 				}
 			});
 			
-			// Handle form submission untuk mengunggah review ICP
-			document.getElementById('reviewIcpForm').addEventListener('submit', async function(e) {
-				e.preventDefault();
-				const formData = new FormData(this);
-				const dosenID = localStorage.getItem('dosenID');
-				
-				if (!dosenID) {
-					showAlert('Dosen ID tidak ditemukan. Silakan login ulang.', 'danger');
-					return;
-				}
 
-				formData.append('dosen_id', dosenID);
-
-				// Debug log
-				console.log('Submitting review with:', {
-					dosenId: formData.get('dosen_id'),
-					tarunaId: formData.get('taruna_id'),
-					topikPenelitian: formData.get('topik_penelitian')
-				});
-
-				try {
-					const uploadResponse = await fetch('http://104.43.89.154:8082/upload/reviewicp/dosen', {
-						method: 'POST',
-						body: formData
-					});
-					const uploadData = await uploadResponse.json();
-					
-					if (uploadData.status === 'success') {
-						showAlert('Review ICP berhasil diunggah dan status diperbarui', 'success');
-						this.reset();
-						loadICPData();
-						loadICPReviewData();
-					} else {
-						showAlert('Gagal upload: ' + uploadData.message, 'danger');
-					}
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Terjadi kesalahan pada server', 'danger');
-				}
-			});
 
 			// Pastikan event listener untuk tombol logout terpasang dengan benar
 			document.addEventListener('DOMContentLoaded', function() {
