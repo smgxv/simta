@@ -706,41 +706,53 @@
 								'on review': 'badge badge-secondary'
 							}[icp.status] || 'badge badge-secondary';
 
-							// Debug log untuk melihat data taruna
+							// Debug log untuk melihat data ICP
 							console.log('ICP data:', icp);
 
-							tbody.innerHTML += `
-								<tr>
-									<td>${icp.topik_penelitian}</td>
-									<td>${icp.nama_taruna || 'Nama tidak tersedia'}</td>
-									<td><span class="${statusClass}">${icp.status}</span></td>
-									<td>
-										<div class="dropdown">
-											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-											href="#" role="button" data-toggle="dropdown">
-												<i class="dw dw-more"></i>
-											</a>
-											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="${icp.file_path}" target="_blank">
-													<i class="dw dw-eye"></i> View
-												</a>
-												<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${icp.topik_penelitian}', ${icp.taruna_id}, ${icp.id}, 0)">
-													<i class="dw dw-upload"></i> Upload Review
-												</a>
-												<a class="dropdown-item accept-icp-btn" href="#" data-id="${icp.id}">
-													<i class="dw dw-edit2"></i> Accept
-												</a>
-												<a class="dropdown-item reject-icp-btn" href="#" data-id="${icp.id}">
-													<i class="dw dw-delete-3"></i> Reject
-												</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
-													<i class="dw dw-download"></i> Download
-												</a>
-											</div>
-										</div>
-									</td>
-								</tr>
-							`;
+							// Get taruna_id from user_id
+							fetch(`http://104.43.89.154:8081/taruna?user_id=${icp.user_id}`)
+								.then(response => response.json())
+								.then(tarunaData => {
+									if (tarunaData.status === 'success' && tarunaData.data && tarunaData.data.length > 0) {
+										const taruna = tarunaData.data[0];
+										
+										tbody.innerHTML += `
+											<tr>
+												<td>${icp.topik_penelitian}</td>
+												<td>${icp.nama_taruna || 'Nama tidak tersedia'}</td>
+												<td><span class="${statusClass}">${icp.status}</span></td>
+												<td>
+													<div class="dropdown">
+														<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+														href="#" role="button" data-toggle="dropdown">
+															<i class="dw dw-more"></i>
+														</a>
+														<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+															<a class="dropdown-item" href="${icp.file_path}" target="_blank">
+																<i class="dw dw-eye"></i> View
+															</a>
+															<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${icp.topik_penelitian}', ${taruna.id}, ${icp.id}, 0)">
+																<i class="dw dw-upload"></i> Upload Review
+															</a>
+															<a class="dropdown-item accept-icp-btn" href="#" data-id="${icp.id}">
+																<i class="dw dw-edit2"></i> Accept
+															</a>
+															<a class="dropdown-item reject-icp-btn" href="#" data-id="${icp.id}">
+																<i class="dw dw-delete-3"></i> Reject
+															</a>
+															<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
+																<i class="dw dw-download"></i> Download
+															</a>
+														</div>
+													</div>
+												</td>
+											</tr>
+										`;
+									}
+								})
+								.catch(error => {
+									console.error('Error fetching taruna data:', error);
+								});
 						});
 					}
 				} catch (error) {
