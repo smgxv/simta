@@ -1048,7 +1048,7 @@
 				}
 				
 				try {
-					const url = `http://104.43.89.154:8082/reviewicp/list?dosen_id=${dosenID}`;
+					const url = `http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenID}`;
 					console.log('Fetching from URL:', url);
 					
 					const response = await fetch(url);
@@ -1071,7 +1071,7 @@
 								tbody.innerHTML += `
 									<tr>
 										<td>${review.topik_penelitian || '-'}</td>
-										<td>${review.nama_taruna || '-'}</td>
+										<td>${review.taruna_nama || '-'}</td>
 										<td>${review.cycle_number || 1}</td>
 										<td>${review.keterangan || '-'}</td>
 										<td>
@@ -1087,13 +1087,13 @@
 													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Revisi
 													</a>
-													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.id}, ${review.cycle_number || 0})">
+													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.icp_id}, ${review.cycle_number || 0})">
 														<i class="dw dw-upload"></i> Upload Review Baru
 													</a>
-													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.id}, 'approved')">
+													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'approved')">
 														<i class="dw dw-check"></i> Approve ICP
 													</a>
-													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.id}, 'rejected')">
+													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'rejected')">
 														<i class="dw dw-cancel"></i> Reject ICP
 													</a>
 												</div>
