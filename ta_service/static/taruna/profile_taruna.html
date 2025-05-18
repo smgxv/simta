@@ -273,7 +273,7 @@ ss
 							<span class="user-icon">
 								<img src="vendors/images/photo1.jpg" alt="" />
 							</span>
-							<span class="user-name">{{.username}}</span>
+							<span class="user-name" id="username"></span>
 						</a>
 						<div
 							class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list"
@@ -281,9 +281,9 @@ ss
 							<a class="dropdown-item" href="/admin/profile"
 								><i class="dw dw-user1"></i> Profile</a
 							>
-							<a class="dropdown-item" href="/logout"
-								><i class="dw dw-logout"></i> Log Out</a
-							>
+							<a class="dropdown-item" href="#" onclick="logout(); return false;">
+								<i class="dw dw-logout"></i> Log Out
+							</a>
 						</div>
 					</div>
 				</div>
@@ -600,7 +600,7 @@ ss
 								</div>
 								<h5 class="text-center h5 mb-0" id="fullName">Nama Panjang</h5>
 								<div class="text-center mb-3">
-									<button class="btn btn-primary" id="editProfileBtn">Edit Profile</button>
+									<a href="/taruna/editprofile" class="btn btn-primary" id="editProfileBtn">Edit Profile</a>
 								</div>
 								<p class="text-center text-muted font-14">
 									<span id="role">Role</span>
