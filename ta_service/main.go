@@ -118,6 +118,8 @@ func main() {
 	tarunaRoutes.HandleFunc("/editicp", controllers.EditICP).Methods("GET", "OPTIONS")
 	// Tambahkan route profile taruna
 	tarunaRoutes.HandleFunc("/profile", controllers.ProfileTaruna).Methods("GET")
+	// Tambahkan route edit profile taruna
+	tarunaRoutes.HandleFunc("/editprofile", controllers.EditProfileTaruna).Methods("GET")
 
 	// Tambahkan routes untuk dosen
 	dosenRoutes := router.PathPrefix("/dosen").Subrouter()
