@@ -16,6 +16,10 @@ func main() {
 	http.HandleFunc("/users/detail", middleware.AuthMiddleware(handlers.GetUserDetail))
 	http.HandleFunc("/users/delete", middleware.AuthMiddleware(handlers.DeleteUser))
 
+	// Taruna
+	http.HandleFunc("/taruna", middleware.AuthMiddleware(handlers.GetAllTaruna))
+	http.HandleFunc("/taruna/edituser", middleware.AuthMiddleware(handlers.EditUserTaruna))
+
 	http.HandleFunc("/dosen", middleware.AuthMiddleware(handlers.GetAllDosen))
 	http.HandleFunc("/taruna", middleware.AuthMiddleware(handlers.GetAllTaruna))
 

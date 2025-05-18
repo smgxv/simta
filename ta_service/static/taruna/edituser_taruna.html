@@ -151,6 +151,19 @@
                         </div>
                         
                         <div class="form-group row">
+                            <label class="col-sm-12 col-md-2 col-form-label">Password Baru</label>
+                            <div class="col-sm-12 col-md-10">
+                                <input class="form-control" type="password" id="password" name="password" placeholder="Kosongkan jika tidak ingin mengubah password">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-12 col-md-2 col-form-label">Konfirmasi Password</label>
+                            <div class="col-sm-12 col-md-10">
+                                <input class="form-control" type="password" id="confirm_password" name="confirm_password" placeholder="Ulangi password baru">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
                             <div class="col-sm-12 col-md-10 offset-md-2">
                                 <button type="submit" class="btn btn-primary">Update User</button>
                                 <a href="/admin/listuser" class="btn btn-secondary">Cancel</a>
@@ -250,10 +263,12 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('id');
+        let userId = urlParams.get('id');
+        if (!userId) {
+            userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        }
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    
-        if (!token) {
+        if (!token || !userId) {
             window.location.replace('/loginusers');
             return;
         }
@@ -305,8 +320,22 @@
         document.getElementById('editUserForm').addEventListener('submit', function (e) {
             e.preventDefault(); // Hindari reload halaman
 
+            // Validasi password jika diisi
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            if (password || confirmPassword) {
+                if (password !== confirmPassword) {
+                    alert('Password dan konfirmasi password tidak sama!');
+                    return;
+                }
+                if (password.length < 6) {
+                    alert('Password minimal 6 karakter!');
+                    return;
+                }
+            }
+
             const userData = {
-                id: parseInt(userId), // Ambil ID dari URL
+                id: parseInt(userId), // Ambil ID dari URL atau storage
                 nama_lengkap: document.getElementById('nama_lengkap').value,
                 email: document.getElementById('email').value,
                 username: document.getElementById('username').value,
@@ -314,15 +343,19 @@
                 role: document.getElementById('role').value
             };
 
-                    // Tambahkan kelas jika role adalah Taruna
+            // Tambahkan kelas jika role adalah Taruna
             if (userData.role.toLowerCase() === 'taruna') {
                 userData.kelas = document.getElementById('kelas').value;
             }
 
+            // Tambahkan password jika diisi
+            if (password) {
+                userData.password = password;
+            }
 
             console.log('Sending data:', userData);
 
-            fetch(`http://104.43.89.154:8081/users/edit`, {
+            fetch(`http://104.43.89.154:8081/taruna/edituser`, {
                 method: 'PUT',
                 headers: {
                     'Accept': 'application/json',
@@ -342,7 +375,7 @@
             .then(data => {
                 console.log('Success:', data);
                 alert('User berhasil diupdate');
-                window.location.href = '/admin/listuser';
+                window.location.href = '/taruna/profile';
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -351,6 +384,7 @@
         });
     });
     </script>
+    
 <!-- // ... existing code ... -->
 </body>
 </html>
