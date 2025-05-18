@@ -599,6 +599,9 @@ ss
 									</div>
 								</div>
 								<h5 class="text-center h5 mb-0" id="fullName">Nama Panjang</h5>
+								<div class="text-center mb-3">
+									<button class="btn btn-primary" id="editProfileBtn">Edit Profile</button>
+								</div>
 								<p class="text-center text-muted font-14">
 									<span id="role">Role</span>
 								</p>
@@ -771,6 +774,92 @@ ss
 					});
 				}
 			});
+
+			// Kelas per jurusan
+			const kelasPerJurusan = {
+				'Keamanan Siber': [
+					'IV Rekayasa Keamanan Siber Echo',
+					'IV Rekayasa Keamanan Siber Trace',
+					'IV Rekayasa Keamanan Siber Route'
+				],
+				'Kriptografi': [
+					'IV Rekayasa Perangkat Lunak Kripto',
+					'IV Rekayasa Perangkat Keras Kriptografi',
+					'IV Rekayasa Sistem Kriptografi'
+				]
+			};
+
+			// Dinamis update kelas saat jurusan berubah di modal
+			function updateKelasEditModal() {
+				const jurusan = document.getElementById('edit_jurusan').value;
+				const kelasSelect = document.getElementById('edit_kelas');
+				kelasSelect.innerHTML = '';
+				if (kelasPerJurusan[jurusan]) {
+					kelasPerJurusan[jurusan].forEach(kelas => {
+						const option = document.createElement('option');
+						option.value = kelas;
+						option.textContent = kelas;
+						kelasSelect.appendChild(option);
+					});
+				}
+			}
+			document.getElementById('edit_jurusan').addEventListener('change', updateKelasEditModal);
+
+			// Tampilkan modal dan isi data
+			const editProfileBtn = document.getElementById('editProfileBtn');
+			if (editProfileBtn) {
+				editProfileBtn.addEventListener('click', function() {
+					document.getElementById('edit_nama_lengkap').value = document.getElementById('fullName').textContent;
+					document.getElementById('edit_email').value = document.getElementById('email').textContent;
+					document.getElementById('edit_username').value = document.getElementById('username').textContent;
+					document.getElementById('edit_jurusan').value = document.getElementById('jurusan').textContent;
+					updateKelasEditModal();
+					document.getElementById('edit_kelas').value = document.getElementById('kelas').textContent;
+					if (window.jQuery && $('#editProfileModal').modal) {
+						$('#editProfileModal').modal('show');
+					} else {
+						document.getElementById('editProfileModal').style.display = 'block';
+					}
+				});
+			}
+
+			// Handle submit edit profile
+			const editProfileForm = document.getElementById('editProfileForm');
+			if (editProfileForm) {
+				editProfileForm.addEventListener('submit', function(e) {
+					e.preventDefault();
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+					const data = {
+						id: parseInt(userId),
+						nama_lengkap: document.getElementById('edit_nama_lengkap').value,
+						email: document.getElementById('edit_email').value,
+						username: document.getElementById('edit_username').value,
+						jurusan: document.getElementById('edit_jurusan').value,
+						kelas: document.getElementById('edit_kelas').value,
+						role: 'taruna'
+					};
+					fetch('http://104.43.89.154:8081/users/edit', {
+						method: 'PUT',
+						headers: {
+							'Content-Type': 'application/json',
+							'Authorization': `Bearer ${token}`
+						},
+						body: JSON.stringify(data)
+					})
+					.then(response => {
+						if (!response.ok) throw new Error('Gagal update profile');
+						return response.json();
+					})
+					.then(res => {
+						alert('Profile berhasil diupdate');
+						location.reload();
+					})
+					.catch(err => {
+						alert('Gagal update profile: ' + err.message);
+					});
+				});
+			}
 		</script>
 		
 		<!-- Google Tag Manager (noscript) -->	
