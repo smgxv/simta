@@ -1103,7 +1103,7 @@
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
 				document.getElementById('reviewIcpId').value = icpId;
 				document.getElementById('reviewUserId').value = userId;
-				document.getElementById('reviewCycleNumber').value = 1; // Untuk review pertama
+				document.getElementById('reviewCycleNumber').value = 1;
 				
 				// Get taruna_id from user_id
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -1116,9 +1116,14 @@
 				.then(response => response.json())
 				.then(data => {
 					if (data.status === 'success' && data.data && data.data.length > 0) {
-						const taruna = data.data[0];
-						document.getElementById('reviewTarunaId').value = taruna.id;
-						$('#uploadReviewModal').modal('show');
+						// Cari taruna yang user_id nya sesuai
+						const taruna = data.data.find(t => t.user_id === parseInt(userId));
+						if (taruna) {
+							document.getElementById('reviewTarunaId').value = taruna.id;
+							$('#uploadReviewModal').modal('show');
+						} else {
+							showAlert('Data taruna tidak ditemukan untuk user_id ini', 'danger');
+						}
 					} else {
 						showAlert('Data taruna tidak ditemukan', 'danger');
 					}
