@@ -761,7 +761,7 @@
 										return;
 									}
 
-									// First get ICP data to get the correct user_id
+									// Get ICP data
 									const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
 										headers: {
 											'Authorization': `Bearer ${token}`,
@@ -781,41 +781,9 @@
 										return;
 									}
 
-									// Get the taruna data using the user_id from ICP data
-									const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${icpData.data.user_id}`, {
-										headers: {
-											'Authorization': `Bearer ${token}`,
-											'Content-Type': 'application/json'
-										}
-									});
+									// Call modal function with user_id from ICP data
+									openUploadReviewModalICP(topik, icpId, icpData.data.user_id);
 
-									if (!tarunaResponse.ok) {
-										if (tarunaResponse.status === 401) {
-											showAlert('Sesi anda telah berakhir. Silakan login ulang.', 'danger');
-											setTimeout(() => {
-												window.location.href = '/loginusers';
-											}, 2000);
-											return;
-										}
-										throw new Error(`HTTP error! status: ${tarunaResponse.status}`);
-									}
-
-									const tarunaData = await tarunaResponse.json();
-									console.log('Taruna data:', tarunaData);
-
-									if (tarunaData.status === 'success' && tarunaData.data && tarunaData.data.length > 0) {
-										const taruna = tarunaData.data[0];
-										console.log('Opening modal with:', {
-											topik,
-											icpId,
-											userId: icpData.data.user_id
-										});
-
-										// Use the new modal function for ICP list
-										openUploadReviewModalICP(topik, icpId, icpData.data.user_id);
-									} else {
-										showAlert('Data taruna tidak ditemukan', 'danger');
-									}
 								} catch (error) {
 									console.error('Error:', error);
 									showAlert('Gagal mengambil data. Silakan coba lagi.', 'danger');
@@ -1136,7 +1104,29 @@
 				document.getElementById('reviewIcpId').value = icpId;
 				document.getElementById('reviewUserId').value = userId;
 				document.getElementById('reviewCycleNumber').value = 1; // Untuk review pertama
-				$('#uploadReviewModal').modal('show');
+				
+				// Get taruna_id from user_id
+				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					headers: {
+						'Authorization': `Bearer ${token}`,
+						'Content-Type': 'application/json'
+					}
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.status === 'success' && data.data && data.data.length > 0) {
+						const taruna = data.data[0];
+						document.getElementById('reviewTarunaId').value = taruna.id;
+						$('#uploadReviewModal').modal('show');
+					} else {
+						showAlert('Data taruna tidak ditemukan', 'danger');
+					}
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					showAlert('Gagal mengambil data taruna', 'danger');
+				});
 			}
 
 			// Function to update ICP status (approve/reject)
