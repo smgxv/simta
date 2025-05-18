@@ -782,7 +782,7 @@
 									}
 
 									// Get the taruna data using the user_id from ICP data
-									const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${icpData.data.user_id}`, {
+									const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna/by-userid/${icpData.data.user_id}`, {
 										headers: {
 											'Authorization': `Bearer ${token}`,
 											'Content-Type': 'application/json'
@@ -803,8 +803,8 @@
 									const tarunaData = await tarunaResponse.json();
 									console.log('Taruna data:', tarunaData);
 
-									if (tarunaData.status === 'success' && tarunaData.data && tarunaData.data.length > 0) {
-										const taruna = tarunaData.data[0];
+									if (tarunaData.status === 'success' && tarunaData.data) {
+										const taruna = tarunaData.data;
 										console.log('Opening modal with:', {
 											topik,
 											tarunaId: taruna.id,
