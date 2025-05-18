@@ -774,7 +774,7 @@
 									}
 
 									const icpData = await icpResponse.json();
-									console.log('ICP data:', icpData); // Debug log
+									console.log('ICP data:', icpData);
 
 									if (!icpData.data) {
 										showAlert('Data ICP tidak ditemukan', 'danger');
@@ -801,7 +801,7 @@
 									}
 
 									const tarunaData = await tarunaResponse.json();
-									console.log('Taruna data:', tarunaData); // Debug log
+									console.log('Taruna data:', tarunaData);
 
 									if (tarunaData.status === 'success' && tarunaData.data && tarunaData.data.length > 0) {
 										const taruna = tarunaData.data[0];
@@ -810,15 +810,15 @@
 											tarunaId: taruna.id,
 											icpId,
 											userId: icpData.data.user_id
-										}); // Debug log
+										});
 
-										// Store both taruna.id and user_id in the modal
-										openUploadReviewModal(topik, taruna.id, icpId, 0, icpData.data.user_id);
+										// Use the new modal function for ICP list
+										openUploadReviewModalICP(topik, taruna.id, icpId, icpData.data.user_id);
 									} else {
 										showAlert('Data taruna tidak ditemukan', 'danger');
-					}
-				} catch (error) {
-					console.error('Error:', error);
+									}
+								} catch (error) {
+									console.error('Error:', error);
 									showAlert('Gagal mengambil data. Silakan coba lagi.', 'danger');
 								}
 							});
@@ -1120,13 +1120,24 @@
 				}
 			}
 
-			// Function to open upload review modal
+			// Fungsi untuk membuka modal upload review pada tabel hasil revisi 
 			function openUploadReviewModal(topikPenelitian, tarunaId, icpId, currentCycle) {
 				console.log('Opening modal with:', { topikPenelitian, tarunaId, icpId, currentCycle });
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
 				document.getElementById('reviewTarunaId').value = tarunaId;
 				document.getElementById('reviewIcpId').value = icpId;
 				document.getElementById('reviewCycleNumber').value = currentCycle + 1;
+				$('#uploadReviewModal').modal('show');
+			}
+
+			// Fungsi untuk membuka modal upload review pada tabel list ICP
+			function openUploadReviewModalICP(topikPenelitian, tarunaId, icpId, userId) {
+				console.log('Opening ICP modal with:', { topikPenelitian, tarunaId, icpId, userId });
+				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
+				document.getElementById('reviewTarunaId').value = tarunaId;
+				document.getElementById('reviewIcpId').value = icpId;
+				document.getElementById('reviewUserId').value = userId;
+				document.getElementById('reviewCycleNumber').value = 1; // Untuk review pertama
 				$('#uploadReviewModal').modal('show');
 			}
 
