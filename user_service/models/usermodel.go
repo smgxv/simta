@@ -205,8 +205,3 @@ func (u UserModel) DeleteUser(userID int) error {
 	_, err := u.db.Exec("DELETE FROM users WHERE id = ?", userID)
 	return err
 }
-
-func (u UserModel) UpdateUserPassword(userID int, hashedPassword string) error {
-	_, err := u.db.Exec("UPDATE users SET password = ? WHERE id = ?", hashedPassword, userID)
-	return err
-}
