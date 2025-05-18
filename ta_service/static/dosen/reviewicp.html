@@ -782,7 +782,7 @@
 									}
 
 									// Get the taruna data using the user_id from ICP data
-									const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna/by-userid/${icpData.data.user_id}`, {
+									const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${icpData.data.user_id}`, {
 										headers: {
 											'Authorization': `Bearer ${token}`,
 											'Content-Type': 'application/json'
@@ -803,17 +803,16 @@
 									const tarunaData = await tarunaResponse.json();
 									console.log('Taruna data:', tarunaData);
 
-									if (tarunaData.status === 'success' && tarunaData.data) {
-										const taruna = tarunaData.data;
+									if (tarunaData.status === 'success' && tarunaData.data && tarunaData.data.length > 0) {
+										const taruna = tarunaData.data[0];
 										console.log('Opening modal with:', {
 											topik,
-											tarunaId: taruna.id,
 											icpId,
 											userId: icpData.data.user_id
 										});
 
 										// Use the new modal function for ICP list
-										openUploadReviewModalICP(topik, taruna.id, icpId, icpData.data.user_id);
+										openUploadReviewModalICP(topik, icpId, icpData.data.user_id);
 									} else {
 										showAlert('Data taruna tidak ditemukan', 'danger');
 									}
@@ -1131,10 +1130,9 @@
 			}
 
 			// Fungsi untuk membuka modal upload review pada tabel list ICP
-			function openUploadReviewModalICP(topikPenelitian, tarunaId, icpId, userId) {
-				console.log('Opening ICP modal with:', { topikPenelitian, tarunaId, icpId, userId });
+			function openUploadReviewModalICP(topikPenelitian, icpId, userId) {
+				console.log('Opening ICP modal with:', { topikPenelitian, icpId, userId });
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
-				document.getElementById('reviewTarunaId').value = tarunaId;
 				document.getElementById('reviewIcpId').value = icpId;
 				document.getElementById('reviewUserId').value = userId;
 				document.getElementById('reviewCycleNumber').value = 1; // Untuk review pertama
