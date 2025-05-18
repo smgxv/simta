@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>SIMTA - Profilel</title>
+		<title>SIMTA - Profile</title>
 
 		<!-- Site favicon -->
 		<link
@@ -532,7 +532,7 @@ ss
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
 										<li class="breadcrumb-item">
-											<a href="/admin/dashboard">Home</a>
+											<a href="/taruna/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
 											Profile
@@ -639,6 +639,7 @@ ss
         <script src="src/plugins/bootstrap-select/bootstrap-select.min.js"></script>
 
 		<script>
+			
 			document.addEventListener("DOMContentLoaded", function() {
 				// Ambil token dari storage
 				const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -647,11 +648,13 @@ ss
 					return;
 				}
 
-				// Ambil ID dari parameter URL
+				// Ambil userId dari URL, jika tidak ada ambil dari localStorage/sessionStorage
 				const urlParams = new URLSearchParams(window.location.search);
-				const userId = urlParams.get('id');
+				let userId = urlParams.get('id');
+				if (!userId) {
+					userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+				}
 
-				// Jika ada ID, ambil data user spesifik
 				if (userId) {
 					fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
 						headers: {
@@ -673,7 +676,6 @@ ss
 							}
 						};
 
-						// Update setiap elemen dengan pengecekan data kosong
 						updateElement("fullName", user.nama_lengkap);
 						updateElement("role", user.role);
 						updateElement("username", user.username);
@@ -684,13 +686,11 @@ ss
 					})
 					.catch(error => {
 						console.error("Error:", error);
-						// Hanya tampilkan alert jika error bukan karena data kosong
 						if (error.message !== "Gagal mengambil data user") {
 							alert("Terjadi kesalahan saat mengakses server");
 						}
 					});
 				} else {
-					// Jika tidak ada ID, tampilkan pesan atau redirect
 					console.log("ID user tidak ditemukan");
 					// Optional: redirect ke halaman lain
 					// window.location.replace("/admin/listuser");
