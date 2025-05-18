@@ -111,7 +111,7 @@ func EditUserTaruna(w http.ResponseWriter, r *http.Request) {
 			Role     string `json:"role"`
 			Jurusan  string `json:"jurusan"`
 			Kelas    string `json:"kelas"`
-			Password string `json:"password"`
+			Password string `json:"password,omitempty"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
@@ -121,7 +121,7 @@ func EditUserTaruna(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Validasi data yang diperlukan
-		if userData.UserID == 0 || userData.FullName == "" || userData.Email == "" || userData.Username == "" || userData.Role == "" {
+		if userData.UserID == 0 || userData.FullName == "" || userData.Email == "" || userData.Username == "" {
 			http.Error(w, "Semua field harus diisi", http.StatusBadRequest)
 			return
 		}
@@ -134,28 +134,30 @@ func EditUserTaruna(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Update data user (tanpa password)
-		err = userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, userData.Role, userData.Jurusan, userData.Kelas)
+		// Update data user
+		err = userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, "Taruna", userData.Jurusan, userData.Kelas)
 		if err != nil {
 			log.Printf("Failed to update user: %v", err)
 			http.Error(w, "Gagal mengupdate user", http.StatusInternalServerError)
 			return
 		}
 
-		// Jika password diisi, hash dan update password via TarunaModel
+		// Jika password diisi, hash dan update password
 		if userData.Password != "" {
-			tarunaModel, err := models.NewTarunaModel()
-			if err != nil {
-				log.Printf("Database connection error: %v", err)
-				http.Error(w, "Database connection error", http.StatusInternalServerError)
-				return
-			}
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
 			if err != nil {
 				log.Printf("Failed to hash password: %v", err)
 				http.Error(w, "Gagal mengupdate password", http.StatusInternalServerError)
 				return
 			}
+
+			tarunaModel, err := models.NewTarunaModel()
+			if err != nil {
+				log.Printf("Database connection error: %v", err)
+				http.Error(w, "Database connection error", http.StatusInternalServerError)
+				return
+			}
+
 			err = tarunaModel.UpdateTarunaPassword(userData.UserID, string(hashedPassword))
 			if err != nil {
 				log.Printf("Failed to update password: %v", err)
