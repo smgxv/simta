@@ -816,9 +816,9 @@
 										openUploadReviewModal(topik, taruna.id, icpId, 0, icpData.data.user_id);
 									} else {
 										showAlert('Data taruna tidak ditemukan', 'danger');
-									}
-								} catch (error) {
-									console.error('Error:', error);
+					}
+				} catch (error) {
+					console.error('Error:', error);
 									showAlert('Gagal mengambil data. Silakan coba lagi.', 'danger');
 								}
 							});
@@ -953,7 +953,6 @@
 				});
 			});
 
-
 			// Panggil loadICPData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', loadICPData);
 
@@ -1040,26 +1039,25 @@
 
 			// Fungsi untuk memuat data ICP yang sedang di-review
 			async function loadICPReviewData() {
-				console.log('loadICPReviewData function called'); // Debug log
+				console.log('loadICPReviewData function called');
 				const dosenID = localStorage.getItem('dosenID');
-				console.log('Loading review data for dosenID:', dosenID); // Debug log
+				console.log('Loading review data for dosenID:', dosenID);
 				if (!dosenID) {
 					console.warn('DosenID not found in localStorage');
 					return;
 				}
 				
 				try {
-					const url = `http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenID}`;
-					console.log('Fetching from URL:', url); // Debug log
+					const url = `http://104.43.89.154:8082/reviewicp/list?dosen_id=${dosenID}`;
+					console.log('Fetching from URL:', url);
 					
-					// Get review data from review_icp_taruna table
 					const response = await fetch(url);
 					const data = await response.json();
-					console.log('Review data received:', data); // Debug log
+					console.log('Review data received:', data);
 					
 					if (data.status === 'success') {
 						const tbody = document.querySelector('#revisiTable tbody');
-						console.log('Found tbody:', tbody); // Debug log
+						console.log('Found tbody:', tbody);
 						
 						if (!tbody) {
 							console.error('Table body not found');
@@ -1068,12 +1066,12 @@
 						tbody.innerHTML = '';
 						
 						if (data.data && data.data.length > 0) {
-							console.log('Processing', data.data.length, 'reviews'); // Debug log
+							console.log('Processing', data.data.length, 'reviews');
 							data.data.forEach(review => {
 								tbody.innerHTML += `
 									<tr>
 										<td>${review.topik_penelitian || '-'}</td>
-										<td>${review.taruna_nama || '-'}</td>
+										<td>${review.nama_taruna || '-'}</td>
 										<td>${review.cycle_number || 1}</td>
 										<td>${review.keterangan || '-'}</td>
 										<td>
@@ -1089,13 +1087,13 @@
 													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Revisi
 													</a>
-													<a class="dropdown-item upload-review-btn" href="#" data-icp-id="${review.icp_id}" data-taruna-id="${review.taruna_id}" data-topik="${review.topik_penelitian}" data-cycle="${review.cycle_number}">
+													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.id}, ${review.cycle_number || 0})">
 														<i class="dw dw-upload"></i> Upload Review Baru
 													</a>
-													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'approved')">
+													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.id}, 'approved')">
 														<i class="dw dw-check"></i> Approve ICP
 													</a>
-													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'rejected')">
+													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.id}, 'rejected')">
 														<i class="dw dw-cancel"></i> Reject ICP
 													</a>
 												</div>
@@ -1104,9 +1102,9 @@
 									</tr>
 								`;
 							});
-							console.log('Table rows added'); // Debug log
+							console.log('Table rows added');
 						} else {
-							console.log('No review data found'); // Debug log
+							console.log('No review data found');
 							tbody.innerHTML = `
 								<tr>
 									<td colspan="5" class="text-center">Tidak ada data revisi</td>
@@ -1123,13 +1121,12 @@
 			}
 
 			// Function to open upload review modal
-			function openUploadReviewModal(topikPenelitian, tarunaId, icpId, currentCycle, userId) {
-				console.log('Opening modal with:', { topikPenelitian, tarunaId, icpId, currentCycle, userId }); // Debug log
+			function openUploadReviewModal(topikPenelitian, tarunaId, icpId, currentCycle) {
+				console.log('Opening modal with:', { topikPenelitian, tarunaId, icpId, currentCycle });
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
 				document.getElementById('reviewTarunaId').value = tarunaId;
 				document.getElementById('reviewIcpId').value = icpId;
 				document.getElementById('reviewCycleNumber').value = currentCycle + 1;
-				document.getElementById('reviewUserId').value = userId;
 				$('#uploadReviewModal').modal('show');
 			}
 
@@ -1211,52 +1208,6 @@
 					showAlert('Terjadi kesalahan: ' + error.message, 'danger');
 				}
 			}
-
-			// Add click handlers for the new upload-review-btn buttons
-			document.querySelectorAll('#revisiTable .upload-review-btn').forEach(btn => {
-				btn.addEventListener('click', async (e) => {
-					e.preventDefault();
-					const icpId = btn.getAttribute('data-icp-id');
-					const tarunaId = btn.getAttribute('data-taruna-id');
-					const topik = btn.getAttribute('data-topik');
-					const cycle = parseInt(btn.getAttribute('data-cycle')) || 0;
-
-					try {
-						// Get token from localStorage or sessionStorage
-						const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-						if (!token) {
-							showAlert('Token tidak ditemukan. Silakan login ulang.', 'danger');
-							return;
-						}
-
-						// Get ICP data to get the correct user_id
-						const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
-							headers: {
-								'Authorization': `Bearer ${token}`,
-								'Content-Type': 'application/json'
-							}
-						});
-
-						if (!icpResponse.ok) {
-							throw new Error(`HTTP error! status: ${icpResponse.status}`);
-						}
-
-						const icpData = await icpResponse.json();
-						console.log('ICP data:', icpData);
-
-						if (!icpData.data) {
-							showAlert('Data ICP tidak ditemukan', 'danger');
-							return;
-						}
-
-						// Open modal with the correct data
-						openUploadReviewModal(topik, tarunaId, icpId, cycle, icpData.data.user_id);
-					} catch (error) {
-						console.error('Error:', error);
-						showAlert('Gagal mengambil data. Silakan coba lagi.', 'danger');
-					}
-				});
-			});
 
 		</script>
 
