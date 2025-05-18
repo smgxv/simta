@@ -56,3 +56,9 @@ func (d *TarunaModel) GetAllTaruna() ([]map[string]interface{}, error) {
 
 	return dosens, nil
 }
+
+// Update password taruna berdasarkan user_id
+func (d *TarunaModel) UpdateTarunaPassword(userID int, hashedPassword string) error {
+	_, err := d.db.Exec("UPDATE users SET password = ? WHERE id = ?", hashedPassword, userID)
+	return err
+}
