@@ -1287,16 +1287,9 @@
 
 
 		<script>
-		// Tambahkan fungsi untuk redirect ke profile
-		// function redirectToProfile() {
-		// 	const userId = localStorage.getItem('userId');
-		// 	if (userId) {
-		// 		window.location.href = `/dosen/profile?id=${userId}`; // Ubah ke route dosen
-		// 	} else {
-		// 		console.error('User ID tidak ditemukan');
-		// 		window.location.replace('/loginusers');
-		// 	}
-		// }
+		function redirectToProfile() {
+			window.location.href = '/dosen/profile';
+		}
 
 		// Fungsi untuk logout
 		async function logout() {

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Basic Page Info -->
+    <meta charset="utf-8" />
+    <title>Edit User</title>
+
+    <!-- Site favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="vendors/images/apple-touch-icon.png"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="vendors/images/logo.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="vendors/images/logo.png"/>
+
+    <!-- Mobile Specific Metas -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" type="text/css" href="vendors/styles/core.css" />
+    <link rel="stylesheet" type="text/css" href="vendors/styles/icon-font.min.css"/>
+    <link rel="stylesheet" type="text/css" href="vendors/styles/style.css" />
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="menu-icon bi bi-list"></div>
+        </div>
+    </div>
+
+    <div class="left-side-bar">
+        <div class="brand-logo">
+            <a href="/admin/dashboard">
+                <img src="vendors/images/logo_admin_panel.png" alt="" class="dark-logo" />
+            </a>
+            <div class="close-sidebar" data-toggle="left-sidebar-close">
+                <i class="ion-close-round"></i>
+            </div>
+        </div>
+        <div class="menu-block customscroll">
+            <div class="sidebar-menu">
+                <ul id="accordion-menu">
+                    <li>
+                        <a href="/admin/dashboard" class="dropdown-toggle no-arrow">
+                            <span class="micon bi bi-house"></span><span class="mtext">Home</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/adduser" class="dropdown-toggle no-arrow">
+                            <span class="micon bi bi-textarea-resize"></span><span class="mtext">Add User</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/listuser" class="dropdown-toggle no-arrow">
+                            <span class="micon bi bi-table"></span><span class="mtext">List User</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/calendar" class="dropdown-toggle no-arrow">
+                            <span class="micon bi bi-calendar4-week"></span><span class="mtext">Calendar</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="mobile-menu-overlay"></div>
+
+    <div class="main-container">
+        <div class="pd-ltr-20 xs-pd-20-10">
+            <div class="min-height-200px">
+                <div class="page-header">
+                    <div class="row">
+                        <div class="col-md-6 col-sm-12">
+                            <div class="title">
+                                <h4>Edit User</h4>
+                            </div>
+                            <nav aria-label="breadcrumb" role="navigation">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="/admin/dashboard">Home</a></li>
+                                    <li class="breadcrumb-item"><a href="/admin/listuser">List User</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">Edit User</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Default Basic Forms Start -->
+                <div class="pd-20 card-box mb-30">
+                    <div class="clearfix">
+                        <div class="pull-left">
+                            <h4 class="text-blue h4">Edit User Information</h4>
+                            <p class="mb-30">Update user details below</p>
+                        </div>
+                    </div>
+                    <form id="editUserForm">
+                        
+                        <div class="form-group row">
+                            <label class="col-sm-12 col-md-2 col-form-label">Nama Lengkap</label>
+                            <div class="col-sm-12 col-md-10">
+                                <input class="form-control" type="text" id="nama_lengkap" name="nama_lengkap" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-sm-12 col-md-2 col-form-label">Email</label>
+                            <div class="col-sm-12 col-md-10">
+                                <input class="form-control" type="email" id="email" name="email" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-sm-12 col-md-2 col-form-label">Username</label>
+                            <div class="col-sm-12 col-md-10">
+                                <input class="form-control" type="text" id="username" name="username" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-sm-12 col-md-2 col-form-label">Role</label>
+                            <div class="col-sm-12 col-md-10">
+                                <select class="custom-select col-12" id="role" name="role" required>
+                                    <option value="admin">Admin</option>
+                                    <option value="dosen">Dosen</option>
+                                    <option value="taruna">Taruna</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group row" id="jurusanGroup" style="display: none;">
+                            <label class="col-sm-12 col-md-2 col-form-label">Jurusan</label>
+                            <div class="col-sm-12 col-md-10">
+                                <select class="custom-select col-12" name="jurusan" id="jurusan" onchange="updateKelas()">
+                                    <option value="" disabled selected>Pilih Jurusan</option>
+                                    <option value="Keamanan Siber">Keamanan Siber</option>
+                                    <option value="Kriptografi">Kriptografi</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row" id="kelasGroup" style="display: none;">
+                            <label class="col-sm-12 col-md-2 col-form-label">Kelas</label>
+                            <div class="col-sm-12 col-md-10">
+                                <select class="custom-select col-12" name="kelas" id="kelas">
+                                    <option value="" disabled selected>Pilih Kelas</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-sm-12 col-md-2 col-form-label">Password Baru</label>
+                            <div class="col-sm-12 col-md-10">
+                                <input class="form-control" type="password" id="password" name="password" placeholder="Kosongkan jika tidak ingin mengubah password">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-12 col-md-2 col-form-label">Konfirmasi Password</label>
+                            <div class="col-sm-12 col-md-10">
+                                <input class="form-control" type="password" id="confirm_password" name="confirm_password" placeholder="Ulangi password baru">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <div class="col-sm-12 col-md-10 offset-md-2">
+                                <button type="submit" class="btn btn-primary">Update User</button>
+                                <a href="/admin/listuser" class="btn btn-secondary">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <!-- Default Basic Forms End -->
+            </div>
+        </div>
+    </div>
+
+    <!-- js -->
+    <script src="vendors/scripts/core.js"></script>
+    <script src="vendors/scripts/script.min.js"></script>
+    <script src="vendors/scripts/process.js"></script>
+    <script src="vendors/scripts/layout-settings.js"></script>
+
+    <!-- // ... existing code ... -->
+    <script>
+    const kelasPerJurusan = {
+        'Keamanan Siber': [
+            'IV Rekayasa Keamanan Siber Echo',
+            'IV Rekayasa Keamanan Siber Trace',
+            'IV Rekayasa Keamanan Siber Route'
+        ],
+        'Kriptografi': [
+            'IV Rekayasa Perangkat Lunak Kripto',
+            'IV Rekayasa Perangkat Keras Kriptografi',
+            'IV Rekayasa Sistem Kriptografi'
+        ]
+    };
+
+    function toggleJurusanKelas() {
+        const role = document.getElementById('role').value;
+        const jurusanGroup = document.getElementById('jurusanGroup');
+        const kelasGroup = document.getElementById('kelasGroup');
+        const jurusanSelect = document.getElementById('jurusan');
+        const kelasSelect = document.getElementById('kelas');
+
+        // Reset nilai
+        jurusanSelect.value = '';
+        kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
+
+        if (role.toLowerCase() === 'dosen') {
+            // Tampilkan hanya dropdown jurusan untuk Dosen
+            jurusanGroup.style.display = 'flex';
+            kelasGroup.style.display = 'none';
+            jurusanSelect.required = true;
+            kelasSelect.required = false;
+        } else if (role.toLowerCase() === 'taruna') {
+            // Tampilkan dropdown jurusan dan kelas untuk Taruna
+            jurusanGroup.style.display = 'flex';
+            kelasGroup.style.display = 'flex';
+            jurusanSelect.required = true;
+            kelasSelect.required = true;
+        } else {
+            // Sembunyikan keduanya untuk role lain (admin)
+            jurusanGroup.style.display = 'none';
+            kelasGroup.style.display = 'none';
+            jurusanSelect.required = false;
+            kelasSelect.required = false;
+        }
+    }
+
+    function updateKelas() {
+        const role = document.getElementById('role').value;
+        const jurusanSelect = document.getElementById('jurusan');
+        const kelasSelect = document.getElementById('kelas');
+        const selectedJurusan = jurusanSelect.value;
+
+        // Jika role adalah Dosen, tidak perlu mengupdate kelas
+        if (role.toLowerCase() === 'dosen') {
+            return;
+        }
+
+        // Reset dropdown kelas
+        kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
+
+        // Jika ada jurusan yang dipilih dan role adalah Taruna
+        if (selectedJurusan && role.toLowerCase() === 'taruna') {
+            const kelasOptions = kelasPerJurusan[selectedJurusan];
+            if (kelasOptions) {
+                kelasOptions.forEach(kelas => {
+                    const option = document.createElement('option');
+                    option.value = kelas;
+                    option.textContent = kelas;
+                    kelasSelect.appendChild(option);
+                });
+            }
+        }
+    }
+
+    // Update event listener untuk role
+    document.getElementById('role').addEventListener('change', toggleJurusanKelas);
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let userId = urlParams.get('id');
+        if (!userId) {
+            userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        }
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token || !userId) {
+            window.location.replace('/loginusers');
+            return;
+        }
+    
+        // Fetch data user yang akan diedit
+        fetch(`http://104.43.89.154:8081/taruna/edituser?id=${userId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'Origin': 'http://104.43.89.154:8080'
+            }
+        })
+        .then(response => response.json())
+        .then(user => {
+            console.log('Data user:', user);
+            if (!user) {
+                throw new Error('Data user tidak ditemukan');
+            }
+            document.getElementById('nama_lengkap').value = user.nama_lengkap || '';
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('username').value = user.username || '';
+            document.getElementById('role').value = (user.role || '').toLowerCase();
+            
+            // Set jurusan dan kelas jika ada
+            if (user.jurusan) {
+                document.getElementById('jurusan').value = user.jurusan;
+            }
+            
+            // Tampilkan/sembunyikan field berdasarkan role
+            toggleJurusanKelas();
+            
+            // Update opsi kelas jika role adalah Taruna
+            if (user.role.toLowerCase() === 'taruna' && user.jurusan) {
+                updateKelas();
+                // Set nilai kelas setelah opsi diupdate
+                setTimeout(() => {
+                    document.getElementById('kelas').value = user.kelas || '';
+                }, 100);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Gagal mengambil data user: ' + error.message);
+        });
+    
+        // Handle form submission
+        document.getElementById('editUserForm').addEventListener('submit', function (e) {
+            e.preventDefault(); // Hindari reload halaman
+
+            // Validasi password jika diisi
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            if (password || confirmPassword) {
+                if (password !== confirmPassword) {
+                    alert('Password dan konfirmasi password tidak sama!');
+                    return;
+                }
+                if (password.length < 6) {
+                    alert('Password minimal 6 karakter!');
+                    return;
+                }
+            }
+
+            const userData = {
+                id: parseInt(userId), // Ambil ID dari URL atau storage
+                nama_lengkap: document.getElementById('nama_lengkap').value,
+                email: document.getElementById('email').value,
+                username: document.getElementById('username').value,
+                jurusan: document.getElementById('jurusan').value || null,
+                role: document.getElementById('role').value
+            };
+
+            // Tambahkan kelas jika role adalah Taruna
+            if (userData.role.toLowerCase() === 'taruna') {
+                userData.kelas = document.getElementById('kelas').value;
+            }
+
+            // Tambahkan password jika diisi
+            if (password) {
+                userData.password = password;
+            }
+
+            console.log('Sending data:', userData);
+
+            fetch(`http://104.43.89.154:8081/taruna/edituser`, {
+                method: 'PUT',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Gagal mengupdate user');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Success:', data);
+                alert('User berhasil diupdate');
+                window.location.href = '/taruna/profile';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'Terjadi kesalahan saat mengupdate user');
+            });
+        });
+    });
+    </script>
+    
+<!-- // ... existing code ... -->
+</body>
+</html>
