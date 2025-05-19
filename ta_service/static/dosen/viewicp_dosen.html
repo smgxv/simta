@@ -490,16 +490,15 @@
                 <div class="icp-section">
                     <div class="icp-title">View ICP - Secure Simta (Havilah Papilaya)</div>
                     <table style="margin-bottom: 0;">
-                        <tr><td><b>Nama Taruna</b></td><td>: Havilah Papilaya</td></tr>
-                        <tr><td><b>NIM</b></td><td>: 2021XXX</td></tr>
-                        <tr><td><b>Judul ICP</b></td><td>: Secure Simta</td></tr>
-                        <tr><td><b>Deskripsi</b></td><td>: Sistem yang berfokus pada keamanan...</td></tr>
-                        <tr><td><b>Tanggal</b></td><td>: 12 Mei 2025</td></tr>
-                        <tr><td><b>Status</b></td><td class="icp-status">: On Review</td></tr>
+                        <tr><td><b>Nama Taruna</b></td><td>: <span id="icp-nama-taruna">-</span></td></tr>
+                        <tr><td><b>NIM</b></td><td>: <span id="icp-nim">-</span></td></tr>
+                        <tr><td><b>Judul ICP</b></td><td>: <span id="icp-judul">-</span></td></tr>
+                        <tr><td><b>Deskripsi</b></td><td>: <span id="icp-deskripsi">-</span></td></tr>
+                        <tr><td><b>Tanggal</b></td><td>: <span id="icp-tanggal">-</span></td></tr>
+                        <tr><td><b>Status</b></td><td class="icp-status">: <span id="icp-status">-</span></td></tr>
                         <tr>
                             <td colspan="2">
-                                <a href="#" class="btn btn-outline-primary btn-sm">Download Proposal</a>
-                                <a href="#" class="btn btn-outline-secondary btn-sm">Download Pendukung</a>
+                                <a href="#" id="icp-download-proposal" class="btn btn-outline-primary btn-sm" style="display:none;">Download Proposal</a>
                             </td>
                         </tr>
                     </table>
@@ -698,6 +697,45 @@
 				});
 			}
 		});
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ambil ICP ID dari query string
+            const urlParams = new URLSearchParams(window.location.search);
+            const icpId = urlParams.get('id');
+            if (!icpId) {
+                alert('ICP ID tidak ditemukan!');
+                return;
+            }
+
+            // Fetch detail ICP dari API
+            fetch(`http://104.43.89.154:8082/icp/${icpId}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status !== 'success' || !result.data) {
+                        throw new Error('Data ICP tidak ditemukan');
+                    }
+                    const icp = result.data;
+
+                    // Isi data ke tabel
+                    document.getElementById('icp-nama-taruna').textContent = icp.nama_taruna || '-';
+                    document.getElementById('icp-nim').textContent = icp.nim || '-';
+                    document.getElementById('icp-judul').textContent = icp.judul_icp || '-';
+                    document.getElementById('icp-deskripsi').textContent = icp.deskripsi || '-';
+                    document.getElementById('icp-tanggal').textContent = icp.tanggal || '-';
+                    document.getElementById('icp-status').textContent = icp.status || '-';
+
+                    // Download Proposal
+                    if (icp.proposal_path) {
+                        document.getElementById('icp-download-proposal').href = `http://104.43.89.154:8082/download?path=${encodeURIComponent(icp.proposal_path)}`;
+                        document.getElementById('icp-download-proposal').style.display = '';
+                    } else {
+                        document.getElementById('icp-download-proposal').style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    alert('Gagal mengambil data ICP: ' + err.message);
+                });
+        });
     </script>
 </body>
 </html>
