@@ -920,3 +920,99 @@ func GetReviewICPDetailHandler(w http.ResponseWriter, r *http.Request) {
 		"data":   review,
 	})
 }
+
+// Handler untuk mengambil detail review ICP dosen berdasarkan ID
+func GetReviewICPDosenDetailHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Content-Type", "application/json")
+
+	// Get review ID from query parameter
+	reviewID := r.URL.Query().Get("id")
+	if reviewID == "" {
+		http.Error(w, "Review ID is required", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	query := `
+		SELECT 
+			r.id, r.icp_id, r.taruna_id, r.dosen_id, r.cycle_number,
+			r.topik_penelitian, r.file_path, r.keterangan, r.created_at,
+			r.updated_at, t.nama_lengkap as nama_taruna, d.nama_lengkap as nama_dosen,
+			i.status as icp_status
+		FROM review_icp_dosen r
+		LEFT JOIN taruna t ON r.taruna_id = t.id
+		LEFT JOIN dosen d ON r.dosen_id = d.id
+		LEFT JOIN icp i ON r.icp_id = i.id
+		WHERE r.id = ?
+	`
+
+	var review struct {
+		ID              int            `json:"id"`
+		ICPID           int            `json:"icp_id"`
+		TarunaID        int            `json:"taruna_id"`
+		DosenID         int            `json:"dosen_id"`
+		CycleNumber     int            `json:"cycle_number"`
+		TopikPenelitian string         `json:"topik_penelitian"`
+		FilePath        string         `json:"file_path"`
+		Keterangan      string         `json:"keterangan"`
+		CreatedAt       string         `json:"created_at"`
+		UpdatedAt       string         `json:"updated_at"`
+		NamaTaruna      sql.NullString `json:"nama_taruna"`
+		NamaDosen       sql.NullString `json:"nama_dosen"`
+		ICPStatus       sql.NullString `json:"icp_status"`
+	}
+
+	err = db.QueryRow(query, reviewID).Scan(
+		&review.ID,
+		&review.ICPID,
+		&review.TarunaID,
+		&review.DosenID,
+		&review.CycleNumber,
+		&review.TopikPenelitian,
+		&review.FilePath,
+		&review.Keterangan,
+		&review.CreatedAt,
+		&review.UpdatedAt,
+		&review.NamaTaruna,
+		&review.NamaDosen,
+		&review.ICPStatus,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Review not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert sql.NullString to string for JSON response
+	response := map[string]interface{}{
+		"id":               review.ID,
+		"icp_id":           review.ICPID,
+		"taruna_id":        review.TarunaID,
+		"dosen_id":         review.DosenID,
+		"cycle_number":     review.CycleNumber,
+		"topik_penelitian": review.TopikPenelitian,
+		"file_path":        review.FilePath,
+		"keterangan":       review.Keterangan,
+		"created_at":       review.CreatedAt,
+		"updated_at":       review.UpdatedAt,
+		"nama_taruna":      review.NamaTaruna.String,
+		"nama_dosen":       review.NamaDosen.String,
+		"icp_status":       review.ICPStatus.String,
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   response,
+	})
+}

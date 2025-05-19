@@ -635,10 +635,9 @@
                 // Ambil review ID dan ICP ID dari query string
                 const urlParams = new URLSearchParams(window.location.search);
                 const reviewId = urlParams.get('id');
-                const icpId = urlParams.get('icp_id');
                 
-                if (!reviewId || !icpId) {
-                    alert('Review ID atau ICP ID tidak ditemukan!');
+                if (!reviewId) {
+                    alert('Review ID tidak ditemukan!');
                     return;
                 }
 
@@ -650,58 +649,41 @@
                     return;
                 }
 
-                // Fetch detail ICP dari API
-                const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}?dosen_id=${dosenId}`, {
+                // Fetch review details
+                const reviewResponse = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/detail?id=${reviewId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
 
-                if (icpResponse.status === 403) {
-                    alert('Anda tidak memiliki akses untuk melihat ICP ini');
+                if (reviewResponse.status === 403) {
+                    alert('Anda tidak memiliki akses untuk melihat review ini');
                     window.location.href = '/dosen/review_icp';
                     return;
                 }
 
-                const icpResult = await icpResponse.json();
+                const reviewResult = await reviewResponse.json();
                 
-                if (icpResult.status === 'success' && icpResult.data) {
-                    const icp = icpResult.data;
+                if (reviewResult.status === 'success' && reviewResult.data) {
+                    const review = reviewResult.data;
                     
-                    // Update ICP details
-                    document.getElementById('icp-nama-taruna').textContent = icp.nama_taruna || '-';
-                    document.getElementById('icp-topik').textContent = icp.topik_penelitian || '-';
+                    // Update review details
+                    document.getElementById('icp-nama-taruna').textContent = review.nama_taruna || '-';
+                    document.getElementById('icp-topik').textContent = review.topik_penelitian || '-';
+                    document.getElementById('icp-revisi-ke').textContent = review.cycle_number || '-';
+                    document.getElementById('icp-tanggal').textContent = review.created_at ? 
+                        new Date(review.created_at).toLocaleDateString('id-ID') : '-';
+                    document.getElementById('icp-status').textContent = review.icp_status || '-';
+                    document.getElementById('icp-keterangan').textContent = review.keterangan || '-';
                     
-                    // Fetch review details
-                    const reviewResponse = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/detail?id=${reviewId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    
-                    const reviewResult = await reviewResponse.json();
-                    
-                    if (reviewResult.status === 'success' && reviewResult.data) {
-                        const review = reviewResult.data;
-                        
-                        // Update review details
-                        document.getElementById('icp-revisi-ke').textContent = review.revisi_ke || '-';
-                        document.getElementById('icp-tanggal').textContent = review.created_at ? 
-                            new Date(review.created_at).toLocaleDateString('id-ID') : '-';
-                        document.getElementById('icp-status').textContent = review.status || '-';
-                        document.getElementById('icp-keterangan').textContent = review.keterangan || '-';
-                        
-                        // Update download button if file exists
-                        const downloadBtn = document.getElementById('icp-download-proposal');
-                        if (downloadBtn && review.file_path) {
-                            downloadBtn.href = `http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}`;
-                            downloadBtn.style.display = 'inline-block';
-                        }
-                    } else {
-                        throw new Error('Data review tidak ditemukan');
+                    // Update download button if file exists
+                    const downloadBtn = document.getElementById('icp-download-proposal');
+                    if (downloadBtn && review.file_path) {
+                        downloadBtn.href = `http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}`;
+                        downloadBtn.style.display = 'inline-block';
                     }
                 } else {
-                    throw new Error('Data ICP tidak ditemukan');
+                    throw new Error('Data review tidak ditemukan');
                 }
             } catch (err) {
                 console.error('Error:', err);
@@ -722,6 +704,7 @@
             loadICPReviewData();
         });
 
+        // Fungsi untuk redirect ke profile
         function redirectToProfile() {
             window.location.href = '/dosen/profile';
         }
