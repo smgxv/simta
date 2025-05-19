@@ -660,8 +660,8 @@
                             <input type="file" class="form-control" accept=".pdf">
                         </div>
                         <div class="form-group">
-                            <button type="button" class="btn btn-success mr-2">✔ Accept ICP</button>
-                            <button type="button" class="btn btn-danger mr-2">✘ Reject ICP</button>
+                            <button type="button" class="btn btn-success mr-2" onclick="acceptICP()">✔ Accept ICP</button>
+                            <button type="button" class="btn btn-danger mr-2" onclick="rejectICP()">✘ Reject ICP</button>
                             <button type="submit" class="btn btn-primary">
                                 <i class="dw dw-upload"></i> Upload Review
                             </button>
@@ -1058,6 +1058,78 @@
                 alert('Terjadi kesalahan saat mengupload review');
             }
         });
+
+        // Fungsi untuk accept ICP
+        async function acceptICP() {
+            try {
+                // Ambil ICP ID dari query string
+                const urlParams = new URLSearchParams(window.location.search);
+                const icpId = urlParams.get('id');
+                if (!icpId) {
+                    alert('ICP ID tidak ditemukan!');
+                    return;
+                }
+
+                if (!confirm('Apakah Anda yakin ingin menerima ICP ini?')) {
+                    return;
+                }
+
+                const response = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=approved`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert('ICP berhasil diterima');
+                    // Reload data to update status
+                    loadICPData();
+                } else {
+                    throw new Error(data.message || 'Gagal menerima ICP');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Terjadi kesalahan saat menerima ICP: ' + err.message);
+            }
+        }
+
+        // Fungsi untuk reject ICP
+        async function rejectICP() {
+            try {
+                // Ambil ICP ID dari query string
+                const urlParams = new URLSearchParams(window.location.search);
+                const icpId = urlParams.get('id');
+                if (!icpId) {
+                    alert('ICP ID tidak ditemukan!');
+                    return;
+                }
+
+                if (!confirm('Apakah Anda yakin ingin menolak ICP ini?')) {
+                    return;
+                }
+
+                const response = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=rejected`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert('ICP berhasil ditolak');
+                    // Reload data to update status
+                    loadICPData();
+                } else {
+                    throw new Error(data.message || 'Gagal menolak ICP');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Terjadi kesalahan saat menolak ICP: ' + err.message);
+            }
+        }
     </script>
 </body>
 </html>
