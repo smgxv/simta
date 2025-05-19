@@ -185,6 +185,13 @@ func GetICPByIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
 
+	// Get dosen_id from query parameter
+	dosenID := r.URL.Query().Get("dosen_id")
+	if dosenID == "" {
+		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
+		return
+	}
+
 	// Ambil ID dari path parameter
 	vars := mux.Vars(r)
 	icpID := vars["id"]
@@ -199,6 +206,31 @@ func GetICPByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
+
+	// First check if this dosen is assigned to this ICP
+	var assignedDosenID int
+	err = db.QueryRow("SELECT dosen_id FROM icp WHERE id = ?", icpID).Scan(&assignedDosenID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "ICP not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert dosenID to int for comparison
+	requestingDosenID, err := strconv.Atoi(dosenID)
+	if err != nil {
+		http.Error(w, "Invalid dosen ID format", http.StatusBadRequest)
+		return
+	}
+
+	// Check if requesting dosen is assigned to this ICP
+	if requestingDosenID != assignedDosenID {
+		http.Error(w, "Unauthorized: You are not assigned to review this ICP", http.StatusForbidden)
+		return
+	}
 
 	query := `
         SELECT i.*, d.nama_lengkap as dosen_nama 

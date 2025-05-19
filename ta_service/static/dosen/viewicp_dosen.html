@@ -828,19 +828,26 @@
                     return;
                 }
 
-                // Ambil token dari storage
+                // Ambil token dan dosen_id dari storage
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-                if (!token) {
+                const dosenId = localStorage.getItem('dosenID');
+                if (!token || !dosenId) {
                     window.location.href = '/loginusers';
                     return;
                 }
 
                 // Fetch detail ICP dari API
-                const response = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
+                const response = await fetch(`http://104.43.89.154:8082/icp/${icpId}?dosen_id=${dosenId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
+
+                if (response.status === 403) {
+                    alert('Anda tidak memiliki akses untuk melihat ICP ini');
+                    window.location.href = '/dosen/review_icp';
+                    return;
+                }
 
                 const result = await response.json();
                 console.log('ICP Data:', result); // Debug log
