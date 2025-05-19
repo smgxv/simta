@@ -480,3 +480,9 @@ func EditProfileTaruna(w http.ResponseWriter, r *http.Request) {
 
 	http.ServeFile(w, r, "static/taruna/edituser_taruna.html")
 }
+
+// Handler for dosen view ICP page
+func ViewICPDosen(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	http.ServeFile(w, r, "static/dosen/viewicp_dosen.html")
+}
