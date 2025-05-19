@@ -847,53 +847,70 @@
                 
                 if (result.status === 'success' && result.data) {
                     const icp = result.data;
-
-                    // Update title
-                    document.getElementById('icp-title-text').textContent = icp.topik_penelitian || '-';
                     
-                    // Isi data ke tabel
-                    document.getElementById('icp-nama-taruna').textContent = icp.nama_taruna || '-';
-                    document.getElementById('icp-topik').textContent = icp.topik_penelitian || '-';
-                    document.getElementById('icp-keterangan').textContent = icp.keterangan || '-';
-                    document.getElementById('icp-tanggal').textContent = new Date(icp.created_at).toLocaleDateString('id-ID') || '-';
-                    document.getElementById('icp-status').textContent = icp.status || '-';
+                    // Fungsi helper untuk update elemen dengan safety check
+                    const updateElement = (id, value) => {
+                        const element = document.getElementById(id);
+                        if (element) {
+                            element.textContent = value || '-';
+                        }
+                    };
 
-                    // Update status badge
+                    // Update semua elemen dengan safety check
+                    updateElement('icp-nama-taruna', icp.nama_taruna);
+                    updateElement('icp-topik', icp.topik_penelitian);
+                    updateElement('icp-keterangan', icp.keterangan);
+                    updateElement('icp-tanggal', icp.created_at ? new Date(icp.created_at).toLocaleDateString('id-ID') : '-');
+                    
+                    // Update status dengan safety check
                     const statusElement = document.getElementById('icp-status');
-                    statusElement.className = 'icp-status-badge';
-                    
-                    switch(icp.status) {
-                        case 'pending':
-                            statusElement.classList.add('icp-status-pending');
-                            break;
-                        case 'approved':
-                            statusElement.classList.add('icp-status-approved');
-                            break;
-                        case 'rejected':
-                            statusElement.classList.add('icp-status-rejected');
-                            break;
-                        case 'on review':
-                            statusElement.classList.add('icp-status-review');
-                            break;
+                    if (statusElement) {
+                        statusElement.textContent = icp.status || '-';
+                        statusElement.className = 'icp-status-badge';
+                        
+                        // Add status-specific class
+                        const statusClasses = {
+                            'pending': 'icp-status-pending',
+                            'approved': 'icp-status-approved',
+                            'rejected': 'icp-status-rejected',
+                            'on review': 'icp-status-review'
+                        };
+                        
+                        if (icp.status && statusClasses[icp.status]) {
+                            statusElement.classList.add(statusClasses[icp.status]);
+                        }
                     }
 
-                    // Download Proposal
+                    // Update download button dengan safety check
                     const downloadBtn = document.getElementById('icp-download-proposal');
-                    if (icp.file_path) {
-                        downloadBtn.href = `http://104.43.89.154:8082/download?path=${encodeURIComponent(icp.file_path)}`;
-                        downloadBtn.style.display = 'inline-block';
-                    } else {
-                        downloadBtn.style.display = 'none';
+                    if (downloadBtn) {
+                        if (icp.file_path) {
+                            downloadBtn.href = `http://104.43.89.154:8082/download?path=${encodeURIComponent(icp.file_path)}`;
+                            downloadBtn.style.display = 'inline-block';
+                        } else {
+                            downloadBtn.style.display = 'none';
+                        }
                     }
 
                     // Load revisi data
                     await loadRevisiData(icpId);
                 } else {
-                    throw new Error('Data ICP tidak ditemukan');
+                    throw new Error('Data ICP tidak ditemukan atau response tidak valid');
                 }
             } catch (err) {
                 console.error('Error:', err);
-                alert('Gagal mengambil data ICP: ' + err.message);
+                // Update UI untuk menampilkan error state
+                const errorMessage = 'Gagal memuat data ICP: ' + (err.message || 'Unknown error');
+                alert(errorMessage);
+                
+                // Set default values untuk semua field
+                const fields = ['icp-nama-taruna', 'icp-topik', 'icp-keterangan', 'icp-tanggal', 'icp-status'];
+                fields.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = '-';
+                    }
+                });
             }
         }
 
@@ -902,100 +919,87 @@
             try {
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token');
                 const dosenId = localStorage.getItem('dosenID');
-
-                // Load dosen reviews
-                const reviewResponse = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?dosen_id=${dosenId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const reviewResult = await reviewResponse.json();
-                console.log('Review Data:', reviewResult); // Debug log
-
-                const reviewTbody = document.querySelector('#reviewDosenTable tbody');
-                reviewTbody.innerHTML = '';
-
-                if (reviewResult.status === 'success' && reviewResult.data) {
-                    const reviews = reviewResult.data.filter(rev => rev.icp_id === parseInt(icpId));
-                    if (reviews.length > 0) {
-                        reviews.forEach((review, index) => {
-                            reviewTbody.innerHTML += `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${new Date(review.created_at).toLocaleDateString('id-ID')}</td>
-                                    <td>${review.keterangan || '-'}</td>
-                                    <td>
-                                        ${review.file_path ? 
-                                            `<a href="http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}" 
-                                                class="review-action-btn btn-download">
-                                                <i class="dw dw-download"></i> Download
-                                            </a>` : '-'}
-                                    </td>
-                                    <td>
-                                        ${review.file_path ? 
-                                            `<a href="${review.file_path}" target="_blank" 
-                                                class="review-action-btn btn-view">
-                                                <i class="dw dw-eye"></i> View
-                                            </a>` : '-'}
-                                    </td>
-                                </tr>
-                            `;
-                        });
-                    } else {
-                        reviewTbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada review dari dosen</td></tr>';
-                    }
+                
+                if (!token || !dosenId) {
+                    throw new Error('Token atau Dosen ID tidak ditemukan');
                 }
 
-                // Load taruna revisions
-                const revisiResponse = await fetch(`http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                // Helper function untuk membuat baris tabel
+                const createTableRow = (review, index) => {
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${review.created_at ? new Date(review.created_at).toLocaleDateString('id-ID') : '-'}</td>
+                            <td>${review.keterangan || '-'}</td>
+                            <td>
+                                ${review.file_path ? 
+                                    `<a href="http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}" 
+                                        class="review-action-btn btn-download">
+                                        <i class="dw dw-download"></i> Download
+                                    </a>` : '-'}
+                            </td>
+                            <td>
+                                ${review.file_path ? 
+                                    `<a href="${review.file_path}" target="_blank" 
+                                        class="review-action-btn btn-view">
+                                        <i class="dw dw-eye"></i> View
+                                    </a>` : '-'}
+                            </td>
+                        </tr>
+                    `;
+                };
 
-                const revisiResult = await revisiResponse.json();
-                console.log('Revisi Data:', revisiResult); // Debug log
-
-                const revisiTbody = document.querySelector('#revisiTarunaTable tbody');
-                revisiTbody.innerHTML = '';
-
-                if (revisiResult.status === 'success' && revisiResult.data) {
-                    const revisions = revisiResult.data.filter(rev => rev.icp_id === parseInt(icpId));
-                    if (revisions.length > 0) {
-                        revisions.forEach((revision, index) => {
-                            revisiTbody.innerHTML += `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${new Date(revision.created_at).toLocaleDateString('id-ID')}</td>
-                                    <td>${revision.keterangan || '-'}</td>
-                                    <td>
-                                        ${revision.file_path ? 
-                                            `<a href="http://104.43.89.154:8082/download?path=${encodeURIComponent(revision.file_path)}" 
-                                                class="review-action-btn btn-download">
-                                                <i class="dw dw-download"></i> Download
-                                            </a>` : '-'}
-                                    </td>
-                                    <td>
-                                        ${revision.file_path ? 
-                                            `<a href="${revision.file_path}" target="_blank" 
-                                                class="review-action-btn btn-view">
-                                                <i class="dw dw-eye"></i> View
-                                            </a>` : '-'}
-                                    </td>
-                                </tr>
-                            `;
-                        });
+                // Helper function untuk update tabel
+                const updateTable = async (url, tableId, emptyMessage) => {
+                    const response = await fetch(url, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    const result = await response.json();
+                    console.log(`${tableId} Data:`, result);
+                    
+                    const tbody = document.querySelector(`#${tableId} tbody`);
+                    if (!tbody) return;
+                    
+                    tbody.innerHTML = '';
+                    
+                    if (result.status === 'success' && result.data && result.data.length > 0) {
+                        const filteredData = result.data.filter(item => item.icp_id === parseInt(icpId));
+                        if (filteredData.length > 0) {
+                            tbody.innerHTML = filteredData.map((item, index) => createTableRow(item, index)).join('');
+                        } else {
+                            tbody.innerHTML = `<tr><td colspan="5" class="text-center">${emptyMessage}</td></tr>`;
+                        }
                     } else {
-                        revisiTbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada revisi dari taruna</td></tr>';
+                        tbody.innerHTML = `<tr><td colspan="5" class="text-center">${emptyMessage}</td></tr>`;
                     }
-                }
+                };
+
+                // Update kedua tabel secara parallel
+                await Promise.all([
+                    updateTable(
+                        `http://104.43.89.154:8082/reviewicp/dosen/list?dosen_id=${dosenId}`,
+                        'reviewDosenTable',
+                        'Belum ada review dari dosen'
+                    ),
+                    updateTable(
+                        `http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenId}`,
+                        'revisiTarunaTable',
+                        'Belum ada revisi dari taruna'
+                    )
+                ]);
+
             } catch (err) {
-                console.error('Error loading data:', err);
-                document.querySelector('#reviewDosenTable tbody').innerHTML = 
-                    '<tr><td colspan="5" class="text-center">Gagal memuat data review</td></tr>';
-                document.querySelector('#revisiTarunaTable tbody').innerHTML = 
-                    '<tr><td colspan="5" class="text-center">Gagal memuat data revisi</td></tr>';
+                console.error('Error loading revisi data:', err);
+                const errorMessage = `<tr><td colspan="5" class="text-center">Gagal memuat data: ${err.message}</td></tr>`;
+                
+                // Update kedua tabel dengan pesan error
+                ['reviewDosenTable', 'revisiTarunaTable'].forEach(tableId => {
+                    const tbody = document.querySelector(`#${tableId} tbody`);
+                    if (tbody) {
+                        tbody.innerHTML = errorMessage;
+                    }
+                });
             }
         }
 
@@ -1013,7 +1017,7 @@
         });
 
         // Handle form submission
-        document.getElementById('reviewForm').addEventListener('submit', async function(e) {
+        document.getElementById('reviewForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const formData = new FormData(this);
