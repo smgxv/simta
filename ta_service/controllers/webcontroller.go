@@ -401,6 +401,33 @@ func ProfileDosen(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/dosen/profile_dosen.html")
 }
 
+// Handler untuk edit profile dosen
+func EditProfileDosen(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "dosen" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	http.ServeFile(w, r, "static/dosen/edituser_dosen.html")
+}
+
 // Handler untuk profile taruna
 func ProfileTaruna(w http.ResponseWriter, r *http.Request) {
 	// Set header content type
