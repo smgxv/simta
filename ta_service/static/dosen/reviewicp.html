@@ -1058,15 +1058,49 @@
 				$('#uploadReviewModal').modal('show');
 			}
 
-			// Update the openUploadReviewModalICP function to match the working implementation
-			function openUploadReviewModalICP(topikPenelitian, icpId, userId) {
+			// Fungsi untuk membuka modal upload review pada tabel list ICP
+			async function openUploadReviewModalICP(topikPenelitian, icpId, userId) {
 				console.log('Opening modal with:', { topikPenelitian, icpId, userId });
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
 				document.getElementById('reviewIcpId').value = icpId;
 				document.getElementById('reviewUserId').value = userId;
 				document.getElementById('reviewCycleNumber').value = 1;
-				document.getElementById('reviewTarunaId').value = userId; // We'll get the actual taruna_id from the form submission
-				$('#uploadReviewModal').modal('show');
+				
+				try {
+					// Get token from localStorage or sessionStorage
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					if (!token) {
+						showAlert('Token tidak ditemukan. Silakan login ulang.', 'danger');
+						return;
+					}
+
+					// Get taruna_id from user_id
+					const response = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+						headers: {
+							'Authorization': `Bearer ${token}`,
+							'Content-Type': 'application/json'
+						}
+					});
+
+					const data = await response.json();
+					console.log('Taruna data:', data);
+
+					if (data.status === 'success' && data.data && data.data.length > 0) {
+						// Find taruna with matching user_id
+						const taruna = data.data.find(t => t.user_id === parseInt(userId));
+						if (taruna) {
+							document.getElementById('reviewTarunaId').value = taruna.id;
+							$('#uploadReviewModal').modal('show');
+						} else {
+							showAlert('Data taruna tidak ditemukan untuk user_id ini', 'danger');
+						}
+					} else {
+						showAlert('Data taruna tidak ditemukan', 'danger');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Gagal mengambil data taruna', 'danger');
+				}
 			}
 
 			// Function to update ICP status (approve/reject)
