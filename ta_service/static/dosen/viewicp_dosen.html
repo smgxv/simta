@@ -21,17 +21,101 @@
     <link rel="stylesheet" type="text/css" href="vendors/styles/icon-font.min.css"/>
     <link rel="stylesheet" type="text/css" href="vendors/styles/style.css" />
     <style>
-        .icp-section { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 32px; margin-bottom: 32px; }
-        .icp-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 16px; }
-        .icp-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-        .icp-table th, .icp-table td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
-        .icp-table th { background: #f5f5f5; }
-        .icp-status { font-weight: bold; color: #888; }
-        .icp-actions button, .icp-actions a { margin-right: 8px; }
-        .form-label { font-weight: 500; }
-        .form-group { margin-bottom: 16px; }
-        .btn { min-width: 100px; }
-        .markdown-box { font-family: 'Consolas', 'Menlo', 'Monaco', monospace; background: #f8f8f8; border-radius: 6px; padding: 16px; }
+        .icp-section { 
+            background: #fff; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+            padding: 32px; 
+            margin-bottom: 32px; 
+        }
+        .icp-title { 
+            font-size: 1.5rem; 
+            font-weight: 600; 
+            color: #1b00ff;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .icp-info-table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .icp-info-table td {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .icp-info-table td:first-child {
+            font-weight: 500;
+            width: 180px;
+            color: #333;
+        }
+        .icp-status-badge {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .icp-status-pending { background: #fff4de; color: #ffa800; }
+        .icp-status-approved { background: #e8fff3; color: #0fba6f; }
+        .icp-status-rejected { background: #ffe2e5; color: #f64e60; }
+        .icp-status-review { background: #eee; color: #666; }
+        .btn-download {
+            margin-top: 20px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .btn-download:hover {
+            background: #e9ecef;
+            text-decoration: none;
+        }
+        .btn-download i {
+            font-size: 18px;
+        }
+        .review-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .review-table th {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .review-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+        }
+        .review-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        .review-action-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            color: #fff;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 4px;
+        }
+        .review-action-btn:hover {
+            opacity: 0.9;
+            text-decoration: none;
+            color: #fff;
+        }
+        .btn-view { background: #1b00ff; }
+        .btn-download { background: #0fba6f; }
     </style>
 </head>
 
@@ -487,49 +571,100 @@
                     </div>
                 </div>
 
+                <!-- ICP Details Section -->
                 <div class="icp-section">
-                    <div class="icp-title">View ICP - <span id="icp-title-text">-</span></div>
-                    <table style="margin-bottom: 0;">
-                        <tr><td><b>Nama Taruna</b></td><td>: <span id="icp-nama-taruna">-</span></td></tr>
-                        <tr><td><b>Topik ICP</b></td><td>: <span id="icp-topik">-</span></td></tr>
-                        <tr><td><b>Keterangan</b></td><td>: <span id="icp-keterangan">-</span></td></tr>
-                        <tr><td><b>Tanggal</b></td><td>: <span id="icp-tanggal">-</span></td></tr>
-                        <tr><td><b>Status</b></td><td>: <span id="icp-status" class="icp-status">-</span></td></tr>
+                    <div class="icp-title">Detail ICP</div>
+                    <table class="icp-info-table">
                         <tr>
-                            <td colspan="2">
-                                <a href="#" id="icp-download-proposal" class="btn btn-outline-primary btn-sm" style="display:none;">Download Proposal</a>
-                            </td>
+                            <td>Nama Taruna</td>
+                            <td>: <span id="icp-nama-taruna">-</span></td>
+                        </tr>
+                        <tr>
+                            <td>Topik ICP</td>
+                            <td>: <span id="icp-topik">-</span></td>
+                        </tr>
+                        <tr>
+                            <td>Keterangan</td>
+                            <td>: <span id="icp-keterangan">-</span></td>
+                        </tr>
+                        <tr>
+                            <td>Tanggal Pengajuan</td>
+                            <td>: <span id="icp-tanggal">-</span></td>
+                        </tr>
+                        <tr>
+                            <td>Status</td>
+                            <td>: <span id="icp-status" class="icp-status-badge">-</span></td>
                         </tr>
                     </table>
+                    <a href="#" id="icp-download-proposal" class="btn-download" style="display:none;">
+                        <i class="dw dw-download"></i> Download Proposal ICP
+                    </a>
                 </div>
-                <div class="icp-section">
-                    <div class="icp-title">Riwayat Revisi dan Tanggapan</div>
-                    <table class="icp-table">
-                        <thead>
-                            <tr>
-                                <th>Revisi</th>
-                                <th>Tanggal</th>
-                                <th>Catatan Taruna</th>
-                                <th>Tanggapan Dosen</th>
-                                <th>File</th>
-                            </tr>
-                        </thead>
-                        <tbody id="revisi-table-body">
-                            <!-- Data will be populated by JavaScript -->
-                        </tbody>
-                    </table>
+
+                <!-- Review History Section -->
+                <div class="card-box mb-30">
+                    <div class="pd-20">
+                        <h4 class="text-blue h4">Riwayat Review Dosen</h4>
+                    </div>
+                    <div class="pb-20">
+                        <table id="reviewDosenTable" class="data-table table stripe hover nowrap">
+                            <thead>
+                                <tr>
+                                    <th>Review ke-</th>
+                                    <th>Tanggal</th>
+                                    <th>Keterangan</th>
+                                    <th>File</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
+                <!-- Revision History Section -->
+                <div class="card-box mb-30">
+                    <div class="pd-20">
+                        <h4 class="text-blue h4">Riwayat Revisi Taruna</h4>
+                    </div>
+                    <div class="pb-20">
+                        <table id="revisiTarunaTable" class="data-table table stripe hover nowrap">
+                            <thead>
+                                <tr>
+                                    <th>Revisi ke-</th>
+                                    <th>Tanggal</th>
+                                    <th>Keterangan</th>
+                                    <th>File</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Review Form Section -->
                 <div class="icp-section">
                     <div class="icp-title">Form Review Dosen</div>
-                    <form>
+                    <form id="reviewForm">
                         <div class="form-group">
-                            <label class="form-label">Komentar:</label>
-                            <textarea class="form-control" rows="3" placeholder="Tulis komentar..." style="resize:vertical;"></textarea>
+                            <label class="form-label">Komentar Review:</label>
+                            <textarea class="form-control" rows="4" placeholder="Tulis komentar review di sini..." style="resize:vertical;"></textarea>
                         </div>
-                        <div class="form-group icp-actions">
-                            <button type="button" class="btn btn-success">✔ Accept</button>
-                            <button type="button" class="btn btn-danger">✘ Reject</button>
-                            <button type="button" class="btn btn-primary"><i class="dw dw-upload"></i> Upload Review</button>
+                        <div class="form-group">
+                            <label class="form-label">Upload File Review (PDF):</label>
+                            <input type="file" class="form-control" accept=".pdf">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="btn btn-success mr-2">✔ Accept ICP</button>
+                            <button type="button" class="btn btn-danger mr-2">✘ Reject ICP</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="dw dw-upload"></i> Upload Review
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -727,16 +862,27 @@
                 document.getElementById('icp-tanggal').textContent = new Date(icp.created_at).toLocaleDateString('id-ID') || '-';
                 document.getElementById('icp-status').textContent = icp.status || '-';
 
-                // Set status color
+                // Update status badge with new styling
                 const statusElement = document.getElementById('icp-status');
-                if (icp.status === 'pending') {
-                    statusElement.style.color = '#ffc107';
-                } else if (icp.status === 'approved') {
-                    statusElement.style.color = '#28a745';
-                } else if (icp.status === 'rejected') {
-                    statusElement.style.color = '#dc3545';
-                } else if (icp.status === 'on review') {
-                    statusElement.style.color = '#6c757d';
+                statusElement.textContent = icp.status || '-';
+                
+                // Remove any existing status classes
+                statusElement.className = 'icp-status-badge';
+                
+                // Add appropriate status class
+                switch(icp.status) {
+                    case 'pending':
+                        statusElement.classList.add('icp-status-pending');
+                        break;
+                    case 'approved':
+                        statusElement.classList.add('icp-status-approved');
+                        break;
+                    case 'rejected':
+                        statusElement.classList.add('icp-status-rejected');
+                        break;
+                    case 'on review':
+                        statusElement.classList.add('icp-status-review');
+                        break;
                 }
 
                 // Download Proposal
@@ -761,48 +907,88 @@
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token');
                 const dosenId = localStorage.getItem('dosenID');
 
-                const response = await fetch(`http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenId}`, {
+                // Load dosen reviews
+                const reviewResponse = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?dosen_id=${dosenId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });
 
-                const result = await response.json();
-                console.log('Revisi data:', result); // Debug log
+                const reviewResult = await reviewResponse.json();
+                const reviewTbody = document.querySelector('#reviewDosenTable tbody');
+                reviewTbody.innerHTML = '';
 
-                if (result.status === 'success' && result.data) {
-                    const tbody = document.getElementById('revisi-table-body');
-                    tbody.innerHTML = ''; // Clear existing rows
-
-                    // Filter revisi for current ICP
-                    const revisiList = result.data.filter(rev => rev.icp_id === parseInt(icpId));
-
-                    if (revisiList.length > 0) {
-                        revisiList.forEach((revisi, index) => {
-                            tbody.innerHTML += `
+                if (reviewResult.status === 'success' && reviewResult.data) {
+                    const reviews = reviewResult.data.filter(rev => rev.icp_id === parseInt(icpId));
+                    if (reviews.length > 0) {
+                        reviews.forEach((review, index) => {
+                            reviewTbody.innerHTML += `
                                 <tr>
                                     <td>${index + 1}</td>
-                                    <td>${new Date(revisi.created_at).toLocaleDateString('id-ID')}</td>
-                                    <td>${revisi.keterangan || '-'}</td>
-                                    <td>${revisi.tanggapan_dosen || '-'}</td>
+                                    <td>${new Date(review.created_at).toLocaleDateString('id-ID')}</td>
+                                    <td>${review.keterangan || '-'}</td>
+                                    <td>${review.file_path ? 
+                                        `<a href="http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}" 
+                                            class="review-action-btn btn-download">
+                                            <i class="dw dw-download"></i> Download
+                                        </a>` : '-'}</td>
                                     <td>
-                                        ${revisi.file_path ? 
-                                            `<a href="http://104.43.89.154:8082/download?path=${encodeURIComponent(revisi.file_path)}" target="_blank">
-                                                <i class="dw dw-download"></i>
-                                            </a>` : 
-                                            '-'}
+                                        <a href="#" class="review-action-btn btn-view">
+                                            <i class="dw dw-eye"></i> View
+                                        </a>
                                     </td>
                                 </tr>
                             `;
                         });
                     } else {
-                        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada data revisi</td></tr>';
+                        reviewTbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada review dari dosen</td></tr>';
+                    }
+                }
+
+                // Load taruna revisions
+                const revisiResponse = await fetch(`http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const revisiResult = await revisiResponse.json();
+                const revisiTbody = document.querySelector('#revisiTarunaTable tbody');
+                revisiTbody.innerHTML = '';
+
+                if (revisiResult.status === 'success' && revisiResult.data) {
+                    const revisions = revisiResult.data.filter(rev => rev.icp_id === parseInt(icpId));
+                    if (revisions.length > 0) {
+                        revisions.forEach((revision, index) => {
+                            revisiTbody.innerHTML += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${new Date(revision.created_at).toLocaleDateString('id-ID')}</td>
+                                    <td>${revision.keterangan || '-'}</td>
+                                    <td>${revision.file_path ? 
+                                        `<a href="http://104.43.89.154:8082/download?path=${encodeURIComponent(revision.file_path)}" 
+                                            class="review-action-btn btn-download">
+                                            <i class="dw dw-download"></i> Download
+                                        </a>` : '-'}</td>
+                                    <td>
+                                        <a href="#" class="review-action-btn btn-view">
+                                            <i class="dw dw-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        revisiTbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada revisi dari taruna</td></tr>';
                     }
                 }
             } catch (err) {
-                console.error('Error loading revisi:', err);
-                document.getElementById('revisi-table-body').innerHTML = 
+                console.error('Error loading data:', err);
+                document.querySelector('#reviewDosenTable tbody').innerHTML = 
+                    '<tr><td colspan="5" class="text-center">Gagal memuat data review</td></tr>';
+                document.querySelector('#revisiTarunaTable tbody').innerHTML = 
                     '<tr><td colspan="5" class="text-center">Gagal memuat data revisi</td></tr>';
             }
         }
