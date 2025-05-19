@@ -134,10 +134,25 @@ func EditUserDosen(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Update data user
-		err = userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, "Dosen", userData.Jurusan, "")
+		err = userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, "dosen", userData.Jurusan, "")
 		if err != nil {
 			log.Printf("Failed to update user: %v", err)
 			http.Error(w, "Gagal mengupdate user", http.StatusInternalServerError)
+			return
+		}
+
+		// Update data dosen
+		dosenModel, err := models.NewDosenModel()
+		if err != nil {
+			log.Printf("Database connection error: %v", err)
+			http.Error(w, "Database connection error", http.StatusInternalServerError)
+			return
+		}
+
+		err = dosenModel.UpdateDosen(userData.UserID, userData.FullName, userData.Jurusan)
+		if err != nil {
+			log.Printf("Failed to update dosen: %v", err)
+			http.Error(w, "Gagal mengupdate dosen", http.StatusInternalServerError)
 			return
 		}
 
@@ -147,13 +162,6 @@ func EditUserDosen(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Printf("Failed to hash password: %v", err)
 				http.Error(w, "Gagal mengupdate password", http.StatusInternalServerError)
-				return
-			}
-
-			dosenModel, err := models.NewDosenModel()
-			if err != nil {
-				log.Printf("Database connection error: %v", err)
-				http.Error(w, "Database connection error", http.StatusInternalServerError)
 				return
 			}
 
