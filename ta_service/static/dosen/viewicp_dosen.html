@@ -488,14 +488,13 @@
                 </div>
 
                 <div class="icp-section">
-                    <div class="icp-title">View ICP - Secure Simta (Havilah Papilaya)</div>
+                    <div class="icp-title">View ICP - <span id="icp-title-text">-</span></div>
                     <table style="margin-bottom: 0;">
                         <tr><td><b>Nama Taruna</b></td><td>: <span id="icp-nama-taruna">-</span></td></tr>
-                        <tr><td><b>NIM</b></td><td>: <span id="icp-nim">-</span></td></tr>
-                        <tr><td><b>Judul ICP</b></td><td>: <span id="icp-judul">-</span></td></tr>
-                        <tr><td><b>Deskripsi</b></td><td>: <span id="icp-deskripsi">-</span></td></tr>
+                        <tr><td><b>Topik ICP</b></td><td>: <span id="icp-topik">-</span></td></tr>
+                        <tr><td><b>Keterangan</b></td><td>: <span id="icp-keterangan">-</span></td></tr>
                         <tr><td><b>Tanggal</b></td><td>: <span id="icp-tanggal">-</span></td></tr>
-                        <tr><td><b>Status</b></td><td class="icp-status">: <span id="icp-status">-</span></td></tr>
+                        <tr><td><b>Status</b></td><td>: <span id="icp-status" class="icp-status">-</span></td></tr>
                         <tr>
                             <td colspan="2">
                                 <a href="#" id="icp-download-proposal" class="btn btn-outline-primary btn-sm" style="display:none;">Download Proposal</a>
@@ -515,21 +514,8 @@
                                 <th>File</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>13 Mei</td>
-                                <td>Ini revisi saya bu</td>
-                                <td>-</td>
-                                <td><a href="#"><i class="dw dw-attachment"></i></a></td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>14 Mei</td>
-                                <td>Ini balasannya</td>
-                                <td>-</td>
-                                <td><a href="#"><i class="dw dw-attachment"></i></a></td>
-                            </tr>
+                        <tbody id="revisi-table-body">
+                            <!-- Data will be populated by JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -561,8 +547,6 @@
         function redirectToProfile() {
             window.location.href = '/dosen/profile';
         }
-
-        
 
 		// Fungsi untuk logout
 		async function logout() {
@@ -698,44 +682,133 @@
 			}
 		});
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Ambil ICP ID dari query string
-            const urlParams = new URLSearchParams(window.location.search);
-            const icpId = urlParams.get('id');
-            if (!icpId) {
-                alert('ICP ID tidak ditemukan!');
-                return;
-            }
+        // Fungsi untuk mengambil data ICP
+        async function loadICPData() {
+            try {
+                // Ambil ICP ID dari query string
+                const urlParams = new URLSearchParams(window.location.search);
+                const icpId = urlParams.get('id');
+                if (!icpId) {
+                    alert('ICP ID tidak ditemukan!');
+                    return;
+                }
 
-            // Fetch detail ICP dari API
-            fetch(`http://104.43.89.154:8082/icp/${icpId}`)
-                .then(response => response.json())
-                .then(result => {
-                    if (result.status !== 'success' || !result.data) {
-                        throw new Error('Data ICP tidak ditemukan');
+                // Ambil token dari storage
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/loginusers';
+                    return;
+                }
+
+                // Fetch detail ICP dari API
+                const response = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
-                    const icp = result.data;
-
-                    // Isi data ke tabel
-                    document.getElementById('icp-nama-taruna').textContent = icp.nama_taruna || '-';
-                    document.getElementById('icp-nim').textContent = icp.nim || '-';
-                    document.getElementById('icp-judul').textContent = icp.judul_icp || '-';
-                    document.getElementById('icp-deskripsi').textContent = icp.deskripsi || '-';
-                    document.getElementById('icp-tanggal').textContent = icp.tanggal || '-';
-                    document.getElementById('icp-status').textContent = icp.status || '-';
-
-                    // Download Proposal
-                    if (icp.proposal_path) {
-                        document.getElementById('icp-download-proposal').href = `http://104.43.89.154:8082/download?path=${encodeURIComponent(icp.proposal_path)}`;
-                        document.getElementById('icp-download-proposal').style.display = '';
-                    } else {
-                        document.getElementById('icp-download-proposal').style.display = 'none';
-                    }
-                })
-                .catch(err => {
-                    alert('Gagal mengambil data ICP: ' + err.message);
                 });
-        });
+
+                const result = await response.json();
+                
+                if (result.status !== 'success' || !result.data) {
+                    throw new Error('Data ICP tidak ditemukan');
+                }
+                
+                const icp = result.data;
+                console.log('Data ICP:', icp); // Debug log
+
+                // Update title
+                document.getElementById('icp-title-text').textContent = icp.topik_penelitian || '-';
+                
+                // Isi data ke tabel
+                document.getElementById('icp-nama-taruna').textContent = icp.nama_taruna || '-';
+                document.getElementById('icp-topik').textContent = icp.topik_penelitian || '-';
+                document.getElementById('icp-keterangan').textContent = icp.keterangan || '-';
+                document.getElementById('icp-tanggal').textContent = new Date(icp.created_at).toLocaleDateString('id-ID') || '-';
+                document.getElementById('icp-status').textContent = icp.status || '-';
+
+                // Set status color
+                const statusElement = document.getElementById('icp-status');
+                if (icp.status === 'pending') {
+                    statusElement.style.color = '#ffc107';
+                } else if (icp.status === 'approved') {
+                    statusElement.style.color = '#28a745';
+                } else if (icp.status === 'rejected') {
+                    statusElement.style.color = '#dc3545';
+                } else if (icp.status === 'on review') {
+                    statusElement.style.color = '#6c757d';
+                }
+
+                // Download Proposal
+                if (icp.file_path) {
+                    const downloadBtn = document.getElementById('icp-download-proposal');
+                    downloadBtn.href = `http://104.43.89.154:8082/download?path=${encodeURIComponent(icp.file_path)}`;
+                    downloadBtn.style.display = 'inline-block';
+                }
+
+                // Load revisi data
+                await loadRevisiData(icpId);
+
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Gagal mengambil data ICP: ' + err.message);
+            }
+        }
+
+        // Fungsi untuk mengambil data revisi
+        async function loadRevisiData(icpId) {
+            try {
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const dosenId = localStorage.getItem('dosenID');
+
+                const response = await fetch(`http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                console.log('Revisi data:', result); // Debug log
+
+                if (result.status === 'success' && result.data) {
+                    const tbody = document.getElementById('revisi-table-body');
+                    tbody.innerHTML = ''; // Clear existing rows
+
+                    // Filter revisi for current ICP
+                    const revisiList = result.data.filter(rev => rev.icp_id === parseInt(icpId));
+
+                    if (revisiList.length > 0) {
+                        revisiList.forEach((revisi, index) => {
+                            tbody.innerHTML += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${new Date(revisi.created_at).toLocaleDateString('id-ID')}</td>
+                                    <td>${revisi.keterangan || '-'}</td>
+                                    <td>${revisi.tanggapan_dosen || '-'}</td>
+                                    <td>
+                                        ${revisi.file_path ? 
+                                            `<a href="http://104.43.89.154:8082/download?path=${encodeURIComponent(revisi.file_path)}" target="_blank">
+                                                <i class="dw dw-download"></i>
+                                            </a>` : 
+                                            '-'}
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada data revisi</td></tr>';
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading revisi:', err);
+                document.getElementById('revisi-table-body').innerHTML = 
+                    '<tr><td colspan="5" class="text-center">Gagal memuat data revisi</td></tr>';
+            }
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', loadICPData);
     </script>
 </body>
 </html>
