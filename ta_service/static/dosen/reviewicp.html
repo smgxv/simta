@@ -684,7 +684,6 @@
 		</div>
 
 		<script>
-			// Fungsi untuk redirect ke halaman profile
 			function redirectToProfile() {
 				window.location.href = '/dosen/profile';
 			}
@@ -728,7 +727,9 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												
+												<a class="dropdown-item view-icp-btn" href="#" data-icp-id="${icp.id}">
+													<i class="dw dw-eye"></i> View
+												</a>
 												<a class="dropdown-item upload-review-btn" href="#" data-icp-id="${icp.id}" data-user-id="${icp.user_id}" data-topik="${icp.topik_penelitian}">
 													<i class="dw dw-upload"></i> Upload Review
 												</a>
@@ -740,9 +741,6 @@
 												</a>
 												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
-												</a>
-												<a class="dropdown-item view-icp-btn" href="#" data-icp-id="${icp.id}">
-													<i class="dw dw-eye"></i> View
 												</a>
 											</div>
 										</div>
@@ -1104,47 +1102,40 @@
 			}
 
 			// Fungsi untuk membuka modal upload review pada tabel list ICP
-			async function openUploadReviewModalICP(topikPenelitian, icpId, userId) {
-				try {
-					console.log('Opening ICP modal with:', { topikPenelitian, icpId, userId });
-					document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
-					document.getElementById('reviewIcpId').value = icpId;
-					document.getElementById('reviewUserId').value = userId;
-					document.getElementById('reviewCycleNumber').value = 1;
-					
-					// Get token from storage
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					if (!token) {
-						showAlert('Token tidak ditemukan. Silakan login ulang.', 'danger');
-						return;
+			function openUploadReviewModalICP(topikPenelitian, icpId, userId) {
+				console.log('Opening ICP modal with:', { topikPenelitian, icpId, userId });
+				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
+				document.getElementById('reviewIcpId').value = icpId;
+				document.getElementById('reviewUserId').value = userId;
+				document.getElementById('reviewCycleNumber').value = 1;
+				
+				// Get taruna_id from user_id
+				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					headers: {
+						'Authorization': `Bearer ${token}`,
+						'Content-Type': 'application/json'
 					}
-
-					// Get ICP data to get taruna_id
-					const response = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
-						headers: {
-							'Authorization': `Bearer ${token}`
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.status === 'success' && data.data && data.data.length > 0) {
+						// Cari taruna yang user_id nya sesuai
+						const taruna = data.data.find(t => t.user_id === parseInt(userId));
+						if (taruna) {
+							document.getElementById('reviewTarunaId').value = taruna.id;
+							$('#uploadReviewModal').modal('show');
+						} else {
+							showAlert('Data taruna tidak ditemukan untuk user_id ini', 'danger');
 						}
-					});
-
-					if (!response.ok) {
-						throw new Error('Failed to fetch ICP data');
-					}
-
-					const result = await response.json();
-					console.log('ICP Data:', result);
-
-					if (result.status === 'success' && result.data) {
-						// Set taruna_id from ICP data
-						document.getElementById('reviewTarunaId').value = result.data.taruna_id;
-						$('#uploadReviewModal').modal('show');
 					} else {
-						throw new Error('Data ICP tidak ditemukan');
+						showAlert('Data taruna tidak ditemukan', 'danger');
 					}
-
-				} catch (error) {
+				})
+				.catch(error => {
 					console.error('Error:', error);
-					showAlert('Gagal mengambil data: ' + error.message, 'danger');
-				}
+					showAlert('Gagal mengambil data taruna', 'danger');
+				});
 			}
 
 			// Function to update ICP status (approve/reject)
