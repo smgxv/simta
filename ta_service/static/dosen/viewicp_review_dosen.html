@@ -680,8 +680,8 @@
                     const downloadBtn = document.getElementById('icp-download-proposal');
                     if (downloadBtn && review.file_path) {
                         downloadBtn.href = `http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}`;
-                        downloadBtn.style.display = 'inline-block';
-                    }
+                            downloadBtn.style.display = 'inline-block';
+                        }
                 } else {
                     throw new Error('Data review tidak ditemukan');
                 }
@@ -694,7 +694,7 @@
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
             // Check token first
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
             if (!token) {
                 window.location.href = '/loginusers';
                 return;
@@ -729,7 +729,7 @@
                     localStorage.clear();
                     sessionStorage.clear();
                     window.location.href = '/loginusers';
-                } else {
+                        } else {
                     throw new Error(data.message || 'Gagal logout');
                 }
             } catch (error) {
