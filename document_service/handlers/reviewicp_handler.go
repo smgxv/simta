@@ -851,3 +851,72 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		"data":   revisions,
 	})
 }
+
+// Handler untuk mengambil detail review ICP dosen berdasarkan ID
+func GetReviewICPDetailHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Content-Type", "application/json")
+
+	// Get review ID from query parameter
+	reviewID := r.URL.Query().Get("id")
+	if reviewID == "" {
+		http.Error(w, "Review ID is required", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	query := `
+		SELECT 
+			r.id, r.icp_id, r.taruna_id, r.dosen_id, r.cycle_number,
+			r.topik_penelitian, r.file_path, r.keterangan, r.created_at,
+			r.updated_at, t.nama_lengkap as nama_taruna, d.nama_lengkap as dosen_nama
+		FROM review_icp_dosen r
+		LEFT JOIN taruna t ON r.taruna_id = t.id
+		LEFT JOIN dosen d ON r.dosen_id = d.id
+		WHERE r.id = ?
+	`
+
+	var review entities.ReviewICP
+	var namaTaruna, dosenNama sql.NullString
+	err = db.QueryRow(query, reviewID).Scan(
+		&review.ID,
+		&review.ICPID,
+		&review.TarunaID,
+		&review.DosenID,
+		&review.CycleNumber,
+		&review.TopikPenelitian,
+		&review.FilePath,
+		&review.Keterangan,
+		&review.CreatedAt,
+		&review.UpdatedAt,
+		&namaTaruna,
+		&dosenNama,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Review not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if namaTaruna.Valid {
+		review.NamaTaruna = namaTaruna.String
+	}
+	if dosenNama.Valid {
+		review.DosenNama = dosenNama.String
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   review,
+	})
+}

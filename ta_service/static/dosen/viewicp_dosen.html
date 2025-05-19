@@ -662,9 +662,6 @@
                         <div class="form-group">
                             <button type="button" class="btn btn-success mr-2" onclick="acceptICP()">✔ Accept ICP</button>
                             <button type="button" class="btn btn-danger mr-2" onclick="rejectICP()">✘ Reject ICP</button>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="dw dw-upload"></i> Upload Review
-                            </button>
                         </div>
                     </form>
                 </div>
@@ -941,16 +938,13 @@
                             <td>${review.keterangan || '-'}</td>
                             <td>
                                 ${review.file_path ? 
-                                    `<a href="http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}" 
-                                        class="review-action-btn btn-download">
-                                        <i class="dw dw-download"></i> Download
-                                    </a>` : '-'}
-                            </td>
-                            <td>
-                                ${review.file_path ? 
-                                    `<a href="/dosen/viewicp_review?id=${review.id}&icp_id=${icpId}" 
-                                        class="review-action-btn btn-view">
-                                        <i class="dw dw-eye"></i> View
+                                    `<a href=\"http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}\" 
+                                        class=\"review-action-btn btn-download\">
+                                        <i class=\"dw dw-download\"></i> Download
+                                    </a>
+                                    <a href=\"/dosen/viewicp_review?id=${review.id}&icp_id=${icpId}\" 
+                                        class=\"review-action-btn btn-view\">
+                                        <i class=\"dw dw-eye\"></i> View
                                     </a>` : '-'}
                             </td>
                         </tr>

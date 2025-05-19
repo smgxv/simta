@@ -585,13 +585,12 @@
                         </tr>
                         <tr>
                             <td>Revisi ke-</td>
-                            <td>: <span id="icp-tanggal">-</span></td>
+                            <td>: <span id="icp-revisi-ke">-</span></td>
                         </tr>
                         <tr>
                             <td>Tanggal Review</td>
                             <td>: <span id="icp-tanggal">-</span></td>
                         </tr>
-                        
                         <tr>
                             <td>Status</td>
                             <td>: <span id="icp-status" class="icp-status-badge">-</span></td>
@@ -606,7 +605,7 @@
                     </a>
                 </div>
 
-                <!-- Review Form Section -->
+                <!-- Form Review Section -->
                 <div class="icp-section">
                     <div class="icp-title">Form Review Dosen</div>
                     <form id="reviewForm">
@@ -630,143 +629,142 @@
     <script src="vendors/scripts/layout-settings.js"></script>
 
     <script>
+        // Fungsi untuk mengambil data review ICP
+        async function loadICPReviewData() {
+            try {
+                // Ambil review ID dan ICP ID dari query string
+                const urlParams = new URLSearchParams(window.location.search);
+                const reviewId = urlParams.get('id');
+                const icpId = urlParams.get('icp_id');
+                
+                if (!reviewId || !icpId) {
+                    alert('Review ID atau ICP ID tidak ditemukan!');
+                    return;
+                }
+
+                // Ambil token dan dosen_id dari storage
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const dosenId = localStorage.getItem('dosenID');
+                if (!token || !dosenId) {
+                    window.location.href = '/loginusers';
+                    return;
+                }
+
+                // Fetch detail ICP dari API
+                const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}?dosen_id=${dosenId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (icpResponse.status === 403) {
+                    alert('Anda tidak memiliki akses untuk melihat ICP ini');
+                    window.location.href = '/dosen/review_icp';
+                    return;
+                }
+
+                const icpResult = await icpResponse.json();
+                
+                if (icpResult.status === 'success' && icpResult.data) {
+                    const icp = icpResult.data;
+                    
+                    // Update ICP details
+                    document.getElementById('icp-nama-taruna').textContent = icp.nama_taruna || '-';
+                    document.getElementById('icp-topik').textContent = icp.topik_penelitian || '-';
+                    
+                    // Fetch review details
+                    const reviewResponse = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/detail?id=${reviewId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    const reviewResult = await reviewResponse.json();
+                    
+                    if (reviewResult.status === 'success' && reviewResult.data) {
+                        const review = reviewResult.data;
+                        
+                        // Update review details
+                        document.getElementById('icp-revisi-ke').textContent = review.revisi_ke || '-';
+                        document.getElementById('icp-tanggal').textContent = review.created_at ? 
+                            new Date(review.created_at).toLocaleDateString('id-ID') : '-';
+                        document.getElementById('icp-status').textContent = review.status || '-';
+                        document.getElementById('icp-keterangan').textContent = review.keterangan || '-';
+                        
+                        // Update download button if file exists
+                        const downloadBtn = document.getElementById('icp-download-proposal');
+                        if (downloadBtn && review.file_path) {
+                            downloadBtn.href = `http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}`;
+                            downloadBtn.style.display = 'inline-block';
+                        }
+                    } else {
+                        throw new Error('Data review tidak ditemukan');
+                    }
+                } else {
+                    throw new Error('Data ICP tidak ditemukan');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Gagal memuat data: ' + err.message);
+            }
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check token first
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/loginusers';
+                return;
+            }
+
+            // Load review data
+            loadICPReviewData();
+        });
+
         function redirectToProfile() {
             window.location.href = '/dosen/profile';
         }
 
-		// Fungsi untuk logout
-		async function logout() {
-			try {
-				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				
-				const response = await fetch('http://104.43.89.154:8080/logout', {
-					method: 'POST',
-					headers: {
-						'Authorization': token ? `Bearer ${token}` : '',
-						'Content-Type': 'application/json'
-					},
-					credentials: 'include'
-				});
+        // Fungsi untuk logout
+        async function logout() {
+            try {
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                
+                const response = await fetch('http://104.43.89.154:8080/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : '',
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
 
-				const data = await response.json();
-				
-				if (response.ok && data.status === 'success') {
-					// Clear localStorage
-					localStorage.clear();
-					
-					// Clear sessionStorage
-					sessionStorage.clear();
-					
-					// Clear all cookies for all possible paths
-					const paths = ['/', '/admin', '/dosen', '/admin/', '/dosen/'];
-					const cookies = document.cookie.split(';');
-					
-					for (let cookie of cookies) {
-						const eqPos = cookie.indexOf('=');
-						const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-						
-						// Hapus cookie untuk setiap path
-						paths.forEach(path => {
-							document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path}`;
-						});
-					}
-					
-					// Clear cache if browser supports it
-					if (window.caches) {
-						caches.keys().then(names => {
-							names.forEach(name => {
-								caches.delete(name);
-							});
-						});
-					}
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'success') {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = '/loginusers';
+                } else {
+                    throw new Error(data.message || 'Gagal logout');
+                }
+            } catch (error) {
+                console.error('Error during logout:', error);
+                alert('Gagal logout. Silakan coba lagi.');
+            }
+        }
 
-					// Clear application cache
-					if (window.applicationCache) {
-						window.applicationCache.abort();
-					}
-
-					// Clear service workers if any
-					if (navigator.serviceWorker) {
-						navigator.serviceWorker.getRegistrations().then(registrations => {
-							registrations.forEach(registration => {
-								registration.unregister();
-							});
-						});
-					}
-					
-					console.log('Logout berhasil');
-					
-					// Force reload halaman login untuk membersihkan cache
-					window.location.href = '/loginusers';
-					window.location.reload(true);
-				} else {
-					throw new Error(data.message || 'Gagal logout');
-				}
-			} catch (error) {
-				console.error('Error during logout:', error);
-				alert('Gagal logout. Silakan coba lagi.');
-			}
-		}
-
-		// Fungsi untuk mengambil data user
-		document.addEventListener('DOMContentLoaded', function() {
-			// Cek token
-			const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-			if (!token) {
-				window.location.replace('/loginusers');
-				return;
-			}
-
-			// Ambil ID user dari token
-			const userId = localStorage.getItem('userId');
-
-			// Ambil data user dari API
-			fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			})
-			.then(response => {
-				if (!response.ok) {
-					throw new Error('Gagal mengambil data user');
-				}
-				return response.json();
-			})
-			.then(user => {
-				// Update username di header
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = user.username || user.nama_lengkap || 'User';
-				}
-			})
-			.catch(error => {
-				console.error('Error:', error);
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = 'User';
-				}
-			});
-
-			// Validasi token dengan server
-			fetch('http://104.43.89.154:8080/dosen/dashboard', { // Ubah ke endpoint dosen
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			}).catch(() => {
-				window.location.replace('/loginusers');
-			});
-		});
-
-		// Event listener untuk tombol logout
-		document.addEventListener('DOMContentLoaded', function() {
-			const logoutButton = document.querySelector('a[onclick="logout()"]');
-			if (logoutButton) {
-				logoutButton.addEventListener('click', function(e) {
-					e.preventDefault();
-					logout();
-				});
-			}
-		});
+        // Event listener untuk tombol logout
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutButton = document.querySelector('a[onclick="logout()"]');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    logout();
+                });
+            }
+        });
 
         // Fungsi untuk mengambil data ICP
         async function loadICPData() {
@@ -960,19 +958,6 @@
                 });
             }
         }
-
-        // Load data when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check token first
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/loginusers';
-                return;
-            }
-
-            // Load ICP data
-            loadICPData();
-        });
 
         // Handle form submission
         document.getElementById('reviewForm')?.addEventListener('submit', async function(e) {
