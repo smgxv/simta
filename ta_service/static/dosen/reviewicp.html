@@ -730,7 +730,7 @@
 												<a class="dropdown-item view-icp-btn" href="#" data-icp-id="${icp.id}">
 													<i class="dw dw-eye"></i> View
 												</a>
-												<a class="dropdown-item upload-review-btn" href="#" data-icp-id="${icp.id}" data-user-id="${icp.user_id}" data-topik="${icp.topik_penelitian}">
+												<a class="dropdown-item" href="#" onclick="openUploadReviewModalICP('${icp.topik_penelitian}', ${icp.id}, ${icp.user_id})">
 													<i class="dw dw-upload"></i> Upload Review
 												</a>
 												<a class="dropdown-item accept-icp-btn" href="#" data-id="${icp.id}">
@@ -749,51 +749,8 @@
 							`;
 						});
 
-						// Then, set up click handlers for upload buttons
-						document.querySelectorAll('.upload-review-btn').forEach(btn => {
-							btn.addEventListener('click', async (e) => {
-								e.preventDefault();
-								const icpId = btn.getAttribute('data-icp-id');
-								const userId = btn.getAttribute('data-user-id');
-								const topik = btn.getAttribute('data-topik');
-
-								try {
-									// Get token from localStorage or sessionStorage
-									const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-									if (!token) {
-										showAlert('Token tidak ditemukan. Silakan login ulang.', 'danger');
-										return;
-									}
-
-									// Get ICP data
-									const icpResponse = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
-										headers: {
-											'Authorization': `Bearer ${token}`,
-											'Content-Type': 'application/json'
-										}
-									});
-
-									if (!icpResponse.ok) {
-										throw new Error(`HTTP error! status: ${icpResponse.status}`);
-									}
-
-									const icpData = await icpResponse.json();
-									console.log('ICP data:', icpData);
-
-									if (!icpData.data) {
-										showAlert('Data ICP tidak ditemukan', 'danger');
-										return;
-									}
-
-									// Call modal function with user_id from ICP data
-									openUploadReviewModalICP(topik, icpId, icpData.data.user_id);
-
-				} catch (error) {
-					console.error('Error:', error);
-									showAlert('Gagal mengambil data. Silakan coba lagi.', 'danger');
-								}
-							});
-						});
+						// Remove the old event listeners setup since we're now using onclick
+						
 					}
 				} catch (error) {
 					console.error('Error:', error);
@@ -1101,41 +1058,15 @@
 				$('#uploadReviewModal').modal('show');
 			}
 
-			// Fungsi untuk membuka modal upload review pada tabel list ICP
+			// Update the openUploadReviewModalICP function to match the working implementation
 			function openUploadReviewModalICP(topikPenelitian, icpId, userId) {
-				console.log('Opening ICP modal with:', { topikPenelitian, icpId, userId });
+				console.log('Opening modal with:', { topikPenelitian, icpId, userId });
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
 				document.getElementById('reviewIcpId').value = icpId;
 				document.getElementById('reviewUserId').value = userId;
 				document.getElementById('reviewCycleNumber').value = 1;
-				
-				// Get taruna_id from user_id
-				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
-					headers: {
-						'Authorization': `Bearer ${token}`,
-						'Content-Type': 'application/json'
-					}
-				})
-				.then(response => response.json())
-				.then(data => {
-					if (data.status === 'success' && data.data && data.data.length > 0) {
-						// Cari taruna yang user_id nya sesuai
-						const taruna = data.data.find(t => t.user_id === parseInt(userId));
-						if (taruna) {
-							document.getElementById('reviewTarunaId').value = taruna.id;
-							$('#uploadReviewModal').modal('show');
-						} else {
-							showAlert('Data taruna tidak ditemukan untuk user_id ini', 'danger');
-						}
-					} else {
-						showAlert('Data taruna tidak ditemukan', 'danger');
-					}
-				})
-				.catch(error => {
-					console.error('Error:', error);
-					showAlert('Gagal mengambil data taruna', 'danger');
-				});
+				document.getElementById('reviewTarunaId').value = userId; // We'll get the actual taruna_id from the form submission
+				$('#uploadReviewModal').modal('show');
 			}
 
 			// Function to update ICP status (approve/reject)
