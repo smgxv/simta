@@ -3,7 +3,7 @@
 <head>
     <!-- Basic Page Info -->
     <meta charset="utf-8" />
-    <title>View ICP - Dosen</title>
+    <title>View Review ICP - Dosen</title>
 
     <!-- Site favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="vendors/images/apple-touch-icon.png"/>
@@ -573,7 +573,7 @@
 
                 <!-- ICP Details Section -->
                 <div class="icp-section">
-                    <div class="icp-title">Detail ICP</div>
+                    <div class="icp-title">Detail Review ICP</div>
                     <table class="icp-info-table">
                         <tr>
                             <td>Nama Taruna</td>
@@ -584,81 +584,32 @@
                             <td>: <span id="icp-topik">-</span></td>
                         </tr>
                         <tr>
-                            <td>Keterangan</td>
-                            <td>: <span id="icp-keterangan">-</span></td>
-                        </tr>
-                        <tr>
-                            <td>Tanggal Pengajuan</td>
+                            <td>Revisi ke-</td>
                             <td>: <span id="icp-tanggal">-</span></td>
                         </tr>
+                        <tr>
+                            <td>Tanggal Review</td>
+                            <td>: <span id="icp-tanggal">-</span></td>
+                        </tr>
+                        
                         <tr>
                             <td>Status</td>
                             <td>: <span id="icp-status" class="icp-status-badge">-</span></td>
                         </tr>
+                        <tr>
+                            <td>Keterangan</td>
+                            <td>: <span id="icp-keterangan">-</span></td>
+                        </tr>
                     </table>
                     <a href="#" id="icp-download-proposal" class="btn-download" style="display:none;">
-                        <i class="dw dw-download"></i> Download Proposal ICP
+                        <i class="dw dw-download"></i> Download File Review
                     </a>
-                </div>
-
-                <!-- Review History Section -->
-                <div class="card-box mb-30">
-                    <div class="pd-20">
-                        <h4 class="text-blue h4">Riwayat Review Dosen</h4>
-                    </div>
-                    <div class="pb-20">
-                        <table id="reviewDosenTable" class="data-table table stripe hover nowrap">
-                            <thead>
-                                <tr>
-                                    <th>Review ke-</th>
-                                    <th>Tanggal</th>
-                                    <th>Keterangan</th>
-                                    <th>File</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Data will be loaded here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Revision History Section -->
-                <div class="card-box mb-30">
-                    <div class="pd-20">
-                        <h4 class="text-blue h4">Riwayat Revisi Taruna</h4>
-                    </div>
-                    <div class="pb-20">
-                        <table id="revisiTarunaTable" class="data-table table stripe hover nowrap">
-                            <thead>
-                                <tr>
-                                    <th>Revisi ke-</th>
-                                    <th>Tanggal</th>
-                                    <th>Keterangan</th>
-                                    <th>File</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Data will be loaded here -->
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
 
                 <!-- Review Form Section -->
                 <div class="icp-section">
                     <div class="icp-title">Form Review Dosen</div>
                     <form id="reviewForm">
-                        <div class="form-group">
-                            <label class="form-label">Komentar Review:</label>
-                            <textarea class="form-control" rows="4" placeholder="Tulis komentar review di sini..." style="resize:vertical;"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Upload File Review (PDF):</label>
-                            <input type="file" class="form-control" accept=".pdf">
-                        </div>
                         <div class="form-group">
                             <button type="button" class="btn btn-success mr-2" onclick="acceptICP()">✔ Accept ICP</button>
                             <button type="button" class="btn btn-danger mr-2" onclick="rejectICP()">✘ Reject ICP</button>
@@ -679,7 +630,6 @@
     <script src="vendors/scripts/layout-settings.js"></script>
 
     <script>
-        // Fungsi untuk redirect ke profile
         function redirectToProfile() {
             window.location.href = '/dosen/profile';
         }
@@ -758,7 +708,7 @@
 			}
 		}
 
-		// Fungsi untuk mengambil data user dan update username di header
+		// Fungsi untuk mengambil data user
 		document.addEventListener('DOMContentLoaded', function() {
 			// Cek token
 			const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -948,7 +898,7 @@
                             </td>
                             <td>
                                 ${review.file_path ? 
-                                    `<a href="/dosen/viewicp_review?id=${review.id}&icp_id=${icpId}" 
+                                    `<a href="${review.file_path}" target="_blank" 
                                         class="review-action-btn btn-view">
                                         <i class="dw dw-eye"></i> View
                                     </a>` : '-'}

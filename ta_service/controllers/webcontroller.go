@@ -486,3 +486,9 @@ func ViewICPDosen(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	http.ServeFile(w, r, "static/dosen/viewicp_dosen.html")
 }
+
+// Handler for viewing ICP review details
+func ViewICPReviewDosen(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	http.ServeFile(w, r, "static/dosen/viewicp_review_dosen.html")
+}

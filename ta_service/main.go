@@ -131,6 +131,7 @@ func main() {
 	dosenRoutes.HandleFunc("/profile", controllers.ProfileDosen).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/editprofile", controllers.EditProfileDosen).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/viewicp", controllers.ViewICPDosen).Methods("GET", "OPTIONS")
+	dosenRoutes.HandleFunc("/viewicp_review", controllers.ViewICPReviewDosen).Methods("GET", "OPTIONS")
 
 	// Tambahkan router ke http.Handle
 	http.Handle("/", router) // Tambahkan ini untuk menggunakan router mux
