@@ -1133,6 +1133,48 @@
         function viewReview(reviewId, icpId) {
             window.location.href = `/dosen/viewicp_review?id=${reviewId}&icp_id=${icpId}`;
         }
+
+        // Fungsi untuk membuka modal upload review pada tabel list ICP
+        async function openUploadReviewModalICP(topikPenelitian, icpId, userId) {
+            try {
+                console.log('Opening ICP modal with:', { topikPenelitian, icpId, userId });
+                document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
+                document.getElementById('reviewIcpId').value = icpId;
+                document.getElementById('reviewUserId').value = userId;
+                document.getElementById('reviewCycleNumber').value = 1;
+                
+                // Get token from storage
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                if (!token) {
+                    showAlert('Token tidak ditemukan. Silakan login ulang.', 'danger');
+                    return;
+                }
+
+                // Get taruna data
+                const response = await fetch(`http://104.43.89.154:8082/icp/${icpId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch ICP data');
+                }
+
+                const result = await response.json();
+                console.log('ICP Data:', result);
+
+                if (result.status === 'success' && result.data) {
+                    document.getElementById('reviewTarunaId').value = result.data.taruna_id;
+                    $('#uploadReviewModal').modal('show');
+                } else {
+                    throw new Error('Data ICP tidak ditemukan');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Gagal mengambil data: ' + error.message, 'danger');
+            }
+        }
     </script>
 </body>
 </html>
