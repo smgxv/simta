@@ -723,7 +723,7 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="${icp.file_path}" target="_blank">
+												<a class="dropdown-item view-icp-btn" href="#" data-icp-id="${icp.id}">
 													<i class="dw dw-eye"></i> View
 												</a>
 												<a class="dropdown-item upload-review-btn" href="#" data-icp-id="${icp.id}" data-user-id="${icp.user_id}" data-topik="${icp.topik_penelitian}">
@@ -1212,6 +1212,16 @@
 					showAlert('Terjadi kesalahan: ' + error.message, 'danger');
 				}
 			}
+
+			// Event delegation for view ICP button
+			document.querySelector('.data-table tbody').addEventListener('click', function(e) {
+				const btn = e.target.closest('.view-icp-btn');
+				if (btn) {
+					e.preventDefault();
+					const icpId = btn.getAttribute('data-icp-id');
+					window.location.href = `/dosen/viewicp?id=${icpId}`;
+				}
+			});
 
 		</script>
 
