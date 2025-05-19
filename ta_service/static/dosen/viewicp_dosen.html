@@ -669,39 +669,6 @@
         </div>
     </div>
 
-    <!-- Review Details Modal -->
-    <div class="modal fade" id="reviewDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Detail Review</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <table class="table">
-                        <tr>
-                            <td>Review ke-</td>
-                            <td>: <span id="modal-review-number">-</span></td>
-                        </tr>
-                        <tr>
-                            <td>Tanggal Review</td>
-                            <td>: <span id="modal-review-date">-</span></td>
-                        </tr>
-                        <tr>
-                            <td>Keterangan</td>
-                            <td>: <span id="modal-review-keterangan">-</span></td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- js -->
     <script src="vendors/scripts/core.js"></script>
     <script src="vendors/scripts/script.min.js"></script>
@@ -978,11 +945,10 @@
                             </td>
                             <td>
                                 ${review.file_path ? 
-                                    `<button type="button" 
-                                        class="review-action-btn btn-view" 
-                                        onclick="showReviewDetails('${review.keterangan}', '${review.created_at}', ${index + 1})">
+                                    `<a href="/dosen/viewicp_review_dosen?id=${review.id}&icp_id=${icpId}" 
+                                        class="review-action-btn btn-view">
                                         <i class="dw dw-eye"></i> View
-                                    </button>` : '-'}
+                                    </a>` : '-'}
                             </td>
                         </tr>
                     `;
@@ -1161,14 +1127,6 @@
                 console.error('Error:', err);
                 alert('Terjadi kesalahan saat menolak ICP: ' + err.message);
             }
-        }
-
-        // Add this function after the existing scripts
-        function showReviewDetails(keterangan, createdAt, reviewNumber) {
-            document.getElementById('modal-review-number').textContent = reviewNumber;
-            document.getElementById('modal-review-date').textContent = new Date(createdAt).toLocaleDateString('id-ID');
-            document.getElementById('modal-review-keterangan').textContent = keterangan || '-';
-            $('#reviewDetailsModal').modal('show');
         }
     </script>
 </body>
