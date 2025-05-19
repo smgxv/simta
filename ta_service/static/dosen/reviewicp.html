@@ -684,6 +684,7 @@
 		</div>
 
 		<script>
+			// Fungsi untuk redirect ke halaman profile
 			function redirectToProfile() {
 				window.location.href = '/dosen/profile';
 			}
@@ -727,9 +728,7 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item view-icp-btn" href="#" data-icp-id="${icp.id}">
-													<i class="dw dw-eye"></i> View
-												</a>
+												
 												<a class="dropdown-item upload-review-btn" href="#" data-icp-id="${icp.id}" data-user-id="${icp.user_id}" data-topik="${icp.topik_penelitian}">
 													<i class="dw dw-upload"></i> Upload Review
 												</a>
@@ -741,6 +740,9 @@
 												</a>
 												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
+												</a>
+												<a class="dropdown-item view-icp-btn" href="#" data-icp-id="${icp.id}">
+													<i class="dw dw-eye"></i> View
 												</a>
 											</div>
 										</div>

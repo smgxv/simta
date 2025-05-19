@@ -944,11 +944,11 @@
                                     </a>` : '-'}
                             </td>
                             <td>
-                                ${review.file_path ? 
-                                    `<a href="/dosen/viewicp_review_dosen?id=${review.id}&icp_id=${icpId}" 
-                                        class="review-action-btn btn-view">
-                                        <i class="dw dw-eye"></i> View
-                                    </a>` : '-'}
+                                ${review.file_path ?                                     
+                                `<a href="#" onclick="viewReview(${review.id}, ${icpId})" 
+                                    class="review-action-btn btn-view">                                        
+                                    <i class="dw dw-eye"></i> View                                    
+                                </a>` : '-'}
                             </td>
                         </tr>
                     `;
@@ -1127,6 +1127,11 @@
                 console.error('Error:', err);
                 alert('Terjadi kesalahan saat menolak ICP: ' + err.message);
             }
+        }
+
+        // Add this function to handle the view button click
+        function viewReview(reviewId, icpId) {
+            window.location.href = `/dosen/viewicp_review?id=${reviewId}&icp_id=${icpId}`;
         }
     </script>
 </body>
