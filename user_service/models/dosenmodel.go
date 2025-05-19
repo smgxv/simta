@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"user_service/config"
+	"user_service/entities"
 )
 
 type DosenModel struct {
@@ -55,4 +56,28 @@ func (d *DosenModel) GetAllDosen() ([]map[string]interface{}, error) {
 	}
 
 	return dosens, nil
+}
+
+// Update password dosen berdasarkan user_id
+func (d *DosenModel) UpdateDosenPassword(userID int, hashedPassword string) error {
+	_, err := d.db.Exec("UPDATE users SET password = ? WHERE id = ?", hashedPassword, userID)
+	return err
+}
+
+// Update data dosen
+func (d *DosenModel) UpdateDosen(userID int, namaLengkap, jurusan string) error {
+	_, err := d.db.Exec("UPDATE dosen SET nama_lengkap = ?, jurusan = ? WHERE user_id = ?",
+		namaLengkap, jurusan, userID)
+	return err
+}
+
+// Get dosen by user_id
+func (d *DosenModel) GetDosenByUserID(userID int) (*entities.Dosen, error) {
+	var dosen entities.Dosen
+	err := d.db.QueryRow("SELECT id, user_id, nama_lengkap, jurusan FROM dosen WHERE user_id = ?", userID).
+		Scan(&dosen.ID, &dosen.UserID, &dosen.NamaLengkap, &dosen.Jurusan)
+	if err != nil {
+		return nil, err
+	}
+	return &dosen, nil
 }

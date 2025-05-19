@@ -174,7 +174,12 @@
                 'Origin': 'http://104.43.89.154:8080'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Gagal mengambil data user');
+            }
+            return response.json();
+        })
         .then(user => {
             console.log('Data user:', user);
             if (!user) {
@@ -194,9 +199,26 @@
         document.getElementById('editProfileForm').addEventListener('submit', function (e) {
             e.preventDefault();
 
-            // Validasi password jika diisi
+            // Validasi form
+            const namaLengkap = document.getElementById('nama_lengkap').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const jurusan = document.getElementById('jurusan').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
+
+            if (!namaLengkap || !email || !username || !jurusan) {
+                alert('Semua field harus diisi!');
+                return;
+            }
+
+            // Validasi email
+            if (!email.includes('@')) {
+                alert('Format email tidak valid!');
+                return;
+            }
+
+            // Validasi password jika diisi
             if (password || confirmPassword) {
                 if (password !== confirmPassword) {
                     alert('Password dan konfirmasi password tidak sama!');
@@ -210,10 +232,10 @@
 
             const userData = {
                 id: parseInt(userId),
-                nama_lengkap: document.getElementById('nama_lengkap').value,
-                email: document.getElementById('email').value,
-                username: document.getElementById('username').value,
-                jurusan: document.getElementById('jurusan').value,
+                nama_lengkap: namaLengkap,
+                email: email,
+                username: username,
+                jurusan: jurusan,
                 role: 'dosen'
             };
 
@@ -224,17 +246,20 @@
 
             console.log('Sending data:', userData);
 
-            fetch(`http://104.43.89.154:8081/dosen/edituser`, {
+            fetch('http://104.43.89.154:8081/dosen/edituser', {
                 method: 'PUT',
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(userData)
             })
             .then(response => {
                 if (!response.ok) {
+                    if (response.status === 409) {
+                        throw new Error('Email sudah digunakan oleh user lain');
+                    }
                     return response.text().then(text => {
                         throw new Error(text || 'Gagal mengupdate profile');
                     });

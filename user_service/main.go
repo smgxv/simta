@@ -19,6 +19,7 @@ func main() {
 	http.HandleFunc("/dosen", middleware.AuthMiddleware(handlers.GetAllDosen))
 	http.HandleFunc("/taruna", middleware.AuthMiddleware(handlers.GetAllTaruna))
 	http.HandleFunc("/taruna/edituser", middleware.AuthMiddleware(handlers.EditUserTaruna))
+	http.HandleFunc("/dosen/edituser", middleware.AuthMiddleware(handlers.EditUserDosen))
 
 	fmt.Println("API Server running on port 8081...")
 	log.Fatal(http.ListenAndServe(":8081", nil))
