@@ -929,8 +929,8 @@
                     throw new Error('Token atau Dosen ID tidak ditemukan');
                 }
 
-                // Helper function untuk membuat baris tabel
-                const createTableRow = (review, index) => {
+                // Helper function untuk membuat baris tabel review dosen
+                const createReviewDosenRow = (review, index) => {
                     return `
                         <tr>
                             <td>${index + 1}</td>
@@ -945,7 +945,32 @@
                             </td>
                             <td>
                                 ${review.file_path ?                                     
-                                `<a href="#" onclick="viewReview(${review.id}, ${icpId})" 
+                                `<a href="#" onclick="viewReviewDosen(${review.id}, ${icpId})" 
+                                    class="review-action-btn btn-view">                                        
+                                    <i class="dw dw-eye"></i> View                                    
+                                </a>` : '-'}
+                            </td>
+                        </tr>
+                    `;
+                };
+
+                // Helper function untuk membuat baris tabel revisi taruna
+                const createRevisiTarunaRow = (review, index) => {
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${review.created_at ? new Date(review.created_at).toLocaleDateString('id-ID') : '-'}</td>
+                            <td>${review.keterangan || '-'}</td>
+                            <td>
+                                ${review.file_path ? 
+                                    `<a href="http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}" 
+                                        class="review-action-btn btn-download">
+                                        <i class="dw dw-download"></i> Download
+                                    </a>` : '-'}
+                            </td>
+                            <td>
+                                ${review.file_path ?                                     
+                                `<a href="#" onclick="viewRevisiTaruna(${review.id}, ${icpId})" 
                                     class="review-action-btn btn-view">                                        
                                     <i class="dw dw-eye"></i> View                                    
                                 </a>` : '-'}
@@ -955,7 +980,7 @@
                 };
 
                 // Helper function untuk update tabel
-                const updateTable = async (url, tableId, emptyMessage) => {
+                const updateTable = async (url, tableId, emptyMessage, rowCreator) => {
                     const response = await fetch(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -971,7 +996,7 @@
                     if (result.status === 'success' && result.data && result.data.length > 0) {
                         const filteredData = result.data.filter(item => item.icp_id === parseInt(icpId));
                         if (filteredData.length > 0) {
-                            tbody.innerHTML = filteredData.map((item, index) => createTableRow(item, index)).join('');
+                            tbody.innerHTML = filteredData.map((item, index) => rowCreator(item, index)).join('');
                         } else {
                             tbody.innerHTML = `<tr><td colspan="5" class="text-center">${emptyMessage}</td></tr>`;
                         }
@@ -985,12 +1010,14 @@
                     updateTable(
                         `http://104.43.89.154:8082/reviewicp/dosen/list?dosen_id=${dosenId}`,
                         'reviewDosenTable',
-                        'Belum ada review dari dosen'
+                        'Belum ada review dari dosen',
+                        createReviewDosenRow
                     ),
                     updateTable(
                         `http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenId}`,
                         'revisiTarunaTable',
-                        'Belum ada revisi dari taruna'
+                        'Belum ada revisi dari taruna',
+                        createRevisiTarunaRow
                     )
                 ]);
 
@@ -1129,9 +1156,14 @@
             }
         }
 
-        // Add this function to handle the view button click
-        function viewReview(reviewId, icpId) {
+        // Fungsi untuk melihat review dosen
+        function viewReviewDosen(reviewId, icpId) {
             window.location.href = `/dosen/viewicp_review?id=${reviewId}&icp_id=${icpId}`;
+        }
+
+        // Fungsi untuk melihat revisi taruna
+        function viewRevisiTaruna(reviewId, icpId) {
+            window.location.href = `/dosen/viewicp_revisi?id=${reviewId}&icp_id=${icpId}`;
         }
 
         // Fungsi untuk membuka modal upload review pada tabel list ICP
@@ -1176,5 +1208,6 @@
             }
         }
     </script>
+    
 </body>
 </html>
