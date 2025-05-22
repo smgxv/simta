@@ -965,7 +965,7 @@
 				}, 5000);
 			}
 
-			// Fungsi untuk memuat data ICP yang sedang di-review
+			// Fungsi untuk memuat data revisi ICP
 			async function loadICPReviewData() {
 				console.log('loadICPReviewData function called');
 				const dosenID = localStorage.getItem('dosenID');
@@ -1009,7 +1009,7 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="${review.file_path}" target="_blank">
+													<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${review.id}, ${review.icp_id})">
 														<i class="dw dw-eye"></i> View Revisi
 													</a>
 													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
@@ -1180,6 +1180,11 @@
 					console.error('Error details:', error); // Debug log untuk error
 					showAlert('Terjadi kesalahan: ' + error.message, 'danger');
 				}
+			}
+
+			// Fungsi untuk melihat detail revisi
+			function viewRevisiDetail(revisiId, icpId) {
+				window.location.href = `/dosen/viewicp_revisi?id=${revisiId}&icp_id=${icpId}`;
 			}
 
 			// Event delegation for view ICP button
