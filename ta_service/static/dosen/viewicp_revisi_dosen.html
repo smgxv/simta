@@ -3,7 +3,7 @@
 <head>
     <!-- Basic Page Info -->
     <meta charset="utf-8" />
-    <title>View Review ICP - Dosen</title>
+    <title>View Revisi ICP - Dosen</title>
 
     <!-- Site favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="vendors/images/apple-touch-icon.png"/>
@@ -558,13 +558,13 @@
                     <div class="row">
                         <div class="col-md-6 col-sm-12">
                             <div class="title">
-                                <h4>View ICP</h4>   
+                                <h4>View Revisi ICP</h4>   
                             </div>
                             <nav aria-label="breadcrumb" role="navigation">
                                 <ol class="breadcrumb">
                                     <li class="breadcrumb-item"><a href="/dosen/dashboard">Home</a></li>
                                     <li class="breadcrumb-item"><a href="/dosen/review_icp">Review ICP</a></li>
-                                    <li class="breadcrumb-item active" aria-current="page">View ICP</li>
+                                    <li class="breadcrumb-item active" aria-current="page">View Revisi ICP</li>
                                 </ol>
                             </nav>
                         </div>
@@ -573,7 +573,7 @@
 
                 <!-- ICP Details Section -->
                 <div class="icp-section">
-                    <div class="icp-title">Detail Review ICP</div>
+                    <div class="icp-title">Detail Revisi ICP</div>
                     <table class="icp-info-table">
                         <tr>
                             <td>Nama Taruna</td>
@@ -584,11 +584,11 @@
                             <td>: <span id="icp-topik">-</span></td>
                         </tr>
                         <tr>
-                            <td>Review ke-</td>
+                            <td>Revisi ke-</td>
                             <td>: <span id="icp-revisi-ke">-</span></td>
                         </tr>
                         <tr>
-                            <td>Tanggal Review</td>
+                            <td>Tanggal Revisi</td>
                             <td>: <span id="icp-tanggal">-</span></td>
                         </tr>
                         <tr>
@@ -601,13 +601,13 @@
                         </tr>
                     </table>
                     <a href="#" id="icp-download-proposal" class="btn-download" style="display:none;">
-                        <i class="dw dw-download"></i> Download File Review
+                        <i class="dw dw-download"></i> Download File Revisi
                     </a>
                 </div>
 
                 <!-- Form Review Section -->
                 <div class="icp-section">
-                    <div class="icp-title">Form Review Dosen</div>
+                    <div class="icp-title">Form Dosen</div>
                     <form id="reviewForm">
                         <div class="form-group">
                             <button type="button" class="btn btn-success mr-2" onclick="acceptICP()">✔ Accept ICP</button>
@@ -635,13 +635,14 @@
                 // Ambil review ID dan ICP ID dari query string
                 const urlParams = new URLSearchParams(window.location.search);
                 const reviewId = urlParams.get('id');
+                const icpId = urlParams.get('icp_id');
                 
-                if (!reviewId) {
-                    alert('Review ID tidak ditemukan!');
+                if (!reviewId || !icpId) {
+                    alert('Review ID atau ICP ID tidak ditemukan!');
                     return;
                 }
 
-                // Ambil token dan dosen_id dari storage
+                // Ambil token dari storage
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token');
                 const dosenId = localStorage.getItem('dosenID');
                 if (!token || !dosenId) {
@@ -650,7 +651,7 @@
                 }
 
                 // Fetch review details
-                const reviewResponse = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/detail?id=${reviewId}`, {
+                const reviewResponse = await fetch(`http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -665,25 +666,48 @@
                 const reviewResult = await reviewResponse.json();
                 
                 if (reviewResult.status === 'success' && reviewResult.data) {
-                    const review = reviewResult.data;
+                    // Cari review yang sesuai dengan ID yang diminta
+                    const review = reviewResult.data.find(r => r.id === parseInt(reviewId));
                     
-                    // Update review details
-                    document.getElementById('icp-nama-taruna').textContent = review.nama_taruna || '-';
-                    document.getElementById('icp-topik').textContent = review.topik_penelitian || '-';
-                    document.getElementById('icp-revisi-ke').textContent = review.cycle_number || '-';
-                    document.getElementById('icp-tanggal').textContent = review.created_at ? 
-                        new Date(review.created_at).toLocaleDateString('id-ID') : '-';
-                    document.getElementById('icp-status').textContent = review.icp_status || '-';
-                    document.getElementById('icp-keterangan').textContent = review.keterangan || '-';
-                    
-                    // Update download button if file exists
-                    const downloadBtn = document.getElementById('icp-download-proposal');
-                    if (downloadBtn && review.file_path) {
-                        downloadBtn.href = `http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}`;
+                    if (review) {
+                        // Update review details
+                        document.getElementById('icp-nama-taruna').textContent = review.taruna_nama || '-';
+                        document.getElementById('icp-topik').textContent = review.topik_penelitian || '-';
+                        document.getElementById('icp-revisi-ke').textContent = review.cycle_number || '-';
+                        document.getElementById('icp-tanggal').textContent = review.created_at ? 
+                            new Date(review.created_at).toLocaleDateString('id-ID') : '-';
+                        document.getElementById('icp-status').textContent = review.icp_status || '-';
+                        document.getElementById('icp-keterangan').textContent = review.keterangan || '-';
+                        
+                        // Update status badge class
+                        const statusBadge = document.getElementById('icp-status');
+                        statusBadge.className = 'icp-status-badge';
+                        switch(review.icp_status?.toLowerCase()) {
+                            case 'pending':
+                                statusBadge.classList.add('icp-status-pending');
+                                break;
+                            case 'approved':
+                                statusBadge.classList.add('icp-status-approved');
+                                break;
+                            case 'rejected':
+                                statusBadge.classList.add('icp-status-rejected');
+                                break;
+                            case 'on review':
+                                statusBadge.classList.add('icp-status-review');
+                                break;
+                        }
+                        
+                        // Update download button if file exists
+                        const downloadBtn = document.getElementById('icp-download-proposal');
+                        if (downloadBtn && review.file_path) {
+                            downloadBtn.href = `http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}`;
                             downloadBtn.style.display = 'inline-block';
                         }
+                    } else {
+                        throw new Error('Data revisi tidak ditemukan');
+                    }
                 } else {
-                    throw new Error('Data review tidak ditemukan');
+                    throw new Error('Gagal mengambil data revisi');
                 }
             } catch (err) {
                 console.error('Error:', err);
@@ -694,7 +718,7 @@
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
             // Check token first
-                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
             if (!token) {
                 window.location.href = '/loginusers';
                 return;
@@ -729,7 +753,7 @@
                     localStorage.clear();
                     sessionStorage.clear();
                     window.location.href = '/loginusers';
-                        } else {
+                } else {
                     throw new Error(data.message || 'Gagal logout');
                 }
             } catch (error) {
