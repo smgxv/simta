@@ -677,7 +677,7 @@
     <script>
         // Fungsi untuk redirect ke profile
         function redirectToProfile() {
-            window.location.href = '/dosen/profile';
+            window.location.href = '/taruna/profile';
         }
 
 		// Fungsi untuk logout
@@ -868,13 +868,16 @@
                 const icpId = urlParams.get('id');
                 if (!icpId) {
                     alert('ICP ID tidak ditemukan!');
+                    window.location.href = '/taruna/icp';
                     return;
                 }
 
                 // Ambil token dan taruna_id dari storage
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-                const tarunaId = localStorage.getItem('tarunaID');
+                const tarunaId = localStorage.getItem('tarunaID') || localStorage.getItem('userId');
+                
                 if (!token || !tarunaId) {
+                    console.error('Token atau Taruna ID tidak ditemukan');
                     window.location.href = '/loginusers';
                     return;
                 }
@@ -882,14 +885,18 @@
                 // Fetch detail ICP dari API
                 const response = await fetch(`http://104.43.89.154:8082/icp/${icpId}?taruna_id=${tarunaId}`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 });
 
-                if (response.status === 403) {
-                    alert('Anda tidak memiliki akses untuk melihat ICP ini');
-                    window.location.href = '/taruna/icp';
-                    return;
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        alert('Anda tidak memiliki akses untuk melihat ICP ini');
+                        window.location.href = '/taruna/icp';
+                        return;
+                    }
+                    throw new Error('Network response was not ok');
                 }
 
                 const result = await response.json();
@@ -933,6 +940,7 @@
             } catch (err) {
                 console.error('Error:', err);
                 alert('Gagal memuat data ICP: ' + (err.message || 'Unknown error'));
+                window.location.href = '/taruna/icp';
             }
         }
 
@@ -953,10 +961,10 @@
         async function loadRevisiData(icpId) {
             try {
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-                const dosenId = localStorage.getItem('dosenID');
+                const tarunaId = localStorage.getItem('tarunaID') || localStorage.getItem('userId');
                 
-                if (!token || !dosenId) {
-                    throw new Error('Token atau Dosen ID tidak ditemukan');
+                if (!token || !tarunaId) {
+                    throw new Error('Token atau Taruna ID tidak ditemukan');
                 }
 
                 // Helper function untuk membuat baris tabel review dosen
@@ -1038,13 +1046,13 @@
                 // Update kedua tabel secara parallel
                 await Promise.all([
                     updateTable(
-                        `http://104.43.89.154:8082/reviewicp/dosen/list?dosen_id=${dosenId}`,
+                        `http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${tarunaId}`,
                         'reviewDosenTable',
                         'Belum ada review dari dosen',
                         createReviewDosenRow
                     ),
                     updateTable(
-                        `http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenId}`,
+                        `http://104.43.89.154:8082/reviewicp/taruna/list?taruna_id=${tarunaId}`,
                         'revisiTarunaTable',
                         'Belum ada revisi dari taruna',
                         createRevisiTarunaRow

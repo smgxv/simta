@@ -748,7 +748,7 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/taruna/viewicp?id=${icp.id}" onclick="event.preventDefault(); viewICP(${icp.id})">
+												<a class="dropdown-item" href="${icp.file_path}" target="_blank">
 													<i class="dw dw-eye"></i> View
 												</a>
 												<a class="dropdown-item" href="/taruna/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
@@ -1126,11 +1126,6 @@
 				setTimeout(() => {
 					alertContainer.style.display = 'none';
 				}, 5000);
-			}
-
-			// Fungsi untuk melihat detail ICP
-			function viewICP(icpId) {
-				window.location.href = `/taruna/viewicp?id=${icpId}`;
 			}
 
 		</script>

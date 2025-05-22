@@ -944,7 +944,7 @@
                                     </a>` : '-'}
                             </td>
                             <td>
-                                ${review.file_path ?                                     
+                                ${review.file_path ? 
                                 `<a href="#" onclick="viewReviewDosen(${review.id}, ${icpId})" 
                                     class="review-action-btn btn-view">                                        
                                     <i class="dw dw-eye"></i> View                                    
@@ -971,9 +971,9 @@
                             <td>
                                 ${review.file_path ?                                     
                                 `<a href="#" onclick="viewRevisiTaruna(${review.id}, ${icpId})" 
-                                    class="review-action-btn btn-view">                                        
-                                    <i class="dw dw-eye"></i> View                                    
-                                </a>` : '-'}
+                                        class="review-action-btn btn-view">
+                                        <i class="dw dw-eye"></i> View
+                                    </a>` : '-'}
                             </td>
                         </tr>
                     `;
