@@ -3,7 +3,6 @@ package entities
 type FinalICP struct {
 	ID              int    `json:"id"`
 	UserID          int    `json:"user_id"`
-	DosenID         int    `json:"dosen_id"`
 	NamaLengkap     string `json:"nama_lengkap"`
 	Jurusan         string `json:"jurusan"`
 	Kelas           string `json:"kelas"`

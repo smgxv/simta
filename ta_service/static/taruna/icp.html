@@ -673,11 +673,11 @@
 						<form id="finalIcpForm" enctype="multipart/form-data">
 							<div class="form-group">
 								<label>Nama Lengkap</label>
-								<input class="form-control" type="text" name="nama_lengkap" placeholder="Masukkan Nama Lengkap Anda" required>
+								<input class="form-control" type="text" id="finalNamaLengkap" name="nama_lengkap" placeholder="Masukkan Nama Lengkap Anda" required readonly>
 							</div>
 							<div class="form-group">
 								<label>Jurusan</label>
-								<select class="custom-select" name="jurusan" id="finalJurusan" required onchange="updateFinalKelas()">
+								<select class="custom-select" name="jurusan" id="finalJurusan" required>
 									<option value="" disabled selected>Pilih Jurusan</option>
 									<option value="Keamanan Siber">Keamanan Siber</option>
 									<option value="Kriptografi">Kriptografi</option>
@@ -1219,25 +1219,18 @@
 				}
 			});
 
-			// Handle form submission untuk Final ICP
+			// Update event listener untuk form submission
 			document.getElementById('finalIcpForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 				
-				// Tampilkan loading state
 				const submitButton = this.querySelector('button[type="submit"]');
 				submitButton.disabled = true;
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 				
 				try {
 					const formData = new FormData(this);
-					
-					// Tambahkan user_id dari localStorage
 					const userId = localStorage.getItem('userId');
 					formData.append('user_id', userId);
-					
-					// Tambahkan dosen_id dari form ICP sebelumnya
-					const dosenSelect = document.getElementById('dosenSelect');
-					formData.append('dosen_id', dosenSelect.value);
 					
 					const response = await fetch('http://104.43.89.154:8082/finalicp/upload', {
 						method: 'POST',
@@ -1247,16 +1240,12 @@
 					const data = await response.json();
 					
 					if (response.ok && data.status === 'success') {
-						// Tampilkan pesan sukses
 						showAlert('Final ICP berhasil diunggah', 'success');
-						
-						// Reset form
 						this.reset();
 						document.querySelector('#finalIcpFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('finalSelectedFileName').style.display = 'none';
-						
-						// Refresh data jika ada
 						loadFinalICPData();
+						fillUserData(); // Isi kembali data user setelah reset
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
@@ -1264,7 +1253,6 @@
 					console.error('Error:', error);
 					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
 				} finally {
-					// Reset button state
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Upload Final ICP';
 				}
@@ -1371,6 +1359,47 @@
 					kelasSelect.disabled = true;
 				}
 			}
+
+			// Fungsi untuk mengisi data user saat halaman dimuat
+			async function fillUserData() {
+				const userId = localStorage.getItem('userId');
+				if (!userId) return;
+
+				try {
+					const response = await fetch(`http://104.43.89.154:8081/users?id=${userId}`);
+					const data = await response.json();
+					
+					if (data) {
+						// Isi nama lengkap
+						document.getElementById('finalNamaLengkap').value = data.nama_lengkap || '';
+						
+						// Set jurusan jika ada
+						const jurusanSelect = document.getElementById('finalJurusan');
+						if (data.jurusan) {
+							jurusanSelect.value = data.jurusan;
+							// Trigger change event untuk mengupdate kelas
+							const event = new Event('change');
+							jurusanSelect.dispatchEvent(event);
+						}
+						
+						// Set kelas jika ada
+						setTimeout(() => {
+							const kelasSelect = document.getElementById('finalKelas');
+							if (data.kelas) {
+								kelasSelect.value = data.kelas;
+							}
+						}, 100);
+					}
+				} catch (error) {
+					console.error('Error fetching user data:', error);
+				}
+			}
+
+			// Panggil fungsi saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', () => {
+				fillUserData();
+				loadFinalICPData();
+			});
 
 		</script>
 

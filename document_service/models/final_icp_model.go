@@ -18,14 +18,13 @@ func NewFinalICPModel(db *sql.DB) *FinalICPModel {
 func (m *FinalICPModel) Create(finalICP *entities.FinalICP) error {
 	query := `
 		INSERT INTO final_icp (
-			user_id, dosen_id, nama_lengkap, jurusan, 
+			user_id, nama_lengkap, jurusan, 
 			kelas, topik_penelitian, file_path, keterangan, 
 			status
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := m.db.Exec(query,
 		finalICP.UserID,
-		finalICP.DosenID,
 		finalICP.NamaLengkap,
 		finalICP.Jurusan,
 		finalICP.Kelas,
@@ -70,7 +69,6 @@ func (m *FinalICPModel) GetByUserID(userID string) ([]entities.FinalICP, error) 
 		err := rows.Scan(
 			&finalICP.ID,
 			&finalICP.UserID,
-			&finalICP.DosenID,
 			&finalICP.NamaLengkap,
 			&finalICP.Jurusan,
 			&finalICP.Kelas,

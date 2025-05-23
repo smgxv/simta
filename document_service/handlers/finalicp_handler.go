@@ -37,7 +37,6 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get form values
 	userID := r.FormValue("user_id")
-	dosenID := r.FormValue("dosen_id")
 	namaLengkap := r.FormValue("nama_lengkap")
 	jurusan := r.FormValue("jurusan")
 	kelas := r.FormValue("kelas")
@@ -45,7 +44,7 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	keterangan := r.FormValue("keterangan")
 
 	// Validate required fields
-	if userID == "" || dosenID == "" || namaLengkap == "" || jurusan == "" || kelas == "" || topikPenelitian == "" {
+	if userID == "" || namaLengkap == "" || jurusan == "" || kelas == "" || topikPenelitian == "" {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Missing required fields",
@@ -118,7 +117,6 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	finalICPModel := models.NewFinalICPModel(db)
 	finalICP := &entities.FinalICP{
 		UserID:          parseInt(userID),
-		DosenID:         parseInt(dosenID),
 		NamaLengkap:     namaLengkap,
 		Jurusan:         jurusan,
 		Kelas:           kelas,
