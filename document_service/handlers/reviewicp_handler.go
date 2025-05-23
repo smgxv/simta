@@ -733,11 +733,11 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
 
-	dosenID := r.URL.Query().Get("dosen_id")
-	tarunaID := r.URL.Query().Get("taruna_id")
+	userID := r.URL.Query().Get("taruna_id") // We receive user_id as taruna_id from frontend
+	icpID := r.URL.Query().Get("icp_id")
 
-	if dosenID == "" && tarunaID == "" {
-		http.Error(w, "Either dosen_id or taruna_id is required", http.StatusBadRequest)
+	if userID == "" {
+		http.Error(w, "taruna_id (user_id) is required", http.StatusBadRequest)
 		return
 	}
 
@@ -748,11 +748,8 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	var query string
-	var args []interface{}
-
-	// Base query with joins to get taruna and dosen names, including user_id
-	query = `
+	// Base query with joins to get taruna and dosen names
+	query := `
 		SELECT 
 			rit.id,
 			rit.icp_id,
@@ -770,19 +767,16 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		FROM review_icp_taruna rit
 		LEFT JOIN taruna t ON rit.taruna_id = t.id
 		LEFT JOIN dosen d ON rit.dosen_id = d.id
-		WHERE 1=1
+		WHERE t.user_id = ?
 	`
+	args := []interface{}{userID}
 
-	if dosenID != "" {
-		query += " AND rit.dosen_id = ?"
-		args = append(args, dosenID)
-	}
-	if tarunaID != "" {
-		query += " AND rit.taruna_id = ?"
-		args = append(args, tarunaID)
+	if icpID != "" {
+		query += " AND rit.icp_id = ?"
+		args = append(args, icpID)
 	}
 
-	query += " ORDER BY rit.created_at DESC"
+	query += " ORDER BY rit.cycle_number DESC, rit.created_at DESC"
 
 	rows, err := db.Query(query, args...)
 	if err != nil {
