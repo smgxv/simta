@@ -607,14 +607,14 @@
                         <h4 class="text-blue h4">Riwayat Review Dosen</h4>
                     </div>
                     <div class="pb-20">
-                        <table id="reviewDosenTable" class="data-table table stripe hover nowrap">
+                        <table id="reviewDosenTable" class="table table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>Review ke-</th>
+                                    <th class="table-plus">Review ke-</th>
                                     <th>Tanggal</th>
                                     <th>Keterangan</th>
                                     <th>File</th>
-                                    <th>Action</th>
+                                    <th class="datatable-nosort">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -630,14 +630,14 @@
                         <h4 class="text-blue h4">Riwayat Revisi</h4>
                     </div>
                     <div class="pb-20">
-                        <table id="revisiTarunaTable" class="data-table table stripe hover nowrap">
+                        <table id="revisiTarunaTable" class="table table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>Revisi ke-</th>
+                                    <th class="table-plus">Revisi ke-</th>
                                     <th>Tanggal</th>
                                     <th>Keterangan</th>
                                     <th>File</th>
-                                    <th>Action</th>
+                                    <th class="datatable-nosort">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1005,20 +1005,20 @@
                 const createReviewDosenRow = (review, index) => {
                     return `
                         <tr>
-                            <td>${index + 1}</td>
+                            <td>${review.cycle_number || (index + 1)}</td>
                             <td>${review.created_at ? new Date(review.created_at).toLocaleDateString('id-ID') : '-'}</td>
                             <td>${review.keterangan || '-'}</td>
                             <td>
                                 ${review.file_path ? 
                                     `<a href="http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}" 
-                                        class="review-action-btn btn-download">
+                                        class="btn btn-success btn-sm">
                                         <i class="dw dw-download"></i> Download
                                     </a>` : '-'}
                             </td>
                             <td>
                                 ${review.file_path ?                                     
                                 `<a href="#" onclick="viewReviewDosen(${review.id}, ${icpId})" 
-                                    class="review-action-btn btn-view">                                        
+                                    class="btn btn-primary btn-sm">                                        
                                     <i class="dw dw-eye"></i> View                                    
                                 </a>` : '-'}
                             </td>
@@ -1030,20 +1030,20 @@
                 const createRevisiTarunaRow = (review, index) => {
                     return `
                         <tr>
-                            <td>${index + 1}</td>
+                            <td>${review.cycle_number || (index + 1)}</td>
                             <td>${review.created_at ? new Date(review.created_at).toLocaleDateString('id-ID') : '-'}</td>
                             <td>${review.keterangan || '-'}</td>
                             <td>
                                 ${review.file_path ? 
                                     `<a href="http://104.43.89.154:8082/download?path=${encodeURIComponent(review.file_path)}" 
-                                        class="review-action-btn btn-download">
+                                        class="btn btn-success btn-sm">
                                         <i class="dw dw-download"></i> Download
                                     </a>` : '-'}
                             </td>
                             <td>
                                 ${review.file_path ?                                     
                                 `<a href="#" onclick="viewRevisiTaruna(${review.id}, ${icpId})" 
-                                    class="review-action-btn btn-view">                                        
+                                    class="btn btn-primary btn-sm">                                        
                                     <i class="dw dw-eye"></i> View                                    
                                 </a>` : '-'}
                             </td>
@@ -1055,7 +1055,10 @@
                 const updateTable = async (url, tableId, emptyMessage, rowCreator) => {
                     try {
                         const response = await fetch(url, {
-                            headers: { 'Authorization': `Bearer ${token}` }
+                            headers: { 
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
                         });
                         
                         if (!response.ok) {
@@ -1071,9 +1074,17 @@
                         tbody.innerHTML = '';
                         
                         if (result.status === 'success' && result.data && result.data.length > 0) {
+                            // Filter data berdasarkan icp_id
                             const filteredData = result.data.filter(item => item.icp_id === parseInt(icpId));
                             if (filteredData.length > 0) {
-                                tbody.innerHTML = filteredData.map((item, index) => rowCreator(item, index)).join('');
+                                // Sort data by cycle_number or created_at
+                                const sortedData = filteredData.sort((a, b) => {
+                                    if (a.cycle_number && b.cycle_number) {
+                                        return b.cycle_number - a.cycle_number;
+                                    }
+                                    return new Date(b.created_at) - new Date(a.created_at);
+                                });
+                                tbody.innerHTML = sortedData.map((item, index) => rowCreator(item, index)).join('');
                             } else {
                                 tbody.innerHTML = `<tr><td colspan="5" class="text-center">${emptyMessage}</td></tr>`;
                             }
