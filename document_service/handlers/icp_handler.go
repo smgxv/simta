@@ -185,10 +185,12 @@ func GetICPByIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
 
-	// Get dosen_id from query parameter
+	// Get either dosen_id or taruna_id from query parameter
 	dosenID := r.URL.Query().Get("dosen_id")
-	if dosenID == "" {
-		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
+	tarunaID := r.URL.Query().Get("taruna_id")
+
+	if dosenID == "" && tarunaID == "" {
+		http.Error(w, "Either dosen_id or taruna_id is required", http.StatusBadRequest)
 		return
 	}
 
@@ -207,40 +209,58 @@ func GetICPByIDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// First check if this dosen is assigned to this ICP
-	var assignedDosenID int
-	err = db.QueryRow("SELECT dosen_id FROM icp WHERE id = ?", icpID).Scan(&assignedDosenID)
+	// Check access rights
+	var authorized bool
+	var query string
+	var args []interface{}
+
+	if dosenID != "" {
+		query = "SELECT EXISTS(SELECT 1 FROM icp WHERE id = ? AND dosen_id = ?)"
+		args = []interface{}{icpID, dosenID}
+	} else {
+		// For taruna, we need to check against user_id since that's what we store in ICP table
+		query = "SELECT EXISTS(SELECT 1 FROM icp WHERE id = ? AND user_id = ?)"
+		args = []interface{}{icpID, tarunaID}
+	}
+
+	err = db.QueryRow(query, args...).Scan(&authorized)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "ICP not found", http.StatusNotFound)
-			return
-		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Convert dosenID to int for comparison
-	requestingDosenID, err := strconv.Atoi(dosenID)
-	if err != nil {
-		http.Error(w, "Invalid dosen ID format", http.StatusBadRequest)
+	if !authorized {
+		http.Error(w, "Unauthorized: You don't have access to this ICP", http.StatusForbidden)
 		return
 	}
 
-	// Check if requesting dosen is assigned to this ICP
-	if requestingDosenID != assignedDosenID {
-		http.Error(w, "Unauthorized: You are not assigned to review this ICP", http.StatusForbidden)
-		return
-	}
-
-	query := `
-        SELECT i.*, d.nama_lengkap as dosen_nama 
+	// Get ICP details with joins to get names
+	detailQuery := `
+        SELECT 
+            i.*,
+            d.nama_lengkap as dosen_nama,
+            t.nama_lengkap as nama_taruna
         FROM icp i 
-        LEFT JOIN dosen d ON i.dosen_id = d.id 
+        LEFT JOIN dosen d ON i.dosen_id = d.id
+        LEFT JOIN taruna t ON i.user_id = t.user_id
         WHERE i.id = ?
     `
 
-	var icp entities.ICP
-	err = db.QueryRow(query, icpID).Scan(
+	var icp struct {
+		ID              int            `json:"id"`
+		UserID          int            `json:"user_id"`
+		DosenID         int            `json:"dosen_id"`
+		TopikPenelitian string         `json:"topik_penelitian"`
+		Keterangan      string         `json:"keterangan"`
+		FilePath        string         `json:"file_path"`
+		Status          string         `json:"status"`
+		CreatedAt       string         `json:"created_at"`
+		UpdatedAt       string         `json:"updated_at"`
+		DosenNama       sql.NullString `json:"dosen_nama"`
+		NamaTaruna      sql.NullString `json:"nama_taruna"`
+	}
+
+	err = db.QueryRow(detailQuery, icpID).Scan(
 		&icp.ID,
 		&icp.UserID,
 		&icp.DosenID,
@@ -251,6 +271,7 @@ func GetICPByIDHandler(w http.ResponseWriter, r *http.Request) {
 		&icp.CreatedAt,
 		&icp.UpdatedAt,
 		&icp.DosenNama,
+		&icp.NamaTaruna,
 	)
 
 	if err != nil {
@@ -262,9 +283,24 @@ func GetICPByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Convert sql.NullString to string for JSON response
+	response := map[string]interface{}{
+		"id":               icp.ID,
+		"user_id":          icp.UserID,
+		"dosen_id":         icp.DosenID,
+		"topik_penelitian": icp.TopikPenelitian,
+		"keterangan":       icp.Keterangan,
+		"file_path":        icp.FilePath,
+		"status":           icp.Status,
+		"created_at":       icp.CreatedAt,
+		"updated_at":       icp.UpdatedAt,
+		"dosen_nama":       icp.DosenNama.String,
+		"nama_taruna":      icp.NamaTaruna.String,
+	}
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   icp,
+		"data":   response,
 	})
 }
 

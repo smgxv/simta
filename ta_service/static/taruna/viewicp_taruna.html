@@ -674,7 +674,7 @@
     <script src="vendors/scripts/process.js"></script>
     <script src="vendors/scripts/layout-settings.js"></script>
 
-    <!-- <script>
+    <script>
         // Fungsi untuk redirect ke profile
         function redirectToProfile() {
             window.location.href = '/taruna/profile';
@@ -819,19 +819,25 @@
             e.preventDefault();
             
             const formData = new FormData(this);
-            const tarunaId = localStorage.getItem('tarunaID');
+            const userId = localStorage.getItem('userId');
             const urlParams = new URLSearchParams(window.location.search);
             const icpId = urlParams.get('id');
             
-            if (!tarunaId || !icpId) {
+            if (!userId || !icpId) {
                 alert('Data tidak lengkap');
                 return;
             }
             
-            formData.append('taruna_id', tarunaId);
-            formData.append('icp_id', icpId);
+            // Disable submit button and show loading state
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
             
             try {
+                formData.append('taruna_id', userId);
+                formData.append('icp_id', icpId);
+                
                 const response = await fetch('http://104.43.89.154:8082/upload/reviewicp/taruna', {
                     method: 'POST',
                     body: formData
@@ -839,16 +845,44 @@
                 
                 const result = await response.json();
                 if (result.status === 'success') {
-                    alert('Revisi berhasil diupload');
-                    loadRevisiData(icpId); // Reload data
+                    // Show success message
+                    showAlert('Revisi berhasil diupload', 'success');
+                    
+                    // Reset form
+                    this.reset();
+                    
+                    // Reload data
+                    await loadRevisiData(icpId);
                 } else {
-                    alert(result.message || 'Gagal mengupload revisi');
+                    showAlert(result.message || 'Gagal mengupload revisi', 'danger');
                 }
             } catch (err) {
                 console.error('Error:', err);
-                alert('Terjadi kesalahan saat mengupload revisi');
+                showAlert('Terjadi kesalahan saat mengupload revisi', 'danger');
+            } finally {
+                // Re-enable submit button and restore text
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonText;
             }
         });
+
+        // Fungsi untuk menampilkan alert
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertMessage = document.getElementById('alertMessage');
+            
+            alertMessage.className = `alert alert-${type}`;
+            alertMessage.textContent = message;
+            alertContainer.style.display = 'block';
+            
+            // Scroll to top to show the alert
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Hide alert after 5 seconds
+            setTimeout(() => {
+                alertContainer.style.display = 'none';
+            }, 5000);
+        }
 
         // Fungsi untuk melihat review dosen
         function viewReviewDosen(reviewId, icpId) {
@@ -874,16 +908,16 @@
 
                 // Ambil token dan taruna_id dari storage
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-                const tarunaId = localStorage.getItem('tarunaID') || localStorage.getItem('userId');
+                const userId = localStorage.getItem('userId');
                 
-                if (!token || !tarunaId) {
-                    console.error('Token atau Taruna ID tidak ditemukan');
+                if (!token || !userId) {
+                    console.error('Token atau User ID tidak ditemukan');
                     window.location.href = '/loginusers';
                     return;
                 }
 
                 // Fetch detail ICP dari API
-                const response = await fetch(`http://104.43.89.154:8082/icp/${icpId}?taruna_id=${tarunaId}`, {
+                const response = await fetch(`http://104.43.89.154:8082/icp/${icpId}?taruna_id=${userId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -917,7 +951,7 @@
                         statusElement.textContent = icp.status || '-';
                         statusElement.className = 'icp-status-badge';
                         if (icp.status) {
-                            statusElement.classList.add(`icp-status-${icp.status.toLowerCase()}`);
+                            statusElement.classList.add(`icp-status-${icp.status.toLowerCase().replace(/\s+/g, '-')}`);
                         }
                     }
 
@@ -961,10 +995,10 @@
         async function loadRevisiData(icpId) {
             try {
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-                const tarunaId = localStorage.getItem('tarunaID') || localStorage.getItem('userId');
+                const userId = localStorage.getItem('userId');
                 
-                if (!token || !tarunaId) {
-                    throw new Error('Token atau Taruna ID tidak ditemukan');
+                if (!token || !userId) {
+                    throw new Error('Token atau User ID tidak ditemukan');
                 }
 
                 // Helper function untuk membuat baris tabel review dosen
@@ -1019,40 +1053,52 @@
 
                 // Helper function untuk update tabel
                 const updateTable = async (url, tableId, emptyMessage, rowCreator) => {
-                    const response = await fetch(url, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    
-                    const result = await response.json();
-                    console.log(`${tableId} Data:`, result);
-                    
-                    const tbody = document.querySelector(`#${tableId} tbody`);
-                    if (!tbody) return;
-                    
-                    tbody.innerHTML = '';
-                    
-                    if (result.status === 'success' && result.data && result.data.length > 0) {
-                        const filteredData = result.data.filter(item => item.icp_id === parseInt(icpId));
-                        if (filteredData.length > 0) {
-                            tbody.innerHTML = filteredData.map((item, index) => rowCreator(item, index)).join('');
+                    try {
+                        const response = await fetch(url, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        const result = await response.json();
+                        console.log(`${tableId} Data:`, result);
+                        
+                        const tbody = document.querySelector(`#${tableId} tbody`);
+                        if (!tbody) return;
+                        
+                        tbody.innerHTML = '';
+                        
+                        if (result.status === 'success' && result.data && result.data.length > 0) {
+                            const filteredData = result.data.filter(item => item.icp_id === parseInt(icpId));
+                            if (filteredData.length > 0) {
+                                tbody.innerHTML = filteredData.map((item, index) => rowCreator(item, index)).join('');
+                            } else {
+                                tbody.innerHTML = `<tr><td colspan="5" class="text-center">${emptyMessage}</td></tr>`;
+                            }
                         } else {
                             tbody.innerHTML = `<tr><td colspan="5" class="text-center">${emptyMessage}</td></tr>`;
                         }
-                    } else {
-                        tbody.innerHTML = `<tr><td colspan="5" class="text-center">${emptyMessage}</td></tr>`;
+                    } catch (error) {
+                        console.error(`Error updating ${tableId}:`, error);
+                        const tbody = document.querySelector(`#${tableId} tbody`);
+                        if (tbody) {
+                            tbody.innerHTML = `<tr><td colspan="5" class="text-center">Error: ${error.message}</td></tr>`;
+                        }
                     }
                 };
 
                 // Update kedua tabel secara parallel
                 await Promise.all([
                     updateTable(
-                        `http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${tarunaId}`,
+                        `http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${userId}`,
                         'reviewDosenTable',
                         'Belum ada review dari dosen',
                         createReviewDosenRow
                     ),
                     updateTable(
-                        `http://104.43.89.154:8082/reviewicp/taruna/list?taruna_id=${tarunaId}`,
+                        `http://104.43.89.154:8082/reviewicp/taruna/list?taruna_id=${userId}`,
                         'revisiTarunaTable',
                         'Belum ada revisi dari taruna',
                         createRevisiTarunaRow
@@ -1072,7 +1118,7 @@
                 });
             }
         }
-    </script> -->
+    </script>
     
 </body>
 </html>
