@@ -578,8 +578,8 @@
 
 						<div class="clearfix">
 							<div class="pull-left">
-								<h4 class="text-blue h4">Idea Concept Project</h4>
-								<p class="mb-30">Unggah file Idea Concept Project Anda</p>
+								<h4 class="text-blue h4">Daftar Idea Concept Project</h4>
+								<p class="mb-30">Kamu memiliki ide yang bagus? Segera buat dan daftarkan ICP anda !!</p>
 							</div>
 						</div>
 
@@ -657,6 +657,75 @@
 								</tbody>
 							</table>
 						</div>
+					</div>
+					<!-- Simple Datatable End -->
+
+					<!-- Default Basic Forms Start -->
+					<div class="pd-20 card-box mb-30">
+
+						<div class="clearfix">
+							<div class="pull-left">
+								<h4 class="text-blue h4">Final Idea Concept Project</h4>
+								<p class="mb-30">Sudah mendapat persetujuan dari dosen pembimbing? Segera upload ICP anda !!</p>
+							</div>
+						</div>
+
+						<form id="finalIcpForm" enctype="multipart/form-data">
+							<div class="form-group">
+								<label>Nama Lengkap</label>
+								<input class="form-control" type="text" name="nama_lengkap" placeholder="Masukkan Nama Lengkap Anda" required>
+							</div>
+							<div class="form-group">
+								<label>Jurusan</label>
+								<input class="form-control" type="text" name="jurusan" placeholder="Masukkan Jurusan Anda" required>
+							</div>
+							<div class="form-group">
+								<label>Kelas</label>
+								<input class="form-control" type="text" name="kelas" placeholder="Masukkan Kelas Anda" required>
+							</div>
+							<div class="form-group">
+								<label>Topik Penelitian</label>
+								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
+							</div>
+							<div class="form-group">
+								<label>Keterangan</label>
+								<textarea class="form-control" name="keterangan" required></textarea>
+							</div>
+							<div class="form-group">
+								<label>Final File ICP (PDF)</label>
+								<div class="custom-file">
+									<input type="file" class="custom-file-input" id="finalIcpFile" name="file" accept=".pdf" required>
+									<label class="custom-file-label" for="finalIcpFile">Choose file</label>
+								</div>
+								<div id="finalSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
+							</div>
+							<button type="submit" class="btn btn-primary">Upload Final ICP</button>
+						</form>
+
+						<!-- Tabel Final ICP -->
+						<div class="pd-20 card-box mb-30">
+							<div class="clearfix">
+								<div class="pull-left">
+									<h4 class="text-blue h4">Daftar Final ICP</h4>
+								</div>
+							</div>
+							<div class="pb-20">
+								<table class="table stripe hover nowrap" id="finalIcpTable">
+									<thead>
+										<tr>
+											<th>Topik Penelitian</th>
+											<th>Jurusan</th>
+											<th>Kelas</th>
+											<th>Status</th>
+											<th>Action</th>
+										</tr>
+									</thead>
+									<tbody>
+									</tbody>
+								</table>
+							</div>
+						</div>
+
 					</div>
 					<!-- Simple Datatable End -->
 
@@ -1127,6 +1196,138 @@
 					alertContainer.style.display = 'none';
 				}, 5000);
 			}
+
+			// Update nama file saat file dipilih untuk Final ICP
+			document.getElementById('finalIcpFile').addEventListener('change', function(e) {
+				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
+				var label = this.nextElementSibling;
+				label.textContent = fileName;
+				
+				var selectedFileDiv = document.getElementById('finalSelectedFileName');
+				if (e.target.files[0]) {
+					selectedFileDiv.textContent = 'File terpilih: ' + fileName;
+					selectedFileDiv.style.display = 'block';
+				} else {
+					selectedFileDiv.style.display = 'none';
+				}
+			});
+
+			// Handle form submission untuk Final ICP
+			document.getElementById('finalIcpForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+				
+				// Tampilkan loading state
+				const submitButton = this.querySelector('button[type="submit"]');
+				submitButton.disabled = true;
+				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+				
+				try {
+					const formData = new FormData(this);
+					
+					// Tambahkan user_id dari localStorage
+					const userId = localStorage.getItem('userId');
+					formData.append('user_id', userId);
+					
+					// Tambahkan dosen_id dari form ICP sebelumnya
+					const dosenSelect = document.getElementById('dosenSelect');
+					formData.append('dosen_id', dosenSelect.value);
+					
+					const response = await fetch('http://104.43.89.154:8082/finalicp/upload', {
+						method: 'POST',
+						body: formData
+					});
+					
+					const data = await response.json();
+					
+					if (response.ok && data.status === 'success') {
+						// Tampilkan pesan sukses
+						showAlert('Final ICP berhasil diunggah', 'success');
+						
+						// Reset form
+						this.reset();
+						document.querySelector('#finalIcpFile').nextElementSibling.textContent = 'Choose file';
+						document.getElementById('finalSelectedFileName').style.display = 'none';
+						
+						// Refresh data jika ada
+						loadFinalICPData();
+					} else {
+						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
+				} finally {
+					// Reset button state
+					submitButton.disabled = false;
+					submitButton.innerHTML = 'Upload Final ICP';
+				}
+			});
+
+			// Update fungsi loadFinalICPData
+			async function loadFinalICPData() {
+				const userId = localStorage.getItem('userId');
+				if (!userId) return;
+				
+				try {
+					const response = await fetch(`http://104.43.89.154:8082/finalicp/list?user_id=${userId}`);
+					const data = await response.json();
+					
+					if (data.status === 'success') {
+						const tbody = document.querySelector('#finalIcpTable tbody');
+						tbody.innerHTML = '';
+						
+						if (data.data && data.data.length > 0) {
+							data.data.forEach(finalIcp => {
+								const statusClass = {
+									'pending': 'badge badge-warning',
+									'approved': 'badge badge-success',
+									'rejected': 'badge badge-danger',
+									'on review': 'badge badge-info'
+								}[finalIcp.status] || 'badge badge-secondary';
+
+								tbody.innerHTML += `
+									<tr>
+										<td>${finalIcp.topik_penelitian}</td>
+										<td>${finalIcp.jurusan}</td>
+										<td>${finalIcp.kelas}</td>
+										<td><span class="${statusClass}">${finalIcp.status}</span></td>
+										<td>
+											<div class="dropdown">
+												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												   href="#" role="button" data-toggle="dropdown">
+													<i class="dw dw-more"></i>
+												</a>
+												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${finalIcp.file_path}" download>
+														<i class="dw dw-download"></i> Download
+													</a>
+												</div>
+											</div>
+										</td>
+									</tr>
+								`;
+							});
+						} else {
+							tbody.innerHTML = `
+								<tr>
+									<td colspan="5" class="text-center">Belum ada Final ICP yang diupload</td>
+								</tr>
+							`;
+						}
+					} else {
+						console.error('Failed to load Final ICP data:', data.message);
+						showAlert('Gagal memuat data Final ICP', 'danger');
+					}
+				} catch (error) {
+					console.error('Error loading Final ICP data:', error);
+					showAlert('Terjadi kesalahan saat memuat data Final ICP', 'danger');
+				}
+			}
+
+			// Load Final ICP data saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', () => {
+				loadFinalICPData();
+			});
 
 		</script>
 

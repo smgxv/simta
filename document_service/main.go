@@ -36,6 +36,10 @@ func main() {
 	r.HandleFunc("/upload/revisiicp/taruna", handlers.UploadTarunaRevisiICPHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload/reviewicp", handlers.UploadReviewICPHandler).Methods("POST", "OPTIONS")
 
+	// Final ICP routes
+	r.HandleFunc("/finalicp/upload", handlers.UploadFinalICPHandler)
+	r.HandleFunc("/finalicp/list", handlers.GetFinalICPHandler)
+
 	// Setup CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
