@@ -677,11 +677,17 @@
 							</div>
 							<div class="form-group">
 								<label>Jurusan</label>
-								<input class="form-control" type="text" name="jurusan" placeholder="Masukkan Jurusan Anda" required>
+								<select class="custom-select" name="jurusan" id="finalJurusan" required onchange="updateFinalKelas()">
+									<option value="" disabled selected>Pilih Jurusan</option>
+									<option value="Keamanan Siber">Keamanan Siber</option>
+									<option value="Kriptografi">Kriptografi</option>
+								</select>
 							</div>
 							<div class="form-group">
 								<label>Kelas</label>
-								<input class="form-control" type="text" name="kelas" placeholder="Masukkan Kelas Anda" required>
+								<select class="custom-select" name="kelas" id="finalKelas" required>
+									<option value="" disabled selected>Pilih Kelas</option>
+								</select>
 							</div>
 							<div class="form-group">
 								<label>Topik Penelitian</label>
@@ -702,32 +708,33 @@
 							<button type="submit" class="btn btn-primary">Upload Final ICP</button>
 						</form>
 
-						<!-- Tabel Final ICP -->
-						<div class="pd-20 card-box mb-30">
-							<div class="clearfix">
-								<div class="pull-left">
-									<h4 class="text-blue h4">Daftar Final ICP</h4>
-								</div>
-							</div>
-							<div class="pb-20">
-								<table class="table stripe hover nowrap" id="finalIcpTable">
-									<thead>
-										<tr>
-											<th>Topik Penelitian</th>
-											<th>Jurusan</th>
-											<th>Kelas</th>
-											<th>Status</th>
-											<th>Action</th>
-										</tr>
-									</thead>
-									<tbody>
-									</tbody>
-								</table>
-							</div>
-						</div>
-
 					</div>
 					<!-- Simple Datatable End -->
+
+					<!-- Tabel Final ICP -->
+					<div class="pd-20 card-box mb-30">
+						<div class="clearfix">
+							<div class="pull-left">
+								<h4 class="text-blue h4">Daftar Final ICP</h4>
+							</div>
+						</div>
+						<div class="pb-20">
+							<table class="table stripe hover nowrap" id="finalIcpTable">
+								<thead>
+									<tr>
+										<th>Topik Penelitian</th>
+										<th>Jurusan</th>
+										<th>Kelas</th>
+										<th>Status</th>
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<!-- Tabel Final ICP End -->
 
 				</div>
 
@@ -1328,6 +1335,42 @@
 			document.addEventListener('DOMContentLoaded', () => {
 				loadFinalICPData();
 			});
+
+			// Definisi kelas per jurusan
+			const kelasPerJurusan = {
+				'Keamanan Siber': [
+					'IV Rekayasa Keamanan Siber Echo',
+					'IV Rekayasa Keamanan Siber Trace',
+					'IV Rekayasa Keamanan Siber Route'
+				],
+				'Kriptografi': [
+					'IV Rekayasa Perangkat Lunak Kripto',
+					'IV Rekayasa Perangkat Keras Kriptografi',
+					'IV Rekayasa Sistem Kriptografi'
+				]
+			};
+
+			// Fungsi untuk mengupdate dropdown kelas berdasarkan jurusan yang dipilih
+			function updateFinalKelas() {
+				const jurusanSelect = document.getElementById('finalJurusan');
+				const kelasSelect = document.getElementById('finalKelas');
+				const selectedJurusan = jurusanSelect.value;
+				
+				// Reset kelas dropdown
+				kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
+				
+				if (selectedJurusan && kelasPerJurusan[selectedJurusan]) {
+					kelasPerJurusan[selectedJurusan].forEach(kelas => {
+						const option = document.createElement('option');
+						option.value = kelas;
+						option.textContent = kelas;
+						kelasSelect.appendChild(option);
+					});
+					kelasSelect.disabled = false;
+				} else {
+					kelasSelect.disabled = true;
+				}
+			}
 
 		</script>
 
