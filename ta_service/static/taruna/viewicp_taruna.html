@@ -1073,12 +1073,10 @@
                         
                         tbody.innerHTML = '';
                         
-                        if (result.status === 'success' && result.data && result.data.length > 0) {
-                            // Filter data berdasarkan icp_id
-                            const filteredData = result.data.filter(item => item.icp_id === parseInt(icpId));
-                            if (filteredData.length > 0) {
+                        if (result.status === 'success') {
+                            if (result.data && Array.isArray(result.data) && result.data.length > 0) {
                                 // Sort data by cycle_number or created_at
-                                const sortedData = filteredData.sort((a, b) => {
+                                const sortedData = result.data.sort((a, b) => {
                                     if (a.cycle_number && b.cycle_number) {
                                         return b.cycle_number - a.cycle_number;
                                     }
@@ -1089,7 +1087,7 @@
                                 tbody.innerHTML = `<tr><td colspan="5" class="text-center">${emptyMessage}</td></tr>`;
                             }
                         } else {
-                            tbody.innerHTML = `<tr><td colspan="5" class="text-center">${emptyMessage}</td></tr>`;
+                            throw new Error(result.message || 'Failed to load data');
                         }
                     } catch (error) {
                         console.error(`Error updating ${tableId}:`, error);
@@ -1109,7 +1107,7 @@
                         createReviewDosenRow
                     ),
                     updateTable(
-                        `http://104.43.89.154:8082/reviewicp/taruna/list?taruna_id=${userId}`,
+                        `http://104.43.89.154:8082/reviewicp/taruna/list?taruna_id=${userId}&icp_id=${icpId}`,
                         'revisiTarunaTable',
                         'Belum ada revisi dari taruna',
                         createRevisiTarunaRow
