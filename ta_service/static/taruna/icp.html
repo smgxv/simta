@@ -673,7 +673,7 @@
 						<form id="finalIcpForm" enctype="multipart/form-data">
 							<div class="form-group">
 								<label>Nama Lengkap</label>
-								<input class="form-control" type="text" id="finalNamaLengkap" name="nama_lengkap" placeholder="Masukkan Nama Lengkap Anda" required readonly>
+								<input class="form-control" type="text" id="finalNamaLengkap" name="nama_lengkap" placeholder="Masukkan Nama Lengkap Anda" required>
 							</div>
 							<div class="form-group">
 								<label>Jurusan</label>
@@ -1214,25 +1214,84 @@
 				selectedFileDiv.style.display = e.target.files[0] ? 'block' : 'none';
 			});
 
+			// Definisi kelas per jurusan
+			const kelasPerJurusan = {
+				'Keamanan Siber': [
+					'IV Rekayasa Keamanan Siber Echo',
+					'IV Rekayasa Keamanan Siber Trace',
+					'IV Rekayasa Keamanan Siber Route'
+				],
+				'Kriptografi': [
+					'IV Rekayasa Perangkat Lunak Kripto',
+					'IV Rekayasa Perangkat Keras Kriptografi',
+					'IV Rekayasa Sistem Kriptografi'
+				]
+			};
+
 			// Event listener untuk perubahan jurusan
 			document.getElementById('finalJurusan').addEventListener('change', function() {
 				const kelasSelect = document.getElementById('finalKelas');
 				const selectedJurusan = this.value;
 				
+				// Reset dan disable kelas dropdown
 				kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
+				kelasSelect.disabled = true;
 				
 				if (selectedJurusan && kelasPerJurusan[selectedJurusan]) {
+					// Enable kelas dropdown dan tambahkan opsi
+					kelasSelect.disabled = false;
 					kelasPerJurusan[selectedJurusan].forEach(kelas => {
 						const option = document.createElement('option');
 						option.value = kelas;
 						option.textContent = kelas;
 						kelasSelect.appendChild(option);
 					});
-					kelasSelect.disabled = false;
-				} else {
-					kelasSelect.disabled = true;
 				}
 			});
+
+			// Fungsi untuk mengisi data user
+			async function fillUserData() {
+				const userId = localStorage.getItem('userId');
+				if (!userId) {
+					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
+					return;
+				}
+
+				try {
+					const response = await fetch(`http://104.43.89.154:8081/users?id=${userId}`);
+					if (!response.ok) {
+						throw new Error('Gagal mengambil data user');
+					}
+					const data = await response.json();
+					
+					if (data) {
+						// Set nama lengkap
+						const namaLengkapInput = document.getElementById('finalNamaLengkap');
+						if (namaLengkapInput) {
+							namaLengkapInput.value = data.nama_lengkap || '';
+						}
+						
+						// Set jurusan
+						const jurusanSelect = document.getElementById('finalJurusan');
+						if (jurusanSelect && data.jurusan) {
+							jurusanSelect.value = data.jurusan;
+							// Trigger change event untuk mengupdate kelas
+							jurusanSelect.dispatchEvent(new Event('change'));
+							
+							// Set kelas setelah jurusan diset
+							setTimeout(() => {
+								const kelasSelect = document.getElementById('finalKelas');
+								if (kelasSelect && data.kelas) {
+									kelasSelect.value = data.kelas;
+								}
+							}, 100);
+						}
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Gagal memuat data user: ' + error.message, 'danger');
+				}
+			}
 
 			// Handle form submission untuk Final ICP
 			document.getElementById('finalIcpForm').addEventListener('submit', async function(e) {
@@ -1346,40 +1405,6 @@
 				} catch (error) {
 					console.error('Error:', error);
 					showAlert('Gagal memuat data Final ICP', 'danger');
-				}
-			}
-
-			// Fungsi untuk mengisi data user
-			async function fillUserData() {
-				const userId = localStorage.getItem('userId');
-				if (!userId) {
-					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
-					return;
-				}
-
-				try {
-					const response = await fetch(`http://104.43.89.154:8081/users?id=${userId}`);
-					const data = await response.json();
-					
-					if (data) {
-						document.getElementById('finalNamaLengkap').value = data.nama_lengkap || '';
-						
-						const jurusanSelect = document.getElementById('finalJurusan');
-						if (data.jurusan) {
-							jurusanSelect.value = data.jurusan;
-							jurusanSelect.dispatchEvent(new Event('change'));
-							
-							setTimeout(() => {
-								const kelasSelect = document.getElementById('finalKelas');
-								if (data.kelas) {
-									kelasSelect.value = data.kelas;
-								}
-							}, 100);
-						}
-					}
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Gagal memuat data user', 'danger');
 				}
 			}
 
