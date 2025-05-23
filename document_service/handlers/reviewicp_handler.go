@@ -734,10 +734,11 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	userID := r.URL.Query().Get("taruna_id") // We receive user_id as taruna_id from frontend
+	dosenID := r.URL.Query().Get("dosen_id")
 	icpID := r.URL.Query().Get("icp_id")
 
-	if userID == "" {
-		http.Error(w, "taruna_id (user_id) is required", http.StatusBadRequest)
+	if userID == "" && dosenID == "" {
+		http.Error(w, "Either taruna_id or dosen_id is required", http.StatusBadRequest)
 		return
 	}
 
@@ -767,9 +768,19 @@ func GetRevisiICPTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		FROM review_icp_taruna rit
 		LEFT JOIN taruna t ON rit.taruna_id = t.id
 		LEFT JOIN dosen d ON rit.dosen_id = d.id
-		WHERE t.user_id = ?
+		WHERE 1=1
 	`
-	args := []interface{}{userID}
+	var args []interface{}
+
+	if userID != "" {
+		query += " AND t.user_id = ?"
+		args = append(args, userID)
+	}
+
+	if dosenID != "" {
+		query += " AND rit.dosen_id = ?"
+		args = append(args, dosenID)
+	}
 
 	if icpID != "" {
 		query += " AND rit.icp_id = ?"
