@@ -673,7 +673,7 @@
 						<form id="finalIcpForm" enctype="multipart/form-data">
 							<div class="form-group">
 								<label>Nama Lengkap</label>
-								<input class="form-control" type="text" name="nama_lengkap" placeholder="Masukkan Nama Lengkap Anda" required>
+								<input class="form-control" type="text" name="nama_lengkap" id="finalNamaLengkap" readonly>
 							</div>
 							<div class="form-group">
 								<label>Jurusan</label>
@@ -1407,6 +1407,36 @@
 					kelasSelect.disabled = true;
 				}
 			}
+
+			// Add this function to get user data
+			async function getUserData() {
+				const userId = localStorage.getItem('userId');
+				if (!userId) {
+					console.error('User ID not found');
+					return;
+				}
+
+				try {
+					const response = await fetch(`http://104.43.89.154:8081/users?id=${userId}`);
+					const data = await response.json();
+					
+					if (data) {
+						// Set the nama_lengkap field
+						document.getElementById('finalNamaLengkap').value = data.nama_lengkap || '';
+					}
+				} catch (error) {
+					console.error('Error fetching user data:', error);
+					showAlert('Gagal memuat data user: ' + error.message, 'danger');
+				}
+			}
+
+			// Call getUserData when page loads
+			document.addEventListener('DOMContentLoaded', () => {
+				getUserData();
+				loadICPData();
+				loadICPReviewData();
+				loadFinalICPData();
+			});
 
 		</script>
 
