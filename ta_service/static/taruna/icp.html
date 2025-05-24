@@ -854,13 +854,22 @@
 				
 				try {
 					console.log('Fetching review data for user:', userId);
-					// Get review data using user_id directly
 					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
-						// Use a more specific selector to find the correct table
-						const reviewTable = document.querySelector('.card-box h4.text-blue:contains("Tabel Hasil Review Dosen")').closest('.card-box').querySelector('table tbody');
+						// Find the table that follows the heading "Tabel Hasil Review Dosen"
+						const tables = document.querySelectorAll('.card-box table');
+						let reviewTable = null;
+						
+						for (const table of tables) {
+							const heading = table.closest('.card-box').querySelector('h4.text-blue');
+							if (heading && heading.textContent.includes('Tabel Hasil Review Dosen')) {
+								reviewTable = table.querySelector('tbody');
+								break;
+							}
+						}
+						
 						if (!reviewTable) {
 							console.error('Review table not found');
 							return;
