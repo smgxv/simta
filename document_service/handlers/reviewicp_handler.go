@@ -499,16 +499,21 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk mengambil daftar review ICP dosen dari table review_icp_dosen
+// Handler untuk mengambil daftar review ICP dosen
 func GetReviewICPDosenHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
 
-	dosenID := r.URL.Query().Get("dosen_id")
-	tarunaID := r.URL.Query().Get("taruna_id")
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
-	if dosenID == "" && tarunaID == "" {
-		http.Error(w, "Either dosen_id or taruna_id is required", http.StatusBadRequest)
+	tarunaID := r.URL.Query().Get("taruna_id")
+	if tarunaID == "" {
+		http.Error(w, "Taruna ID is required", http.StatusBadRequest)
 		return
 	}
 
@@ -519,18 +524,81 @@ func GetReviewICPDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	reviewModel := models.NewReviewICPDosenModel(db)
+	query := `
+		SELECT 
+			rid.id,
+			rid.icp_id,
+			rid.taruna_id,
+			rid.dosen_id,
+			rid.cycle_number,
+			rid.topik_penelitian,
+			rid.file_path,
+			rid.keterangan,
+			rid.created_at,
+			rid.updated_at,
+			d.nama_lengkap as dosen_nama
+		FROM review_icp_dosen rid
+		LEFT JOIN dosen d ON rid.dosen_id = d.id
+		LEFT JOIN taruna t ON rid.taruna_id = t.id
+		WHERE t.user_id = ?
+		ORDER BY rid.cycle_number DESC, rid.created_at DESC
+	`
 
-	var reviews []entities.ReviewICP
-	if dosenID != "" {
-		reviews, err = reviewModel.GetByDosenID(dosenID)
-	} else {
-		reviews, err = reviewModel.GetByTarunaID(tarunaID)
-	}
-
+	rows, err := db.Query(query, tarunaID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	defer rows.Close()
+
+	var reviews []map[string]interface{}
+	for rows.Next() {
+		var review struct {
+			ID              int            `json:"id"`
+			ICPID           int            `json:"icp_id"`
+			TarunaID        int            `json:"taruna_id"`
+			DosenID         int            `json:"dosen_id"`
+			CycleNumber     int            `json:"cycle_number"`
+			TopikPenelitian string         `json:"topik_penelitian"`
+			FilePath        string         `json:"file_path"`
+			Keterangan      string         `json:"keterangan"`
+			CreatedAt       string         `json:"created_at"`
+			UpdatedAt       string         `json:"updated_at"`
+			DosenNama       sql.NullString `json:"dosen_nama"`
+		}
+
+		err := rows.Scan(
+			&review.ID,
+			&review.ICPID,
+			&review.TarunaID,
+			&review.DosenID,
+			&review.CycleNumber,
+			&review.TopikPenelitian,
+			&review.FilePath,
+			&review.Keterangan,
+			&review.CreatedAt,
+			&review.UpdatedAt,
+			&review.DosenNama,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		reviewMap := map[string]interface{}{
+			"id":               review.ID,
+			"icp_id":           review.ICPID,
+			"taruna_id":        review.TarunaID,
+			"dosen_id":         review.DosenID,
+			"cycle_number":     review.CycleNumber,
+			"topik_penelitian": review.TopikPenelitian,
+			"file_path":        review.FilePath,
+			"keterangan":       review.Keterangan,
+			"created_at":       review.CreatedAt,
+			"updated_at":       review.UpdatedAt,
+			"dosen_nama":       review.DosenNama.String,
+		}
+		reviews = append(reviews, reviewMap)
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{

@@ -847,20 +847,30 @@
 			// Fungsi untuk memuat data ICP hasil review dosen
 			async function loadICPReviewData() {
 				const userId = localStorage.getItem('userId');
-				if (!userId) return;
+				if (!userId) {
+					console.error('User ID not found in localStorage');
+					return;
+				}
 				
 				try {
+					console.log('Fetching review data for user:', userId);
 					// Get review data using user_id directly
 					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
-						const tbody = document.querySelector('.card-box:last-child table tbody');
-						tbody.innerHTML = '';
+						// Use a more specific selector to find the correct table
+						const reviewTable = document.querySelector('.card-box h4.text-blue:contains("Tabel Hasil Review Dosen")').closest('.card-box').querySelector('table tbody');
+						if (!reviewTable) {
+							console.error('Review table not found');
+							return;
+						}
+						
+						reviewTable.innerHTML = '';
 						
 						if (data.data && data.data.length > 0) {
 							data.data.forEach(review => {
-								tbody.innerHTML += `
+								reviewTable.innerHTML += `
 									<tr>
 										<td>${review.topik_penelitian || '-'}</td>
 										<td>${review.dosen_nama || '-'}</td>
@@ -873,7 +883,7 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="${review.file_path}" target="_blank">
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" target="_blank">
 														<i class="dw dw-eye"></i> View Review
 													</a>
 													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
@@ -889,18 +899,19 @@
 								`;
 							});
 						} else {
-							tbody.innerHTML = `
+							reviewTable.innerHTML = `
 								<tr>
 									<td colspan="5" class="text-center">Tidak ada data review</td>
 								</tr>
 							`;
 						}
 					} else {
+						console.error('Failed to load review data:', data.message);
 						showAlert('Gagal memuat data review: ' + (data.message || 'Unknown error'), 'danger');
 					}
 				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Gagal memuat data review', 'danger');
+					console.error('Error loading review data:', error);
+					showAlert('Gagal memuat data review: ' + error.message, 'danger');
 				}
 			}
 
