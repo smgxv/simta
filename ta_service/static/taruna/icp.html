@@ -1273,14 +1273,30 @@
 			// Update fungsi loadFinalICPData
 			async function loadFinalICPData() {
 				const userId = localStorage.getItem('userId');
-				if (!userId) return;
+				if (!userId) {
+					console.error('User ID not found in localStorage');
+					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
+					return;
+				}
 				
 				try {
+					console.log('Fetching Final ICP data for user:', userId);
 					const response = await fetch(`http://104.43.89.154:8082/finalicp/list?user_id=${userId}`);
+					
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					
 					const data = await response.json();
+					console.log('Received Final ICP data:', data);
 					
 					if (data.status === 'success') {
 						const tbody = document.querySelector('#finalIcpTable tbody');
+						if (!tbody) {
+							console.error('Table body element not found');
+							return;
+						}
+						
 						tbody.innerHTML = '';
 						
 						if (data.data && data.data.length > 0) {
@@ -1294,10 +1310,10 @@
 
 								tbody.innerHTML += `
 									<tr>
-										<td>${finalIcp.topik_penelitian}</td>
-										<td>${finalIcp.jurusan}</td>
-										<td>${finalIcp.kelas}</td>
-										<td><span class="${statusClass}">${finalIcp.status}</span></td>
+										<td>${finalIcp.topik_penelitian || '-'}</td>
+										<td>${finalIcp.jurusan || '-'}</td>
+										<td>${finalIcp.kelas || '-'}</td>
+										<td><span class="${statusClass}">${finalIcp.status || 'pending'}</span></td>
 										<td>
 											<div class="dropdown">
 												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
@@ -1323,11 +1339,11 @@
 						}
 					} else {
 						console.error('Failed to load Final ICP data:', data.message);
-						showAlert('Gagal memuat data Final ICP', 'danger');
+						showAlert('Gagal memuat data Final ICP: ' + (data.message || 'Unknown error'), 'danger');
 					}
 				} catch (error) {
 					console.error('Error loading Final ICP data:', error);
-					showAlert('Terjadi kesalahan saat memuat data Final ICP', 'danger');
+					showAlert('Terjadi kesalahan saat memuat data Final ICP: ' + error.message, 'danger');
 				}
 			}
 

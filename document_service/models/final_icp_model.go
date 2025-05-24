@@ -50,7 +50,7 @@ func (m *FinalICPModel) Create(finalICP *entities.FinalICP) error {
 func (m *FinalICPModel) GetByUserID(userID string) ([]entities.FinalICP, error) {
 	query := `
 		SELECT 
-			id, user_id, dosen_id, nama_lengkap, 
+			id, user_id, nama_lengkap, 
 			jurusan, kelas, topik_penelitian, file_path, 
 			keterangan, status, created_at, updated_at
 		FROM final_icp 

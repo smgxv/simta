@@ -146,8 +146,15 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler untuk mengambil daftar final ICP berdasarkan user_id
 func GetFinalICPHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
 	userID := r.URL.Query().Get("user_id")
 	if userID == "" {
