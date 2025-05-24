@@ -1269,13 +1269,9 @@
 						throw new Error('Data taruna tidak lengkap');
 					}
 					
-					// Tambahkan nama lengkap dan user_id ke formData
-					formData.append('nama_lengkap', tarunaData.data.nama_lengkap);
+					// Tambahkan user_id dan nama_lengkap ke formData
 					formData.append('user_id', userId);
-					
-					// Tambahkan dosen_id dari form ICP sebelumnya
-					const dosenSelect = document.getElementById('dosenSelect');
-					formData.append('dosen_id', dosenSelect.value);
+					formData.append('nama_lengkap', tarunaData.data.nama_lengkap);
 					
 					const response = await fetch('http://104.43.89.154:8082/finalicp/upload', {
 						method: 'POST',
@@ -1450,9 +1446,6 @@
 					const data = await response.json();
 					
 					if (data && data.status === 'success' && data.data) {
-						// Set the nama_lengkap field
-						document.getElementById('finalNamaLengkap').value = data.data.nama_lengkap || '';
-						
 						// Set jurusan if available
 						const jurusanSelect = document.getElementById('finalJurusan');
 						if (data.data.jurusan) {
