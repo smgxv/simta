@@ -672,10 +672,6 @@
 
 						<form id="finalIcpForm" enctype="multipart/form-data">
 							<div class="form-group">
-								<label>Nama Lengkap</label>
-								<input class="form-control" type="text" name="nama_lengkap" id="finalNamaLengkap" readonly>
-							</div>
-							<div class="form-group">
 								<label>Jurusan</label>
 								<select class="custom-select" name="jurusan" id="finalJurusan" required onchange="updateFinalKelas()">
 									<option value="" disabled selected>Pilih Jurusan</option>
@@ -1250,9 +1246,31 @@
 				
 				try {
 					const formData = new FormData(this);
-					
-					// Tambahkan user_id dari localStorage
 					const userId = localStorage.getItem('userId');
+					const token = localStorage.getItem('token');
+					
+					if (!userId || !token) {
+						throw new Error('User ID atau token tidak ditemukan');
+					}
+					
+					// Ambil data taruna untuk mendapatkan nama lengkap
+					const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+					
+					if (!tarunaResponse.ok) {
+						throw new Error('Gagal mengambil data taruna');
+					}
+					
+					const tarunaData = await tarunaResponse.json();
+					if (!tarunaData.data || !tarunaData.data.nama_lengkap) {
+						throw new Error('Data taruna tidak lengkap');
+					}
+					
+					// Tambahkan nama lengkap dan user_id ke formData
+					formData.append('nama_lengkap', tarunaData.data.nama_lengkap);
 					formData.append('user_id', userId);
 					
 					// Tambahkan dosen_id dari form ICP sebelumnya
@@ -1275,7 +1293,7 @@
 						document.querySelector('#finalIcpFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('finalSelectedFileName').style.display = 'none';
 						
-						// Refresh data jika ada
+						// Refresh data
 						loadFinalICPData();
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
