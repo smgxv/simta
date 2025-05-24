@@ -1411,22 +1411,41 @@
 			// Add this function to get user data
 			async function getUserData() {
 				const userId = localStorage.getItem('userId');
-				if (!userId) {
-					console.error('User ID not found');
+				const token = localStorage.getItem('token');
+				
+				if (!userId || !token) {
+					console.error('User ID or token not found');
 					return;
 				}
 
 				try {
-					const response = await fetch(`http://104.43.89.154:8081/users?id=${userId}`);
+					const response = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+					
+					if (!response.ok) {
+						throw new Error('Failed to fetch taruna data');
+					}
+					
 					const data = await response.json();
 					
-					if (data) {
+					if (data && data.status === 'success' && data.data) {
 						// Set the nama_lengkap field
-						document.getElementById('finalNamaLengkap').value = data.nama_lengkap || '';
+						document.getElementById('finalNamaLengkap').value = data.data.nama_lengkap || '';
+						
+						// Set jurusan if available
+						const jurusanSelect = document.getElementById('finalJurusan');
+						if (data.data.jurusan) {
+							jurusanSelect.value = data.data.jurusan;
+							// Trigger kelas update
+							updateFinalKelas();
+						}
 					}
 				} catch (error) {
-					console.error('Error fetching user data:', error);
-					showAlert('Gagal memuat data user: ' + error.message, 'danger');
+					console.error('Error fetching taruna data:', error);
+					showAlert('Gagal memuat data taruna: ' + error.message, 'danger');
 				}
 			}
 
