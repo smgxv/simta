@@ -1267,13 +1267,19 @@
 					const tarunaData = await tarunaResponse.json();
 					console.log('Response taruna data:', tarunaData);
 
-					if (tarunaData.status !== 'success' || !tarunaData.data || !Array.isArray(tarunaData.data) || tarunaData.data.length === 0) {
+					if (tarunaData.status !== 'success' || !tarunaData.data || !Array.isArray(tarunaData.data)) {
 						console.error('Data taruna tidak valid:', tarunaData);
 						throw new Error('Data taruna tidak ditemukan');
 					}
 
-					const taruna = tarunaData.data[0]; // Ambil data taruna pertama
+					// Cari data taruna yang sesuai dengan user_id
+					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
 					console.log('Data taruna yang akan digunakan:', taruna);
+
+					if (!taruna) {
+						console.error('Data taruna tidak ditemukan untuk user_id:', userId);
+						throw new Error('Data taruna tidak ditemukan untuk user ID ini');
+					}
 
 					if (!taruna.nama_lengkap) {
 						console.error('Data taruna tidak memiliki nama lengkap:', taruna);
@@ -1309,7 +1315,9 @@
 					console.error('Error saat upload final ICP:', error);
 					let errorMessage = 'Terjadi kesalahan pada server';
 					
-					if (error.message.includes('Data taruna tidak ditemukan')) {
+					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
+						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
+					} else if (error.message.includes('Data taruna tidak ditemukan')) {
 						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
 					} else if (error.message.includes('nama lengkap tidak ditemukan')) {
 						errorMessage = 'Data taruna tidak lengkap: nama lengkap belum diisi. Silakan lengkapi profil Anda terlebih dahulu.';
