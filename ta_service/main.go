@@ -107,6 +107,7 @@ func main() {
 	adminRouter.HandleFunc("/edituser", controllers.EditUser).Methods("GET")
 	adminRouter.HandleFunc("/deleteuser", controllers.DeleteUser).Methods("GET", "POST")
 	adminRouter.HandleFunc("/listdosen", controllers.ListDosen).Methods("GET")
+	adminRouter.HandleFunc("/listicp", controllers.ListICP).Methods("GET", "OPTIONS") // Tambahkan route untuk ICP admin
 
 	// Tambahkan routes untuk taruna
 	tarunaRoutes := router.PathPrefix("/taruna").Subrouter()
