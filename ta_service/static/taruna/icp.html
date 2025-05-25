@@ -1265,13 +1265,24 @@
 					}
 					
 					const tarunaData = await tarunaResponse.json();
-					if (!tarunaData.data || !tarunaData.data.nama_lengkap) {
-						throw new Error('Data taruna tidak lengkap');
+					console.log('Response taruna data:', tarunaData);
+
+					if (tarunaData.status !== 'success' || !tarunaData.data || !Array.isArray(tarunaData.data) || tarunaData.data.length === 0) {
+						console.error('Data taruna tidak valid:', tarunaData);
+						throw new Error('Data taruna tidak ditemukan');
+					}
+
+					const taruna = tarunaData.data[0]; // Ambil data taruna pertama
+					console.log('Data taruna yang akan digunakan:', taruna);
+
+					if (!taruna.nama_lengkap) {
+						console.error('Data taruna tidak memiliki nama lengkap:', taruna);
+						throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
 					}
 					
 					// Tambahkan user_id dan nama_lengkap ke formData
 					formData.append('user_id', userId);
-					formData.append('nama_lengkap', tarunaData.data.nama_lengkap);
+					formData.append('nama_lengkap', taruna.nama_lengkap);
 					
 					const response = await fetch('http://104.43.89.154:8082/finalicp/upload', {
 						method: 'POST',
@@ -1295,8 +1306,18 @@
 						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
 				} catch (error) {
-					console.error('Error:', error);
-					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
+					console.error('Error saat upload final ICP:', error);
+					let errorMessage = 'Terjadi kesalahan pada server';
+					
+					if (error.message.includes('Data taruna tidak ditemukan')) {
+						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
+					} else if (error.message.includes('nama lengkap tidak ditemukan')) {
+						errorMessage = 'Data taruna tidak lengkap: nama lengkap belum diisi. Silakan lengkapi profil Anda terlebih dahulu.';
+					} else if (error.message.includes('Gagal mengambil data taruna')) {
+						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi atau hubungi administrator.';
+					}
+					
+					showAlert(errorMessage, 'danger');
 				} finally {
 					// Reset button state
 					submitButton.disabled = false;
