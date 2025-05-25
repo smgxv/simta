@@ -571,6 +571,24 @@
 									</ol>
 								</nav>
 							</div>
+							<div class="col-md-6 col-sm-12">
+								<div class="d-flex justify-content-end">
+									<div class="dropdown mr-2">
+										<select class="form-control" id="jurusanFilter" onchange="applyFilters()">
+											<option value="">Semua Jurusan</option>
+											<option value="Keamanan Siber">Keamanan Siber</option>
+											<option value="Kriptografi">Kriptografi</option>
+										</select>
+									</div>
+									<div class="dropdown">
+										<select class="form-control" id="kelasFilter" onchange="applyFilters()">
+											<option value="">Semua Kelas</option>
+											<option value="IV Rekayasa Keamanan Siber Echo">IV Rekayasa Keamanan Siber Echo</option>
+											<option value="IV Rekayasa Sistem Kriptografi">IV Rekayasa Sistem Kriptografi</option>
+										</select>
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 
@@ -584,6 +602,8 @@
 								<thead>
 									<tr>
 										<th class="table-plus datatable-nosort">Nama Lengkap</th>
+										<th class="table-plus datatable-nosort">Jurusan</th>
+										<th class="table-plus datatable-nosort">Kelas</th>
 										<th class="table-plus datatable-nosort">Topik</th>
 										<th class="table-plus datatable-nosort">Status</th>
 										<th class="datatable-nosort">Action</th>
@@ -804,6 +824,8 @@
 				}, 5000);
 			}
 
+			let allICPData = []; // Menyimpan semua data ICP
+
 			// Fungsi untuk memuat data ICP
 			async function loadICPData() {
 				try {
@@ -823,40 +845,62 @@
 						throw new Error(result.message || 'Failed to load data');
 					}
 
-					const tableBody = document.querySelector('.data-table tbody');
-					tableBody.innerHTML = '';
-
-					result.data.forEach(item => {
-						const row = document.createElement('tr');
-						row.innerHTML = `
-							<td>${item.nama_lengkap || '-'}</td>
-							<td>${item.topik_penelitian || '-'}</td>
-							<td>
-								${item.status ? 
-									`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
-									: '-'}
-							</td>
-							<td>
-								${item.final_icp_id > 0 ? 
-									`<div class="dropdown">
-										<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-											<i class="dw dw-more"></i>
-										</a>
-										<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-											<a class="dropdown-item" href="#" onclick="viewICP(${item.final_icp_id})">
-												<i class="dw dw-eye"></i> View
-											</a>
-										</div>
-									</div>`
-									: '-'}
-							</td>
-						`;
-						tableBody.appendChild(row);
-					});
+					allICPData = result.data; // Simpan data ke variabel global
+					displayFilteredData(); // Tampilkan data dengan filter yang aktif
 				} catch (error) {
 					console.error('Error:', error);
 					showAlert('Failed to load ICP data', 'danger');
 				}
+			}
+
+			// Fungsi untuk menampilkan data yang sudah difilter
+			function displayFilteredData() {
+				const jurusanFilter = document.getElementById('jurusanFilter').value;
+				const kelasFilter = document.getElementById('kelasFilter').value;
+
+				const filteredData = allICPData.filter(item => {
+					const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
+					const matchKelas = !kelasFilter || item.kelas === kelasFilter;
+					return matchJurusan && matchKelas;
+				});
+
+				const tableBody = document.querySelector('.data-table tbody');
+				tableBody.innerHTML = '';
+
+				filteredData.forEach(item => {
+					const row = document.createElement('tr');
+					row.innerHTML = `
+						<td>${item.nama_lengkap || '-'}</td>
+						<td>${item.jurusan || '-'}</td>
+						<td>${item.kelas || '-'}</td>
+						<td>${item.topik_penelitian || '-'}</td>
+						<td>
+							${item.status ? 
+								`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
+								: '-'}
+						</td>
+						<td>
+							${item.final_icp_id > 0 ? 
+								`<div class="dropdown">
+									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+										<i class="dw dw-more"></i>
+									</a>
+									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+										<a class="dropdown-item" href="#" onclick="viewICP(${item.final_icp_id})">
+											<i class="dw dw-eye"></i> View
+										</a>
+									</div>
+								</div>`
+								: '-'}
+						</td>
+					`;
+					tableBody.appendChild(row);
+				});
+			}
+
+			// Fungsi untuk menerapkan filter
+			function applyFilters() {
+				displayFilteredData();
 			}
 
 			// Fungsi untuk menentukan class badge berdasarkan status
