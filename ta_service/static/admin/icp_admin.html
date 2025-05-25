@@ -808,77 +808,54 @@
 			async function loadICPData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					
-					// Fetch data taruna
-					const tarunaResponse = await fetch('http://104.43.89.154:8081/users/taruna', {
+					const response = await fetch('http://104.43.89.154:8082/finalicp/all', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
 					});
 
-					if (!tarunaResponse.ok) {
-						throw new Error('Failed to fetch taruna data');
-					}
-
-					const tarunaData = await tarunaResponse.json();
-
-					// Fetch data final ICP
-					const icpResponse = await fetch('http://104.43.89.154:8081/icp/all', {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-
-					if (!icpResponse.ok) {
+					if (!response.ok) {
 						throw new Error('Failed to fetch ICP data');
 					}
 
-					const icpData = await icpResponse.json();
-
-					// Create a map of ICP data keyed by user_id
-					const icpMap = new Map();
-					icpData.forEach(icp => {
-						icpMap.set(icp.user_id.toString(), icp);
-					});
+					const result = await response.json();
+					if (result.status !== 'success') {
+						throw new Error(result.message || 'Failed to load data');
+					}
 
 					const tableBody = document.querySelector('.data-table tbody');
 					tableBody.innerHTML = '';
 
-					// Iterate through taruna data and combine with ICP data
-					tarunaData.forEach(taruna => {
-						const icpInfo = icpMap.get(taruna.user_id?.toString());
+					result.data.forEach(item => {
 						const row = document.createElement('tr');
-						
 						row.innerHTML = `
-							<td>${taruna.nama_lengkap || '-'}</td>
-							<td>${icpInfo ? icpInfo.topik_penelitian || '-' : '-'}</td>
+							<td>${item.nama_lengkap || '-'}</td>
+							<td>${item.topik_penelitian || '-'}</td>
 							<td>
-								${icpInfo ? 
-									`<span class="badge badge-${getStatusBadgeClass(icpInfo.status)}">${icpInfo.status || 'Pending'}</span>` 
-									: '-'
-								}
+								${item.status ? 
+									`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
+									: '-'}
 							</td>
 							<td>
-								${icpInfo ? 
+								${item.final_icp_id > 0 ? 
 									`<div class="dropdown">
 										<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
 											<i class="dw dw-more"></i>
 										</a>
 										<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-											<a class="dropdown-item" href="#" onclick="viewICP('${icpInfo.id}')">
+											<a class="dropdown-item" href="#" onclick="viewICP(${item.final_icp_id})">
 												<i class="dw dw-eye"></i> View
 											</a>
 										</div>
 									</div>`
-									: '-'
-								}
+									: '-'}
 							</td>
 						`;
 						tableBody.appendChild(row);
 					});
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Failed to load data', 'danger');
+					showAlert('Failed to load ICP data', 'danger');
 				}
 			}
 

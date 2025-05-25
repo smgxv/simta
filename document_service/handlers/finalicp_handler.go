@@ -188,3 +188,72 @@ func parseInt(s string) int {
 	fmt.Sscanf(s, "%d", &i)
 	return i
 }
+
+// Handler untuk mengambil data gabungan taruna dan final ICP
+func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Query untuk mengambil data gabungan
+	query := `
+		SELECT 
+			t.id as taruna_id,
+			t.nama_lengkap,
+			COALESCE(f.topik_penelitian, '') as topik_penelitian,
+			COALESCE(f.status, '') as status,
+			COALESCE(f.id, 0) as final_icp_id
+		FROM taruna t
+		LEFT JOIN final_icp f ON t.id = f.user_id
+		ORDER BY t.nama_lengkap ASC`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type TarunaICP struct {
+		TarunaID        int    `json:"taruna_id"`
+		NamaLengkap     string `json:"nama_lengkap"`
+		TopikPenelitian string `json:"topik_penelitian"`
+		Status          string `json:"status"`
+		FinalICPID      int    `json:"final_icp_id"`
+	}
+
+	var results []TarunaICP
+	for rows.Next() {
+		var data TarunaICP
+		err := rows.Scan(
+			&data.TarunaID,
+			&data.NamaLengkap,
+			&data.TopikPenelitian,
+			&data.Status,
+			&data.FinalICPID,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		results = append(results, data)
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   results,
+	})
+}

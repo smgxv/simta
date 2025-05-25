@@ -39,6 +39,7 @@ func main() {
 	// Final ICP routes
 	r.HandleFunc("/finalicp/upload", handlers.UploadFinalICPHandler)
 	r.HandleFunc("/finalicp/list", handlers.GetFinalICPHandler)
+	r.HandleFunc("/finalicp/all", handlers.GetAllFinalICPWithTarunaHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{
