@@ -213,6 +213,8 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		SELECT 
 			t.user_id as taruna_id,
 			t.nama_lengkap,
+			t.jurusan,
+			t.kelas,
 			COALESCE(f.topik_penelitian, '') as topik_penelitian,
 			COALESCE(f.status, '') as status,
 			COALESCE(f.id, 0) as final_icp_id
@@ -230,6 +232,8 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	type TarunaICP struct {
 		TarunaID        int    `json:"taruna_id"`
 		NamaLengkap     string `json:"nama_lengkap"`
+		Jurusan         string `json:"jurusan"`
+		Kelas           string `json:"kelas"`
 		TopikPenelitian string `json:"topik_penelitian"`
 		Status          string `json:"status"`
 		FinalICPID      int    `json:"final_icp_id"`
@@ -241,6 +245,8 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		err := rows.Scan(
 			&data.TarunaID,
 			&data.NamaLengkap,
+			&data.Jurusan,
+			&data.Kelas,
 			&data.TopikPenelitian,
 			&data.Status,
 			&data.FinalICPID,

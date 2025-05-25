@@ -554,6 +554,7 @@
 			<div class="pd-ltr-20 xs-pd-20-10">
 				<div class="min-height-200px">
 
+					<!-- Header section with filters -->
 					<div class="page-header">
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
@@ -572,19 +573,15 @@
 								</nav>
 							</div>
 							<div class="col-md-6 col-sm-12">
-								<div class="d-flex justify-content-end">
-									<div class="dropdown mr-2">
+								<div class="d-flex justify-content-end align-items-center">
+									<div class="form-group mb-0 mr-2">
 										<select class="form-control" id="jurusanFilter" onchange="applyFilters()">
 											<option value="">Semua Jurusan</option>
-											<option value="Keamanan Siber">Keamanan Siber</option>
-											<option value="Kriptografi">Kriptografi</option>
 										</select>
 									</div>
-									<div class="dropdown">
+									<div class="form-group mb-0">
 										<select class="form-control" id="kelasFilter" onchange="applyFilters()">
 											<option value="">Semua Kelas</option>
-											<option value="IV Rekayasa Keamanan Siber Echo">IV Rekayasa Keamanan Siber Echo</option>
-											<option value="IV Rekayasa Sistem Kriptografi">IV Rekayasa Sistem Kriptografi</option>
 										</select>
 									</div>
 								</div>
@@ -825,6 +822,34 @@
 			}
 
 			let allICPData = []; // Menyimpan semua data ICP
+			let uniqueJurusan = new Set();
+			let uniqueKelas = new Set();
+
+			// Fungsi untuk memperbarui opsi filter
+			function updateFilterOptions() {
+				const jurusanFilter = document.getElementById('jurusanFilter');
+				const kelasFilter = document.getElementById('kelasFilter');
+
+				// Clear existing options except the first one
+				jurusanFilter.innerHTML = '<option value="">Semua Jurusan</option>';
+				kelasFilter.innerHTML = '<option value="">Semua Kelas</option>';
+
+				// Add unique jurusan options
+				[...uniqueJurusan].sort().forEach(jurusan => {
+					const option = document.createElement('option');
+					option.value = jurusan;
+					option.textContent = jurusan;
+					jurusanFilter.appendChild(option);
+				});
+
+				// Add unique kelas options
+				[...uniqueKelas].sort().forEach(kelas => {
+					const option = document.createElement('option');
+					option.value = kelas;
+					option.textContent = kelas;
+					kelasFilter.appendChild(option);
+				});
+			}
 
 			// Fungsi untuk memuat data ICP
 			async function loadICPData() {
@@ -845,8 +870,19 @@
 						throw new Error(result.message || 'Failed to load data');
 					}
 
-					allICPData = result.data; // Simpan data ke variabel global
-					displayFilteredData(); // Tampilkan data dengan filter yang aktif
+					allICPData = result.data;
+
+					// Collect unique values
+					allICPData.forEach(item => {
+						if (item.jurusan) uniqueJurusan.add(item.jurusan);
+						if (item.kelas) uniqueKelas.add(item.kelas);
+					});
+
+					// Update filter options
+					updateFilterOptions();
+					
+					// Display data
+					displayFilteredData();
 				} catch (error) {
 					console.error('Error:', error);
 					showAlert('Failed to load ICP data', 'danger');
