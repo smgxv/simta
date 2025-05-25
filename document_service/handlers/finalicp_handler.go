@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"document_service/config"
 	"document_service/entities"
 	"document_service/models"
@@ -11,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 // Handler untuk mengupload final ICP
@@ -262,4 +265,93 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		"status": "success",
 		"data":   results,
 	})
+}
+
+// Handler untuk update status Final ICP
+func UpdateFinalICPStatusHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	var requestData struct {
+		ID     int    `json:"id"`
+		Status string `json:"status"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	query := "UPDATE final_icp SET status = ? WHERE id = ?"
+	_, err = db.Exec(query, requestData.Status, requestData.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "success",
+		"message": "Status berhasil diupdate",
+	})
+}
+
+// Handler untuk download file Final ICP
+func DownloadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	vars := mux.Vars(r)
+	icpID := vars["id"]
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	var filePath string
+	query := "SELECT file_path FROM final_icp WHERE id = ?"
+	err = db.QueryRow(query, icpID).Scan(&filePath)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "File not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	fileName := filepath.Base(filePath)
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", "application/pdf")
+
+	http.ServeFile(w, r, filePath)
 }

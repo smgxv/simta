@@ -638,39 +638,6 @@
 		></noscript>
 		<!-- End Google Tag Manager (noscript) -->
 
-		<!-- Add this modal before the closing body tag -->
-		<div class="modal fade" id="uploadRevisionModal" tabindex="-1" role="dialog" aria-labelledby="uploadRevisionModalLabel" aria-hidden="true">
-			<div class="modal-dialog" role="document">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 class="modal-title" id="uploadRevisionModalLabel">Upload Revisi ICP</h5>
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-							<span aria-hidden="true">&times;</span>
-						</button>
-					</div>
-					<div class="modal-body">
-						<form id="revisionForm" enctype="multipart/form-data">
-							<input type="hidden" id="revisionDosenId" name="dosen_id">
-							<input type="hidden" id="revisionTopikPenelitian" name="topik_penelitian">
-							
-							<div class="form-group">
-								<label>Keterangan Revisi</label>
-								<textarea class="form-control" name="keterangan" required></textarea>
-							</div>
-							<div class="form-group">
-								<label>File Revisi ICP (PDF)</label>
-								<input type="file" class="form-control" name="file" accept=".pdf" required>
-							</div>
-						</form>
-					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-						<button type="button" class="btn btn-primary" onclick="submitRevision()">Upload Revisi</button>
-					</div>
-				</div>
-			</div>
-		</div>
-
 		<script>
 			// Fungsi Logout
 			async function logout() {
@@ -925,6 +892,15 @@
 										<a class="dropdown-item" href="#" onclick="viewICP(${item.final_icp_id})">
 											<i class="dw dw-eye"></i> View
 										</a>
+										<a class="dropdown-item" href="#" onclick="downloadICP(${item.final_icp_id})">
+											<i class="dw dw-download"></i> Download
+										</a>
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_icp_id}, 'approved')">
+											<i class="dw dw-check"></i> Accept
+										</a>
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_icp_id}, 'rejected')">
+											<i class="dw dw-delete-3"></i> Reject
+										</a>
 									</div>
 								</div>`
 								: '-'}
@@ -961,6 +937,45 @@
 			// Fungsi untuk redirect ke profile
 			function redirectToProfile() {
 				window.location.href = '/admin/profile';
+			}
+
+			// Fungsi untuk mengupdate status ICP
+			async function updateStatus(id, status) {
+				try {
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					const response = await fetch('http://104.43.89.154:8082/finalicp/status', {
+						method: 'POST',
+						headers: {
+							'Authorization': `Bearer ${token}`,
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							id: id,
+							status: status
+						})
+					});
+
+					if (!response.ok) {
+						throw new Error('Failed to update status');
+					}
+
+					const result = await response.json();
+					if (result.status === 'success') {
+						showAlert(`ICP berhasil di${status}`, 'success');
+						loadICPData(); // Reload data
+					} else {
+						throw new Error(result.message || 'Failed to update status');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Failed to update status', 'danger');
+				}
+			}
+
+			// Fungsi untuk download ICP
+			function downloadICP(id) {
+				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				window.open(`http://104.43.89.154:8082/finalicp/download/${id}?token=${token}`, '_blank');
 			}
 
 			// Load data ICP saat halaman dimuat
