@@ -211,13 +211,13 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	// Query untuk mengambil data gabungan
 	query := `
 		SELECT 
-			t.id as taruna_id,
+			t.user_id as taruna_id,
 			t.nama_lengkap,
 			COALESCE(f.topik_penelitian, '') as topik_penelitian,
 			COALESCE(f.status, '') as status,
 			COALESCE(f.id, 0) as final_icp_id
 		FROM taruna t
-		LEFT JOIN final_icp f ON t.id = f.user_id
+		LEFT JOIN final_icp f ON t.user_id = f.user_id
 		ORDER BY t.nama_lengkap ASC`
 
 	rows, err := db.Query(query)
