@@ -260,33 +260,59 @@ func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Query utama untuk menghitung jumlah hasil telaah per ICP
+	// Query utama untuk menghitung jumlah hasil telaah per ICP dengan informasi lengkap
 	query := `
-		SELECT u.nama_lengkap, fi.topik_penelitian, COUNT(ht.id) AS jumlah_telaah
+		SELECT 
+			u.nama_lengkap as nama_taruna,
+			fi.jurusan,
+			fi.kelas,
+			fi.topik_penelitian,
+			COUNT(ht.id) AS jumlah_telaah,
+			fi.status as status_icp
 		FROM final_icp fi
 		JOIN users u ON u.id = fi.user_id
 		LEFT JOIN hasil_telaah_icp ht ON ht.icp_id = fi.id
-		GROUP BY fi.id, u.nama_lengkap, fi.topik_penelitian
+		GROUP BY fi.id, u.nama_lengkap, fi.jurusan, fi.kelas, fi.topik_penelitian, fi.status
 		ORDER BY u.nama_lengkap ASC;
 	`
 
 	rows, err := db.Query(query)
 	if err != nil {
+		fmt.Printf("[Error] Query error: %v\n", err)
 		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var results []HasilTelaahResponse
+	type MonitoringResponse struct {
+		NamaTaruna      string `json:"nama_taruna"`
+		Jurusan         string `json:"jurusan"`
+		Kelas           string `json:"kelas"`
+		TopikPenelitian string `json:"topik_penelitian"`
+		JumlahTelaah    int    `json:"jumlah_telaah"`
+		StatusTelaah    string `json:"status_telaah"`
+		StatusICP       string `json:"status_icp"`
+	}
+
+	var results []MonitoringResponse
 
 	for rows.Next() {
-		var res HasilTelaahResponse
-		err := rows.Scan(&res.NamaDosen, &res.TopikPenelitian, &res.JumlahTelaah)
+		var res MonitoringResponse
+		var statusICP string
+		err := rows.Scan(
+			&res.NamaTaruna,
+			&res.Jurusan,
+			&res.Kelas,
+			&res.TopikPenelitian,
+			&res.JumlahTelaah,
+			&statusICP,
+		)
 		if err != nil {
-			fmt.Println("[Error] Scan:", err)
+			fmt.Printf("[Error] Scan error: %v\n", err)
 			continue
 		}
 
+		// Set status telaah berdasarkan jumlah telaah
 		switch res.JumlahTelaah {
 		case 2:
 			res.StatusTelaah = "✅ Lengkap"
@@ -296,6 +322,7 @@ func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
 			res.StatusTelaah = "❌ Belum Ditelaah"
 		}
 
+		res.StatusICP = statusICP
 		results = append(results, res)
 	}
 
