@@ -15,123 +15,177 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
+    <style>
+      .wrapper {
+        position: relative;
+        max-width: 470px;
+        width: 100%;
+        border-radius: 12px;
+        padding: 20px 30px 120px;
+        background: #4070f4;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+      .form.login {
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+        width: calc(100% + 220px);
+        padding: 20px 140px;
+        border-radius: 50% 50% 0 0;
+        background: #fff;
+        height: 100%;
+      }
+      .form.login header {
+        font-size: 30px;
+        text-align: center;
+        color: #333;
+        font-weight: 600;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #eee;
+      }
+      .home-btn {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #4070f4;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .home-btn:hover {
+        background: #2d5ae0;
+      }
+      .error {
+        color: red;
+        text-align: center;
+        margin-top: 10px;
+      }
+      .form-grid {
+        display: grid;
+        gap: 15px;
+      }
+      .form-grid input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+      }
+      .form-grid a {
+        color: #4070f4;
+        text-decoration: none;
+        text-align: right;
+      }
+      .form-grid button {
+        background: #4070f4;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .form-grid button:hover {
+        background: #2d5ae0;
+      }
+    </style>
   </head>
   <body style="background-image: url('style/images/background.png') no-repeat center center fixed;">
     
     <section class="wrapper">
-    
-          <div class="form login">
-            <header>Login</header>
-            <form onsubmit="event.preventDefault(); login();">
-              <div class="form-grid">
-                <div>
-                  <input type="text" placeholder="Email address" id="email" required />
-                </div>
-                <div>
-                  <input type="password" placeholder="Password" id="password" required />
-                </div>
-                <div>
-                  <a href="#">Forgot password?</a>
-                </div>
-                <!-- <input type="submit" value="Login" /> -->
-                <button type="submit">Login</button>
-                <div id="error" class="error"></div>
-              </div>
-            </form>
+      <div class="form login">
+        <header>Login</header>
+        <form onsubmit="event.preventDefault(); login();">
+          <div class="form-grid">
+            <div>
+              <input type="text" placeholder="Email address" id="email" required />
+            </div>
+            <div>
+              <input type="password" placeholder="Password" id="password" required />
+            </div>
+            <div>
+              <a href="#">Forgot password?</a>
+            </div>
+            <button type="submit">Login</button>
+            <div id="error" class="error"></div>
           </div>
+        </form>
+      </div>
 
+      <button class="home-btn" onclick="window.location.href='/dashboard';">Home</button>
+
+      <script>
+        async function login() {
+          const email = document.getElementById('email').value;
+          const password = document.getElementById('password').value;
+          const errorElement = document.getElementById('error');
+
+          console.log('Mencoba login...'); // Debug log
           
-        
-          <!-- Button to return to the homepage -->
-          <button class="home-btn" onclick="window.location.href='/dashboard';">Home</button>
+          try {
+            const response = await fetch('http://104.43.89.154:8080/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: email,
+                password: password
+              })
+            });
 
-        <script>
-            // const wrapper = document.querySelector(".wrapper"),
-            // signupHeader = document.querySelector(".signup header"),
-            // loginHeader = document.querySelector(".login header");
+            const data = await response.json();
+            console.log('Response dari server:', data); // Debug log
 
-            // // Initially set to show the login form
-            // wrapper.classList.add("active");  // Show login form by default
+            if (!response.ok || data.error) {
+              throw new Error(data.error || 'Login gagal');
+            }
 
-            // loginHeader.addEventListener("click", () => {
-            // wrapper.classList.add("active"); // Show login
-            // });
-            // signupHeader.addEventListener("click", () => {
-            // wrapper.classList.remove("active"); // Show signup
-            // });
+            // Simpan token dan status login
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('role', data.role); // Simpan role user
+            localStorage.setItem('userId', data.id); // Simpan ID user
+            localStorage.setItem('username', data.username); // Simpan username
 
-            // Fungsi login yang sudah ada tetap sama
-            async function login() {
-              const email = document.getElementById('email').value;
-              const password = document.getElementById('password').value;
-              const errorElement = document.getElementById('error');
+            // Set token sebagai cookie
+            document.cookie = `token=${data.token}; path=/`;
+            
+            console.log('Login berhasil, melakukan redirect...'); // Debug log
 
-              console.log('Mencoba login...'); // Debug log
-              
-              try {
-                  const response = await fetch('http://104.43.89.154:8080/login', {
-                      method: 'POST',
-                      headers: {
-                          'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                          email: email,
-                          password: password
-                      })
-                  });
+            // Hapus flag redirect jika ada
+            sessionStorage.removeItem('isRedirecting');
+            
+            // Redirect berdasarkan role
+            const userRole = data.role.toLowerCase();
+            if (userRole === 'admin') {
+              window.location.replace('/admin/dashboard');
+            } else if (userRole === 'taruna') {
+              window.location.replace('/taruna/dashboard');
+            } else if (userRole === 'dosen') {
+              window.location.replace('/dosen/dashboard');
+            } else {
+              console.log('Role tidak dikenal:', userRole);
+              throw new Error('Role tidak valid');
+            }
 
-                  const data = await response.json();
-                  console.log('Response dari server:', data); // Debug log
-
-                  if (!response.ok || data.error) {
-                      throw new Error(data.error || 'Login gagal');
-                  }
-
-                  // Simpan token dan status login
-                  localStorage.setItem('isLoggedIn', 'true');
-                  localStorage.setItem('token', data.token);
-                  localStorage.setItem('role', data.role); // Simpan role user
-                  localStorage.setItem('userId', data.id); // Simpan ID user
-
-                  // Set token sebagai cookie
-                  document.cookie = `token=${data.token}; path=/`;
-                  
-                  console.log('Login berhasil, melakukan redirect...'); // Debug log
-
-                  // Hapus flag redirect jika ada
-                  sessionStorage.removeItem('isRedirecting');
-                  
-                  // Redirect berdasarkan role
-                  const userRole = data.role.toLowerCase();
-                  if (userRole === 'admin') {
-                      window.location.replace('/admin/dashboard');
-                  } 
-                //       else if (userRole === 'dosen') {
-                //       window.location.replace('/userlist');
-                //   } 
-                  else if (userRole === 'taruna') {
-                      window.location.replace('/taruna/dashboard');
-                  } else if (userRole === 'dosen') {
-                      window.location.replace('/dosen/dashboard');
-                  } else {
-                      console.log('Role tidak dikenal:', userRole);
-                      throw new Error('Role tidak valid');
-                  }
-
-              } catch (error) {
-                  console.error('Error:', error);
-                  errorElement.textContent = error.message || 'Terjadi kesalahan saat login';
-              }
+          } catch (error) {
+            console.error('Error:', error);
+            errorElement.textContent = error.message || 'Terjadi kesalahan saat login';
           }
+        }
 
-          // Hapus atau modifikasi event listener DOMContentLoaded
-          // karena ini bisa menyebabkan redirect yang tidak diinginkan
-          document.addEventListener('DOMContentLoaded', function() {
-              // Hapus flag redirect saat halaman login dimuat
-              sessionStorage.removeItem('isRedirecting');
-          });
-
-        </script>
+        // Hapus flag redirect saat halaman login dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+          sessionStorage.removeItem('isRedirecting');
+        });
+      </script>
     </section>
   </body>
 </html>
