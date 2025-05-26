@@ -617,14 +617,15 @@
 					</div>
 					<!-- Simple Datatable End -->
 
-					<!-- Simple Datatable start -->
+					
+					<!-- Monitoring Hasil Telaah ICP -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
 							<h4 class="text-blue h4">Monitoring Hasil Telaah ICP</h4>
 							<p class="mb-0">Daftar hasil telaah ICP untuk semua taruna</p>
 						</div>
 						<div class="pb-20">
-							<table id="monitoringtable"  class="data-table table stripe hover nowrap">
+							<table id="monitoringTable"  class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
 										<th>Nama Taruna</th>
@@ -641,7 +642,7 @@
 							</table>
 						</div>
 					</div>
-					<!-- Simple Datatable End -->
+					<!-- End Monitoring Hasil Telaah ICP -->
 
 				</div>
 
@@ -1021,6 +1022,7 @@
 				}
 			});
 
+			// Load data monitoring telaah ICP
 			async function loadMonitoringTelaahData() {
 				try {
 					const response = await fetch('http://104.43.89.154:8082/hasiltelaah/monitoring');
