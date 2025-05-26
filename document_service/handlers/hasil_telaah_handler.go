@@ -186,34 +186,21 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Debug: Cek data di tabel hasil_telaah_icp
-	var count int
-	err = db.QueryRow("SELECT COUNT(*) FROM hasil_telaah_icp").Scan(&count)
+	// Pertama, dapatkan taruna_id dari user_id
+	var tarunaID int
+	err = db.QueryRow("SELECT id FROM taruna WHERE user_id = ?", userID).Scan(&tarunaID)
 	if err != nil {
-		fmt.Printf("[Error] Failed to count hasil_telaah_icp: %v\n", err)
-	} else {
-		fmt.Printf("[Debug] Total records in hasil_telaah_icp: %d\n", count)
+		fmt.Printf("[Error] Failed to get taruna_id: %v\n", err)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error getting taruna data: " + err.Error(),
+		})
+		return
 	}
 
-	// Debug: Cek data taruna dengan user_id yang diberikan
-	var debugTarunaID int
-	err = db.QueryRow("SELECT id FROM taruna WHERE user_id = ?", userID).Scan(&debugTarunaID)
-	if err != nil {
-		fmt.Printf("[Error] Failed to find taruna with user_id %s: %v\n", userID, err)
-	} else {
-		fmt.Printf("[Debug] Found taruna with ID %d for user_id %s\n", debugTarunaID, userID)
+	fmt.Printf("[Debug] Found taruna_id: %d for user_id: %s\n", tarunaID, userID)
 
-		// Debug: Cek hasil telaah untuk taruna ini
-		var debugCount int
-		err = db.QueryRow("SELECT COUNT(*) FROM hasil_telaah_icp WHERE taruna_id = ?", debugTarunaID).Scan(&debugCount)
-		if err != nil {
-			fmt.Printf("[Error] Failed to count hasil telaah for taruna_id %d: %v\n", debugTarunaID, err)
-		} else {
-			fmt.Printf("[Debug] Found %d hasil telaah records for taruna_id %d\n", debugCount, debugTarunaID)
-		}
-	}
-
-	// Query untuk mengambil data hasil telaah
+	// Query untuk mengambil data hasil telaah menggunakan taruna_id yang benar
 	query := `
 		SELECT ht.id, d.nama_lengkap, ht.topik_penelitian, ht.file_path, ht.tanggal_telaah
 		FROM hasil_telaah_icp ht
@@ -221,8 +208,8 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		WHERE ht.taruna_id = ?
 		ORDER BY ht.tanggal_telaah DESC`
 
-	fmt.Printf("[Debug] Executing query: %s with taruna_id: %d\n", query, debugTarunaID)
-	rows, err := db.Query(query, debugTarunaID)
+	fmt.Printf("[Debug] Executing query with taruna_id: %d\n", tarunaID)
+	rows, err := db.Query(query, tarunaID)
 	if err != nil {
 		fmt.Printf("[Error] Query execution error: %v\n", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
