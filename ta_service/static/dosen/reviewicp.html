@@ -1307,25 +1307,51 @@
 				
 				const formData = new FormData(this);
 				const dosenID = localStorage.getItem('dosenID');
+				const tarunaSelect = document.getElementById('tarunaSelect');
+				const topikSelect = document.getElementById('topikSelect');
+				const fileInput = document.getElementById('icpFile');
 				
+				// Validate form
 				if (!dosenID) {
 					alert('Dosen ID tidak ditemukan. Silakan login ulang.');
 					return;
 				}
 				
+				if (!tarunaSelect.value) {
+					alert('Silakan pilih nama taruna.');
+					return;
+				}
+				
+				if (!topikSelect.value) {
+					alert('Silakan pilih topik penelitian.');
+					return;
+				}
+				
+				if (!fileInput.files[0]) {
+					alert('Silakan pilih file hasil telaah.');
+					return;
+				}
+				
 				formData.append('dosen_id', dosenID);
+				formData.append('taruna_id', tarunaSelect.value);
+				formData.append('topik_penelitian', topikSelect.value);
 				
 				try {
+					console.log('Sending data:', {
+						dosen_id: dosenID,
+						taruna_id: tarunaSelect.value,
+						topik_penelitian: topikSelect.value,
+						file: fileInput.files[0].name
+					});
+					
 					const response = await fetch('http://104.43.89.154:8082/hasiltelaah/upload', {
 						method: 'POST',
 						body: formData
 					});
 					
-					if (!response.ok) {
-						throw new Error('Upload failed');
-					}
-					
 					const result = await response.json();
+					console.log('Server response:', result);
+					
 					if (result.status === 'success') {
 						alert('Hasil telaah berhasil diunggah!');
 						location.reload();

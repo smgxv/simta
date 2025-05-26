@@ -15,7 +15,7 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == "OPTIONS" {
@@ -26,7 +26,10 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse multipart form
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max
 	if err != nil {
-		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error parsing form: " + err.Error(),
+		})
 		return
 	}
 
@@ -35,16 +38,30 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	dosenID := r.FormValue("dosen_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 
+	// Debug log
+	fmt.Printf("Received values - tarunaID: %s, dosenID: %s, topik: %s\n", tarunaID, dosenID, topikPenelitian)
+
 	// Validate required fields
 	if tarunaID == "" || dosenID == "" || topikPenelitian == "" {
-		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Missing required fields",
+			"data": map[string]interface{}{
+				"taruna_id":        tarunaID,
+				"dosen_id":         dosenID,
+				"topik_penelitian": topikPenelitian,
+			},
+		})
 		return
 	}
 
 	// Handle file upload
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, "Error retrieving file: "+err.Error(), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error retrieving file: " + err.Error(),
+		})
 		return
 	}
 	defer file.Close()
@@ -52,7 +69,10 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	// Create upload directory if not exists
 	uploadDir := "uploads/hasil_telaah_icp"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
-		http.Error(w, "Error creating upload directory: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error creating upload directory: " + err.Error(),
+		})
 		return
 	}
 
@@ -67,7 +87,10 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	// Create the file
 	dst, err := os.Create(filePath)
 	if err != nil {
-		http.Error(w, "Error creating file: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error creating file: " + err.Error(),
+		})
 		return
 	}
 	defer dst.Close()
@@ -75,7 +98,10 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	// Copy the uploaded file
 	if _, err := io.Copy(dst, file); err != nil {
 		os.Remove(filePath)
-		http.Error(w, "Error saving file: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error saving file: " + err.Error(),
+		})
 		return
 	}
 
@@ -83,7 +109,10 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	db, err := config.GetDB()
 	if err != nil {
 		os.Remove(filePath)
-		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Database error: " + err.Error(),
+		})
 		return
 	}
 	defer db.Close()
@@ -95,7 +124,10 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	result, err := db.Exec(query, nil, dosenID, tarunaID, topikPenelitian, filePath)
 	if err != nil {
 		os.Remove(filePath)
-		http.Error(w, "Error saving to database: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error saving to database: " + err.Error(),
+		})
 		return
 	}
 
