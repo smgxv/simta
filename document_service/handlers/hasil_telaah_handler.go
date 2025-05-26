@@ -41,16 +41,24 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	// Debug log
 	fmt.Printf("Received values - tarunaID: %s, dosenID: %s, topik: %s\n", tarunaID, dosenID, topikPenelitian)
 
-	// Validate required fields
-	if tarunaID == "" || dosenID == "" || topikPenelitian == "" {
+	// Connect to database for getting icp_id
+	db, err := config.GetDB()
+	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Missing required fields",
-			"data": map[string]interface{}{
-				"taruna_id":        tarunaID,
-				"dosen_id":         dosenID,
-				"topik_penelitian": topikPenelitian,
-			},
+			"message": "Database error: " + err.Error(),
+		})
+		return
+	}
+	defer db.Close()
+
+	// Get icp_id from final_icp table
+	var icpID int
+	err = db.QueryRow("SELECT id FROM final_icp WHERE user_id = ? AND topik_penelitian = ?", tarunaID, topikPenelitian).Scan(&icpID)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error getting ICP ID: " + err.Error(),
 		})
 		return
 	}
@@ -105,23 +113,11 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Connect to database
-	db, err := config.GetDB()
-	if err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Database error: " + err.Error(),
-		})
-		return
-	}
-	defer db.Close()
-
 	// Insert into database
 	query := `INSERT INTO hasil_telaah_icp (icp_id, dosen_id, taruna_id, topik_penelitian, file_path, tanggal_telaah) 
 			 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
 
-	result, err := db.Exec(query, nil, dosenID, tarunaID, topikPenelitian, filePath)
+	result, err := db.Exec(query, icpID, dosenID, tarunaID, topikPenelitian, filePath)
 	if err != nil {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
