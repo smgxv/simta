@@ -1068,31 +1068,6 @@
 						`;
 					});
 
-					// Inisialisasi atau reset DataTable
-					const dataTable = $('#monitoringTable');
-					if ($.fn.DataTable.isDataTable(dataTable)) {
-						dataTable.DataTable().destroy();
-					}
-
-					dataTable.DataTable({
-						scrollCollapse: true,
-						autoWidth: false,
-						responsive: true,
-						columnDefs: [{
-							targets: "datatable-nosort",
-							orderable: false,
-						}],
-						"lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-						"language": {
-							"info": "_START_-_END_ of _TOTAL_ entries",
-							searchPlaceholder: "Cari data...",
-							paginate: {
-								next: '<i class="ion-chevron-right"></i>',
-								previous: '<i class="ion-chevron-left"></i>'
-							}
-						}
-					});
-
 				} catch (error) {
 					console.error('Error:', error);
 					alert('Gagal memuat data monitoring telaah ICP');
