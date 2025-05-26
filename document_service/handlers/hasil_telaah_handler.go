@@ -125,7 +125,7 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert into database
-	query := `INSERT INTO hasil_telaah_icp (icp_id, dosen_id, taruna_id, topik_penelitian, file_path, tanggal_telaah) 
+	query := `INSERT INTO hasil_telaah_icp (icp_id, dosen_id, user_id, topik_penelitian, file_path, tanggal_telaah) 
 			 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
 
 	result, err := db.Exec(query, icpID, dosenID, userID, topikPenelitian, filePath)
