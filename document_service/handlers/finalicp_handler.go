@@ -110,7 +110,7 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Database error: " + err.Error(),
+			"message": "Error connecting to database: " + err.Error(),
 		})
 		return
 	}
@@ -354,4 +354,62 @@ func DownloadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/pdf")
 
 	http.ServeFile(w, r, filePath)
+}
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+}
+
+// GetTarunaTopicsHandler handles fetching taruna names and their research topics
+func GetTarunaTopicsHandler(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Error connecting to database: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var results []struct {
+		UserID          int    `json:"user_id"`
+		NamaLengkap     string `json:"nama_lengkap"`
+		TopikPenelitian string `json:"topik_penelitian"`
+	}
+
+	query := `SELECT user_id, nama_lengkap, topik_penelitian 
+			  FROM final_icp 
+			  WHERE status = 'approved'`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		http.Error(w, "Error fetching data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var result struct {
+			UserID          int    `json:"user_id"`
+			NamaLengkap     string `json:"nama_lengkap"`
+			TopikPenelitian string `json:"topik_penelitian"`
+		}
+		if err := rows.Scan(&result.UserID, &result.NamaLengkap, &result.TopikPenelitian); err != nil {
+			http.Error(w, "Error scanning data: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		results = append(results, result)
+	}
+
+	if err = rows.Err(); err != nil {
+		http.Error(w, "Error iterating rows: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
 }

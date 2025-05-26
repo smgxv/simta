@@ -42,6 +42,7 @@ func main() {
 	r.HandleFunc("/finalicp/all", handlers.GetAllFinalICPWithTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finalicp/status", handlers.UpdateFinalICPStatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/finalicp/download/{id}", handlers.DownloadFinalICPHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finalicp/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{

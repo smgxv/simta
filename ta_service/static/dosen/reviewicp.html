@@ -635,17 +635,15 @@
 						<form id="icpForm" enctype="multipart/form-data">
 							<div class="form-group">
 								<label>Nama Taruna</label>
-								<select class="form-control" id="dosenSelect" name="dosen_id">
+								<select class="form-control" id="tarunaSelect" name="taruna_id">
 									<option value="" disabled selected>Pilih Nama Taruna</option>
 								</select>
 							</div>
 							<div class="form-group">
 								<label>Topik Penelitian</label>
-								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
-							</div>
-							<div class="form-group">
-								<label>Keterangan</label>
-								<textarea class="form-control" name="keterangan" required></textarea>
+								<select class="form-control" id="topikSelect" name="topik_penelitian">
+									<option value="" disabled selected>Pilih Topik Penelitian</option>
+								</select>
 							</div>
 							<div class="form-group">
 								<label>File Hasil Telaah Dosen (PDF)</label>
@@ -1233,6 +1231,85 @@
 					e.preventDefault();
 					const icpId = btn.getAttribute('data-icp-id');
 					window.location.href = `/dosen/viewicp?id=${icpId}`;
+				}
+			});
+
+			// Fungsi untuk mengambil data taruna dan topik penelitian
+			async function fetchTarunaTopics() {
+				try {
+					const response = await fetch('http://104.43.89.154:8080/finalicp/taruna-topics');
+					const data = await response.json();
+					
+					const tarunaSelect = document.getElementById('tarunaSelect');
+					const topikSelect = document.getElementById('topikSelect');
+					
+					// Simpan data untuk referensi
+					window.tarunaTopicsData = data;
+					
+					// Populate taruna dropdown
+					data.forEach(item => {
+						const option = document.createElement('option');
+						option.value = item.user_id;
+						option.textContent = item.nama_lengkap;
+						tarunaSelect.appendChild(option);
+					});
+					
+					// Event listener untuk perubahan pada dropdown taruna
+					tarunaSelect.addEventListener('change', function() {
+						const selectedTarunaId = this.value;
+						const selectedTaruna = data.find(item => item.user_id == selectedTarunaId);
+						
+						// Reset dan populate topik dropdown
+						topikSelect.innerHTML = '<option value="" disabled selected>Pilih Topik Penelitian</option>';
+						if (selectedTaruna) {
+							const option = document.createElement('option');
+							option.value = selectedTaruna.topik_penelitian;
+							option.textContent = selectedTaruna.topik_penelitian;
+							topikSelect.appendChild(option);
+							topikSelect.value = selectedTaruna.topik_penelitian;
+						}
+					});
+				} catch (error) {
+					console.error('Error fetching data:', error);
+				}
+			}
+
+			// Panggil fungsi saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', fetchTarunaTopics);
+
+			// Event listener untuk file input
+			document.getElementById('icpFile').addEventListener('change', function() {
+				const fileName = this.files[0]?.name;
+				const fileNameDiv = document.getElementById('selectedFileName');
+				if (fileName) {
+					fileNameDiv.textContent = 'Selected file: ' + fileName;
+					fileNameDiv.style.display = 'block';
+				} else {
+					fileNameDiv.style.display = 'none';
+				}
+			});
+
+			// Handle form submission
+			document.getElementById('icpForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+				
+				const formData = new FormData(this);
+				try {
+					const response = await fetch('http://104.43.89.154:8080/finalicp/upload', {
+						method: 'POST',
+						body: formData
+					});
+					
+					if (!response.ok) {
+						throw new Error('Upload failed');
+					}
+					
+					const result = await response.json();
+					alert('ICP berhasil diunggah!');
+					location.reload();
+				} catch (error) {
+					console.error('Error:', error);
+					alert('Terjadi kesalahan saat mengunggah ICP');
 				}
 			});
 
