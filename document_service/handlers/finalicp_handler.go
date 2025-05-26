@@ -381,9 +381,13 @@ func GetTarunaTopicsHandler(w http.ResponseWriter, r *http.Request) {
 		TopikPenelitian string `json:"topik_penelitian"`
 	}
 
-	query := `SELECT user_id, nama_lengkap, topik_penelitian 
-			  FROM final_icp 
-			  WHERE status = 'approved'`
+	query := `SELECT 
+		t.user_id,
+		t.nama_lengkap,
+		COALESCE(f.topik_penelitian, '') as topik_penelitian
+	FROM taruna t
+	LEFT JOIN final_icp f ON t.user_id = f.user_id
+	ORDER BY t.nama_lengkap ASC`
 
 	rows, err := db.Query(query)
 	if err != nil {
