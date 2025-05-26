@@ -45,12 +45,12 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get form values
-	tarunaID := r.FormValue("taruna_id")
+	userID := r.FormValue("user_id")
 	dosenID := r.FormValue("dosen_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 
 	// Debug log
-	fmt.Printf("Received values - tarunaID: %s, dosenID: %s, topik: %s\n", tarunaID, dosenID, topikPenelitian)
+	fmt.Printf("Received values - userID: %s, dosenID: %s, topik: %s\n", userID, dosenID, topikPenelitian)
 
 	// Connect to database for getting icp_id
 	db, err := config.GetDB()
@@ -65,7 +65,7 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get icp_id from final_icp table
 	var icpID int
-	err = db.QueryRow("SELECT id FROM final_icp WHERE user_id = ? AND topik_penelitian = ?", tarunaID, topikPenelitian).Scan(&icpID)
+	err = db.QueryRow("SELECT id FROM final_icp WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&icpID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -97,7 +97,7 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Generate unique filename
 	filename := fmt.Sprintf("HASIL_TELAAH_ICP_%s_%s_%s_%s",
-		tarunaID,
+		userID,
 		dosenID,
 		time.Now().Format("20060102150405"),
 		handler.Filename)
@@ -128,7 +128,7 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	query := `INSERT INTO hasil_telaah_icp (icp_id, dosen_id, taruna_id, topik_penelitian, file_path, tanggal_telaah) 
 			 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
 
-	result, err := db.Exec(query, icpID, dosenID, tarunaID, topikPenelitian, filePath)
+	result, err := db.Exec(query, icpID, dosenID, userID, topikPenelitian, filePath)
 	if err != nil {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -188,30 +188,18 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Pertama, dapatkan taruna_id dari user_id
-	var tarunaID int
-	err = db.QueryRow("SELECT id FROM taruna WHERE user_id = ?", userID).Scan(&tarunaID)
-	if err != nil {
-		fmt.Printf("[Error] Failed to get taruna_id: %v\n", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error getting taruna data: " + err.Error(),
-		})
-		return
-	}
-
-	fmt.Printf("[Debug] Found taruna_id: %d for user_id: %s\n", tarunaID, userID)
+	fmt.Printf("[Debug] Found user_id: %d for user_id: %s\n", userID, userID)
 
 	// Query untuk mengambil data hasil telaah menggunakan taruna_id yang benar
 	query := `
 		SELECT ht.id, d.nama_lengkap, ht.topik_penelitian, ht.file_path, ht.tanggal_telaah
 		FROM hasil_telaah_icp ht
 		JOIN dosen d ON ht.dosen_id = d.id
-		WHERE ht.taruna_id = ?
+		WHERE ht.user_id = ?
 		ORDER BY ht.tanggal_telaah DESC`
 
-	fmt.Printf("[Debug] Executing query with taruna_id: %d\n", tarunaID)
-	rows, err := db.Query(query, tarunaID)
+	fmt.Printf("[Debug] Executing query with user_id: %d\n", userID)
+	rows, err := db.Query(query, userID)
 	if err != nil {
 		fmt.Printf("[Error] Query execution error: %v\n", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
