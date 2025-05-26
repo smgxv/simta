@@ -164,6 +164,8 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get user_id from query parameter
 	userID := r.URL.Query().Get("user_id")
+	fmt.Printf("[Debug] Received request for user_id: %s\n", userID)
+
 	if userID == "" {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -175,6 +177,7 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	// Get database connection
 	db, err := config.GetDB()
 	if err != nil {
+		fmt.Printf("[Error] Database connection error: %v\n", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Database error: " + err.Error(),
@@ -192,8 +195,10 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		WHERE t.user_id = ?
 		ORDER BY ht.tanggal_telaah DESC`
 
+	fmt.Printf("[Debug] Executing query with user_id: %s\n", userID)
 	rows, err := db.Query(query, userID)
 	if err != nil {
+		fmt.Printf("[Error] Query execution error: %v\n", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Query error: " + err.Error(),
@@ -213,10 +218,13 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			&result.TanggalTelaah,
 		)
 		if err != nil {
+			fmt.Printf("[Error] Row scan error: %v\n", err)
 			continue
 		}
 		results = append(results, result)
 	}
+
+	fmt.Printf("[Debug] Found %d hasil telaah records\n", len(results))
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",

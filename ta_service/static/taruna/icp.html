@@ -744,11 +744,12 @@
 							</div>
 						</div>
 						<div class="pb-20">
-							<table class="table stripe hover nowrap" id="finalIcpTable">
+							<table class="table stripe hover nowrap" id="hasilTelaahTable">
 								<thead>
 									<tr>
 										<th>Nama Dosen</th>
 										<th>Topik Penelitian</th>
+										<th>Tanggal Telaah</th>
 										<th>Action</th>
 									</tr>
 								</thead>
@@ -1536,7 +1537,9 @@
 					const response = await fetch(`http://104.43.89.154:8082/hasiltelaah/taruna?user_id=${userId}`);
 					const data = await response.json();
 
-					const tbody = document.querySelector('#finalIcpTable tbody');
+					console.log('Hasil telaah data:', data); // Debug log
+
+					const tbody = document.querySelector('#hasilTelaahTable tbody');
 					tbody.innerHTML = '';
 
 					if (data.status === 'success' && data.data && data.data.length > 0) {
