@@ -186,17 +186,30 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Query untuk mengambil data hasil telaah
+	// Pertama, dapatkan taruna_id dari user_id
+	var tarunaID int
+	err = db.QueryRow("SELECT id FROM taruna WHERE user_id = ?", userID).Scan(&tarunaID)
+	if err != nil {
+		fmt.Printf("[Error] Failed to get taruna_id: %v\n", err)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error getting taruna data: " + err.Error(),
+		})
+		return
+	}
+
+	fmt.Printf("[Debug] Found taruna_id: %d for user_id: %s\n", tarunaID, userID)
+
+	// Query untuk mengambil data hasil telaah menggunakan taruna_id
 	query := `
 		SELECT ht.id, d.nama_lengkap, ht.topik_penelitian, ht.file_path, ht.tanggal_telaah
 		FROM hasil_telaah_icp ht
 		JOIN dosen d ON ht.dosen_id = d.id
-		JOIN taruna t ON ht.taruna_id = t.id
-		WHERE t.user_id = ?
+		WHERE ht.taruna_id = ?
 		ORDER BY ht.tanggal_telaah DESC`
 
-	fmt.Printf("[Debug] Executing query with user_id: %s\n", userID)
-	rows, err := db.Query(query, userID)
+	fmt.Printf("[Debug] Executing query with taruna_id: %d\n", tarunaID)
+	rows, err := db.Query(query, tarunaID)
 	if err != nil {
 		fmt.Printf("[Error] Query execution error: %v\n", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
