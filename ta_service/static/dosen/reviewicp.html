@@ -574,6 +574,7 @@
 					</div>
 
 					<!-- Simple Datatable start -->
+					 <!-- Tabel ICP -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
 							<h4 class="text-blue h4">List ICP</h4>
@@ -596,10 +597,8 @@
 					</div>
 					<!-- Simple Datatable End -->
 
-
-
-					
 					<!-- Simple Datatable start -->
+					 <!-- Tabel Hasil Revisi Taruna -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
 							<h4 class="text-blue h4">Tabel Hasil Revisi Taruna</h4>
@@ -620,6 +619,46 @@
 								</tbody>
 							</table>
 							</div>
+					</div>
+					<!-- Simple Datatable End -->
+
+					<!-- Default Basic Forms Start -->
+					 <!-- Form Hasil Telaah Dosen -->
+					 <div class="pd-20 card-box mb-30">
+
+						<div class="clearfix">
+							<div class="pull-left">
+								<h4 class="text-blue h4">Hasil Telaah Dosen</h4>
+							</div>
+						</div>
+
+						<form id="icpForm" enctype="multipart/form-data">
+							<div class="form-group">
+								<label>Nama Taruna</label>
+								<select class="form-control" id="dosenSelect" name="dosen_id">
+									<option value="" disabled selected>Pilih Nama Taruna</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>Topik Penelitian</label>
+								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
+							</div>
+							<div class="form-group">
+								<label>Keterangan</label>
+								<textarea class="form-control" name="keterangan" required></textarea>
+							</div>
+							<div class="form-group">
+								<label>File Hasil Telaah Dosen (PDF)</label>
+								<div class="custom-file">
+									<input type="file" class="custom-file-input" id="icpFile" name="file" accept=".pdf" required>
+									<label class="custom-file-label" for="icpFile">Choose file</label>
+								</div>
+								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
+							</div>
+							<button type="submit" class="btn btn-primary">Tambah ICP</button>
+						</form>
+
+
 					</div>
 					<!-- Simple Datatable End -->
 
