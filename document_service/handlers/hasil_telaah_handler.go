@@ -11,6 +11,15 @@ import (
 	"time"
 )
 
+// Struktur untuk response hasil telaah
+type HasilTelaahResponse struct {
+	ID              int       `json:"id"`
+	NamaDosen       string    `json:"nama_dosen"`
+	TopikPenelitian string    `json:"topik_penelitian"`
+	FilePath        string    `json:"file_path"`
+	TanggalTelaah   time.Time `json:"tanggal_telaah"`
+}
+
 func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -138,5 +147,79 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 			"id":        id,
 			"file_path": filePath,
 		},
+	})
+}
+
+func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Get user_id from query parameter
+	userID := r.URL.Query().Get("user_id")
+	if userID == "" {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "User ID is required",
+		})
+		return
+	}
+
+	// Get database connection
+	db, err := config.GetDB()
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Database error: " + err.Error(),
+		})
+		return
+	}
+	defer db.Close()
+
+	// Query untuk mengambil data hasil telaah
+	query := `
+		SELECT ht.id, d.nama_lengkap, ht.topik_penelitian, ht.file_path, ht.tanggal_telaah
+		FROM hasil_telaah_icp ht
+		JOIN dosen d ON ht.dosen_id = d.id
+		JOIN taruna t ON ht.taruna_id = t.id
+		WHERE t.user_id = ?
+		ORDER BY ht.tanggal_telaah DESC`
+
+	rows, err := db.Query(query, userID)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Query error: " + err.Error(),
+		})
+		return
+	}
+	defer rows.Close()
+
+	var results []HasilTelaahResponse
+	for rows.Next() {
+		var result HasilTelaahResponse
+		err := rows.Scan(
+			&result.ID,
+			&result.NamaDosen,
+			&result.TopikPenelitian,
+			&result.FilePath,
+			&result.TanggalTelaah,
+		)
+		if err != nil {
+			continue
+		}
+		results = append(results, result)
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   results,
 	})
 }

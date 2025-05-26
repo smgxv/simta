@@ -736,7 +736,7 @@
 					</div>
 					<!-- Tabel Final ICP End -->
 
-					<!-- Tabel Final ICP -->
+					<!-- Tabel Hasil Telaah Dosen -->
 					<div class="pd-20 card-box mb-30">
 						<div class="clearfix">
 							<div class="pull-left">
@@ -748,6 +748,7 @@
 								<thead>
 									<tr>
 										<th>Nama Dosen</th>
+										<th>Topik Penelitian</th>
 										<th>Action</th>
 									</tr>
 								</thead>
@@ -756,7 +757,7 @@
 							</table>
 						</div>
 					</div>
-					<!-- Tabel Final ICP End -->
+					<!-- Tabel Hasil Telaah Dosen End -->
 
 				</div>
 
@@ -1521,6 +1522,68 @@
 				loadICPData();
 				loadICPReviewData();
 				loadFinalICPData();
+			});
+
+			// Fungsi untuk memuat data hasil telaah ICP
+			async function loadHasilTelaahData() {
+				try {
+					const userId = localStorage.getItem('userId');
+					if (!userId) {
+						console.error('User ID not found');
+						return;
+					}
+
+					const response = await fetch(`http://104.43.89.154:8082/hasiltelaah/taruna?user_id=${userId}`);
+					const data = await response.json();
+
+					const tbody = document.querySelector('#finalIcpTable tbody');
+					tbody.innerHTML = '';
+
+					if (data.status === 'success' && data.data && data.data.length > 0) {
+						data.data.forEach(telaah => {
+							const date = new Date(telaah.tanggal_telaah).toLocaleDateString('id-ID', {
+								day: '2-digit',
+								month: 'long',
+								year: 'numeric'
+							});
+
+							tbody.innerHTML += `
+								<tr>
+									<td>${telaah.nama_dosen || '-'}</td>
+									<td>${telaah.topik_penelitian || '-'}</td>
+									<td>${date}</td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${telaah.file_path}" download>
+													<i class="dw dw-download"></i> Download
+												</a>
+											</div>
+										</div>
+									</td>
+								</tr>
+							`;
+						});
+					} else {
+						tbody.innerHTML = `
+							<tr>
+								<td colspan="4" class="text-center">Belum ada hasil telaah</td>
+							</tr>
+						`;
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Gagal memuat data hasil telaah', 'danger');
+				}
+			}
+
+			// Panggil fungsi saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', function() {
+				loadHasilTelaahData();
 			});
 
 		</script>

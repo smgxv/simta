@@ -46,6 +46,7 @@ func main() {
 
 	// Hasil Telaah ICP routes
 	r.HandleFunc("/hasiltelaah/upload", handlers.UploadHasilTelaahHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/hasiltelaah/taruna", handlers.GetHasilTelaahTarunaHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{
