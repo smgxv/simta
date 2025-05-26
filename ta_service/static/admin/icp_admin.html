@@ -614,6 +614,32 @@
 					</div>
 					<!-- Simple Datatable End -->
 
+					<!-- Simple Datatable start -->
+					<div class="card-box mb-30">
+						<div class="pd-20">
+							<h4 class="text-blue h4">List Hasil Telaah Dosen</h4>
+						</div>
+						<div class="pb-20">
+							<table class="data-table table stripe hover nowrap">
+								<thead>
+									<tr>
+										<th class="table-plus datatable-nosort">Nama Lengkap</th>
+										<th class="table-plus datatable-nosort">Jurusan</th>
+										<th class="table-plus datatable-nosort">Kelas</th>
+										<th class="table-plus datatable-nosort">Topik</th>
+										<th class="table-plus datatable-nosort">Jumlah Telaah</th>
+										<th class="table-plus datatable-nosort">Status Telaah</th>
+										<th class="datatable-nosort">Action</th>
+									</tr>
+								</thead>
+								<tbody>
+									
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<!-- Simple Datatable End -->
+
 				</div>
 
 			</div>
@@ -988,6 +1014,56 @@
 					username.textContent = localStorage.getItem('username') || 'Admin';
 				}
 			});
+
+			// Fungsi untuk memuat data hasil telaah untuk admin (monitoring)
+			async function loadMonitoringTelaahData() {
+				try {
+					const response = await fetch('http://104.43.89.154:8082/hasiltelaah/monitoring');
+
+					if (!response.ok) {
+						throw new Error('Gagal mengambil data monitoring telaah');
+					}
+
+					const result = await response.json();
+					if (result.status !== 'success') {
+						throw new Error(result.message || 'Gagal memuat data telaah');
+					}
+
+					const tableBody = document.querySelector('.data-table tbody');
+					tableBody.innerHTML = '';
+
+					result.data.forEach((item, index) => {
+						tableBody.innerHTML += `
+							<tr>
+								<td>${item.nama_taruna || '-'}</td>
+								<td>${item.jurusan || '-'}</td>
+								<td>${item.kelas || '-'}</td>
+								<td>${item.topik_penelitian || '-'}</td>
+								<td>${item.jumlah_telaah}</td>
+								<td>${item.status_telaah}</td>
+								<td>
+									<!-- Tambahkan tombol aksi jika perlu -->
+									-
+								</td>
+							</tr>
+						`;
+					});
+
+					// Inisialisasi ulang datatable jika menggunakan plugin seperti DataTables
+					if ($.fn.DataTable) {
+						$('.data-table').DataTable().destroy(); // hapus instance lama
+						$('.data-table').DataTable(); // re-inisialisasi
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Gagal memuat data hasil telaah ICP', 'danger');
+				}
+			}
+
+			// Panggil saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', loadMonitoringTelaahData);
+
+
 		</script>
 
 		<style>

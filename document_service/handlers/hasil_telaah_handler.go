@@ -18,6 +18,8 @@ type HasilTelaahResponse struct {
 	TopikPenelitian string    `json:"topik_penelitian"`
 	FilePath        string    `json:"file_path"`
 	TanggalTelaah   time.Time `json:"tanggal_telaah"`
+	JumlahTelaah    int       `json:"jumlah_telaah"`
+	StatusTelaah    string    `json:"status_telaah"`
 }
 
 func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
@@ -240,6 +242,62 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Printf("[Debug] Found %d hasil telaah records\n", len(results))
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   results,
+	})
+}
+
+func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Query utama untuk menghitung jumlah hasil telaah per ICP
+	query := `
+		SELECT u.nama_lengkap, fi.topik_penelitian, COUNT(ht.id) AS jumlah_telaah
+		FROM final_icp fi
+		JOIN users u ON u.id = fi.user_id
+		LEFT JOIN hasil_telaah_icp ht ON ht.icp_id = fi.id
+		GROUP BY fi.id, u.nama_lengkap, fi.topik_penelitian
+		ORDER BY u.nama_lengkap ASC;
+	`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var results []HasilTelaahResponse
+
+	for rows.Next() {
+		var res HasilTelaahResponse
+		err := rows.Scan(&res.NamaDosen, &res.TopikPenelitian, &res.JumlahTelaah)
+		if err != nil {
+			fmt.Println("[Error] Scan:", err)
+			continue
+		}
+
+		switch res.JumlahTelaah {
+		case 2:
+			res.StatusTelaah = "✅ Lengkap"
+		case 1:
+			res.StatusTelaah = "⚠️ Kurang 1 Telaah"
+		default:
+			res.StatusTelaah = "❌ Belum Ditelaah"
+		}
+
+		results = append(results, res)
+	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
