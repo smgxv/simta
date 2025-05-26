@@ -598,7 +598,7 @@
 							<h4 class="text-blue h4">List ICP Taruna</h4>
 						</div>
 						<div class="pb-20">
-							<table class="data-table table stripe hover nowrap">
+							<table id="monitoringtable" class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
 										<th class="table-plus datatable-nosort">Nama Lengkap</th>
@@ -1021,102 +1021,84 @@
 				}
 			});
 
-			// Fungsi untuk memuat data hasil telaah untuk admin (monitoring)
 			async function loadMonitoringTelaahData() {
 				try {
 					const response = await fetch('http://104.43.89.154:8082/hasiltelaah/monitoring');
-					console.log('Response:', response);
-
-					if (!response.ok) {
-						throw new Error('Gagal mengambil data monitoring telaah');
-					}
+					if (!response.ok) throw new Error('Gagal mengambil data monitoring telaah');
 
 					const result = await response.json();
-					console.log('Data:', result);
-					
-					if (result.status !== 'success') {
-						throw new Error(result.message || 'Gagal memuat data telaah');
-					}
+					if (result.status !== 'success') throw new Error(result.message || 'Gagal memuat data telaah');
 
-					const tableBody = document.querySelector('.data-table:last-child tbody');
+					const tableBody = document.querySelector('#monitoringTable tbody');
 					tableBody.innerHTML = '';
 
 					result.data.forEach(item => {
-						// Tentukan kelas CSS untuk status ICP
+						// Badge warna status ICP
 						let statusICPClass = '';
-						switch (item.status_icp?.toLowerCase()) {
-							case 'approved':
-								statusICPClass = 'badge badge-success';
-								break;
-							case 'rejected':
-								statusICPClass = 'badge badge-danger';
-								break;
-							case 'pending':
-								statusICPClass = 'badge badge-warning';
-								break;
-							default:
-								statusICPClass = 'badge badge-secondary';
+						switch ((item.status_icp || '').toLowerCase()) {
+							case 'approved': statusICPClass = 'badge badge-success'; break;
+							case 'rejected': statusICPClass = 'badge badge-danger'; break;
+							case 'pending': statusICPClass = 'badge badge-warning'; break;
+							default: statusICPClass = 'badge badge-secondary';
 						}
 
-						// Tentukan kelas CSS untuk status telaah
+						// Warna status telaah
 						let statusTelaahClass = '';
-						if (item.status_telaah.includes('✅')) {
+						if ((item.status_telaah || '').includes('✅')) {
 							statusTelaahClass = 'text-success';
-						} else if (item.status_telaah.includes('⚠️')) {
+						} else if ((item.status_telaah || '').includes('⚠️')) {
 							statusTelaahClass = 'text-warning';
 						} else {
 							statusTelaahClass = 'text-danger';
 						}
 
+						// Tambahkan baris ke tabel
 						tableBody.innerHTML += `
 							<tr>
 								<td>${item.nama_taruna || '-'}</td>
 								<td>${item.jurusan || '-'}</td>
 								<td>${item.kelas || '-'}</td>
 								<td>${item.topik_penelitian || '-'}</td>
-								<td><span class="${statusICPClass}">${item.status_icp || 'Pending'}</span></td>
-								<td class="text-center">${item.jumlah_telaah}</td>
-								<td><span class="${statusTelaahClass}">${item.status_telaah}</span></td>
+								<td><span class="${statusICPClass}">${item.status_icp || '-'}</span></td>
+								<td class="text-center">${item.jumlah_telaah ?? 0}</td>
+								<td><span class="${statusTelaahClass}">${item.status_telaah || '-'}</span></td>
 							</tr>
 						`;
 					});
 
-					// Initialize DataTable only if it exists and hasn't been initialized yet
-					const dataTable = $('.data-table:last-child');
-					if (dataTable.length) {
-						if ($.fn.DataTable.isDataTable(dataTable)) {
-							dataTable.DataTable().destroy();
-						}
-						
-						dataTable.DataTable({
-							scrollCollapse: true,
-							autoWidth: false,
-							responsive: true,
-							columnDefs: [{
-								targets: "datatable-nosort",
-								orderable: false,
-							}],
-							"lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-							"language": {
-								"info": "_START_-_END_ of _TOTAL_ entries",
-								searchPlaceholder: "Search",
-								paginate: {
-									next: '<i class="ion-chevron-right"></i>',
-									previous: '<i class="ion-chevron-left"></i>'
-								}
-							}
-						});
+					// Inisialisasi atau reset DataTable
+					const dataTable = $('#monitoringTable');
+					if ($.fn.DataTable.isDataTable(dataTable)) {
+						dataTable.DataTable().destroy();
 					}
+
+					dataTable.DataTable({
+						scrollCollapse: true,
+						autoWidth: false,
+						responsive: true,
+						columnDefs: [{
+							targets: "datatable-nosort",
+							orderable: false,
+						}],
+						"lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+						"language": {
+							"info": "_START_-_END_ of _TOTAL_ entries",
+							searchPlaceholder: "Cari data...",
+							paginate: {
+								next: '<i class="ion-chevron-right"></i>',
+								previous: '<i class="ion-chevron-left"></i>'
+							}
+						}
+					});
 
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Gagal memuat data monitoring telaah ICP', 'danger');
+					alert('Gagal memuat data monitoring telaah ICP');
 				}
 			}
 
-			// Panggil fungsi saat halaman dimuat
+			// Jalankan saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', loadMonitoringTelaahData);
-
 
 		</script>
 
