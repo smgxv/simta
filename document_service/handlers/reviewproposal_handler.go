@@ -499,7 +499,7 @@ func GetReviewProposalDosenHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk upload revisi ICP oleh taruna ke table review_icp_taruna
+// Handler untuk upload revisi proposal oleh taruna ke table review_proposal_taruna
 func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
@@ -556,13 +556,13 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Then get the ICP ID using the user_id
-	var icpID int
-	err = db.QueryRow("SELECT id FROM icp WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&icpID)
+	// Then get the Proposal ID using the user_id
+	var proposalID int
+	err = db.QueryRow("SELECT id FROM proposal WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&proposalID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "ICP not found for the given taruna and topic",
+			"message": "Proposal not found for the given taruna and topic",
 		})
 		return
 	}
@@ -577,7 +577,7 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	uploadDir := "uploads/reviewicp/taruna"
+	uploadDir := "uploads/reviewproposal/taruna"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -586,7 +586,7 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filename := fmt.Sprintf("REVISI_ICP_TARUNA_%s_%s_%s",
+	filename := fmt.Sprintf("REVISI_PROPOSAL_TARUNA_%s_%s_%s",
 		dosenID,
 		time.Now().Format("20060102150405"),
 		handler.Filename)
@@ -622,8 +622,8 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update status ICP dalam transaksi
-	_, err = tx.Exec("UPDATE icp SET status = ? WHERE id = ?",
-		"on review", icpID)
+	_, err = tx.Exec("UPDATE proposal SET status = ? WHERE id = ?",
+		"on review", proposalID)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
@@ -638,8 +638,8 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 	var cycleNumber int = 1
 	err = tx.QueryRow(`
 		SELECT COALESCE(MAX(cycle_number), 0) + 1 
-		FROM review_icp_taruna 
-		WHERE icp_id = ?`, icpID).Scan(&cycleNumber)
+		FROM review_proposal_taruna 
+		WHERE proposal_id = ?`, proposalID).Scan(&cycleNumber)
 	if err != nil {
 		// If error, default to 1
 		cycleNumber = 1
@@ -649,12 +649,12 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 
 	_, err = tx.Exec(`
-		INSERT INTO review_icp_taruna (
-			icp_id, taruna_id, dosen_id, cycle_number,
+		INSERT INTO review_proposal_taruna (
+			proposal_id, taruna_id, dosen_id, cycle_number,
 			topik_penelitian, file_path, keterangan,
 			created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-		icpID, tarunaID, dosenIDInt, cycleNumber,
+		proposalID, tarunaID, dosenIDInt, cycleNumber,
 		topikPenelitian, filePath, keterangan,
 	)
 

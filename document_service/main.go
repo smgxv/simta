@@ -61,7 +61,7 @@ func main() {
 	r.HandleFunc("/reviewproposal/dosen/detail", handlers.GetReviewProposalDosenDetailHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/upload/reviewproposal/dosen", handlers.UploadDosenReviewProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/updateproposalstatus", handlers.UpdateProposalStatusHandler).Methods("POST", "OPTIONS")
-	// r.HandleFunc("/upload/reviewproposal/taruna", handlers.UploadTarunaReviewProposalHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/upload/revisiproposal/taruna", handlers.UploadTarunaRevisiProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload/reviewproposal", handlers.UploadReviewProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/reviewproposal/taruna/list", handlers.GetRevisiProposalTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewproposal/dosen/list", handlers.GetReviewProposalDosenHandler).Methods("GET", "OPTIONS")
