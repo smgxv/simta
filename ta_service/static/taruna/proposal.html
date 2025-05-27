@@ -1606,77 +1606,48 @@
 			// Handle form submission untuk Seminar Proposal
 			document.getElementById('seminarProposalForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
-				
-				const submitButton = this.querySelector('button[type="submit"]');
-				submitButton.disabled = true;
-				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-				
+
+				const form = e.target;
+				const submitBtn = form.querySelector('button[type="submit"]');
+				submitBtn.disabled = true;
+				submitBtn.innerHTML = 'Uploading...';
+
+				const formData = new FormData();
+				formData.append('user_id', localStorage.getItem('userId'));
+				formData.append('ketua_penguji', document.getElementById('seminarKetuaPenguji').value);
+				formData.append('penguji1', document.getElementById('seminarPenguji1').value);
+				formData.append('penguji2', document.getElementById('seminarPenguji2').value);
+				formData.append('topik_penelitian', form.querySelector('input[name="topik_penelitian"]').value);
+				formData.append('file', document.getElementById('seminarProposalFile').files[0]);
+
+				const token = localStorage.getItem('token');
+
 				try {
-					// Create new FormData object
-					const formData = new FormData();
-					const userId = localStorage.getItem('userId');
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					
-					if (!userId) {
-						throw new Error('User ID tidak ditemukan');
-					}
-					
-					if (!token) {
-						throw new Error('Token tidak ditemukan. Silakan login ulang.');
-					}
-					
-					// Add form fields with correct parameter names
-					formData.append('user_id', userId);
-					formData.append('ketua_penguji', document.getElementById('seminarKetuaPenguji').value);
-					formData.append('penguji1', document.getElementById('seminarPenguji1').value);
-					formData.append('penguji2', document.getElementById('seminarPenguji2').value);
-					formData.append('topik_penelitian', document.querySelector('input[name="topik_penelitian"]').value);
-					formData.append('file', document.getElementById('seminarProposalFile').files[0]);
-					
-					// Create headers object without Content-Type to let the browser set it with boundary
-					const headers = new Headers();
-					headers.append('Authorization', `Bearer ${token}`);
-					
 					const response = await fetch('http://104.43.89.154:8082/seminarproposal/upload', {
 						method: 'POST',
-						headers: headers,
+						headers: {
+							'Authorization': `Bearer ${token}`
+						},
 						body: formData,
-						credentials: 'include' // Include cookies if any
+						credentials: 'include'
 					});
-					
-					if (!response.ok) {
-						if (response.status === 401) {
-							throw new Error('Sesi telah berakhir. Silakan login ulang.');
-						}
-						const errorData = await response.json();
-						throw new Error(errorData.message || `Server error: ${response.status}`);
-					}
-					
+
 					const data = await response.json();
-					
-					if (data.status === 'success') {
-						showAlert('Data seminar proposal berhasil disimpan', 'success');
-						this.reset();
-						document.querySelector('#seminarProposalFile').nextElementSibling.textContent = 'Choose file';
-						document.getElementById('seminarSelectedFileName').style.display = 'none';
+					if (response.ok && data.status === 'success') {
+						alert('Berhasil upload seminar proposal');
+						form.reset();
 					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat menyimpan data');
+						throw new Error(data.message || 'Gagal upload');
 					}
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
-					
-					// If token error, redirect to login
-					if (error.message.includes('Sesi telah berakhir')) {
-						setTimeout(() => {
-							window.location.href = '/loginusers';
-						}, 2000);
-					}
+				} catch (err) {
+					console.error(err);
+					alert('Gagal: ' + err.message);
 				} finally {
-					submitButton.disabled = false;
-					submitButton.innerHTML = 'Upload File Seminar Proposal';
+					submitBtn.disabled = false;
+					submitBtn.innerHTML = 'Upload File Seminar Proposal';
 				}
 			});
+
 
 			// Call loadDosenForSeminar when page loads
 			document.addEventListener('DOMContentLoaded', () => {
