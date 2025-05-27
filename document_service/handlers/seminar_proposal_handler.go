@@ -18,19 +18,13 @@ import (
 )
 
 func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
-	origin := r.Header.Get("Origin")
-
-	// Hanya izinkan asal yang sesuai
-	if origin == "http://104.43.89.154:8080" {
-		w.Header().Set("Access-Control-Allow-Origin", origin)
-	}
-
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	// Handle preflight request
-	if r.Method == http.MethodOptions {
+	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
