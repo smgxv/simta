@@ -1,4 +1,5 @@
-FROM golang:1.23.4-alpine
+# FROM golang:1.23.4-alpine
+FROM golang:1.21-alpine
 
 WORKDIR /app
 
@@ -18,8 +19,9 @@ COPY . .
 # Build the application
 RUN go build -o main .
 
-# Create uploads directory
-RUN mkdir -p /app/uploads/icp
+# Create uploads directory with proper permissions
+RUN mkdir -p /app/uploads/proposal && \
+    chmod -R 777 /app/uploads
 
 # Expose port 8082
 EXPOSE 8082
