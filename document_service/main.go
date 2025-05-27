@@ -67,6 +67,14 @@ func main() {
 	r.HandleFunc("/reviewproposal/dosen/list", handlers.GetReviewProposalDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewproposal/dosen/detail", handlers.GetReviewProposalDosenDetailHandler).Methods("GET", "OPTIONS")
 
+	// Final Proposal routes
+	r.HandleFunc("/finalproposal/upload", handlers.UploadFinalProposalHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/finalproposal/list", handlers.GetFinalProposalHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finalproposal/all", handlers.GetAllFinalProposalWithTarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finalproposal/status", handlers.UpdateFinalProposalStatusHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/finalproposal/download/{id}", handlers.DownloadFinalProposalHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finalproposal/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
+
 	// Setup CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},

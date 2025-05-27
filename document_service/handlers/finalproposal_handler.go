@@ -5,6 +5,7 @@ import (
 	"document_service/config"
 	"document_service/entities"
 	"document_service/models"
+	"document_service/utils"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,8 +17,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Handler untuk mengupload final ICP
-func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
+// Handler untuk mengupload final proposal
+func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -67,7 +68,7 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	// Create upload directory if not exists
-	uploadDir := "uploads/finalicp"
+	uploadDir := "uploads/finalproposal"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -77,7 +78,7 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate unique filename
-	filename := fmt.Sprintf("FINAL_ICP_%s_%s_%s",
+	filename := fmt.Sprintf("FINAL_PROPOSAL_%s_%s_%s",
 		userID,
 		time.Now().Format("20060102150405"),
 		handler.Filename)
@@ -116,10 +117,10 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Create Final ICP record
-	finalICPModel := models.NewFinalICPModel(db)
-	finalICP := &entities.FinalICP{
-		UserID:          parseInt(userID),
+	// Create Final Proposal record
+	finalProposalModel := models.NewFinalProposalModel(db)
+	finalProposal := &entities.FinalProposal{
+		UserID:          utils.ParseInt(userID),
 		NamaLengkap:     namaLengkap,
 		Jurusan:         jurusan,
 		Kelas:           kelas,
@@ -128,7 +129,7 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 		Keterangan:      keterangan,
 	}
 
-	if err := finalICPModel.Create(finalICP); err != nil {
+	if err := finalProposalModel.Create(finalProposal); err != nil {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -139,16 +140,16 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Final ICP berhasil diunggah",
+		"message": "Final Proposal berhasil diunggah",
 		"data": map[string]interface{}{
-			"id":        finalICP.ID,
+			"id":        finalProposal.ID,
 			"file_path": filePath,
 		},
 	})
 }
 
-// Handler untuk mengambil daftar final ICP berdasarkan user_id
-func GetFinalICPHandler(w http.ResponseWriter, r *http.Request) {
+// Handler untuk mengambil daftar final proposal berdasarkan user_id
+func GetFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -172,8 +173,8 @@ func GetFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	finalICPModel := models.NewFinalICPModel(db)
-	finalICPs, err := finalICPModel.GetByUserID(userID)
+	finalProposalModel := models.NewFinalProposalModel(db)
+	finalProposals, err := finalProposalModel.GetByUserID(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -181,19 +182,12 @@ func GetFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   finalICPs,
+		"data":   finalProposals,
 	})
 }
 
-// Helper function to parse string to int
-func parseInt(s string) int {
-	var i int
-	fmt.Sscanf(s, "%d", &i)
-	return i
-}
-
-// Handler untuk mengambil data gabungan taruna dan final ICP
-func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
+// Handler untuk mengambil data gabungan taruna dan final proposal
+func GetAllFinalProposalWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -220,9 +214,9 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			t.kelas,
 			COALESCE(f.topik_penelitian, '') as topik_penelitian,
 			COALESCE(f.status, '') as status,
-			COALESCE(f.id, 0) as final_icp_id
+			COALESCE(f.id, 0) as final_proposal_id
 		FROM taruna t
-		LEFT JOIN final_icp f ON t.user_id = f.user_id
+		LEFT JOIN final_proposal f ON t.user_id = f.user_id
 		ORDER BY t.nama_lengkap ASC`
 
 	rows, err := db.Query(query)
@@ -232,19 +226,19 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	type TarunaICP struct {
+	type TarunaProposal struct {
 		TarunaID        int    `json:"taruna_id"`
 		NamaLengkap     string `json:"nama_lengkap"`
 		Jurusan         string `json:"jurusan"`
 		Kelas           string `json:"kelas"`
 		TopikPenelitian string `json:"topik_penelitian"`
 		Status          string `json:"status"`
-		FinalICPID      int    `json:"final_icp_id"`
+		FinalProposalID int    `json:"final_proposal_id"`
 	}
 
-	var results []TarunaICP
+	var results []TarunaProposal
 	for rows.Next() {
-		var data TarunaICP
+		var data TarunaProposal
 		err := rows.Scan(
 			&data.TarunaID,
 			&data.NamaLengkap,
@@ -252,7 +246,7 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			&data.Kelas,
 			&data.TopikPenelitian,
 			&data.Status,
-			&data.FinalICPID,
+			&data.FinalProposalID,
 		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -267,8 +261,8 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk update status Final ICP
-func UpdateFinalICPStatusHandler(w http.ResponseWriter, r *http.Request) {
+// Handler untuk update status Final Proposal
+func UpdateFinalProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -296,7 +290,7 @@ func UpdateFinalICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	query := "UPDATE final_icp SET status = ? WHERE id = ?"
+	query := "UPDATE final_proposal SET status = ? WHERE id = ?"
 	_, err = db.Exec(query, requestData.Status, requestData.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -309,8 +303,8 @@ func UpdateFinalICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk download file Final ICP
-func DownloadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
+// Handler untuk download file Final Proposal
+func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
