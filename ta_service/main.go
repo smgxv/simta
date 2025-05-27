@@ -127,7 +127,6 @@ func main() {
 	// Tambahkan routes untuk dosen
 	dosenRoutes := router.PathPrefix("/dosen").Subrouter()
 	dosenRoutes.Use(middleware.RoleRedirectMiddleware)
-
 	// Route dashboard dosen
 	dosenRoutes.HandleFunc("/dashboard", controllers.DosenDashboard).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/review_icp", controllers.ReviewICP).Methods("GET", "OPTIONS")
@@ -136,7 +135,7 @@ func main() {
 	dosenRoutes.HandleFunc("/viewicp", controllers.ViewICPDosen).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/viewicp_review", controllers.ViewICPReviewDosen).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/viewicp_revisi", controllers.ViewICPRevisiDosen).Methods("GET", "OPTIONS")
-
+	dosenRoutes.HandleFunc("/bimbingan_proposal", controllers.BimbinganProposal).Methods("GET", "OPTIONS")
 	// Tambahkan router ke http.Handle
 	http.Handle("/", router) // Tambahkan ini untuk menggunakan router mux
 
