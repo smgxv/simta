@@ -55,6 +55,18 @@ func main() {
 	r.HandleFunc("/proposal/{id}", handlers.GetProposalByIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/proposal/edit", handlers.EditProposalHandler).Methods("PUT", "OPTIONS")
 
+	// Review Proposal routes
+	r.HandleFunc("/reviewproposal", handlers.GetReviewProposalHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewproposal/dosen/list", handlers.GetReviewProposalDosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewproposal/dosen/detail", handlers.GetReviewProposalDosenDetailHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/upload/reviewproposal/dosen", handlers.UploadDosenReviewProposalHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/updateproposalstatus", handlers.UpdateProposalStatusHandler).Methods("POST", "OPTIONS")
+	// r.HandleFunc("/upload/reviewproposal/taruna", handlers.UploadTarunaReviewProposalHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/upload/reviewproposal", handlers.UploadReviewProposalHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/reviewproposal/taruna/list", handlers.GetRevisiProposalTarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewproposal/dosen/list", handlers.GetReviewProposalDosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewproposal/dosen/detail", handlers.GetReviewProposalDosenDetailHandler).Methods("GET", "OPTIONS")
+
 	// Setup CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},

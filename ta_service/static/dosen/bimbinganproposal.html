@@ -509,6 +509,17 @@
 							</a>
 						</li>
 
+						<li class="dropdown">
+							<a href="javascript:;" class="dropdown-toggle">
+								<span class="micon bi bi-file-earmark-text"></span
+								><span class="mtext">Proposal</span>
+							</a>
+							<ul class="submenu">
+								<li><a href="/dosen/bimbingan_proposal">Bimbingan Proposal</a></li>
+								<li><a href="/dosen/pengujian_proposal">Pengujian Proposal</a></li>
+							</ul>
+						</li>
+
 						<li>
 							<a href="/dosen/review_ta70" class="dropdown-toggle no-arrow">
 								<span class="micon bi bi-file-earmark-text"></span
@@ -720,12 +731,12 @@
 				window.location.href = '/dosen/profile';
 			}
 			
-			let icpDataGlobal = [];
+			let proposalDataGlobal = [];
 
-			// Fungsi untuk menampilkan list ICP yang masuk ke dosen
+			// Fungsi untuk menampilkan list Proposal yang masuk ke dosen
 			async function loadProposalData() {
 				const dosenID = localStorage.getItem('dosenID');
-				console.log('Memuat ICP untuk dosenID:', dosenID); // Debug
+				console.log('Memuat Proposal untuk dosenID:', dosenID); // Debug
 				if (!dosenID) return;
 				try {
 					const response = await fetch(`http://104.43.89.154:8082/reviewproposal?dosen_id=${dosenID}`);
@@ -735,14 +746,14 @@
 						const tbody = document.querySelector('.data-table tbody');
 						tbody.innerHTML = '';
 						
-						// First, display all ICPs immediately
+						// First, display all Proposals immediately
 						data.data.forEach(proposal => {
 							const statusClass = {
 								'pending': 'badge badge-warning',
 								'approved': 'badge badge-success',
 								'rejected': 'badge badge-danger',
 								'on review': 'badge badge-secondary'
-							}[icp.status] || 'badge badge-secondary';
+							}[proposal.status] || 'badge badge-secondary';
 
 							// Create a unique ID for this row to update later
 							const rowId = `proposal-row-${proposal.id}`;
@@ -918,13 +929,13 @@
 
 			// Event delegation untuk tombol Accept dan Reject
 			document.addEventListener('click', async function(e) {
-				if (e.target.closest('.accept-icp-btn')) {
+				if (e.target.closest('.accept-proposal-btn')) {
 					e.preventDefault();
-					const btn = e.target.closest('.accept-icp-btn');
-					const icpId = btn.getAttribute('data-id');
-					if (!icpId) return;
+					const btn = e.target.closest('.accept-proposal-btn');
+					const proposalId = btn.getAttribute('data-id');
+					if (!proposalId) return;
 
-					if (!confirm('Yakin ingin meng-approve ICP ini?')) return;
+					if (!confirm('Yakin ingin meng-approve Proposal ini?')) return;
 
 					try {
 						const response = await fetch(`http://104.43.89.154:8082/updateproposalstatus?id=${proposalId}&status=approved`, {
@@ -1047,7 +1058,7 @@
 													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Revisi
 													</a>
-													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.icp_id}, ${review.cycle_number || 0})">
+													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.proposal_id}, ${review.cycle_number || 0})">
 														<i class="dw dw-upload"></i> Upload Review Baru
 													</a>
 													<a class="dropdown-item" href="#" onclick="updateProposalStatus(${review.proposal_id}, 'approved')">
@@ -1081,8 +1092,8 @@
 			}
 
 			// Fungsi untuk membuka modal upload review pada tabel hasil revisi 
-			function openUploadReviewModal(topikPenelitian, tarunaId, icpId, currentCycle) {
-				console.log('Opening modal with:', { topikPenelitian, tarunaId, icpId, currentCycle });
+			function openUploadReviewModal(topikPenelitian, tarunaId, proposalId, currentCycle) {
+				console.log('Opening modal with:', { topikPenelitian, tarunaId, proposalId, currentCycle });
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
 				document.getElementById('reviewTarunaId').value = tarunaId;
 				document.getElementById('reviewProposalId').value = proposalId;
@@ -1090,7 +1101,7 @@
 				$('#uploadReviewModal').modal('show');
 			}
 
-			// Fungsi untuk membuka modal upload review pada tabel list ICP
+			// Fungsi untuk membuka modal upload review pada tabel list Proposal
 			async function openUploadReviewModalProposal(topikPenelitian, proposalId, userId) {
 				console.log('Opening modal with:', { topikPenelitian, proposalId, userId });
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
@@ -1219,7 +1230,7 @@
 				window.location.href = `/dosen/viewproposal_revisi?id=${revisiId}&proposal_id=${proposalId}`;
 			}
 
-			// Event delegation untuk tombol view ICP
+			// Event delegation untuk tombol view Proposal
 			document.querySelector('.data-table tbody').addEventListener('click', function(e) {
 				const btn = e.target.closest('.view-proposal-btn');
 				if (btn) {
@@ -1229,7 +1240,7 @@
 				}
 			});
 
-			// Fungsi untuk mengambil data taruna dan topik penelitian untuk dropdown hasil telaah ICP
+			// Fungsi untuk mengambil data taruna dan topik penelitian untuk dropdown hasil telaah Proposal
 			async function fetchTarunaTopics() {
 				try {
 					const response = await fetch('http://104.43.89.154:8082/finalproposal/taruna-topics');
@@ -1281,10 +1292,10 @@
 				}
 			}
 
-			// Panggil fungsi saat halaman dimuat untuk mengambil data taruna dan topik penelitian pada dropdown hasil telaah ICP
+			// Panggil fungsi saat halaman dimuat untuk mengambil data taruna dan topik penelitian pada dropdown hasil telaah Proposal
 			document.addEventListener('DOMContentLoaded', fetchTarunaTopics);
 
-			// Event listener untuk file input untuk upload hasil telaah ICP
+			// Event listener untuk file input untuk upload hasil telaah Proposal
 			document.getElementById('proposalFile').addEventListener('change', function () {
 				const fileName = this.files[0]?.name;
 				const fileNameDiv = document.getElementById('selectedFileName');
