@@ -1612,7 +1612,8 @@
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 				
 				try {
-					const formData = new FormData(this);
+					// Create new FormData object
+					const formData = new FormData();
 					const userId = localStorage.getItem('userId');
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					
@@ -1624,7 +1625,13 @@
 						throw new Error('Token tidak ditemukan. Silakan login ulang.');
 					}
 					
+					// Add form fields with correct parameter names
 					formData.append('user_id', userId);
+					formData.append('ketua_penguji', document.getElementById('seminarKetuaPenguji').value);
+					formData.append('penguji1', document.getElementById('seminarPenguji1').value);
+					formData.append('penguji2', document.getElementById('seminarPenguji2').value);
+					formData.append('topik_penelitian', document.querySelector('input[name="topik_penelitian"]').value);
+					formData.append('file', document.getElementById('seminarProposalFile').files[0]);
 					
 					// Create headers object without Content-Type to let the browser set it with boundary
 					const headers = new Headers();
@@ -1641,7 +1648,8 @@
 						if (response.status === 401) {
 							throw new Error('Sesi telah berakhir. Silakan login ulang.');
 						}
-						throw new Error(`Server error: ${response.status}`);
+						const errorData = await response.json();
+						throw new Error(errorData.message || `Server error: ${response.status}`);
 					}
 					
 					const data = await response.json();
