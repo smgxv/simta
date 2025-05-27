@@ -56,7 +56,7 @@ func main() {
 	r.HandleFunc("/proposal/edit", handlers.EditProposalHandler).Methods("PUT", "OPTIONS")
 
 	// Review Proposal routes
-	r.HandleFunc("/reviewproposal", handlers.GetReviewProposalHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewproposal", handlers.GetProposalByDosenIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewproposal/dosen/list", handlers.GetReviewProposalDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewproposal/dosen/detail", handlers.GetReviewProposalDosenDetailHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/upload/reviewproposal/dosen", handlers.UploadDosenReviewProposalHandler).Methods("POST", "OPTIONS")

@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-// Handler untuk mengambil ICP berdasarkan dosen_id
+// Handler untuk mengambil daftar ICP dari table icp
 func GetProposalByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
@@ -33,78 +33,13 @@ func GetProposalByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	query := `
-		SELECT 
-			p.id, p.user_id, p.dosen_id, p.topik_penelitian,
-			p.keterangan, p.file_path, p.status, p.created_at,
-			p.updated_at, t.nama_lengkap as nama_taruna
-		FROM proposal p
-		LEFT JOIN taruna t ON p.user_id = t.user_id
-		WHERE p.dosen_id = ?
-		ORDER BY p.created_at DESC
-	`
-
-	rows, err := db.Query(query, dosenID)
+	proposalModel := models.NewProposalModel(db)
+	proposals, err := proposalModel.GetByDosenID(dosenID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
 
-	var proposals []map[string]interface{}
-	for rows.Next() {
-		var proposal struct {
-			ID              int
-			UserID          int
-			DosenID         int
-			TopikPenelitian string
-			Keterangan      string
-			FilePath        string
-			Status          string
-			CreatedAt       string
-			UpdatedAt       string
-			NamaTaruna      sql.NullString
-		}
-
-		err := rows.Scan(
-			&proposal.ID,
-			&proposal.UserID,
-			&proposal.DosenID,
-			&proposal.TopikPenelitian,
-			&proposal.Keterangan,
-			&proposal.FilePath,
-			&proposal.Status,
-			&proposal.CreatedAt,
-			&proposal.UpdatedAt,
-			&proposal.NamaTaruna,
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		proposalMap := map[string]interface{}{
-			"id":               proposal.ID,
-			"user_id":          proposal.UserID,
-			"dosen_id":         proposal.DosenID,
-			"topik_penelitian": proposal.TopikPenelitian,
-			"keterangan":       proposal.Keterangan,
-			"file_path":        proposal.FilePath,
-			"status":           proposal.Status,
-			"created_at":       proposal.CreatedAt,
-			"updated_at":       proposal.UpdatedAt,
-			"nama_taruna":      proposal.NamaTaruna.String,
-		}
-
-		proposals = append(proposals, proposalMap)
-	}
-
-	if err = rows.Err(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   proposals,
@@ -320,46 +255,6 @@ func UploadReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		"data": map[string]interface{}{
 			"file_path": filePath,
 		},
-	})
-}
-
-// Handler untuk mengambil daftar review ICP dari table review_icp
-func GetReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
-	w.Header().Set("Content-Type", "application/json")
-
-	dosenID := r.URL.Query().Get("dosen_id")
-	tarunaID := r.URL.Query().Get("taruna_id")
-
-	if dosenID == "" && tarunaID == "" {
-		http.Error(w, "Either dosen_id or taruna_id is required", http.StatusBadRequest)
-		return
-	}
-
-	db, err := config.GetDB()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
-	reviewModel := models.NewReviewProposalModel(db)
-
-	var reviews []entities.ReviewProposal
-	if dosenID != "" {
-		reviews, err = reviewModel.GetByDosenID(dosenID)
-	} else {
-		reviews, err = reviewModel.GetByTarunaID(tarunaID)
-	}
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "success",
-		"data":   reviews,
 	})
 }
 
