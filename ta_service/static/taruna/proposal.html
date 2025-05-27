@@ -1614,15 +1614,23 @@
 				try {
 					const formData = new FormData(this);
 					const userId = localStorage.getItem('userId');
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					
 					if (!userId) {
 						throw new Error('User ID tidak ditemukan');
+					}
+					
+					if (!token) {
+						throw new Error('Token tidak ditemukan. Silakan login ulang.');
 					}
 					
 					formData.append('user_id', userId);
 					
 					const response = await fetch('http://104.43.89.154:8082/seminarproposal/upload', {
 						method: 'POST',
+						headers: {
+							'Authorization': `Bearer ${token}`
+						},
 						body: formData
 					});
 					

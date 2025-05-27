@@ -22,6 +22,13 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Verify token
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authorization header is required", http.StatusUnauthorized)
+		return
+	}
+
 	// Parse multipart form
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max
 	if err != nil {
@@ -110,6 +117,13 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 func GetSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	utils.EnableCors(&w)
 	if r.Method == "OPTIONS" {
+		return
+	}
+
+	// Verify token
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authorization header is required", http.StatusUnauthorized)
 		return
 	}
 
