@@ -18,8 +18,15 @@ import (
 )
 
 func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
-	utils.EnableCors(&w)
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	// Handle preflight request
 	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -149,8 +156,15 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
-	utils.EnableCors(&w)
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	// Handle preflight request
 	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
