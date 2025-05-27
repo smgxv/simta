@@ -33,13 +33,78 @@ func GetProposalByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	proposalModel := models.NewProposalModel(db)
-	proposals, err := proposalModel.GetByDosenID(dosenID)
+	query := `
+		SELECT 
+			p.id, p.user_id, p.dosen_id, p.topik_penelitian,
+			p.keterangan, p.file_path, p.status, p.created_at,
+			p.updated_at, t.nama_lengkap as nama_taruna
+		FROM proposal p
+		LEFT JOIN taruna t ON p.user_id = t.user_id
+		WHERE p.dosen_id = ?
+		ORDER BY p.created_at DESC
+	`
+
+	rows, err := db.Query(query, dosenID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer rows.Close()
 
+	var proposals []map[string]interface{}
+	for rows.Next() {
+		var proposal struct {
+			ID              int
+			UserID          int
+			DosenID         int
+			TopikPenelitian string
+			Keterangan      string
+			FilePath        string
+			Status          string
+			CreatedAt       string
+			UpdatedAt       string
+			NamaTaruna      sql.NullString
+		}
+
+		err := rows.Scan(
+			&proposal.ID,
+			&proposal.UserID,
+			&proposal.DosenID,
+			&proposal.TopikPenelitian,
+			&proposal.Keterangan,
+			&proposal.FilePath,
+			&proposal.Status,
+			&proposal.CreatedAt,
+			&proposal.UpdatedAt,
+			&proposal.NamaTaruna,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		proposalMap := map[string]interface{}{
+			"id":               proposal.ID,
+			"user_id":          proposal.UserID,
+			"dosen_id":         proposal.DosenID,
+			"topik_penelitian": proposal.TopikPenelitian,
+			"keterangan":       proposal.Keterangan,
+			"file_path":        proposal.FilePath,
+			"status":           proposal.Status,
+			"created_at":       proposal.CreatedAt,
+			"updated_at":       proposal.UpdatedAt,
+			"nama_taruna":      proposal.NamaTaruna.String,
+		}
+
+		proposals = append(proposals, proposalMap)
+	}
+
+	if err = rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   proposals,
