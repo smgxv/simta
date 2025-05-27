@@ -725,7 +725,7 @@ func GetRevisiProposalTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			t.nama_lengkap as taruna_nama,
 			t.user_id as user_id,
 			d.nama_lengkap as dosen_nama
-		FROM review_proposal rit
+		FROM review_proposal_taruna rit
 		LEFT JOIN taruna t ON rit.taruna_id = t.id
 		LEFT JOIN dosen d ON rit.dosen_id = d.id
 		WHERE 1=1
