@@ -1115,10 +1115,10 @@
 				}
 			});
 		
-			// Update nama file saat file dipilih
-			document.querySelector('.custom-file-input').addEventListener('change', function(e) {
+			// Update nama file saat file dipilih untuk Proposal
+			document.getElementById('proposalFile').addEventListener('change', function(e) {
 				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
-				var label = document.querySelector('.custom-file-label');
+				var label = this.nextElementSibling;
 				label.textContent = fileName;
 				
 				var selectedFileDiv = document.getElementById('selectedFileName');
@@ -1253,7 +1253,7 @@
 			}
 
 			// Update nama file saat file dipilih untuk Final Proposal
-			document.getElementById('proposalFile').addEventListener('change', function(e) {
+			document.getElementById('finalProposalFile').addEventListener('change', function(e) {
 				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
 				var label = this.nextElementSibling;
 				label.textContent = fileName;
@@ -1268,7 +1268,7 @@
 			});
 
 			// Handle form submission untuk Final Proposal
-			document.getElementById('proposalFile').addEventListener('submit', async function(e) {
+			document.getElementById('finalProposalForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 				
 				// Tampilkan loading state
