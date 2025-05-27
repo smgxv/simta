@@ -740,29 +740,52 @@
 					</div>
 					<!-- Tabel Final Proposal End -->
 
-					<!-- Tabel Hasil Telaah Dosen -->
-					<!-- <div class="pd-20 card-box mb-30">
+					<!-- Form Seminar Proposal -->
+					<div class="pd-20 card-box mb-30">
+
 						<div class="clearfix">
 							<div class="pull-left">
-								<h4 class="text-blue h4">Hasil Telaah Dosen</h4>
+								<h4 class="text-blue h4">Seminar Proposal</h4>
+								<p class="mb-30">Pilih Penguji Seminar Proposal Anda !!</p>
 							</div>
 						</div>
-						<div class="pb-20">
-							<table class="table stripe hover nowrap" id="hasilTelaahTable">
-								<thead>
-									<tr>
-										<th>Nama Dosen</th>
-										<th>Topik Penelitian</th>
-										<th>Tanggal Telaah</th>
-										<th>Action</th>
-									</tr>
-								</thead>
-								<tbody>
-								</tbody>
-							</table>
-						</div>
-					</div> -->
-					<!-- Tabel Hasil Telaah Dosen End -->
+
+						<form id="seminarProposalForm" enctype="multipart/form-data">
+							<div class="form-group">
+								<label>Ketua Penguji</label>
+								<select class="custom-select" name="ketua_penguji" id="seminarKetuaPenguji" required>
+									<option value="" disabled selected>Pilih Ketua Penguji</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>Penguji 1</label>
+								<select class="custom-select" name="penguji1" id="seminarPenguji1" required>
+									<option value="" disabled selected>Pilih Penguji 1</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>Penguji 2</label>
+								<select class="custom-select" name="penguji2" id="seminarPenguji2" required>
+									<option value="" disabled selected>Pilih Penguji 2</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>Topik Penelitian</label>
+								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
+							</div>
+							<div class="form-group">
+								<label>File Proposal (PDF)</label>
+								<div class="custom-file">
+									<input type="file" class="custom-file-input" id="seminarProposalFile" name="file" accept=".pdf" required>
+									<label class="custom-file-label" for="seminarProposalFile">Choose file</label>
+								</div>
+								<div id="seminarSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
+							</div>
+							<button type="submit" class="btn btn-primary">Upload File Seminar Proposal</button>
+						</form>
+
+					</div>
+					<!-- Form Seminar Proposal End -->
 
 				</div>
 
