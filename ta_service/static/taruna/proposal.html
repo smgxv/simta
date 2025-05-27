@@ -1552,69 +1552,103 @@
 				loadFinalProposalData();
 			});
 
-			// Fungsi untuk memuat data hasil telaah Proposal
-			// async function loadHasilTelaahData() {
-			// 	try {
-			// 		const userId = localStorage.getItem('userId');
-			// 		if (!userId) {
-			// 			console.error('User ID not found');
-			// 			return;
-			// 		}
+			// Load dosen data for seminar proposal penguji
+			async function loadDosenForSeminar() {
+				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				
+				try {
+					const response = await fetch('http://104.43.89.154:8081/dosen', {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+					
+					const data = await response.json();
+					
+					if (data.status === 'success' && Array.isArray(data.data)) {
+						const ketuaPengujiSelect = document.getElementById('seminarKetuaPenguji');
+						const penguji1Select = document.getElementById('seminarPenguji1');
+						const penguji2Select = document.getElementById('seminarPenguji2');
+						
+						// Clear existing options except the default one
+						ketuaPengujiSelect.innerHTML = '<option value="" disabled selected>Pilih Ketua Penguji</option>';
+						penguji1Select.innerHTML = '<option value="" disabled selected>Pilih Penguji 1</option>';
+						penguji2Select.innerHTML = '<option value="" disabled selected>Pilih Penguji 2</option>';
+						
+						data.data.forEach(dosen => {
+							const optionHtml = `<option value="${dosen.id}">${dosen.nama_lengkap} - ${dosen.jurusan}</option>`;
+							ketuaPengujiSelect.insertAdjacentHTML('beforeend', optionHtml);
+							penguji1Select.insertAdjacentHTML('beforeend', optionHtml);
+							penguji2Select.insertAdjacentHTML('beforeend', optionHtml);
+						});
+					}
+				} catch (error) {
+					console.error('Error loading dosen data:', error);
+					showAlert('Gagal memuat data dosen penguji', 'danger');
+				}
+			}
 
-			// 		const response = await fetch(`http://104.43.89.154:8082/hasiltelaah/taruna?user_id=${userId}`);
-			// 		const data = await response.json();
+			// Update nama file saat file dipilih untuk Seminar Proposal
+			document.getElementById('seminarProposalFile').addEventListener('change', function(e) {
+				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
+				var label = this.nextElementSibling;
+				label.textContent = fileName;
+				
+				var selectedFileDiv = document.getElementById('seminarSelectedFileName');
+				if (e.target.files[0]) {
+					selectedFileDiv.textContent = 'File terpilih: ' + fileName;
+					selectedFileDiv.style.display = 'block';
+				} else {
+					selectedFileDiv.style.display = 'none';
+				}
+			});
 
-			// 		console.log('Hasil telaah data:', data); // Debug log
+			// Handle form submission untuk Seminar Proposal
+			document.getElementById('seminarProposalForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+				
+				const submitButton = this.querySelector('button[type="submit"]');
+				submitButton.disabled = true;
+				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+				
+				try {
+					const formData = new FormData(this);
+					const userId = localStorage.getItem('userId');
+					
+					if (!userId) {
+						throw new Error('User ID tidak ditemukan');
+					}
+					
+					formData.append('user_id', userId);
+					
+					const response = await fetch('http://104.43.89.154:8082/seminarproposal/upload', {
+						method: 'POST',
+						body: formData
+					});
+					
+					const data = await response.json();
+					
+					if (response.ok && data.status === 'success') {
+						showAlert('Data seminar proposal berhasil disimpan', 'success');
+						this.reset();
+						document.querySelector('#seminarProposalFile').nextElementSibling.textContent = 'Choose file';
+						document.getElementById('seminarSelectedFileName').style.display = 'none';
+					} else {
+						throw new Error(data.message || 'Terjadi kesalahan saat menyimpan data');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
+				} finally {
+					submitButton.disabled = false;
+					submitButton.innerHTML = 'Upload File Seminar Proposal';
+				}
+			});
 
-			// 		const tbody = document.querySelector('#hasilTelaahTable tbody');
-			// 		tbody.innerHTML = '';
-
-			// 		if (data.status === 'success' && data.data && data.data.length > 0) {
-			// 			data.data.forEach(telaah => {
-			// 				const date = new Date(telaah.tanggal_telaah).toLocaleDateString('id-ID', {
-			// 					day: '2-digit',
-			// 					month: 'long',
-			// 					year: 'numeric'
-			// 				});
-
-			// 				tbody.innerHTML += `
-			// 					<tr>
-			// 						<td>${telaah.nama_dosen || '-'}</td>
-			// 						<td>${telaah.topik_penelitian || '-'}</td>
-			// 						<td>${date}</td>
-			// 						<td>
-			// 							<div class="dropdown">
-			// 								<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-			// 									href="#" role="button" data-toggle="dropdown">
-			// 									<i class="dw dw-more"></i>
-			// 								</a>
-			// 								<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-			// 									<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${telaah.file_path}" download>
-			// 										<i class="dw dw-download"></i> Download
-			// 									</a>
-			// 								</div>
-			// 							</div>
-			// 						</td>
-			// 					</tr>
-			// 				`;
-			// 			});
-			// 		} else {
-			// 			tbody.innerHTML = `
-			// 				<tr>
-			// 					<td colspan="4" class="text-center">Belum ada hasil telaah</td>
-			// 				</tr>
-			// 			`;
-			// 		}
-			// 	} catch (error) {
-			// 		console.error('Error:', error);
-			// 		showAlert('Gagal memuat data hasil telaah', 'danger');
-			// 	}
-			// }
-
-			// // Panggil fungsi saat halaman dimuat
-			// document.addEventListener('DOMContentLoaded', function() {
-			// 	loadHasilTelaahData();
-			// });
+			// Call loadDosenForSeminar when page loads
+			document.addEventListener('DOMContentLoaded', () => {
+				loadDosenForSeminar();
+			});
 
 		</script>
 

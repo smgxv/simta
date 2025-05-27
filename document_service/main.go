@@ -18,7 +18,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Route untuk upload ICP
+	// Register all routes
 	r.HandleFunc("/upload/icp", handlers.UploadICPHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/icp", handlers.GetICPHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/download", handlers.DownloadFileHandler).Methods("GET", "OPTIONS")
@@ -74,6 +74,10 @@ func main() {
 	r.HandleFunc("/finalproposal/status", handlers.UpdateFinalProposalStatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/finalproposal/download/{id}", handlers.DownloadFinalProposalHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finalproposal/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
+
+	// Register seminar proposal routes
+	r.HandleFunc("/seminarproposal/upload", handlers.UploadSeminarProposalHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/seminarproposal", handlers.GetSeminarProposalHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{
