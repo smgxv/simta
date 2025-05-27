@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>SIMTA - Idea Concept Project</title>
+		<title>SIMTA - Proposal</title>
 
 		<!-- Site favicon -->
 		<link
@@ -510,13 +510,6 @@
 						</li>
 
 						<li>
-							<a href="/taruna/proposal" class="dropdown-toggle no-arrow">
-								<span class="micon bi bi-file-earmark-text"></span
-								><span class="mtext">Proposal</span>
-							</a>
-						</li>
-
-						<li>
 							<a href="/taruna/ta70" class="dropdown-toggle no-arrow">
 								<span class="micon bi bi-file-earmark-text"></span
 								><span class="mtext">Tugas Akhir 70%</span>
@@ -564,7 +557,7 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Idea Concept Project</h4>
+									<h4>Proposal</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
@@ -572,7 +565,7 @@
 											<a href="/taruna/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											ICP
+											Proposal
 										</li>
 									</ol>
 								</nav>
@@ -580,18 +573,17 @@
 						</div>
 					</div>
 
-					<!-- Default Basic Forms Start -->
-					 <!-- Daftar ICP -->
+					<!-- Form Proposal -->
 					<div class="pd-20 card-box mb-30">
 
 						<div class="clearfix">
 							<div class="pull-left">
-								<h4 class="text-blue h4">Daftar Idea Concept Project</h4>
-								<p class="mb-30">Kamu memiliki ide yang bagus? Segera buat dan daftarkan ICP anda !!</p>
+								<h4 class="text-blue h4">Proposal</h4>
+								<p class="mb-30">Segera buat dan daftarkan Proposal anda !!</p>
 							</div>
 						</div>
 
-						<form id="icpForm" enctype="multipart/form-data">
+						<form id="proposalForm" enctype="multipart/form-data">
 							<div class="form-group">
 								<label>Dosen Pembimbing</label>
 								<select class="form-control" id="dosenSelect" name="dosen_id">
@@ -607,25 +599,23 @@
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
-								<label>File ICP (PDF)</label>
+								<label>File Proposal (PDF)</label>
 								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="icpFile" name="file" accept=".pdf" required>
-									<label class="custom-file-label" for="icpFile">Choose file</label>
+									<input type="file" class="custom-file-input" id="proposalFile" name="file" accept=".pdf" required>
+									<label class="custom-file-label" for="proposalFile">Choose file</label>
 								</div>
 								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
-							<button type="submit" class="btn btn-primary">Tambah ICP</button>
+							<button type="submit" class="btn btn-primary">Tambah Proposal</button>
 						</form>
-
-
 					</div>
-					<!-- Simple Datatable End -->
+					<!-- Form Proposal End -->
 
-					<!-- Simple Datatable start -->
-					 <!-- Tabel ICP -->
+
+					<!-- Tabel Proposal -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">List ICP</h4>
+							<h4 class="text-blue h4">List Proposal</h4>
 						</div>
 						<div class="pb-20">
 							<table class="data-table table stripe hover nowrap">
@@ -643,10 +633,10 @@
 							</table>
 						</div>
 					</div>
-					<!-- Simple Datatable End -->
+					<!-- Tabel Proposal End -->
 
-					<!-- Simple Datatable start -->
-					 <!-- Tabel Hasil Review Dosen -->
+					
+					<!-- Tabel Hasil Review Dosen -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
 							<h4 class="text-blue h4">Tabel Hasil Review Dosen</h4>
@@ -668,20 +658,19 @@
 							</table>
 						</div>
 					</div>
-					<!-- Simple Datatable End -->
+					<!-- Tabel Hasil Review Dosen End -->
 
-					<!-- Default Basic Forms Start -->
-					 <!-- Final ICP -->
+					<!-- Form Final Proposal -->
 					<div class="pd-20 card-box mb-30">
 
 						<div class="clearfix">
 							<div class="pull-left">
-								<h4 class="text-blue h4">Final Idea Concept Project</h4>
-								<p class="mb-30">Sudah mendapat persetujuan dari dosen pembimbing? Segera upload ICP anda !!</p>
+								<h4 class="text-blue h4">Final Proposal</h4>
+								<p class="mb-30">Sudah mendapat persetujuan dari dosen pembimbing? Segera upload Proposal anda !!</p>
 							</div>
 						</div>
 
-						<form id="finalIcpForm" enctype="multipart/form-data">
+						<form id="finalProposalForm" enctype="multipart/form-data">
 							<div class="form-group">
 								<label>Jurusan</label>
 								<select class="custom-select" name="jurusan" id="finalJurusan" required onchange="updateFinalKelas()">
@@ -705,28 +694,28 @@
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
-								<label>Final File ICP (PDF)</label>
+								<label>Final File Proposal (PDF)</label>
 								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="finalIcpFile" name="file" accept=".pdf" required>
-									<label class="custom-file-label" for="finalIcpFile">Choose file</label>
+									<input type="file" class="custom-file-input" id="finalProposalFile" name="file" accept=".pdf" required>
+									<label class="custom-file-label" for="finalProposalFile">Choose file</label>
 								</div>
 								<div id="finalSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
-							<button type="submit" class="btn btn-primary">Upload Final ICP</button>
+							<button type="submit" class="btn btn-primary">Upload Final Proposal</button>
 						</form>
 
 					</div>
-					<!-- Simple Datatable End -->
+					<!-- Form Final Proposal End -->
 
-					<!-- Tabel Final ICP -->
+					<!-- Tabel Final Proposal -->
 					<div class="pd-20 card-box mb-30">
 						<div class="clearfix">
 							<div class="pull-left">
-								<h4 class="text-blue h4">Daftar Final ICP</h4>
+								<h4 class="text-blue h4">Daftar Final Proposal/h4>
 							</div>
 						</div>
 						<div class="pb-20">
-							<table class="table stripe hover nowrap" id="finalIcpTable">
+							<table class="table stripe hover nowrap" id="finalProposalTable">
 								<thead>
 									<tr>
 										<th>Topik Penelitian</th>
@@ -737,14 +726,15 @@
 									</tr>
 								</thead>
 								<tbody>
+
 								</tbody>
 							</table>
 						</div>
 					</div>
-					<!-- Tabel Final ICP End -->
+					<!-- Tabel Final Proposal End -->
 
 					<!-- Tabel Hasil Telaah Dosen -->
-					<div class="pd-20 card-box mb-30">
+					<!-- <div class="pd-20 card-box mb-30">
 						<div class="clearfix">
 							<div class="pull-left">
 								<h4 class="text-blue h4">Hasil Telaah Dosen</h4>
@@ -764,7 +754,7 @@
 								</tbody>
 							</table>
 						</div>
-					</div>
+					</div> -->
 					<!-- Tabel Hasil Telaah Dosen End -->
 
 				</div>
@@ -796,7 +786,7 @@
 			<div class="modal-dialog" role="document">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h5 class="modal-title" id="uploadRevisionModalLabel">Upload Revisi ICP</h5>
+						<h5 class="modal-title" id="uploadRevisionModalLabel">Upload Revisi Proposal</h5>
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 							<span aria-hidden="true">&times;</span>
 						</button>
@@ -811,43 +801,43 @@
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
-								<label>File Revisi ICP (PDF)</label>
+								<label>File Revisi Proposal (PDF)</label>
 								<input type="file" class="form-control" name="file" accept=".pdf" required>
 							</div>
 						</form>
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-						<button type="button" class="btn btn-primary" onclick="submitRevision()">Upload Revisi</button>
+						<button type="button" class="btn btn-primary" onclick="submitRevision()">Upload Revisi Proposal</button>
 					</div>
 				</div>
 			</div>
 		</div>
 
 		<script>
-			// Fungsi untuk memuat data ICP
-			async function loadICPData() {
+			// Fungsi untuk memuat data Proposal
+			async function loadProposalData() {
 				const userId = localStorage.getItem('userId');
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/icp?user_id=${userId}`);
+					const response = await fetch(`http://104.43.89.154:8082/proposal?user_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
 						const tbody = document.querySelector('.data-table tbody');
 						tbody.innerHTML = '';
 						
-						data.data.forEach(icp => {
+						data.data.forEach(proposal => {
 							const statusClass = {
 								'pending': 'badge badge-warning',
 								'approved': 'badge badge-success',
 								'rejected': 'badge badge-danger'
-							}[icp.status] || 'badge badge-secondary';
+							}[proposal.status] || 'badge badge-secondary';
 
 							tbody.innerHTML += `
 								<tr>
-									<td>${icp.topik_penelitian}</td>
-									<td>${icp.dosen_nama}</td>
-									<td><span class="${statusClass}">${icp.status}</span></td>
+									<td>${proposal.topik_penelitian}</td>
+									<td>${proposal.dosen_nama}</td>
+									<td><span class="${statusClass}">${proposal.status}</span></td>
 									<td>
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
@@ -855,12 +845,12 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/taruna/viewicp?id=${icp.id}">
+												<a class="dropdown-item" href="/taruna/viewproposal?id=${proposal.id}">
 													<i class="dw dw-eye"></i> View
 												</a>
-												<a class="dropdown-item" href="/taruna/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
+												<a class="dropdown-item" href="/taruna/editproposal?id=${proposal.id}"><i class="dw dw-edit2"></i> Edit</a>
 												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${proposal.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -875,8 +865,8 @@
 				}
 			}
 
-			// Fungsi untuk memuat data ICP hasil review dosen
-			async function loadICPReviewData() {
+			// Fungsi untuk memuat data Proposal hasil review dosen
+			async function loadProposalReviewData() {
 				const userId = localStorage.getItem('userId');
 				if (!userId) {
 					console.error('User ID not found in localStorage');
@@ -885,7 +875,7 @@
 				
 				try {
 					console.log('Fetching review data for user:', userId);
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${userId}`);
+					const response = await fetch(`http://104.43.89.154:8082/reviewproposal/dosen/list?taruna_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -1133,14 +1123,14 @@
 				}
 			});
 
-			// Panggil loadICPData dan loadICPReviewData saat halaman dimuat
+			// Panggil loadProposalData dan loadProposalReviewData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
-				loadICPData();
-				loadICPReviewData();
+				loadProposalData();
+				loadProposalReviewData();
 			});
 
-			// Handle form submission untuk mengunggah ICP
-			document.getElementById('icpForm').addEventListener('submit', async function(e) {
+			// Handle form submission untuk mengunggah Proposal
+			document.getElementById('proposalForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 				
 				// Tampilkan loading state
@@ -1160,7 +1150,7 @@
 						console.log(pair[0] + ': ' + pair[1]);
 					}
 					
-					const response = await fetch('http://104.43.89.154:8082/upload/icp', {
+					const response = await fetch('http://104.43.89.154:8082/upload/proposal', {
 						method: 'POST',
 						body: formData
 					});
@@ -1169,7 +1159,7 @@
 					
 					if (response.ok) {
 						// Tampilkan pesan sukses
-						showAlert('ICP berhasil diunggah', 'success');
+						showAlert('Proposal berhasil diunggah', 'success');
 						
 						// Reset form
 						this.reset();
@@ -1181,7 +1171,7 @@
 							refreshTable();
 						}
 
-						loadICPData(); // Refresh tabel
+						loadProposalData(); // Refresh tabel
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
@@ -1191,11 +1181,11 @@
 				} finally {
 					// Reset button state
 					submitButton.disabled = false;
-					submitButton.innerHTML = 'Tambah ICP';
+					submitButton.innerHTML = 'Tambah Proposal';
 				}
 			});
 
-			// Add function to open upload modal untuk mengunggah revisi ICP
+			// Add function to open upload modal untuk mengunggah revisi Proposal
 			function openUploadRevisionModal(dosenId, topikPenelitian) {
 				console.log('Opening modal with:', { dosenId, topikPenelitian });
 				document.getElementById('revisionDosenId').value = dosenId;
@@ -1203,7 +1193,7 @@
 				$('#uploadRevisionModal').modal('show');
 			}
 
-			// Add function to submit revision untuk mengunggah revisi ICP
+			// Add function to submit revision untuk mengunggah revisi Proposal
 			async function submitRevision() {
 				const form = document.getElementById('revisionForm');
 				const formData = new FormData(form);
@@ -1218,7 +1208,7 @@
 					// Tambahkan user_id sebagai taruna_id
 					formData.append('taruna_id', userId);
 					
-					const response = await fetch('http://104.43.89.154:8082/upload/revisiicp/taruna', {
+						const response = await fetch('http://104.43.89.154:8082/upload/revisi/proposal/taruna', {
 						method: 'POST',
 						body: formData
 					});
@@ -1226,11 +1216,11 @@
 					const data = await response.json();
 					
 					if (data.status === 'success') {
-						showAlert('Revisi ICP berhasil diunggah', 'success');
+						showAlert('Revisi Proposal berhasil diunggah', 'success');
 						$('#uploadRevisionModal').modal('hide');
 						form.reset();
-						await loadICPData();
-						await loadICPReviewData();
+						await loadProposalData();
+						await loadProposalReviewData();
 					} else {
 						showAlert(data.message || 'Gagal mengunggah revisi', 'danger');
 					}
@@ -1255,8 +1245,8 @@
 				}, 5000);
 			}
 
-			// Update nama file saat file dipilih untuk Final ICP
-			document.getElementById('finalIcpFile').addEventListener('change', function(e) {
+			// Update nama file saat file dipilih untuk Final Proposal
+			document.getElementById('proposalFile').addEventListener('change', function(e) {
 				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
 				var label = this.nextElementSibling;
 				label.textContent = fileName;
@@ -1270,8 +1260,8 @@
 				}
 			});
 
-			// Handle form submission untuk Final ICP
-			document.getElementById('finalIcpForm').addEventListener('submit', async function(e) {
+			// Handle form submission untuk Final Proposal
+			document.getElementById('proposalFile').addEventListener('submit', async function(e) {
 				e.preventDefault();
 				
 				// Tampilkan loading state
@@ -1325,7 +1315,7 @@
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
 					
-					const response = await fetch('http://104.43.89.154:8082/finalicp/upload', {
+					const response = await fetch('http://104.43.89.154:8082/finalproposal/upload', {
 						method: 'POST',
 						body: formData
 					});
@@ -1334,20 +1324,20 @@
 					
 					if (response.ok && data.status === 'success') {
 						// Tampilkan pesan sukses
-						showAlert('Final ICP berhasil diunggah', 'success');
+						showAlert('Final Proposal berhasil diunggah', 'success');
 						
 						// Reset form
 						this.reset();
-						document.querySelector('#finalIcpFile').nextElementSibling.textContent = 'Choose file';
+						document.querySelector('#finalProposalFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('finalSelectedFileName').style.display = 'none';
 						
 						// Refresh data
-						loadFinalICPData();
+						loadFinalProposalData();
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
 				} catch (error) {
-					console.error('Error saat upload final ICP:', error);
+					console.error('Error saat upload final Proposal:', error);
 					let errorMessage = 'Terjadi kesalahan pada server';
 					
 					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
@@ -1364,12 +1354,12 @@
 				} finally {
 					// Reset button state
 					submitButton.disabled = false;
-					submitButton.innerHTML = 'Upload Final ICP';
+					submitButton.innerHTML = 'Upload Final Proposal';
 				}
 			});
 
-			// Update fungsi loadFinalICPData
-			async function loadFinalICPData() {
+			// Update fungsi loadFinalProposalData
+			async function loadFinalProposalData() {
 				const userId = localStorage.getItem('userId');
 				if (!userId) {
 					console.error('User ID not found in localStorage');
@@ -1378,18 +1368,18 @@
 				}
 				
 				try {
-					console.log('Fetching Final ICP data for user:', userId);
-					const response = await fetch(`http://104.43.89.154:8082/finalicp/list?user_id=${userId}`);
+					console.log('Fetching Final Proposal data for user:', userId);
+					const response = await fetch(`http://104.43.89.154:8082/finalproposal/list?user_id=${userId}`);
 					
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
 					
 					const data = await response.json();
-					console.log('Received Final ICP data:', data);
+					console.log('Received Final Proposal data:', data);
 					
 					if (data.status === 'success') {
-						const tbody = document.querySelector('#finalIcpTable tbody');
+						const tbody = document.querySelector('#finalProposalTable tbody');
 						if (!tbody) {
 							console.error('Table body element not found');
 							return;
@@ -1398,20 +1388,20 @@
 						tbody.innerHTML = '';
 						
 						if (data.data && data.data.length > 0) {
-							data.data.forEach(finalIcp => {
+							data.data.forEach(finalProposal => {
 								const statusClass = {
 									'pending': 'badge badge-warning',
 									'approved': 'badge badge-success',
 									'rejected': 'badge badge-danger',
 									'on review': 'badge badge-info'
-								}[finalIcp.status] || 'badge badge-secondary';
+								}[finalProposal.status] || 'badge badge-secondary';
 
 								tbody.innerHTML += `
 									<tr>
-										<td>${finalIcp.topik_penelitian || '-'}</td>
-										<td>${finalIcp.jurusan || '-'}</td>
-										<td>${finalIcp.kelas || '-'}</td>
-										<td><span class="${statusClass}">${finalIcp.status || 'pending'}</span></td>
+										<td>${finalProposal.topik_penelitian || '-'}</td>
+										<td>${finalProposal.jurusan || '-'}</td>
+										<td>${finalProposal.kelas || '-'}</td>
+										<td><span class="${statusClass}">${finalProposal.status || 'pending'}</span></td>
 										<td>
 											<div class="dropdown">
 												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
@@ -1419,7 +1409,7 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${finalIcp.file_path}" download>
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${finalProposal.file_path}" download>
 														<i class="dw dw-download"></i> Download
 													</a>
 												</div>
@@ -1431,23 +1421,23 @@
 						} else {
 							tbody.innerHTML = `
 								<tr>
-									<td colspan="5" class="text-center">Belum ada Final ICP yang diupload</td>
+									<td colspan="5" class="text-center">Belum ada Final Proposal yang diupload</td>
 								</tr>
 							`;
 						}
 					} else {
-						console.error('Failed to load Final ICP data:', data.message);
-						showAlert('Gagal memuat data Final ICP: ' + (data.message || 'Unknown error'), 'danger');
+						console.error('Failed to load Final Proposal data:', data.message);
+						showAlert('Gagal memuat data Final Proposal: ' + (data.message || 'Unknown error'), 'danger');
 					}
 				} catch (error) {
-					console.error('Error loading Final ICP data:', error);
-					showAlert('Terjadi kesalahan saat memuat data Final ICP: ' + error.message, 'danger');
+					console.error('Error loading Final Proposal data:', error);
+					showAlert('Terjadi kesalahan saat memuat data Final Proposal: ' + error.message, 'danger');
 				}
 			}
 
-			// Load Final ICP data saat halaman dimuat
+			// Load Final Proposal data saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
-				loadFinalICPData();
+				loadFinalProposalData();
 			});
 
 			// Definisi kelas per jurusan
@@ -1527,74 +1517,74 @@
 			// Call getUserData when page loads
 			document.addEventListener('DOMContentLoaded', () => {
 				getUserData();
-				loadICPData();
-				loadICPReviewData();
-				loadFinalICPData();
+				loadProposalData();
+				loadProposalReviewData();
+				loadFinalProposalData();
 			});
 
-			// Fungsi untuk memuat data hasil telaah ICP
-			async function loadHasilTelaahData() {
-				try {
-					const userId = localStorage.getItem('userId');
-					if (!userId) {
-						console.error('User ID not found');
-						return;
-					}
+			// Fungsi untuk memuat data hasil telaah Proposal
+			// async function loadHasilTelaahData() {
+			// 	try {
+			// 		const userId = localStorage.getItem('userId');
+			// 		if (!userId) {
+			// 			console.error('User ID not found');
+			// 			return;
+			// 		}
 
-					const response = await fetch(`http://104.43.89.154:8082/hasiltelaah/taruna?user_id=${userId}`);
-					const data = await response.json();
+			// 		const response = await fetch(`http://104.43.89.154:8082/hasiltelaah/taruna?user_id=${userId}`);
+			// 		const data = await response.json();
 
-					console.log('Hasil telaah data:', data); // Debug log
+			// 		console.log('Hasil telaah data:', data); // Debug log
 
-					const tbody = document.querySelector('#hasilTelaahTable tbody');
-					tbody.innerHTML = '';
+			// 		const tbody = document.querySelector('#hasilTelaahTable tbody');
+			// 		tbody.innerHTML = '';
 
-					if (data.status === 'success' && data.data && data.data.length > 0) {
-						data.data.forEach(telaah => {
-							const date = new Date(telaah.tanggal_telaah).toLocaleDateString('id-ID', {
-								day: '2-digit',
-								month: 'long',
-								year: 'numeric'
-							});
+			// 		if (data.status === 'success' && data.data && data.data.length > 0) {
+			// 			data.data.forEach(telaah => {
+			// 				const date = new Date(telaah.tanggal_telaah).toLocaleDateString('id-ID', {
+			// 					day: '2-digit',
+			// 					month: 'long',
+			// 					year: 'numeric'
+			// 				});
 
-							tbody.innerHTML += `
-								<tr>
-									<td>${telaah.nama_dosen || '-'}</td>
-									<td>${telaah.topik_penelitian || '-'}</td>
-									<td>${date}</td>
-									<td>
-										<div class="dropdown">
-											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												href="#" role="button" data-toggle="dropdown">
-												<i class="dw dw-more"></i>
-											</a>
-											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${telaah.file_path}" download>
-													<i class="dw dw-download"></i> Download
-												</a>
-											</div>
-										</div>
-									</td>
-								</tr>
-							`;
-						});
-					} else {
-						tbody.innerHTML = `
-							<tr>
-								<td colspan="4" class="text-center">Belum ada hasil telaah</td>
-							</tr>
-						`;
-					}
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Gagal memuat data hasil telaah', 'danger');
-				}
-			}
+			// 				tbody.innerHTML += `
+			// 					<tr>
+			// 						<td>${telaah.nama_dosen || '-'}</td>
+			// 						<td>${telaah.topik_penelitian || '-'}</td>
+			// 						<td>${date}</td>
+			// 						<td>
+			// 							<div class="dropdown">
+			// 								<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+			// 									href="#" role="button" data-toggle="dropdown">
+			// 									<i class="dw dw-more"></i>
+			// 								</a>
+			// 								<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+			// 									<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${telaah.file_path}" download>
+			// 										<i class="dw dw-download"></i> Download
+			// 									</a>
+			// 								</div>
+			// 							</div>
+			// 						</td>
+			// 					</tr>
+			// 				`;
+			// 			});
+			// 		} else {
+			// 			tbody.innerHTML = `
+			// 				<tr>
+			// 					<td colspan="4" class="text-center">Belum ada hasil telaah</td>
+			// 				</tr>
+			// 			`;
+			// 		}
+			// 	} catch (error) {
+			// 		console.error('Error:', error);
+			// 		showAlert('Gagal memuat data hasil telaah', 'danger');
+			// 	}
+			// }
 
-			// Panggil fungsi saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', function() {
-				loadHasilTelaahData();
-			});
+			// // Panggil fungsi saat halaman dimuat
+			// document.addEventListener('DOMContentLoaded', function() {
+			// 	loadHasilTelaahData();
+			// });
 
 		</script>
 
