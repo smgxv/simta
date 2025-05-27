@@ -1603,48 +1603,86 @@
 				}
 			});
 
-			// Handle form submission untuk Seminar Proposal
+			// Upload Seminar Proposal
 			document.getElementById('seminarProposalForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 
-				const form = e.target;
-				const submitBtn = form.querySelector('button[type="submit"]');
-				submitBtn.disabled = true;
-				submitBtn.innerHTML = 'Uploading...';
-
-				const formData = new FormData();
-				formData.append('user_id', localStorage.getItem('userId'));
-				formData.append('ketua_penguji', document.getElementById('seminarKetuaPenguji').value);
-				formData.append('penguji1', document.getElementById('seminarPenguji1').value);
-				formData.append('penguji2', document.getElementById('seminarPenguji2').value);
-				formData.append('topik_penelitian', form.querySelector('input[name="topik_penelitian"]').value);
-				formData.append('file', document.getElementById('seminarProposalFile').files[0]);
-
-				const token = localStorage.getItem('token');
+				const submitButton = this.querySelector('button[type="submit"]');
+				submitButton.disabled = true;
+				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 
 				try {
+					const formData = new FormData(this);
+					const userId = localStorage.getItem('userId');
+					const token = localStorage.getItem('token');
+
+					if (!userId || !token) {
+						throw new Error('User ID atau token tidak ditemukan');
+					}
+
+					// Ambil data taruna untuk verifikasi
+					const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+
+					if (!tarunaResponse.ok) {
+						throw new Error('Gagal mengambil data taruna');
+					}
+
+					const tarunaData = await tarunaResponse.json();
+
+					if (tarunaData.status !== 'success' || !Array.isArray(tarunaData.data)) {
+						throw new Error('Data taruna tidak ditemukan');
+					}
+
+					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
+					if (!taruna) {
+						throw new Error('Data taruna tidak ditemukan untuk user ID ini');
+					}
+
+					// Tambahkan user_id secara eksplisit ke formData (walau sudah ada bisa timpa)
+					formData.append('user_id', userId);
+
+					// Kirim request upload
 					const response = await fetch('http://104.43.89.154:8082/seminarproposal/upload', {
 						method: 'POST',
+						body: formData,
 						headers: {
 							'Authorization': `Bearer ${token}`
 						},
-						body: formData,
 						credentials: 'include'
 					});
 
 					const data = await response.json();
+
 					if (response.ok && data.status === 'success') {
-						alert('Berhasil upload seminar proposal');
-						form.reset();
+						showAlert('Seminar Proposal berhasil diunggah', 'success');
+
+						// Reset form
+						this.reset();
+						document.querySelector('#seminarProposalFile').nextElementSibling.textContent = 'Choose file';
+						document.getElementById('seminarSelectedFileName').style.display = 'none';
 					} else {
-						throw new Error(data.message || 'Gagal upload');
+						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
-				} catch (err) {
-					console.error(err);
-					alert('Gagal: ' + err.message);
+				} catch (error) {
+					console.error('Error saat upload Seminar Proposal:', error);
+					let errorMessage = 'Terjadi kesalahan pada server';
+
+					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
+						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
+					} else if (error.message.includes('Data taruna tidak ditemukan')) {
+						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
+					} else if (error.message.includes('Gagal mengambil data taruna')) {
+						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi atau hubungi administrator.';
+					}
+
+					showAlert(errorMessage, 'danger');
 				} finally {
-					submitBtn.disabled = false;
-					submitBtn.innerHTML = 'Upload File Seminar Proposal';
+					submitButton.disabled = false;
+					submitButton.innerHTML = 'Upload File Seminar Proposal';
 				}
 			});
 
