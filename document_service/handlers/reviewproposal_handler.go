@@ -74,13 +74,13 @@ func UpdateProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg := "ICP berhasil diupdate"
+	msg := "Proposal berhasil diupdate"
 	if status == "approved" {
-		msg = "ICP berhasil di-approve"
+		msg = "Proposal berhasil di-approve"
 	} else if status == "rejected" {
-		msg = "ICP berhasil di-reject"
+		msg = "Proposal berhasil di-reject"
 	} else if status == "on review" {
-		msg = "ICP berhasil diubah ke status review"
+		msg = "Proposal berhasil diubah ke status review"
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -258,7 +258,7 @@ func UploadReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk upload review ICP oleh dosen ke table review_icp_dosen
+// Handler untuk upload review proposal oleh dosen ke table review_proposal_dosen
 func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
@@ -323,12 +323,12 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the ICP ID using user_id and topik_penelitian
-	var icpID int
+	var proposalID int
 	err = db.QueryRow(`
 		SELECT id 
-		FROM icp 
+		FROM proposal 
 		WHERE user_id = ? AND topik_penelitian = ?`,
-		userID, topikPenelitian).Scan(&icpID)
+		userID, topikPenelitian).Scan(&proposalID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -347,7 +347,7 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	uploadDir := "uploads/reviewicp/dosen"
+	uploadDir := "uploads/reviewproposal/dosen"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -356,7 +356,7 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filename := fmt.Sprintf("REVIEW_ICP_DOSEN_%s_%s_%s",
+	filename := fmt.Sprintf("REVIEW_PROPOSAL_DOSEN_%s_%s_%s",
 		dosenID,
 		time.Now().Format("20060102150405"),
 		handler.Filename)
@@ -392,14 +392,14 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update status ICP dalam transaksi
-	_, err = tx.Exec("UPDATE icp SET status = ? WHERE id = ?",
-		"on review", icpID)
+	_, err = tx.Exec("UPDATE proposal SET status = ? WHERE id = ?",
+		"on review", proposalID)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Failed to update ICP status: " + err.Error(),
+			"message": "Failed to update proposal status: " + err.Error(),
 		})
 		return
 	}
@@ -408,8 +408,8 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	var cycleNumber int = 1
 	err = tx.QueryRow(`
 		SELECT COALESCE(MAX(cycle_number), 0) + 1 
-		FROM review_icp_dosen 
-		WHERE icp_id = ?`, icpID).Scan(&cycleNumber)
+		FROM review_proposal_dosen 
+		WHERE proposal_id = ?`, proposalID).Scan(&cycleNumber)
 	if err != nil {
 		// If error, default to 1
 		cycleNumber = 1
@@ -420,12 +420,12 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
 	_, err = tx.Exec(`
-		INSERT INTO review_icp_dosen (
-			icp_id, taruna_id, dosen_id, cycle_number,
+		INSERT INTO review_proposal_dosen (
+			proposal_id, taruna_id, dosen_id, cycle_number,
 			topik_penelitian, file_path, keterangan,
 			created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-		icpID, tarunaIDInt, dosenIDInt, cycleNumber,
+		proposalID, tarunaIDInt, dosenIDInt, cycleNumber,
 		topikPenelitian, filePath, keterangan,
 	)
 
@@ -452,7 +452,7 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Review ICP dosen berhasil diunggah dan status diperbarui",
+		"message": "Review proposal dosen berhasil diunggah dan status diperbarui",
 		"data": map[string]interface{}{
 			"file_path": filePath,
 		},
