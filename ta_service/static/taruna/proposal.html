@@ -1626,17 +1626,27 @@
 					
 					formData.append('user_id', userId);
 					
+					// Create headers object without Content-Type to let the browser set it with boundary
+					const headers = new Headers();
+					headers.append('Authorization', `Bearer ${token}`);
+					
 					const response = await fetch('http://104.43.89.154:8082/seminarproposal/upload', {
 						method: 'POST',
-						headers: {
-							'Authorization': `Bearer ${token}`
-						},
-						body: formData
+						headers: headers,
+						body: formData,
+						credentials: 'include' // Include cookies if any
 					});
+					
+					if (!response.ok) {
+						if (response.status === 401) {
+							throw new Error('Sesi telah berakhir. Silakan login ulang.');
+						}
+						throw new Error(`Server error: ${response.status}`);
+					}
 					
 					const data = await response.json();
 					
-					if (response.ok && data.status === 'success') {
+					if (data.status === 'success') {
 						showAlert('Data seminar proposal berhasil disimpan', 'success');
 						this.reset();
 						document.querySelector('#seminarProposalFile').nextElementSibling.textContent = 'Choose file';
@@ -1647,6 +1657,13 @@
 				} catch (error) {
 					console.error('Error:', error);
 					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
+					
+					// If token error, redirect to login
+					if (error.message.includes('Sesi telah berakhir')) {
+						setTimeout(() => {
+							window.location.href = '/loginusers';
+						}, 2000);
+					}
 				} finally {
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Upload File Seminar Proposal';

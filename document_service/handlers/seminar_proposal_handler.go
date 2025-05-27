@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -29,8 +30,8 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse multipart form
-	err := r.ParseMultipartForm(10 << 20) // 10 MB max
+	// Parse multipart form with larger size limit
+	err := r.ParseMultipartForm(32 << 20) // 32 MB max
 	if err != nil {
 		http.Error(w, "Failed to parse form: "+err.Error(), http.StatusBadRequest)
 		return
@@ -38,10 +39,34 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get form values
 	userID := r.FormValue("user_id")
+	if userID == "" {
+		http.Error(w, "user_id is required", http.StatusBadRequest)
+		return
+	}
+
 	ketuaPengujiID := r.FormValue("ketua_penguji")
+	if ketuaPengujiID == "" {
+		http.Error(w, "ketua_penguji is required", http.StatusBadRequest)
+		return
+	}
+
 	penguji1ID := r.FormValue("penguji1")
+	if penguji1ID == "" {
+		http.Error(w, "penguji1 is required", http.StatusBadRequest)
+		return
+	}
+
 	penguji2ID := r.FormValue("penguji2")
+	if penguji2ID == "" {
+		http.Error(w, "penguji2 is required", http.StatusBadRequest)
+		return
+	}
+
 	topikPenelitian := r.FormValue("topik_penelitian")
+	if topikPenelitian == "" {
+		http.Error(w, "topik_penelitian is required", http.StatusBadRequest)
+		return
+	}
 
 	// Get the file from form
 	file, handler, err := r.FormFile("file")
@@ -50,6 +75,12 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
+
+	// Validate file type
+	if !strings.HasSuffix(strings.ToLower(handler.Filename), ".pdf") {
+		http.Error(w, "Only PDF files are allowed", http.StatusBadRequest)
+		return
+	}
 
 	// Create uploads directory if it doesn't exist
 	uploadsDir := "./uploads/seminar_proposal"
@@ -73,6 +104,7 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Copy file contents
 	if _, err := io.Copy(dst, file); err != nil {
+		os.Remove(filePath) // Clean up on error
 		http.Error(w, "Failed to save file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -80,6 +112,7 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Connect to database
 	db, err := config.GetDB()
 	if err != nil {
+		os.Remove(filePath) // Clean up on error
 		http.Error(w, "Database connection error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -101,6 +134,7 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := seminarProposalModel.Create(seminarProposal); err != nil {
+		os.Remove(filePath) // Clean up on error
 		http.Error(w, "Failed to save seminar proposal: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
