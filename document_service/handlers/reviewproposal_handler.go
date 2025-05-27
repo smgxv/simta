@@ -68,7 +68,7 @@ func UpdateProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("UPDATE icp SET status = ? WHERE id = ?", status, id)
+	_, err = db.Exec("UPDATE proposal SET status = ? WHERE id = ?", status, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
