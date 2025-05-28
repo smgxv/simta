@@ -459,13 +459,16 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 
 		GROUP BY 
 			sp.id, u.nama_lengkap, t.jurusan, sp.topik_penelitian,
-			d_ketua.nama_lengkap, d1.nama_lengkap, d2.nama_lengkap;
-
+			d_ketua.nama_lengkap, d1.nama_lengkap, d2.nama_lengkap
 	`
 
 	rows, err := db.Query(query)
 	if err != nil {
-		http.Error(w, "Error querying database: "+err.Error(), http.StatusInternalServerError)
+		log.Printf("Error querying database: %v", err)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error querying database",
+		})
 		return
 	}
 	defer rows.Close()
@@ -474,7 +477,6 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 		NamaTaruna        string `json:"nama_taruna"`
 		Jurusan           string `json:"jurusan"`
 		TopikPenelitian   string `json:"topik_penelitian"`
-		SeminarProposalID int    `json:"seminar_proposal_id"`
 		KetuaPenguji      string `json:"ketua_penguji"`
 		Penguji1          string `json:"penguji1"`
 		Penguji2          string `json:"penguji2"`
@@ -484,25 +486,54 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 	var result []MonitoringData
 	for rows.Next() {
 		var m MonitoringData
+		// Handle null values with pointers
+		var namaTaruna, jurusan, topikPenelitian, ketuaPenguji, penguji1, penguji2, statusKelengkapan *string
+
 		err := rows.Scan(
-			&m.NamaTaruna,
-			&m.Jurusan,
-			&m.TopikPenelitian,
-			&m.SeminarProposalID,
-			&m.KetuaPenguji,
-			&m.Penguji1,
-			&m.Penguji2,
-			&m.StatusKelengkapan,
+			&namaTaruna,
+			&jurusan,
+			&topikPenelitian,
+			&ketuaPenguji,
+			&penguji1,
+			&penguji2,
+			&statusKelengkapan,
 		)
 		if err != nil {
-			http.Error(w, "Error scanning rows: "+err.Error(), http.StatusInternalServerError)
-			return
+			log.Printf("Error scanning row: %v", err)
+			continue
 		}
+
+		// Convert null values to empty strings
+		m.NamaTaruna = stringOrEmpty(namaTaruna)
+		m.Jurusan = stringOrEmpty(jurusan)
+		m.TopikPenelitian = stringOrEmpty(topikPenelitian)
+		m.KetuaPenguji = stringOrEmpty(ketuaPenguji)
+		m.Penguji1 = stringOrEmpty(penguji1)
+		m.Penguji2 = stringOrEmpty(penguji2)
+		m.StatusKelengkapan = stringOrEmpty(statusKelengkapan)
+
 		result = append(result, m)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error iterating rows: %v", err)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error reading data",
+		})
+		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   result,
 	})
+}
+
+// Helper function to handle null strings
+func stringOrEmpty(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

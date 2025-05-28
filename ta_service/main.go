@@ -107,8 +107,9 @@ func main() {
 	adminRouter.HandleFunc("/edituser", controllers.EditUser).Methods("GET")
 	adminRouter.HandleFunc("/deleteuser", controllers.DeleteUser).Methods("GET", "POST")
 	adminRouter.HandleFunc("/listdosen", controllers.ListDosen).Methods("GET")
-	adminRouter.HandleFunc("/listicp", controllers.ListICP).Methods("GET", "OPTIONS")           // Tambahkan route untuk ICP admin
-	adminRouter.HandleFunc("/listproposal", controllers.ListProposal).Methods("GET", "OPTIONS") // Tambahkan route untuk Proposal admin
+	adminRouter.HandleFunc("/listicp", controllers.ListICP).Methods("GET", "OPTIONS")                                     // Tambahkan route untuk ICP admin
+	adminRouter.HandleFunc("/listproposal", controllers.ListProposal).Methods("GET", "OPTIONS")                           // Tambahkan route untuk Proposal admin
+	adminRouter.HandleFunc("/detail_berkas_seminar_proposal", controllers.DetailBerkasProposal).Methods("GET", "OPTIONS") // Tambahkan route untuk Detail Berkas Proposal admin
 
 	// Tambahkan routes untuk taruna
 	tarunaRoutes := router.PathPrefix("/taruna").Subrouter()
