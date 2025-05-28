@@ -77,7 +77,7 @@ func main() {
 
 	// Register seminar proposal routes
 	r.HandleFunc("/upload/seminarproposal", handlers.UploadSeminarProposalHandler).Methods("POST", "OPTIONS")
-	r.HandleFunc("/seminarproposal/list", handlers.GetSeminarProposalHandler).Methods("GET", "OPTIONS")
+	// r.HandleFunc("/seminarproposal/list", handlers.GetSeminarProposalHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{
