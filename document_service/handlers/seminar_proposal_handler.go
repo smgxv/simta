@@ -16,9 +16,10 @@ import (
 
 func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
@@ -28,45 +29,45 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse multipart form
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max
 	if err != nil {
-		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		sendErrorResponse(w, "Failed to parse form: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Get form values
 	userID, err := strconv.Atoi(r.FormValue("user_id"))
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		sendErrorResponse(w, "Invalid user ID: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	ketuaPengujiID, err := strconv.Atoi(r.FormValue("ketua_penguji"))
 	if err != nil {
-		http.Error(w, "Invalid ketua penguji ID", http.StatusBadRequest)
+		sendErrorResponse(w, "Invalid ketua penguji ID: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	penguji1ID, err := strconv.Atoi(r.FormValue("penguji1"))
 	if err != nil {
-		http.Error(w, "Invalid penguji 1 ID", http.StatusBadRequest)
+		sendErrorResponse(w, "Invalid penguji 1 ID: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	penguji2ID, err := strconv.Atoi(r.FormValue("penguji2"))
 	if err != nil {
-		http.Error(w, "Invalid penguji 2 ID", http.StatusBadRequest)
+		sendErrorResponse(w, "Invalid penguji 2 ID: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	topikPenelitian := r.FormValue("topik_penelitian")
 	if topikPenelitian == "" {
-		http.Error(w, "Topik penelitian is required", http.StatusBadRequest)
+		sendErrorResponse(w, "Topik penelitian is required", http.StatusBadRequest)
 		return
 	}
 
 	// Get file from form
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, "Error retrieving file", http.StatusBadRequest)
+		sendErrorResponse(w, "Error retrieving file: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
@@ -74,7 +75,7 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Create uploads directory if it doesn't exist
 	uploadDir := "uploads/seminar_proposal"
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
-		http.Error(w, "Error creating upload directory", http.StatusInternalServerError)
+		sendErrorResponse(w, "Error creating upload directory: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -86,14 +87,14 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Create file
 	dst, err := os.Create(filepath)
 	if err != nil {
-		http.Error(w, "Error creating file", http.StatusInternalServerError)
+		sendErrorResponse(w, "Error creating file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer dst.Close()
 
 	// Copy file contents
 	if _, err = io.Copy(dst, file); err != nil {
-		http.Error(w, "Error copying file", http.StatusInternalServerError)
+		sendErrorResponse(w, "Error copying file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -109,19 +110,21 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Insert into database
 	if err := models.InsertSeminarProposal(db, proposal); err != nil {
-		http.Error(w, "Error saving to database", http.StatusInternalServerError)
+		sendErrorResponse(w, "Error saving to database: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// Return success response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  "success",
-		"message": "Seminar proposal uploaded successfully",
-	})
+	sendSuccessResponse(w, "Seminar proposal uploaded successfully", nil)
 }
 
 func GetSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -130,28 +133,42 @@ func GetSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user_id from query params
 	userIDStr := r.URL.Query().Get("user_id")
 	if userIDStr == "" {
-		http.Error(w, "User ID is required", http.StatusBadRequest)
+		sendErrorResponse(w, "User ID is required", http.StatusBadRequest)
 		return
 	}
 
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		sendErrorResponse(w, "Invalid user ID: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Get proposals from database
 	proposals, err := models.GetSeminarProposalByUserID(db, userID)
 	if err != nil {
-		http.Error(w, "Error retrieving proposals", http.StatusInternalServerError)
+		sendErrorResponse(w, "Error retrieving proposals: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Return response
-	w.Header().Set("Content-Type", "application/json")
+	// Return success response
+	sendSuccessResponse(w, "Seminar proposals retrieved successfully", proposals)
+}
+
+// Helper functions for consistent response format
+func sendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
+	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "success",
-		"data":   proposals,
+		"status":  "error",
+		"message": message,
+	})
+}
+
+func sendSuccessResponse(w http.ResponseWriter, message string, data interface{}) {
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "success",
+		"message": message,
+		"data":    data,
 	})
 }
 

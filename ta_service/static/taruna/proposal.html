@@ -1660,6 +1660,7 @@
 					formData.append('user_id', userId);
 
 					// Log FormData untuk debugging
+					console.log('Sending form data:');
 					for (let pair of formData.entries()) {
 						console.log(pair[0] + ': ' + pair[1]);
 					}
@@ -1668,59 +1669,60 @@
 						method: 'POST',
 						body: formData
 					});
-					
+
+					let data;
+					const contentType = response.headers.get("content-type");
+					if (contentType && contentType.includes("application/json")) {
+						data = await response.json();
+						console.log('Response data:', data);
+					} else {
+						const text = await response.text();
+						console.log('Response text:', text);
+						throw new Error('Invalid response format from server');
+					}
+
 					if (!response.ok) {
-						const errorText = await response.text();
-						console.error('Server response:', errorText);
-						throw new Error(`HTTP error! status: ${response.status}`);
+						throw new Error(data.message || `HTTP error! status: ${response.status}`);
 					}
 					
-			const data = await response.json();
-			console.log('Server response:', data);
-			
-			if (data.status === 'success') {
-				showAlert('Seminar proposal berhasil diunggah', 'success');
-				this.reset();
-				document.querySelector('#seminarProposalFile').nextElementSibling.textContent = 'Choose file';
-				document.getElementById('seminarSelectedFileName').style.display = 'none';
-				
-				// Refresh data seminar proposal jika ada
-				if (typeof loadSeminarProposalData === 'function') {
-					loadSeminarProposalData();
+					if (data.status === 'success') {
+						showAlert(data.message || 'Seminar proposal berhasil diunggah', 'success');
+						this.reset();
+						document.querySelector('#seminarProposalFile').nextElementSibling.textContent = 'Choose file';
+						document.getElementById('seminarSelectedFileName').style.display = 'none';
+					} else {
+						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
+				} finally {
+					submitButton.disabled = false;
+					submitButton.innerHTML = 'Upload File Seminar Proposal';
 				}
-			} else {
-				throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
-			}
-		} catch (error) {
-			console.error('Error:', error);
-			showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
-		} finally {
-			submitButton.disabled = false;
-			submitButton.innerHTML = 'Upload File Seminar Proposal';
+			});
+
+		</script>
+
+		<style>
+		.badge {
+			padding: 5px 10px;
+			border-radius: 4px;
+			font-weight: normal;
 		}
-	});
+		.badge-warning {
+			background-color: #ffc107;
+			color: #000;
+		}
+		.badge-success {
+			background-color: #28a745;
+			color: #fff;
+		}
+		.badge-danger {
+			background-color: #dc3545;
+			color: #fff;
+		}
+		</style>
 
-</script>
-
-<style>
-.badge {
-	padding: 5px 10px;
-	border-radius: 4px;
-	font-weight: normal;
-}
-.badge-warning {
-	background-color: #ffc107;
-	color: #000;
-}
-.badge-success {
-	background-color: #28a745;
-	color: #fff;
-}
-.badge-danger {
-	background-color: #dc3545;
-	color: #fff;
-}
-</style>
-
-</body>
+	</body>
 </html>
