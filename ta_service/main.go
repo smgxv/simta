@@ -119,9 +119,7 @@ func main() {
 	tarunaRoutes.HandleFunc("/icp", controllers.ICP).Methods("GET", "OPTIONS")
 	tarunaRoutes.HandleFunc("/editicp", controllers.EditICP).Methods("GET", "OPTIONS")
 	tarunaRoutes.HandleFunc("/viewicp", controllers.ViewICPTaruna).Methods("GET", "OPTIONS")
-	// Tambahkan route profile taruna
 	tarunaRoutes.HandleFunc("/profile", controllers.ProfileTaruna).Methods("GET")
-	// Tambahkan route edit profile taruna
 	tarunaRoutes.HandleFunc("/editprofile", controllers.EditProfileTaruna).Methods("GET")
 	tarunaRoutes.HandleFunc("/proposal", controllers.Proposal).Methods("GET", "OPTIONS")
 
@@ -137,6 +135,8 @@ func main() {
 	dosenRoutes.HandleFunc("/viewicp_review", controllers.ViewICPReviewDosen).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/viewicp_revisi", controllers.ViewICPRevisiDosen).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/bimbingan_proposal", controllers.BimbinganProposal).Methods("GET", "OPTIONS")
+	dosenRoutes.HandleFunc("/penguji_proposal", controllers.PengujiProposal).Methods("GET", "OPTIONS")
+
 	// Tambahkan router ke http.Handle
 	http.Handle("/", router) // Tambahkan ini untuk menggunakan router mux
 

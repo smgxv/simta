@@ -605,7 +605,7 @@ func BimbinganProposal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serve the review proposal HTML file
-	http.ServeFile(w, r, "static/dosen/bimbinganproposal.html")
+	http.ServeFile(w, r, "static/dosen/bimbingan_proposal.html")
 }
 
 // Handler untuk halaman Proposal admin
@@ -634,4 +634,31 @@ func ListProposal(w http.ResponseWriter, r *http.Request) {
 
 	// Serve the admin Proposal HTML file
 	http.ServeFile(w, r, "static/admin/proposal_admin.html")
+}
+
+// Handler untuk penguji proposal
+func PengujiProposal(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Validasi token dan role
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "dosen" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the review proposal HTML file
+	http.ServeFile(w, r, "static/dosen/penguji_proposal.html")
 }

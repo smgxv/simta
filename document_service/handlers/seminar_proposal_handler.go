@@ -114,3 +114,148 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
+
+// GetSeminarProposalByDosenHandler menangani request untuk mendapatkan data seminar proposal berdasarkan ID dosen
+func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Ambil dosen_id dari query parameter
+	dosenID := r.URL.Query().Get("dosen_id")
+	if dosenID == "" {
+		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
+		return
+	}
+
+	dosenIDInt, err := strconv.Atoi(dosenID)
+	if err != nil {
+		http.Error(w, "Invalid dosen ID", http.StatusBadRequest)
+		return
+	}
+
+	// Buka koneksi database
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Query untuk mendapatkan data seminar proposal
+	query := `
+		SELECT sp.id, sp.user_id, sp.topik_penelitian, sp.file_proposal_path,
+			   t.nama_lengkap as taruna_nama
+		FROM seminar_proposal sp
+		JOIN taruna t ON sp.user_id = t.user_id
+		WHERE sp.ketua_penguji_id = ? OR sp.penguji1_id = ? OR sp.penguji2_id = ?
+	`
+
+	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
+	if err != nil {
+		http.Error(w, "Error querying database: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type ProposalData struct {
+		ID              int    `json:"id"`
+		UserID          int    `json:"user_id"`
+		TopikPenelitian string `json:"topik_penelitian"`
+		FilePath        string `json:"file_path"`
+		TarunaNama      string `json:"taruna_nama"`
+	}
+
+	var proposals []ProposalData
+	for rows.Next() {
+		var p ProposalData
+		err := rows.Scan(&p.ID, &p.UserID, &p.TopikPenelitian, &p.FilePath, &p.TarunaNama)
+		if err != nil {
+			http.Error(w, "Error scanning rows: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		proposals = append(proposals, p)
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   proposals,
+	})
+}
+
+// GetTarunaListForDosenHandler menangani request untuk mendapatkan list taruna untuk dropdown
+func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Ambil dosen_id dari query parameter
+	dosenID := r.URL.Query().Get("dosen_id")
+	if dosenID == "" {
+		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
+		return
+	}
+
+	dosenIDInt, err := strconv.Atoi(dosenID)
+	if err != nil {
+		http.Error(w, "Invalid dosen ID", http.StatusBadRequest)
+		return
+	}
+
+	// Buka koneksi database
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Query untuk mendapatkan data taruna dan topik penelitian
+	query := `
+		SELECT DISTINCT sp.user_id, t.nama_lengkap, sp.topik_penelitian
+		FROM seminar_proposal sp
+		JOIN taruna t ON sp.user_id = t.user_id
+		WHERE sp.ketua_penguji_id = ? OR sp.penguji1_id = ? OR sp.penguji2_id = ?
+	`
+
+	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
+	if err != nil {
+		http.Error(w, "Error querying database: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type TarunaData struct {
+		UserID          int    `json:"user_id"`
+		NamaLengkap     string `json:"nama_lengkap"`
+		TopikPenelitian string `json:"topik_penelitian"`
+	}
+
+	var tarunaList []TarunaData
+	for rows.Next() {
+		var t TarunaData
+		err := rows.Scan(&t.UserID, &t.NamaLengkap, &t.TopikPenelitian)
+		if err != nil {
+			http.Error(w, "Error scanning rows: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		tarunaList = append(tarunaList, t)
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   tarunaList,
+	})
+}
