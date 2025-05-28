@@ -82,6 +82,9 @@ func main() {
 	r.HandleFunc("/penilaian/proposal", handlers.PenilaianProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/monitoring/penilaian_proposal", handlers.GetMonitoringPenilaianProposalHandler).Methods("GET", "OPTIONS")
 
+	// Detail Berkas Seminar Proposal routes
+	r.HandleFunc("/seminarproposal/detail/{id}", handlers.GetSeminarProposalDetailHandler).Methods("GET", "OPTIONS")
+
 	// Setup CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},

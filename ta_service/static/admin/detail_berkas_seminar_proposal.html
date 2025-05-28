@@ -654,6 +654,10 @@
 								<td>: <span id="jurusan">-</span></td>
 							</tr>
 							<tr>
+								<td>Kelas</td>
+								<td>: <span id="kelas">-</span></td>
+							</tr>
+							<tr>
 								<td>Topik Penelitian</td>
 								<td>: <span id="topik-penelitian">-</span></td>
 							</tr>
@@ -1038,7 +1042,7 @@
 				const proposalId = urlParams.get('id');
 
 				if (!proposalId) {
-					alert('ID Proposal tidak ditemukan');
+					showAlert('ID Proposal tidak ditemukan', 'danger');
 					window.location.href = '/admin/listproposal';
 					return;
 				}
@@ -1048,7 +1052,13 @@
 
 			async function loadProposalDetails(proposalId) {
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/detail/${proposalId}`);
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/detail/${proposalId}`, {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+					
 					if (!response.ok) {
 						throw new Error('Failed to fetch proposal details');
 					}
@@ -1061,6 +1071,7 @@
 					// Update informasi taruna
 					document.getElementById('nama-taruna').textContent = data.data.nama_taruna || '-';
 					document.getElementById('jurusan').textContent = data.data.jurusan || '-';
+					document.getElementById('kelas').textContent = data.data.kelas || '-';
 					document.getElementById('topik-penelitian').textContent = data.data.topik_penelitian || '-';
 
 					// Update ketua penguji
@@ -1074,7 +1085,7 @@
 
 				} catch (error) {
 					console.error('Error:', error);
-					alert('Terjadi kesalahan saat memuat data');
+					showAlert('Terjadi kesalahan saat memuat data', 'danger');
 				}
 			}
 

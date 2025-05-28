@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"document_service/config"
 	"document_service/entities"
 	"document_service/models"
@@ -536,4 +537,144 @@ func stringOrEmpty(s *string) string {
 		return ""
 	}
 	return *s
+}
+
+// GetSeminarProposalDetailHandler menangani request untuk mendapatkan detail berkas seminar proposal
+func GetSeminarProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Ambil proposal_id dari URL parameter
+	proposalID := r.URL.Query().Get("id")
+	if proposalID == "" {
+		http.Error(w, "Proposal ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Buka koneksi database
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Query untuk mendapatkan detail proposal dan data taruna
+	query := `
+		SELECT 
+			sp.id,
+			sp.user_id,
+			t.nama_lengkap,
+			t.jurusan,
+			t.kelas,
+			sp.topik_penelitian,
+			sp.ketua_penguji_id,
+			sp.penguji1_id,
+			sp.penguji2_id
+		FROM seminar_proposal sp
+		JOIN taruna t ON sp.user_id = t.user_id
+		WHERE sp.id = ?
+	`
+
+	var proposal struct {
+		ID              int    `json:"id"`
+		UserID          int    `json:"user_id"`
+		NamaTaruna      string `json:"nama_taruna"`
+		Jurusan         string `json:"jurusan"`
+		Kelas           string `json:"kelas"`
+		TopikPenelitian string `json:"topik_penelitian"`
+		KetuaPengujiID  int    `json:"ketua_penguji_id"`
+		Penguji1ID      int    `json:"penguji1_id"`
+		Penguji2ID      int    `json:"penguji2_id"`
+	}
+
+	err = db.QueryRow(query, proposalID).Scan(
+		&proposal.ID,
+		&proposal.UserID,
+		&proposal.NamaTaruna,
+		&proposal.Jurusan,
+		&proposal.Kelas,
+		&proposal.TopikPenelitian,
+		&proposal.KetuaPengujiID,
+		&proposal.Penguji1ID,
+		&proposal.Penguji2ID,
+	)
+	if err != nil {
+		http.Error(w, "Error getting proposal details: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Query untuk mendapatkan data penilaian dari ketua penguji
+	ketuaPengujiData := getPengujiData(db, proposalID, proposal.KetuaPengujiID)
+	penguji1Data := getPengujiData(db, proposalID, proposal.Penguji1ID)
+	penguji2Data := getPengujiData(db, proposalID, proposal.Penguji2ID)
+
+	response := map[string]interface{}{
+		"status": "success",
+		"data": map[string]interface{}{
+			"id":               proposal.ID,
+			"user_id":          proposal.UserID,
+			"nama_taruna":      proposal.NamaTaruna,
+			"jurusan":          proposal.Jurusan,
+			"kelas":            proposal.Kelas,
+			"topik_penelitian": proposal.TopikPenelitian,
+			"ketua_penguji":    ketuaPengujiData,
+			"penguji1":         penguji1Data,
+			"penguji2":         penguji2Data,
+		},
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+// Helper function untuk mendapatkan data penilaian dosen
+func getPengujiData(db *sql.DB, proposalID string, dosenID int) map[string]interface{} {
+	query := `
+		SELECT 
+			d.nama_lengkap,
+			spp.file_penilaian_path,
+			spp.file_berita_acara_path,
+			spp.status_pengumpulan
+		FROM dosen d
+		LEFT JOIN seminar_proposal_penilaian spp ON spp.dosen_id = d.id 
+			AND spp.seminar_proposal_id = ?
+		WHERE d.id = ?
+	`
+
+	var data struct {
+		NamaLengkap       string
+		FilePenilaianPath sql.NullString
+		BeritaAcaraPath   sql.NullString
+		StatusPengumpulan sql.NullString
+	}
+
+	err := db.QueryRow(query, proposalID, dosenID).Scan(
+		&data.NamaLengkap,
+		&data.FilePenilaianPath,
+		&data.BeritaAcaraPath,
+		&data.StatusPengumpulan,
+	)
+
+	if err != nil {
+		return map[string]interface{}{
+			"nama_lengkap":           "-",
+			"file_penilaian_path":    "",
+			"file_berita_acara_path": "",
+			"status_pengumpulan":     "belum",
+		}
+	}
+
+	return map[string]interface{}{
+		"nama_lengkap":           data.NamaLengkap,
+		"file_penilaian_path":    data.FilePenilaianPath.String,
+		"file_berita_acara_path": data.BeritaAcaraPath.String,
+		"status_pengumpulan":     data.StatusPengumpulan.String,
+	}
 }
