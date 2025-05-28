@@ -770,29 +770,29 @@
 				console.log('UserID:', userId); // Debug log
 
 				// Ambil data dosen dan set dosenID
-					fetch('http://104.43.89.154:8081/dosen', {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					})
-					.then(response => response.json())
-					.then(data => {
-						if (data.status === 'success' && Array.isArray(data.data)) {
-							const dosen = data.data.find(d => String(d.user_id) === String(userId));
-							if (dosen) {
+				fetch('http://104.43.89.154:8081/dosen', {
+					headers: {
+						'Authorization': `Bearer ${token}`
+					}
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.status === 'success' && Array.isArray(data.data)) {
+						const dosen = data.data.find(d => String(d.user_id) === String(userId));
+						if (dosen) {
 							localStorage.setItem('dosenID', dosen.id);
 							localStorage.setItem('dosenName', dosen.nama_lengkap);
 							console.log('DosenID set:', dosen.id); // Debug log
 							
 							// Update nama dosen di header
-					const usernameElement = document.getElementById('username');
-					if (usernameElement) {
+							const usernameElement = document.getElementById('username');
+							if (usernameElement) {
 								usernameElement.textContent = dosen.nama_lengkap;
 							}
 							
 							// Setelah dosenID tersedia, panggil fungsi-fungsi yang membutuhkannya
 							loadProposalData();
-							loadProposalReviewData();
+							loadTarunaDropdown();
 						} else {
 							console.warn('Dosen with user_id', userId, 'not found');
 						}
@@ -832,72 +832,80 @@
 			// Fungsi untuk memuat data proposal
 			async function loadProposalData() {
 				try {
-					const dosenId = localStorage.getItem('userId');
+					const dosenId = localStorage.getItem('dosenID'); // Gunakan dosenID yang sudah di-map
 					if (!dosenId) {
-						showAlert('User ID tidak ditemukan', 'danger');
+						console.error('Dosen ID not found');
 						return;
 					}
 
+					console.log('Fetching proposal data for dosen:', dosenId);
 					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/dosen?dosen_id=${dosenId}`);
 					const data = await response.json();
 
-					if (data.status === 'success') {
-						const tbody = document.querySelector('.data-table tbody');
-						tbody.innerHTML = '';
+					const tbody = document.querySelector('.data-table tbody');
+					if (!tbody) {
+						console.error('Table body element not found');
+						return;
+					}
 
-						if (data.data && data.data.length > 0) {
-							data.data.forEach(proposal => {
-								tbody.innerHTML += `
-									<tr>
-										<td>${proposal.topik_penelitian}</td>
-										<td>${proposal.taruna_nama}</td>
-										<td>
-											<div class="dropdown">
-												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-													href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
+					tbody.innerHTML = '';
+
+					if (data.status === 'success' && data.data && data.data.length > 0) {
+						data.data.forEach(proposal => {
+							tbody.innerHTML += `
+								<tr>
+									<td>${proposal.topik_penelitian || '-'}</td>
+									<td>${proposal.taruna_nama || '-'}</td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${proposal.file_path}" target="_blank">
+													<i class="dw dw-eye"></i> View
 												</a>
-												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${proposal.file_path}" target="_blank">
-														<i class="dw dw-eye"></i> View
-													</a>
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${proposal.file_path}" download>
-														<i class="dw dw-download"></i> Download
-													</a>
-												</div>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${proposal.file_path}" download>
+													<i class="dw dw-download"></i> Download
+												</a>
 											</div>
-										</td>
-									</tr>
-								`;
-							});
-						} else {
-							tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada data proposal</td></tr>';
-						}
+										</div>
+									</td>
+								</tr>
+							`;
+						});
 					} else {
-						showAlert('Gagal memuat data proposal', 'danger');
+						tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada data proposal</td></tr>';
 					}
 				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Terjadi kesalahan saat memuat data', 'danger');
+					console.error('Error loading proposal data:', error);
+					showAlert('Terjadi kesalahan saat memuat data proposal', 'danger');
 				}
 			}
 
 			// Fungsi untuk memuat data taruna ke dropdown
 			async function loadTarunaDropdown() {
 				try {
-					const dosenId = localStorage.getItem('userId');
+					const dosenId = localStorage.getItem('dosenID'); // Gunakan dosenID yang sudah di-map
 					if (!dosenId) {
-						showAlert('User ID tidak ditemukan', 'danger');
+						console.error('Dosen ID not found');
 						return;
 					}
 
+					console.log('Fetching taruna data for dosen:', dosenId);
 					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/taruna/list?dosen_id=${dosenId}`);
 					const data = await response.json();
 
-					if (data.status === 'success') {
-						const tarunaSelect = document.getElementById('tarunaSelect');
-						tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Nama Taruna</option>';
+					const tarunaSelect = document.getElementById('tarunaSelect');
+					if (!tarunaSelect) {
+						console.error('Taruna select element not found');
+						return;
+					}
 
+					tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Nama Taruna</option>';
+
+					if (data.status === 'success' && data.data && Array.isArray(data.data)) {
 						// Simpan data topik penelitian untuk setiap taruna
 						const topikMap = new Map();
 						
@@ -915,15 +923,17 @@
 						tarunaSelect.addEventListener('change', function() {
 							const selectedUserId = this.value;
 							const topikPenelitian = topikMap.get(selectedUserId);
-							if (topikPenelitian) {
-								document.querySelector('input[name="topik_penelitian"]').value = topikPenelitian;
+							const topikInput = document.querySelector('input[name="topik_penelitian"]');
+							if (topikInput && topikPenelitian) {
+								topikInput.value = topikPenelitian;
 							}
 						});
 					} else {
-						showAlert('Gagal memuat data taruna', 'danger');
+						console.warn('No taruna data received or invalid format');
+						showAlert('Tidak ada data taruna yang tersedia', 'warning');
 					}
 				} catch (error) {
-					console.error('Error:', error);
+					console.error('Error loading taruna data:', error);
 					showAlert('Terjadi kesalahan saat memuat data taruna', 'danger');
 				}
 			}
