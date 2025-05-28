@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
@@ -541,7 +543,9 @@ func GetSeminarProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	proposalID := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	proposalID := vars["id"]
+
 	if proposalID == "" {
 		http.Error(w, "Proposal ID is required", http.StatusBadRequest)
 		return
