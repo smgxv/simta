@@ -541,14 +541,12 @@ func GetSeminarProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil proposal_id dari URL parameter
 	proposalID := r.URL.Query().Get("id")
 	if proposalID == "" {
 		http.Error(w, "Proposal ID is required", http.StatusBadRequest)
 		return
 	}
 
-	// Buka koneksi database
 	db, err := config.GetDB()
 	if err != nil {
 		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
@@ -556,20 +554,18 @@ func GetSeminarProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Query untuk mendapatkan detail proposal dan data taruna
 	query := `
 		SELECT 
-			sp.id,
-			sp.user_id,
-			t.nama_lengkap,
-			t.jurusan,
-			t.kelas,
+			sp.id, sp.user_id, t.nama_lengkap, t.jurusan, t.kelas,
 			sp.topik_penelitian,
-			sp.ketua_penguji_id,
-			sp.penguji1_id,
-			sp.penguji2_id
+			sp.ketua_penguji_id, d_ketua.nama_lengkap,
+			sp.penguji1_id, d1.nama_lengkap,
+			sp.penguji2_id, d2.nama_lengkap
 		FROM seminar_proposal sp
-		JOIN taruna t ON sp.user_id = t.user_id
+		JOIN taruna t ON t.user_id = sp.user_id
+		JOIN dosen d_ketua ON d_ketua.id = sp.ketua_penguji_id
+		JOIN dosen d1 ON d1.id = sp.penguji1_id
+		JOIN dosen d2 ON d2.id = sp.penguji2_id
 		WHERE sp.id = ?
 	`
 
@@ -580,44 +576,66 @@ func GetSeminarProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 		Jurusan         string `json:"jurusan"`
 		Kelas           string `json:"kelas"`
 		TopikPenelitian string `json:"topik_penelitian"`
-		KetuaPengujiID  int    `json:"ketua_penguji_id"`
+		KetuaID         int    `json:"ketua_penguji_id"`
+		KetuaNama       string `json:"ketua_penguji_nama"`
 		Penguji1ID      int    `json:"penguji1_id"`
+		Penguji1Nama    string `json:"penguji1_nama"`
 		Penguji2ID      int    `json:"penguji2_id"`
+		Penguji2Nama    string `json:"penguji2_nama"`
 	}
 
 	err = db.QueryRow(query, proposalID).Scan(
-		&proposal.ID,
-		&proposal.UserID,
-		&proposal.NamaTaruna,
-		&proposal.Jurusan,
-		&proposal.Kelas,
+		&proposal.ID, &proposal.UserID, &proposal.NamaTaruna, &proposal.Jurusan, &proposal.Kelas,
 		&proposal.TopikPenelitian,
-		&proposal.KetuaPengujiID,
-		&proposal.Penguji1ID,
-		&proposal.Penguji2ID,
+		&proposal.KetuaID, &proposal.KetuaNama,
+		&proposal.Penguji1ID, &proposal.Penguji1Nama,
+		&proposal.Penguji2ID, &proposal.Penguji2Nama,
 	)
 	if err != nil {
-		http.Error(w, "Error getting proposal details: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error getting proposal: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Query untuk mendapatkan data penilaian dari ketua penguji
-	ketuaPengujiData := getPengujiData(db, proposalID, proposal.KetuaPengujiID)
-	penguji1Data := getPengujiData(db, proposalID, proposal.Penguji1ID)
-	penguji2Data := getPengujiData(db, proposalID, proposal.Penguji2ID)
+	type Penilaian struct {
+		NamaDosen         string `json:"nama_dosen"`
+		StatusPengumpulan string `json:"status_pengumpulan"`
+		FilePenilaian     string `json:"file_penilaian"`
+		FileBeritaAcara   string `json:"file_berita_acara"`
+	}
+
+	// Ambil penilaian dari masing-masing penguji
+	getPenilaian := func(dosenID int) Penilaian {
+		var p Penilaian
+		query := `
+			SELECT d.nama_lengkap, spp.status_pengumpulan, spp.file_penilaian_path, spp.file_berita_acara_path
+			FROM seminar_proposal_penilaian spp
+			JOIN dosen d ON d.id = spp.dosen_id
+			WHERE spp.seminar_proposal_id = ? AND spp.dosen_id = ?
+			LIMIT 1
+		`
+		err := db.QueryRow(query, proposalID, dosenID).Scan(
+			&p.NamaDosen, &p.StatusPengumpulan, &p.FilePenilaian, &p.FileBeritaAcara,
+		)
+		if err != nil {
+			// jika belum ada data, tetap kembalikan nama dosen
+			p.NamaDosen = "-"
+			p.StatusPengumpulan = "belum"
+			p.FilePenilaian = ""
+			p.FileBeritaAcara = ""
+		}
+		return p
+	}
 
 	response := map[string]interface{}{
 		"status": "success",
 		"data": map[string]interface{}{
-			"id":               proposal.ID,
-			"user_id":          proposal.UserID,
 			"nama_taruna":      proposal.NamaTaruna,
 			"jurusan":          proposal.Jurusan,
 			"kelas":            proposal.Kelas,
 			"topik_penelitian": proposal.TopikPenelitian,
-			"ketua_penguji":    ketuaPengujiData,
-			"penguji1":         penguji1Data,
-			"penguji2":         penguji2Data,
+			"ketua_penguji":    getPenilaian(proposal.KetuaID),
+			"penguji1":         getPenilaian(proposal.Penguji1ID),
+			"penguji2":         getPenilaian(proposal.Penguji2ID),
 		},
 	}
 
