@@ -433,6 +433,7 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 	// Query untuk mendapatkan data monitoring
 	query := `
 		SELECT 
+			sp.id as seminar_proposal_id,
 			u.nama_lengkap AS nama_taruna,
 			t.jurusan,
 			sp.topik_penelitian,
@@ -475,6 +476,7 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 	defer rows.Close()
 
 	type MonitoringData struct {
+		SeminarProposalID int    `json:"seminar_proposal_id"`
 		NamaTaruna        string `json:"nama_taruna"`
 		Jurusan           string `json:"jurusan"`
 		TopikPenelitian   string `json:"topik_penelitian"`
@@ -487,32 +489,20 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 	var result []MonitoringData
 	for rows.Next() {
 		var m MonitoringData
-		// Handle null values with pointers
-		var namaTaruna, jurusan, topikPenelitian, ketuaPenguji, penguji1, penguji2, statusKelengkapan *string
-
 		err := rows.Scan(
-			&namaTaruna,
-			&jurusan,
-			&topikPenelitian,
-			&ketuaPenguji,
-			&penguji1,
-			&penguji2,
-			&statusKelengkapan,
+			&m.SeminarProposalID,
+			&m.NamaTaruna,
+			&m.Jurusan,
+			&m.TopikPenelitian,
+			&m.KetuaPenguji,
+			&m.Penguji1,
+			&m.Penguji2,
+			&m.StatusKelengkapan,
 		)
 		if err != nil {
 			log.Printf("Error scanning row: %v", err)
 			continue
 		}
-
-		// Convert null values to empty strings
-		m.NamaTaruna = stringOrEmpty(namaTaruna)
-		m.Jurusan = stringOrEmpty(jurusan)
-		m.TopikPenelitian = stringOrEmpty(topikPenelitian)
-		m.KetuaPenguji = stringOrEmpty(ketuaPenguji)
-		m.Penguji1 = stringOrEmpty(penguji1)
-		m.Penguji2 = stringOrEmpty(penguji2)
-		m.StatusKelengkapan = stringOrEmpty(statusKelengkapan)
-
 		result = append(result, m)
 	}
 

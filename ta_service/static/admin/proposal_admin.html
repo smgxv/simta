@@ -1073,7 +1073,7 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.seminar_proposal_id})">
+													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.seminar_proposal_id}); return false;">
 														<i class="dw dw-eye"></i> View Details
 													</a>
 												</div>
@@ -1098,7 +1098,8 @@
 
 			// Fungsi untuk menampilkan detail penilaian
 			function viewPenilaianDetails(proposalId) {
-				if (!proposalId) {
+				console.log('Viewing details for proposal ID:', proposalId); // Debug log
+				if (!proposalId || proposalId === 'undefined' || proposalId === 'null') {
 					showAlert('ID Proposal tidak valid', 'danger');
 					return;
 				}
