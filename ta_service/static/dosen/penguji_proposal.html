@@ -968,6 +968,21 @@
 				try {
 					const formData = new FormData(this);
 					
+					// Tambahkan dosen_id dari localStorage
+					const dosenId = localStorage.getItem('dosenID');
+					if (!dosenId) {
+						throw new Error('Dosen ID tidak ditemukan');
+					}
+					formData.append('dosen_id', dosenId);
+
+					// Dapatkan seminar_proposal_id dari data yang tersimpan
+					const selectedUserId = formData.get('user_id');
+					const seminarProposalData = await getSeminarProposalData(selectedUserId);
+					if (!seminarProposalData) {
+						throw new Error('Data seminar proposal tidak ditemukan');
+					}
+					formData.append('seminar_proposal_id', seminarProposalData.id);
+					
 					// Rename file input names to match backend expectations
 					const penilaianFile = formData.get('file');
 					const beritaAcaraFile = formData.getAll('file')[1];
@@ -1010,6 +1025,23 @@
 					submitButton.innerHTML = 'Submit';
 				}
 			});
+
+			// Fungsi untuk mendapatkan data seminar proposal berdasarkan user_id
+			async function getSeminarProposalData(userId) {
+				try {
+					const dosenId = localStorage.getItem('dosenID');
+					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/dosen?dosen_id=${dosenId}`);
+					const data = await response.json();
+					
+					if (data.status === 'success' && data.data) {
+						return data.data.find(proposal => proposal.user_id === parseInt(userId));
+					}
+					return null;
+				} catch (error) {
+					console.error('Error fetching seminar proposal data:', error);
+					return null;
+				}
+			}
 
 		</script>
 
