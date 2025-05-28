@@ -1063,25 +1063,45 @@
 						throw new Error('Failed to fetch proposal details');
 					}
 
-					const data = await response.json();
-					if (data.status !== 'success') {
-						throw new Error(data.message || 'Failed to load data');
+					const result = await response.json();
+					if (result.status !== 'success') {
+						throw new Error(result.message || 'Failed to load data');
 					}
 
+					const data = result.data;
+
 					// Update informasi taruna
-					document.getElementById('nama-taruna').textContent = data.data.nama_taruna || '-';
-					document.getElementById('jurusan').textContent = data.data.jurusan || '-';
-					document.getElementById('kelas').textContent = data.data.kelas || '-';
-					document.getElementById('topik-penelitian').textContent = data.data.topik_penelitian || '-';
+					document.getElementById('nama-taruna').textContent = data.nama_taruna || '-';
+					document.getElementById('jurusan').textContent = data.jurusan || '-';
+					document.getElementById('kelas').textContent = data.kelas || '-';
+					document.getElementById('topik-penelitian').textContent = data.topik_penelitian || '-';
 
 					// Update ketua penguji
-					updatePengujiSection('ketua', data.data.ketua_penguji);
+					const ketuaPenguji = data.ketua_penguji || {};
+					updatePengujiSection('ketua', {
+						nama_lengkap: ketuaPenguji.nama_dosen || '-',
+						file_penilaian_path: ketuaPenguji.file_penilaian || '',
+						file_berita_acara_path: ketuaPenguji.file_berita_acara || '',
+						status_pengumpulan: ketuaPenguji.status_pengumpulan || 'belum'
+					});
 
 					// Update penguji 1
-					updatePengujiSection('penguji1', data.data.penguji1);
+					const penguji1 = data.penguji1 || {};
+					updatePengujiSection('penguji1', {
+						nama_lengkap: penguji1.nama_dosen || '-',
+						file_penilaian_path: penguji1.file_penilaian || '',
+						file_berita_acara_path: penguji1.file_berita_acara || '',
+						status_pengumpulan: penguji1.status_pengumpulan || 'belum'
+					});
 
 					// Update penguji 2
-					updatePengujiSection('penguji2', data.data.penguji2);
+					const penguji2 = data.penguji2 || {};
+					updatePengujiSection('penguji2', {
+						nama_lengkap: penguji2.nama_dosen || '-',
+						file_penilaian_path: penguji2.file_penilaian || '',
+						file_berita_acara_path: penguji2.file_berita_acara || '',
+						status_pengumpulan: penguji2.status_pengumpulan || 'belum'
+					});
 
 				} catch (error) {
 					console.error('Error:', error);
@@ -1091,7 +1111,7 @@
 
 			function updatePengujiSection(type, data) {
 				// Update nama dosen
-				document.getElementById(`${type}`).textContent = data.nama_lengkap || '-';
+				document.getElementById(`${type}`).textContent = data.nama_lengkap;
 
 				// Update dokumen penilaian
 				const penilaianStatus = document.getElementById(`${type}-penilaian-status`);
