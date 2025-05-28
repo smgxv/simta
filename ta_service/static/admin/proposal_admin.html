@@ -1030,60 +1030,83 @@
 				}
 			});
 
-			// Load data monitoring penilaian Proposal
-			async function loadMonitoringPenilaianData() {
+			// Fungsi untuk memuat data monitoring penilaian proposal
+			async function loadMonitoringData() {
 				try {
-					const response = await fetch('http://104.43.89.154:8082/penilaianproposal/monitoring');
-					if (!response.ok) throw new Error('Gagal mengambil data monitoring penilaian');
+					const response = await fetch('http://104.43.89.154:8082/monitoring/penilaian_proposal');
+					const data = await response.json();
 
-					const result = await response.json();
-					if (result.status !== 'success') throw new Error(result.message || 'Gagal memuat data telaah');
+					const tbody = document.querySelector('#monitoringTable tbody');
+					tbody.innerHTML = '';
 
-					const tableBody = document.querySelector('#monitoringTable tbody');
-					tableBody.innerHTML = '';
+					if (data.status === 'success' && data.data && data.data.length > 0) {
+						data.data.forEach(item => {
+							const statusClass = item.status_kelengkapan === 'Lengkap' ? 'badge-success' : 'badge-warning';
+							
+							tbody.innerHTML += `
+								<tr>
+									<td>${item.nama_taruna}</td>
+									<td>${item.jurusan}</td>
+									<td>${item.topik_penelitian}</td>
+									<td>${item.ketua_penguji}</td>
+									<td>${item.penguji1}</td>
+									<td>${item.penguji2}</td>
+									<td>
+										<span class="badge ${statusClass}">
+											${item.status_kelengkapan}
+										</span>
+									</td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item view-details" href="#" data-id="${item.seminar_proposal_id}">
+													<i class="dw dw-eye"></i> View Details
+												</a>
+											</div>
+										</div>
+									</td>
+								</tr>
+							`;
+						});
 
-					result.data.forEach(item => {
-						// Badge warna status Proposal
-						let statusProposalClass = '';
-						switch ((item.status_proposal || '').toLowerCase()) {
-							case 'approved': statusProposalClass = 'badge badge-success'; break;
-							case 'rejected': statusProposalClass = 'badge badge-danger'; break;
-							case 'pending': statusProposalClass = 'badge badge-warning'; break;
-							default: statusProposalClass = 'badge badge-secondary';
-						}
+						// Tambahkan event listener untuk tombol view details
+						document.querySelectorAll('.view-details').forEach(button => {
+							button.addEventListener('click', async (e) => {
+								e.preventDefault();
+								const proposalId = e.currentTarget.dataset.id;
+								await showProposalDetails(proposalId);
+							});
+						});
 
-						// Warna status penilaian
-						let statusPenilaianClass = '';
-						if ((item.status_penilaian || '').includes('✅')) {
-							statusPenilaianClass = 'text-success';
-						} else if ((item.status_penilaian || '').includes('⚠️')) {
-							statusPenilaianClass = 'text-warning';
-						} else {
-							statusPenilaianClass = 'text-danger';
-						}
-
-						// Tambahkan baris ke tabel
-						tableBody.innerHTML += `
-							<tr>
-								<td>${item.nama_taruna || '-'}</td>
-								<td>${item.jurusan || '-'}</td>
-								<td>${item.kelas || '-'}</td>
-								<td>${item.topik_penelitian || '-'}</td>
-								<td><span class="${statusProposalClass}">${item.status_proposal || '-'}</span></td>
-								<td class="text-center">${item.jumlah_penilaian ?? 0}</td>
-								<td><span class="${statusPenilaianClass}">${item.status_penilaian || '-'}</span></td>
-							</tr>
-						`;
-					});
-
+					} else {
+						tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada data monitoring</td></tr>';
+					}
 				} catch (error) {
-					console.error('Error:', error);
-					alert('Gagal memuat data monitoring penilaian Proposal');
+					console.error('Error loading monitoring data:', error);
+					showAlert('Terjadi kesalahan saat memuat data monitoring', 'danger');
 				}
 			}
 
-			// Jalankan saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', loadMonitoringPenilaianData);
+			// Fungsi untuk menampilkan detail proposal
+			async function showProposalDetails(proposalId) {
+				try {
+					// Implementasi untuk menampilkan detail proposal
+					// Bisa menggunakan modal atau halaman terpisah
+					console.log('Showing details for proposal:', proposalId);
+				} catch (error) {
+					console.error('Error showing proposal details:', error);
+					showAlert('Terjadi kesalahan saat memuat detail proposal', 'danger');
+				}
+			}
+
+			// Load monitoring data saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', () => {
+				loadMonitoringData();
+			});
 
 		</script>
 

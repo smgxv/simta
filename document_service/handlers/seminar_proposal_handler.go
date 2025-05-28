@@ -408,3 +408,101 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
+
+// GetMonitoringPenilaianProposalHandler menangani request untuk mendapatkan data monitoring penilaian proposal
+func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Buka koneksi database
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Query untuk mendapatkan data monitoring
+	query := `
+		SELECT 
+			u.nama_lengkap AS nama_taruna,
+			t.jurusan,
+			sp.topik_penelitian,
+			
+			d_ketua.nama_lengkap AS ketua_penguji,
+			d1.nama_lengkap AS penguji1,
+			d2.nama_lengkap AS penguji2,
+
+			-- Status kelengkapan berkas
+			CASE
+				WHEN COUNT(CASE WHEN spp.status_pengumpulan = 'sudah' THEN 1 END) = 3 THEN 'Lengkap'
+				ELSE 'Belum Lengkap'
+			END AS status_kelengkapan
+
+		FROM seminar_proposal sp
+
+		JOIN users u ON u.id = sp.user_id
+		JOIN taruna t ON t.user_id = u.id
+
+		JOIN dosen d_ketua ON d_ketua.id = sp.ketua_penguji_id
+		JOIN dosen d1 ON d1.id = sp.penguji1_id
+		JOIN dosen d2 ON d2.id = sp.penguji2_id
+
+		LEFT JOIN seminar_proposal_penilaian spp ON spp.seminar_proposal_id = sp.id
+
+		GROUP BY 
+			sp.id, u.nama_lengkap, t.jurusan, sp.topik_penelitian,
+			d_ketua.nama_lengkap, d1.nama_lengkap, d2.nama_lengkap;
+
+	`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		http.Error(w, "Error querying database: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type MonitoringData struct {
+		NamaTaruna        string `json:"nama_taruna"`
+		Jurusan           string `json:"jurusan"`
+		TopikPenelitian   string `json:"topik_penelitian"`
+		SeminarProposalID int    `json:"seminar_proposal_id"`
+		KetuaPenguji      string `json:"ketua_penguji"`
+		Penguji1          string `json:"penguji1"`
+		Penguji2          string `json:"penguji2"`
+		StatusKelengkapan string `json:"status_kelengkapan"`
+	}
+
+	var result []MonitoringData
+	for rows.Next() {
+		var m MonitoringData
+		err := rows.Scan(
+			&m.NamaTaruna,
+			&m.Jurusan,
+			&m.TopikPenelitian,
+			&m.SeminarProposalID,
+			&m.KetuaPenguji,
+			&m.Penguji1,
+			&m.Penguji2,
+			&m.StatusKelengkapan,
+		)
+		if err != nil {
+			http.Error(w, "Error scanning rows: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		result = append(result, m)
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   result,
+	})
+}
