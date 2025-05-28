@@ -1098,12 +1098,12 @@
 
 			// Fungsi untuk menampilkan detail penilaian
 			function viewPenilaianDetails(proposalId) {
-				console.log('Viewing details for proposal ID:', proposalId); // Debug log
+				console.log('Viewing details for proposal ID:', proposalId);
 				if (!proposalId || proposalId === 'undefined' || proposalId === 'null') {
 					showAlert('ID Proposal tidak valid', 'danger');
 					return;
 				}
-				window.location.href = `/admin/detail_berkas_seminar_proposal.html?id=${proposalId}`;
+				window.location.href = `/admin/detail_berkas_seminar_proposal?id=${proposalId}`;
 			}
 
 			// Load monitoring data saat halaman dimuat
