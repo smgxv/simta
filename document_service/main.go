@@ -79,6 +79,7 @@ func main() {
 	r.HandleFunc("/upload/seminarproposal", handlers.UploadSeminarProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/seminarproposal/dosen", handlers.GetSeminarProposalByDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/seminarproposal/taruna/list", handlers.GetTarunaListForDosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/penilaian/proposal", handlers.PenilaianProposalHandler).Methods("POST", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{

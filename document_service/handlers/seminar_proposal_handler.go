@@ -259,3 +259,144 @@ func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 		"data":   tarunaList,
 	})
 }
+
+// PenilaianProposalHandler menangani request untuk menyimpan penilaian proposal
+func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Parse multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Get form values
+	userID := r.FormValue("user_id")
+	if userID == "" {
+		http.Error(w, "User ID is required", http.StatusBadRequest)
+		return
+	}
+
+	topikPenelitian := r.FormValue("topik_penelitian")
+	if topikPenelitian == "" {
+		http.Error(w, "Topik penelitian is required", http.StatusBadRequest)
+		return
+	}
+
+	// Get files
+	penilaianFile, penilaianHeader, err := r.FormFile("penilaian_file")
+	if err != nil {
+		http.Error(w, "Error retrieving penilaian file: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer penilaianFile.Close()
+
+	beritaAcaraFile, beritaAcaraHeader, err := r.FormFile("berita_acara_file")
+	if err != nil {
+		http.Error(w, "Error retrieving berita acara file: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer beritaAcaraFile.Close()
+
+	// Create upload directories if they don't exist
+	penilaianDir := "uploads/penilaian_proposal"
+	beritaAcaraDir := "uploads/berita_acara_proposal"
+
+	if err := os.MkdirAll(penilaianDir, 0777); err != nil {
+		http.Error(w, "Error creating penilaian directory: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err := os.MkdirAll(beritaAcaraDir, 0777); err != nil {
+		http.Error(w, "Error creating berita acara directory: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Generate unique filenames
+	timestamp := time.Now().Format("20060102150405")
+	penilaianFilename := fmt.Sprintf("Penilaian_%s_%s_%s", userID, timestamp, penilaianHeader.Filename)
+	beritaAcaraFilename := fmt.Sprintf("BeritaAcara_%s_%s_%s", userID, timestamp, beritaAcaraHeader.Filename)
+
+	penilaianPath := filepath.Join(penilaianDir, penilaianFilename)
+	beritaAcaraPath := filepath.Join(beritaAcaraDir, beritaAcaraFilename)
+
+	// Save penilaian file
+	penilaianDst, err := os.Create(penilaianPath)
+	if err != nil {
+		http.Error(w, "Error creating penilaian file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer penilaianDst.Close()
+
+	if _, err = io.Copy(penilaianDst, penilaianFile); err != nil {
+		os.Remove(penilaianPath)
+		http.Error(w, "Error saving penilaian file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Save berita acara file
+	beritaAcaraDst, err := os.Create(beritaAcaraPath)
+	if err != nil {
+		os.Remove(penilaianPath)
+		http.Error(w, "Error creating berita acara file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer beritaAcaraDst.Close()
+
+	if _, err = io.Copy(beritaAcaraDst, beritaAcaraFile); err != nil {
+		os.Remove(penilaianPath)
+		os.Remove(beritaAcaraPath)
+		http.Error(w, "Error saving berita acara file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Open database connection
+	db, err := config.GetDB()
+	if err != nil {
+		os.Remove(penilaianPath)
+		os.Remove(beritaAcaraPath)
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Insert into database
+	query := `
+		INSERT INTO penilaian_proposal (
+			user_id, topik_penelitian, file_penilaian_path,
+			file_berita_acara_path, created_at, updated_at
+		) VALUES (?, ?, ?, ?, NOW(), NOW())
+	`
+
+	_, err = db.Exec(query,
+		userID,
+		topikPenelitian,
+		penilaianPath,
+		beritaAcaraPath,
+	)
+
+	if err != nil {
+		os.Remove(penilaianPath)
+		os.Remove(beritaAcaraPath)
+		http.Error(w, "Error saving to database: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return success response
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "success",
+		"message": "Penilaian proposal berhasil disimpan",
+		"data": map[string]interface{}{
+			"penilaian_path":    penilaianPath,
+			"berita_acara_path": beritaAcaraPath,
+		},
+	})
+}

@@ -944,6 +944,73 @@
 				loadTarunaDropdown();
 			});
 
+			// Update nama file saat file penilaian dipilih
+			document.getElementById('penilaianFile').addEventListener('change', function(e) {
+				const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
+				this.nextElementSibling.textContent = fileName;
+			});
+
+			// Update nama file saat file berita acara dipilih
+			document.getElementById('beritaAcaraFile').addEventListener('change', function(e) {
+				const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
+				this.nextElementSibling.textContent = fileName;
+			});
+
+			// Handle form submission untuk penilaian proposal
+			document.getElementById('proposalForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+				
+				// Tampilkan loading state
+				const submitButton = this.querySelector('button[type="submit"]');
+				submitButton.disabled = true;
+				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+				
+				try {
+					const formData = new FormData(this);
+					
+					// Rename file input names to match backend expectations
+					const penilaianFile = formData.get('file');
+					const beritaAcaraFile = formData.getAll('file')[1];
+					formData.delete('file');
+					formData.append('penilaian_file', penilaianFile);
+					formData.append('berita_acara_file', beritaAcaraFile);
+					
+					// Log FormData untuk debugging
+					for (let pair of formData.entries()) {
+						console.log(pair[0] + ': ' + pair[1]);
+					}
+					
+					const response = await fetch('http://104.43.89.154:8082/penilaian/proposal', {
+						method: 'POST',
+						body: formData
+					});
+					
+					const data = await response.json();
+					
+					if (response.ok && data.status === 'success') {
+						showAlert('Penilaian proposal berhasil disimpan', 'success');
+						
+						// Reset form
+						this.reset();
+						document.querySelectorAll('.custom-file-label').forEach(label => {
+							label.textContent = 'Choose file';
+						});
+						
+						// Refresh data jika diperlukan
+						loadProposalData();
+					} else {
+						throw new Error(data.message || 'Terjadi kesalahan saat menyimpan penilaian');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
+				} finally {
+					// Reset button state
+					submitButton.disabled = false;
+					submitButton.innerHTML = 'Submit';
+				}
+			});
+
 		</script>
 
 		<style>
