@@ -3,76 +3,67 @@ package models
 import (
 	"database/sql"
 	"document_service/entities"
+	"time"
 )
 
-type SeminarProposalModel struct {
-	db *sql.DB
-}
-
-func NewSeminarProposalModel(db *sql.DB) *SeminarProposalModel {
-	return &SeminarProposalModel{
-		db: db,
-	}
-}
-
-func (m *SeminarProposalModel) Create(seminarProposal *entities.SeminarProposal) error {
+func InsertSeminarProposal(db *sql.DB, proposal *entities.SeminarProposal) error {
 	query := `
 		INSERT INTO seminar_proposal (
-			user_id, ketua_penguji_id, penguji1_id, penguji2_id,
-			topik_penelitian, file_path, status
-		) VALUES (?, ?, ?, ?, ?, ?, 'pending')
+			user_id, topik_penelitian, file_proposal_path,
+			ketua_penguji_id, penguji1_id, penguji2_id,
+			created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
-	result, err := m.db.Exec(
-		query,
-		seminarProposal.UserID,
-		seminarProposal.KetuaPengujiID,
-		seminarProposal.Penguji1ID,
-		seminarProposal.Penguji2ID,
-		seminarProposal.TopikPenelitian,
-		seminarProposal.FilePath,
+	now := time.Now()
+	_, err := db.Exec(query,
+		proposal.UserID,
+		proposal.TopikPenelitian,
+		proposal.FileProposalPath,
+		proposal.KetuaPengujiID,
+		proposal.Penguji1ID,
+		proposal.Penguji2ID,
+		now,
+		now,
 	)
 
-	if err != nil {
-		return err
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	seminarProposal.ID = int(id)
-	return nil
+	return err
 }
 
-func (m *SeminarProposalModel) GetByUserID(userID string) ([]entities.SeminarProposal, error) {
+func GetSeminarProposalByUserID(db *sql.DB, userID int) ([]entities.SeminarProposal, error) {
 	query := `
-		SELECT 
-			sp.id, sp.user_id, sp.ketua_penguji_id, sp.penguji1_id, sp.penguji2_id,
-			sp.topik_penelitian, sp.file_path, sp.status, sp.created_at, sp.updated_at
-		FROM seminar_proposal sp
-		WHERE sp.user_id = ?
+		SELECT id, user_id, topik_penelitian, file_proposal_path,
+		       ketua_penguji_id, penguji1_id, penguji2_id,
+		       created_at, updated_at
+		FROM seminar_proposal
+		WHERE user_id = ?
 	`
 
-	rows, err := m.db.Query(query, userID)
+	rows, err := db.Query(query, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var seminarProposals []entities.SeminarProposal
+	var proposals []entities.SeminarProposal
 	for rows.Next() {
-		var sp entities.SeminarProposal
+		var proposal entities.SeminarProposal
 		err := rows.Scan(
-			&sp.ID, &sp.UserID, &sp.KetuaPengujiID, &sp.Penguji1ID, &sp.Penguji2ID,
-			&sp.TopikPenelitian, &sp.FilePath, &sp.Status, &sp.CreatedAt, &sp.UpdatedAt,
+			&proposal.ID,
+			&proposal.UserID,
+			&proposal.TopikPenelitian,
+			&proposal.FileProposalPath,
+			&proposal.KetuaPengujiID,
+			&proposal.Penguji1ID,
+			&proposal.Penguji2ID,
+			&proposal.CreatedAt,
+			&proposal.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
-		seminarProposals = append(seminarProposals, sp)
+		proposals = append(proposals, proposal)
 	}
 
-	return seminarProposals, nil
+	return proposals, nil
 }

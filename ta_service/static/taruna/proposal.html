@@ -1603,93 +1603,133 @@
 				}
 			});
 
-			// Upload Seminar Proposal
+			// Handle form submission untuk Seminar Proposal
 			document.getElementById('seminarProposalForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
-
+				
+				// Tampilkan loading state
 				const submitButton = this.querySelector('button[type="submit"]');
 				submitButton.disabled = true;
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-
+				
 				try {
 					const formData = new FormData(this);
+					
+					// Tambahkan user_id dari localStorage
 					const userId = localStorage.getItem('userId');
-					const token = localStorage.getItem('token');
-
-					if (!userId || !token) {
-						throw new Error('User ID atau token tidak ditemukan');
-					}
-
-					// Ambil data taruna untuk verifikasi
-					const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-
-					if (!tarunaResponse.ok) {
-						throw new Error('Gagal mengambil data taruna');
-					}
-
-					const tarunaData = await tarunaResponse.json();
-
-					if (tarunaData.status !== 'success' || !Array.isArray(tarunaData.data)) {
-						throw new Error('Data taruna tidak ditemukan');
-					}
-
-					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
-					if (!taruna) {
-						throw new Error('Data taruna tidak ditemukan untuk user ID ini');
-					}
-
-					// Tambahkan user_id secara eksplisit ke formData (walau sudah ada bisa timpa)
 					formData.append('user_id', userId);
-
-					// Kirim request upload
+					
 					const response = await fetch('http://104.43.89.154:8082/seminarproposal/upload', {
 						method: 'POST',
-						body: formData,
-						headers: {
-							'Authorization': `Bearer ${token}`
-						},
-						credentials: 'include'
+						body: formData
 					});
-
+					
 					const data = await response.json();
-
+					
 					if (response.ok && data.status === 'success') {
-						showAlert('Seminar Proposal berhasil diunggah', 'success');
-
+						// Tampilkan pesan sukses
+						showAlert('Seminar proposal berhasil diunggah', 'success');
+						
 						// Reset form
 						this.reset();
 						document.querySelector('#seminarProposalFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('seminarSelectedFileName').style.display = 'none';
+						
+						// Refresh data
+						loadSeminarProposalData();
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
 				} catch (error) {
-					console.error('Error saat upload Seminar Proposal:', error);
-					let errorMessage = 'Terjadi kesalahan pada server';
-
-					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
-						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
-					} else if (error.message.includes('Data taruna tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
-					} else if (error.message.includes('Gagal mengambil data taruna')) {
-						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi atau hubungi administrator.';
-					}
-
-					showAlert(errorMessage, 'danger');
+					console.error('Error:', error);
+					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
 				} finally {
+					// Reset button state
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Upload File Seminar Proposal';
 				}
 			});
 
+			// Fungsi untuk memuat data dosen untuk seminar proposal
+			async function loadSeminarProposalData() {
+				const userId = localStorage.getItem('userId');
+				if (!userId) {
+					console.error('User ID not found in localStorage');
+					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
+					return;
+				}
+				
+				try {
+					console.log('Fetching Seminar Proposal data for user:', userId);
+					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/list?user_id=${userId}`);
+					
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					
+					const data = await response.json();
+					console.log('Received Seminar Proposal data:', data);
+					
+					if (data.status === 'success') {
+						const tbody = document.querySelector('#finalProposalTable tbody');
+						if (!tbody) {
+							console.error('Table body element not found');
+							return;
+						}
+						
+						tbody.innerHTML = '';
+						
+						if (data.data && data.data.length > 0) {
+							data.data.forEach(seminarProposal => {
+								const statusClass = {
+									'pending': 'badge badge-warning',
+									'approved': 'badge badge-success',
+									'rejected': 'badge badge-danger',
+									'on review': 'badge badge-info'
+								}[seminarProposal.status] || 'badge badge-secondary';
 
-			// Call loadDosenForSeminar when page loads
+								tbody.innerHTML += `
+									<tr>
+										<td>${seminarProposal.topik_penelitian || '-'}</td>
+										<td>${seminarProposal.jurusan || '-'}</td>
+										<td>${seminarProposal.kelas || '-'}</td>
+										<td><span class="${statusClass}">${seminarProposal.status || 'pending'}</span></td>
+										<td>
+											<div class="dropdown">
+												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												   href="#" role="button" data-toggle="dropdown">
+													<i class="dw dw-more"></i>
+												</a>
+												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${seminarProposal.file_path}" download>
+														<i class="dw dw-download"></i> Download
+													</a>
+												</div>
+											</div>
+										</td>
+									</tr>
+								`;
+							});
+						} else {
+							tbody.innerHTML = `
+								<tr>
+									<td colspan="5" class="text-center">Belum ada Seminar Proposal yang diupload</td>
+								</tr>
+							`;
+						}
+					} else {
+						console.error('Failed to load Seminar Proposal data:', data.message);
+						showAlert('Gagal memuat data Seminar Proposal: ' + (data.message || 'Unknown error'), 'danger');
+					}
+				} catch (error) {
+					console.error('Error loading Seminar Proposal data:', error);
+					showAlert('Terjadi kesalahan saat memuat data Seminar Proposal: ' + error.message, 'danger');
+				}
+			}
+
+			// Load Seminar Proposal data saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
-				loadDosenForSeminar();
+				loadSeminarProposalData();
 			});
 
 		</script>

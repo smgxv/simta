@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"document_service/config"
+	"database/sql"
 	"document_service/entities"
 	"document_service/models"
 	"encoding/json"
@@ -12,8 +12,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +19,6 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
@@ -29,155 +26,137 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse multipart form
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	err := r.ParseMultipartForm(10 << 20) // 10 MB max
 	if err != nil {
-		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
 	}
 
 	// Get form values
-	userID := r.FormValue("user_id")
-	ketuaID := r.FormValue("ketua_penguji")
-	penguji1ID := r.FormValue("penguji1")
-	penguji2ID := r.FormValue("penguji2")
-	topikPenelitian := r.FormValue("topik_penelitian")
-
-	// Validate
-	if userID == "" || ketuaID == "" || penguji1ID == "" || penguji2ID == "" || topikPenelitian == "" {
-		http.Error(w, "Semua field wajib diisi", http.StatusBadRequest)
+	userID, err := strconv.Atoi(r.FormValue("user_id"))
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
-	// Get the file from form
+	ketuaPengujiID, err := strconv.Atoi(r.FormValue("ketua_penguji"))
+	if err != nil {
+		http.Error(w, "Invalid ketua penguji ID", http.StatusBadRequest)
+		return
+	}
+
+	penguji1ID, err := strconv.Atoi(r.FormValue("penguji1"))
+	if err != nil {
+		http.Error(w, "Invalid penguji 1 ID", http.StatusBadRequest)
+		return
+	}
+
+	penguji2ID, err := strconv.Atoi(r.FormValue("penguji2"))
+	if err != nil {
+		http.Error(w, "Invalid penguji 2 ID", http.StatusBadRequest)
+		return
+	}
+
+	topikPenelitian := r.FormValue("topik_penelitian")
+	if topikPenelitian == "" {
+		http.Error(w, "Topik penelitian is required", http.StatusBadRequest)
+		return
+	}
+
+	// Get file from form
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, "Error retrieving file: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "Error retrieving file", http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
 	// Create uploads directory if it doesn't exist
 	uploadDir := "uploads/seminar_proposal"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
-		http.Error(w, "Error creating upload directory: "+err.Error(), http.StatusInternalServerError)
+	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		http.Error(w, "Error creating upload directory", http.StatusInternalServerError)
 		return
 	}
 
-	// Simpan file dengan nama asli
-	filename := fmt.Sprintf("SeminarProposal_%s_%s_%s",
-		userID,
-		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
+	// Generate unique filename
+	timestamp := time.Now().Format("20060102150405")
+	filename := fmt.Sprintf("%d_%s_%s", userID, timestamp, handler.Filename)
+	filepath := filepath.Join(uploadDir, filename)
 
-	// Create the file
-	dst, err := os.Create(filePath)
+	// Create file
+	dst, err := os.Create(filepath)
 	if err != nil {
-		http.Error(w, "Error creating file: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error creating file", http.StatusInternalServerError)
 		return
 	}
 	defer dst.Close()
 
-	// Copy the uploaded file
-	if _, err := io.Copy(dst, file); err != nil {
-		http.Error(w, "Error saving file: "+err.Error(), http.StatusInternalServerError)
+	// Copy file contents
+	if _, err = io.Copy(dst, file); err != nil {
+		http.Error(w, "Error copying file", http.StatusInternalServerError)
 		return
 	}
 
-	// Save to database
-	db, err := config.GetDB()
-	if err != nil {
-		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
-	// Konversi string ke int
-	userIDInt, _ := strconv.Atoi(userID)
-	ketuaIDInt, _ := strconv.Atoi(ketuaID)
-	penguji1IDInt, _ := strconv.Atoi(penguji1ID)
-	penguji2IDInt, _ := strconv.Atoi(penguji2ID)
-
-	// Simpan entitas
-	seminarProposal := &entities.SeminarProposal{
-		UserID:          userIDInt,
-		KetuaPengujiID:  ketuaIDInt,
-		Penguji1ID:      penguji1IDInt,
-		Penguji2ID:      penguji2IDInt,
-		TopikPenelitian: topikPenelitian,
-		FilePath:        filePath,
-		Status:          "pending",
+	// Create seminar proposal record
+	proposal := &entities.SeminarProposal{
+		UserID:           userID,
+		TopikPenelitian:  topikPenelitian,
+		FileProposalPath: filepath,
+		KetuaPengujiID:   ketuaPengujiID,
+		Penguji1ID:       penguji1ID,
+		Penguji2ID:       penguji2ID,
 	}
 
-	model := models.NewSeminarProposalModel(db)
-	if err := model.Create(seminarProposal); err != nil {
-		os.Remove(filePath)
-		http.Error(w, "Error saving to database: "+err.Error(), http.StatusInternalServerError)
+	// Insert into database
+	if err := models.InsertSeminarProposal(db, proposal); err != nil {
+		http.Error(w, "Error saving to database", http.StatusInternalServerError)
 		return
 	}
 
-	// Send success response
+	// Return success response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Seminar proposal berhasil diunggah",
-		"data": map[string]interface{}{
-			"file_path": filePath,
-		},
+		"message": "Seminar proposal uploaded successfully",
 	})
 }
 
 func GetSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-
-	// Handle preflight request
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	// Verify token
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "Authorization header is required", http.StatusUnauthorized)
-		return
-	}
-
 	// Get user_id from query params
-	userID := r.URL.Query().Get("user_id")
-	if userID == "" {
-		http.Error(w, "user_id is required", http.StatusBadRequest)
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		http.Error(w, "User ID is required", http.StatusBadRequest)
 		return
 	}
 
-	// Connect to database
-	db, err := config.GetDB()
+	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
-		http.Error(w, "Database connection error: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
-	// Get seminar proposal data
-	seminarProposalModel := models.NewSeminarProposalModel(db)
-	seminarProposals, err := seminarProposalModel.GetByUserID(userID)
+	// Get proposals from database
+	proposals, err := models.GetSeminarProposalByUserID(db, userID)
 	if err != nil {
-		http.Error(w, "Failed to get seminar proposals: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error retrieving proposals", http.StatusInternalServerError)
 		return
 	}
 
-	// Send response
+	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   seminarProposals,
+		"data":   proposals,
 	})
 }
 
-func RegisterSeminarProposalRoutes(router *mux.Router) {
-	router.HandleFunc("/seminarproposal/upload", UploadSeminarProposalHandler).Methods("POST", "OPTIONS")
-	router.HandleFunc("/seminarproposal", GetSeminarProposalHandler).Methods("GET", "OPTIONS")
+var db *sql.DB
+
+func InitDB(database *sql.DB) {
+	db = database
 }
