@@ -76,6 +76,10 @@
 				border-color: #f5c2c7;
 				color: #842029;
 			}
+
+			.table-responsive {
+				overflow-x: auto;
+			}
 		</style>
 
 		<!-- Global site tag (gtag.js) - Google Analytics -->
@@ -591,21 +595,16 @@
 						<div class="pd-20">
 							<h4 class="text-blue h4">List ICP Taruna</h4>
 						</div>
-						<div class="col-md-6 col-sm-12">
-							<div class="d-flex justify-content-end align-items-center">
-								<div class="form-group mb-0 mr-2">
-									<select class="form-control" id="jurusanFilter" onchange="applyFilters()">
-										<option value="">Semua Jurusan</option>
-									</select>
-								</div>
-								<div class="form-group mb-0">
-									<select class="form-control" id="kelasFilter" onchange="applyFilters()">
-										<option value="">Semua Kelas</option>
-									</select>
-								</div>
-							</div>
+
+						<!-- Filter hanya jurusan -->
+						<div class="col-md-3 col-sm-12 mb-3">
+							<select class="form-control" id="jurusanFilter" onchange="applyFilters()">
+								<option value="">Semua Jurusan</option>
+							</select>
 						</div>
-						<div class="pb-20">
+
+						<!-- Wrapper scroll horizontal -->
+						<div class="table-responsive">
 							<table class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
@@ -613,12 +612,14 @@
 										<th class="table-plus datatable-nosort">Jurusan</th>
 										<th class="table-plus datatable-nosort">Kelas</th>
 										<th class="table-plus datatable-nosort">Topik</th>
+										<th class="table-plus datatable-nosort">Penelaah 1</th>
+										<th class="table-plus datatable-nosort">Penelaah 2</th>
 										<th class="table-plus datatable-nosort">Status</th>
 										<th class="datatable-nosort">Action</th>
 									</tr>
 								</thead>
 								<tbody>
-									
+									<!-- Data akan dimuat di sini lewat JavaScript -->
 								</tbody>
 							</table>
 						</div>
