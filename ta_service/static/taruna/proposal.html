@@ -1554,39 +1554,61 @@
 
 			// Load dosen data for seminar proposal penguji
 			async function loadDosenForSeminar() {
-				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				
 				try {
+					const token = localStorage.getItem('token');
+					if (!token) {
+						console.error('Token not found');
+						showAlert('Token tidak ditemukan. Silakan login ulang.', 'danger');
+						return;
+					}
+
+					console.log('Fetching dosen data...');
 					const response = await fetch('http://104.43.89.154:8081/dosen', {
+						method: 'GET',
 						headers: {
-							'Authorization': `Bearer ${token}`
+							'Authorization': `Bearer ${token}`,
+							'Content-Type': 'application/json'
 						}
 					});
-					
+
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+
 					const data = await response.json();
-					
+					console.log('Received dosen data:', data);
+
 					if (data.status === 'success' && Array.isArray(data.data)) {
 						const ketuaPengujiSelect = document.getElementById('seminarKetuaPenguji');
 						const penguji1Select = document.getElementById('seminarPenguji1');
 						const penguji2Select = document.getElementById('seminarPenguji2');
-						
-						// Clear existing options except the default one
+
+						// Clear existing options
 						ketuaPengujiSelect.innerHTML = '<option value="" disabled selected>Pilih Ketua Penguji</option>';
 						penguji1Select.innerHTML = '<option value="" disabled selected>Pilih Penguji 1</option>';
 						penguji2Select.innerHTML = '<option value="" disabled selected>Pilih Penguji 2</option>';
-						
+
+						// Add dosen options
 						data.data.forEach(dosen => {
 							const optionHtml = `<option value="${dosen.id}">${dosen.nama_lengkap} - ${dosen.jurusan}</option>`;
 							ketuaPengujiSelect.insertAdjacentHTML('beforeend', optionHtml);
 							penguji1Select.insertAdjacentHTML('beforeend', optionHtml);
 							penguji2Select.insertAdjacentHTML('beforeend', optionHtml);
 						});
+					} else {
+						throw new Error('Invalid data format received from server');
 					}
 				} catch (error) {
 					console.error('Error loading dosen data:', error);
-					showAlert('Gagal memuat data dosen penguji', 'danger');
+					showAlert('Gagal memuat data dosen: ' + error.message, 'danger');
 				}
 			}
+
+			// Panggil fungsi loadDosenForSeminar saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', function() {
+				console.log('DOM Content Loaded - Loading dosen data...');
+				loadDosenForSeminar();
+			});
 
 			// Update nama file saat file dipilih untuk Seminar Proposal
 			document.getElementById('seminarProposalFile').addEventListener('change', function(e) {
@@ -1606,6 +1628,21 @@
 			// Handle form submission untuk Seminar Proposal
 			document.getElementById('seminarProposalForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
+				
+				// Validasi pemilihan dosen
+				const ketuaPenguji = document.getElementById('seminarKetuaPenguji').value;
+				const penguji1 = document.getElementById('seminarPenguji1').value;
+				const penguji2 = document.getElementById('seminarPenguji2').value;
+
+				if (!ketuaPenguji || !penguji1 || !penguji2) {
+					showAlert('Silakan pilih semua dosen penguji', 'danger');
+					return;
+				}
+
+				if (ketuaPenguji === penguji1 || ketuaPenguji === penguji2 || penguji1 === penguji2) {
+					showAlert('Dosen penguji tidak boleh sama', 'danger');
+					return;
+				}
 				
 				// Tampilkan loading state
 				const submitButton = this.querySelector('button[type="submit"]');
@@ -1627,16 +1664,10 @@
 					const data = await response.json();
 					
 					if (response.ok && data.status === 'success') {
-						// Tampilkan pesan sukses
 						showAlert('Seminar proposal berhasil diunggah', 'success');
-						
-						// Reset form
 						this.reset();
 						document.querySelector('#seminarProposalFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('seminarSelectedFileName').style.display = 'none';
-						
-						// Refresh data
-						loadSeminarProposalData();
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
@@ -1644,92 +1675,9 @@
 					console.error('Error:', error);
 					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
 				} finally {
-					// Reset button state
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Upload File Seminar Proposal';
 				}
-			});
-
-			// Fungsi untuk memuat data dosen untuk seminar proposal
-			async function loadSeminarProposalData() {
-				const userId = localStorage.getItem('userId');
-				if (!userId) {
-					console.error('User ID not found in localStorage');
-					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
-					return;
-				}
-				
-				try {
-					console.log('Fetching Seminar Proposal data for user:', userId);
-					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/list?user_id=${userId}`);
-					
-					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
-					}
-					
-					const data = await response.json();
-					console.log('Received Seminar Proposal data:', data);
-					
-					if (data.status === 'success') {
-						const tbody = document.querySelector('#finalProposalTable tbody');
-						if (!tbody) {
-							console.error('Table body element not found');
-							return;
-						}
-						
-						tbody.innerHTML = '';
-						
-						if (data.data && data.data.length > 0) {
-							data.data.forEach(seminarProposal => {
-								const statusClass = {
-									'pending': 'badge badge-warning',
-									'approved': 'badge badge-success',
-									'rejected': 'badge badge-danger',
-									'on review': 'badge badge-info'
-								}[seminarProposal.status] || 'badge badge-secondary';
-
-								tbody.innerHTML += `
-									<tr>
-										<td>${seminarProposal.topik_penelitian || '-'}</td>
-										<td>${seminarProposal.jurusan || '-'}</td>
-										<td>${seminarProposal.kelas || '-'}</td>
-										<td><span class="${statusClass}">${seminarProposal.status || 'pending'}</span></td>
-										<td>
-											<div class="dropdown">
-												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												   href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
-												</a>
-												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${seminarProposal.file_path}" download>
-														<i class="dw dw-download"></i> Download
-													</a>
-												</div>
-											</div>
-										</td>
-									</tr>
-								`;
-							});
-						} else {
-							tbody.innerHTML = `
-								<tr>
-									<td colspan="5" class="text-center">Belum ada Seminar Proposal yang diupload</td>
-								</tr>
-							`;
-						}
-					} else {
-						console.error('Failed to load Seminar Proposal data:', data.message);
-						showAlert('Gagal memuat data Seminar Proposal: ' + (data.message || 'Unknown error'), 'danger');
-					}
-				} catch (error) {
-					console.error('Error loading Seminar Proposal data:', error);
-					showAlert('Terjadi kesalahan saat memuat data Seminar Proposal: ' + error.message, 'danger');
-				}
-			}
-
-			// Load Seminar Proposal data saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', () => {
-				loadSeminarProposalData();
 			});
 
 		</script>
