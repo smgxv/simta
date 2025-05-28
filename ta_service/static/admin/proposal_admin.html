@@ -1033,7 +1033,12 @@
 			// Fungsi untuk memuat data monitoring penilaian proposal
 			async function loadMonitoringData() {
 				try {
-					const response = await fetch('http://104.43.89.154:8082/monitoring/penilaian_proposal');
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					const response = await fetch('http://104.43.89.154:8082/monitoring/penilaian_proposal', {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
@@ -1068,7 +1073,7 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.final_proposal_id})">
+													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.seminar_proposal_id})">
 														<i class="dw dw-eye"></i> View Details
 													</a>
 												</div>
@@ -1093,7 +1098,11 @@
 
 			// Fungsi untuk menampilkan detail penilaian
 			function viewPenilaianDetails(proposalId) {
-				window.location.href = `/admin/detail_berkas_seminar_proposal?id=${proposalId}`;
+				if (!proposalId) {
+					showAlert('ID Proposal tidak valid', 'danger');
+					return;
+				}
+				window.location.href = `/admin/detail_berkas_seminar_proposal.html?id=${proposalId}`;
 			}
 
 			// Load monitoring data saat halaman dimuat
