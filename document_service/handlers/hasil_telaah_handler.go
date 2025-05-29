@@ -251,6 +251,7 @@ func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	// Query utama untuk menghitung jumlah hasil telaah per ICP dengan informasi lengkap
 	query := `
 		SELECT 
+			fi.id as final_icp_id,
 			u.nama_lengkap as nama_taruna,
 			fi.jurusan,
 			fi.kelas,
@@ -273,6 +274,7 @@ func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type MonitoringResponse struct {
+		FinalICPId      int    `json:"final_icp_id"`
 		NamaTaruna      string `json:"nama_taruna"`
 		Jurusan         string `json:"jurusan"`
 		Kelas           string `json:"kelas"`
@@ -288,6 +290,7 @@ func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
 		var res MonitoringResponse
 		var statusICP string
 		err := rows.Scan(
+			&res.FinalICPId,
 			&res.NamaTaruna,
 			&res.Jurusan,
 			&res.Kelas,

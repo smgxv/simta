@@ -1251,7 +1251,7 @@
 											<i class="dw dw-more"></i>
 										</a>
 										<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-											<a class="dropdown-item" href="#" onclick="viewTelaahDetails('${item.id}'); return false;">
+											<a class="dropdown-item" href="#" onclick="viewTelaahDetails('${item.final_icp_id}'); return false;">
 												<i class="dw dw-eye"></i> View Details
 											</a>
 										</div>
@@ -1275,7 +1275,7 @@
 					return;
 				}
 				// Redirect ke halaman detail dengan ID ICP
-				window.location.href = `/admin/detail_telaah_icp.html?id=${icpId}`;
+				window.location.href = `/admin/detail_telaah_icp?id=${icpId}`;
 			}
 			
 		</script>
