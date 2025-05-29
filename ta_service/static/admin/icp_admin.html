@@ -610,7 +610,6 @@
 									<tr>
 										<th class="table-plus datatable-nosort">Nama Lengkap</th>
 										<th class="table-plus datatable-nosort">Jurusan</th>
-										<th class="table-plus datatable-nosort">Kelas</th>
 										<th class="table-plus datatable-nosort">Topik</th>
 										<th class="table-plus datatable-nosort">Penelaah 1</th>
 										<th class="table-plus datatable-nosort">Penelaah 2</th>
@@ -626,7 +625,39 @@
 					</div>
 					<!-- Simple Datatable End -->
 
-					
+					<!-- Modal Pilih Penelaah -->
+					<div class="modal fade" id="modalPilihPenelaah" tabindex="-1" role="dialog" aria-labelledby="modalPilihPenelaahLabel" aria-hidden="true">
+						<div class="modal-dialog" role="document">
+							<div class="modal-content">
+								<div class="modal-header">
+									<h5 class="modal-title" id="modalPilihPenelaahLabel">Pilih Penelaah</h5>
+									<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+										<span aria-hidden="true">&times;</span>
+									</button>
+								</div>
+								<div class="modal-body">
+									<input type="hidden" id="currentIcpId">
+									<div class="form-group">
+										<label for="penelaah1">Penelaah 1</label>
+										<select class="form-control" id="penelaah1">
+											<option value="">Pilih Penelaah 1</option>
+										</select>
+									</div>
+									<div class="form-group">
+										<label for="penelaah2">Penelaah 2</label>
+										<select class="form-control" id="penelaah2">
+											<option value="">Pilih Penelaah 2</option>
+										</select>
+									</div>
+								</div>
+								<div class="modal-footer">
+									<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+									<button type="button" class="btn btn-primary" onclick="savePenelaah()">Simpan</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
 					<!-- Monitoring Hasil Telaah ICP -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
@@ -931,6 +962,9 @@
 										<i class="dw dw-more"></i>
 									</a>
 									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+										<a class="dropdown-item" href="#" onclick="showPenelaahModal(${item.final_icp_id}, '${item.penelaah1_id || ''}', '${item.penelaah2_id || ''}')">
+											<i class="dw dw-user1"></i> Pilih Penelaah
+										</a>
 										<a class="dropdown-item" href="#" onclick="viewICP(${item.final_icp_id})">
 											<i class="dw dw-eye"></i> View
 										</a>
@@ -1023,6 +1057,7 @@
 			// Load data ICP saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
 				loadICPData();
+				loadDosenData(); // Load data dosen untuk dropdown
 
 				// Set username dari localStorage
 				const username = document.getElementById('username');
@@ -1030,6 +1065,111 @@
 					username.textContent = localStorage.getItem('username') || 'Admin';
 				}
 			});
+
+			// Fungsi untuk memuat data dosen
+			async function loadDosenData() {
+				try {
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					const response = await fetch('http://104.43.89.154:8081/users/dosen', {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+
+					if (!response.ok) {
+						throw new Error('Failed to fetch dosen data');
+					}
+
+					const result = await response.json();
+					if (result.status !== 'success') {
+						throw new Error(result.message || 'Failed to load dosen data');
+					}
+
+					// Populate dropdown penelaah
+					const penelaah1Select = document.getElementById('penelaah1');
+					const penelaah2Select = document.getElementById('penelaah2');
+					
+					// Clear existing options except the first one
+					penelaah1Select.innerHTML = '<option value="">Pilih Penelaah 1</option>';
+					penelaah2Select.innerHTML = '<option value="">Pilih Penelaah 2</option>';
+
+					// Add dosen options
+					result.data.forEach(dosen => {
+						const option1 = document.createElement('option');
+						option1.value = dosen.id;
+						option1.textContent = dosen.nama_lengkap;
+						penelaah1Select.appendChild(option1);
+
+						const option2 = document.createElement('option');
+						option2.value = dosen.id;
+						option2.textContent = dosen.nama_lengkap;
+						penelaah2Select.appendChild(option2);
+					});
+
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Failed to load dosen data', 'danger');
+				}
+			}
+
+			// Fungsi untuk menampilkan modal pilih penelaah
+			function showPenelaahModal(icpId, penelaah1Id = '', penelaah2Id = '') {
+				document.getElementById('currentIcpId').value = icpId;
+				
+				// Set nilai penelaah yang sudah ada (jika ada)
+				if (penelaah1Id) {
+					document.getElementById('penelaah1').value = penelaah1Id;
+				}
+				if (penelaah2Id) {
+					document.getElementById('penelaah2').value = penelaah2Id;
+				}
+				
+				$('#modalPilihPenelaah').modal('show');
+			}
+
+			// Fungsi untuk menyimpan penelaah
+			async function savePenelaah() {
+				try {
+					const icpId = document.getElementById('currentIcpId').value;
+					const penelaah1Id = document.getElementById('penelaah1').value;
+					const penelaah2Id = document.getElementById('penelaah2').value;
+
+					if (!penelaah1Id || !penelaah2Id) {
+						showAlert('Silakan pilih kedua penelaah', 'warning');
+						return;
+					}
+
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					const response = await fetch('http://104.43.89.154:8082/finalicp/penelaah', {
+						method: 'POST',
+						headers: {
+							'Authorization': `Bearer ${token}`,
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							icp_id: icpId,
+							penelaah1_id: penelaah1Id,
+							penelaah2_id: penelaah2Id
+						})
+					});
+
+					if (!response.ok) {
+						throw new Error('Failed to update penelaah');
+					}
+
+					const result = await response.json();
+					if (result.status === 'success') {
+						showAlert('Penelaah berhasil dipilih', 'success');
+						$('#modalPilihPenelaah').modal('hide');
+						loadICPData(); // Reload data
+					} else {
+						throw new Error(result.message || 'Failed to update penelaah');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Failed to update penelaah', 'danger');
+				}
+			}
 
 			// Load data monitoring telaah ICP
 			async function loadMonitoringTelaahData() {
