@@ -886,70 +886,69 @@
 
 			// Fungsi untuk memuat detail telaah ICP
 			async function loadDetailTelaah() {
-				const urlParams = new URLSearchParams(window.location.search);
-				const icpId = urlParams.get("id");
+				const params = new URLSearchParams(window.location.search);
+				const icpId = params.get('id');
+
+				console.log('Fetching detail telaah for ICP ID:', icpId);
 
 				if (!icpId) {
-					showAlert("ID ICP tidak valid", "danger");
+					showAlert('ID ICP tidak valid', 'danger');
 					return;
 				}
 
-				console.log("Fetching detail telaah for ICP ID:", icpId);
-
 				try {
-					const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					const response = await fetch(`http://104.43.89.154:8082/hasiltelaah/detail?id=${icpId}`, {
 						headers: {
-							"Authorization": `Bearer ${token}`,
-						},
+							'Authorization': `Bearer ${token}`
+						}
 					});
 
-					if (!response.ok) throw new Error("Gagal mengambil data detail ICP");
-
 					const result = await response.json();
-					console.log("Detail telaah ICP:", result);
+					console.log('Detail telaah ICP:', result);
 
-					if (result.status !== "success") throw new Error(result.message || "Gagal mengambil data");
-
-					const { taruna, telaah } = result.data;
-
-					// Isi data taruna
-					document.getElementById("nama-taruna").textContent = taruna.nama_lengkap || "-";
-					document.getElementById("jurusan").textContent = taruna.jurusan || "-";
-					document.getElementById("kelas").textContent = taruna.kelas || "-";
-					document.getElementById("topik-penelitian").textContent = taruna.topik_penelitian || "-";
-					document.getElementById("status-icp").textContent = taruna.status_icp || "-";
-					document.getElementById("status-telaah").textContent = taruna.status_telaah || "-";
-
-					// Isi tabel hasil telaah
-					const tableBody = document.querySelector(".data-table tbody");
-					tableBody.innerHTML = "";
-
-					if (Array.isArray(telaah) && telaah.length > 0) {
-						telaah.forEach((item) => {
-							const row = document.createElement("tr");
-
-							row.innerHTML = `
-								<td>${item.nama_dosen || "-"}</td>
-								<td><span class="badge badge-${item.status_telaah === "Lengkap" ? "success" : "warning"}">${item.status_telaah}</span></td>
-								<td>${item.tanggal_telaah || "-"}</td>
-								<td>
-									${item.file_path 
-										? `<a href="http://104.43.89.154:8082/uploads/${item.file_path}" target="_blank">Lihat File</a>` 
-										: "-"}
-								</td>
-							`;
-
-							tableBody.appendChild(row);
-						});
-					} else {
-						tableBody.innerHTML = `<tr><td colspan="4" class="text-center">Belum ada hasil telaah</td></tr>`;
+					if (result.status !== 'success') {
+						showAlert(result.message || 'Gagal mengambil data', 'danger');
+						return;
 					}
 
+					const { info: taruna, telaah } = result;
+
+					// Tampilkan info taruna
+					document.getElementById('nama-taruna').textContent = taruna.nama_taruna || '-';
+					document.getElementById('jurusan').textContent = taruna.jurusan || '-';
+					document.getElementById('kelas').textContent = taruna.kelas || '-';
+					document.getElementById('topik-penelitian').textContent = taruna.topik_penelitian || '-';
+					document.getElementById('status-icp').textContent = taruna.status_icp || '-';
+					document.getElementById('status-telaah').textContent = taruna.status_telaah || '-';
+
+					// Tampilkan info telaah
+					const tableBody = document.querySelector('.data-table tbody');
+					tableBody.innerHTML = '';
+
+					if (!telaah || telaah.length === 0) {
+						tableBody.innerHTML = `
+							<tr>
+								<td colspan="4" class="text-center">Belum ada data telaah</td>
+							</tr>
+						`;
+						return;
+					}
+
+					telaah.forEach(item => {
+						const row = document.createElement('tr');
+						row.innerHTML = `
+							<td>${item.nama_dosen || '-'}</td>
+							<td><span class="badge badge-${item.file_path ? 'success' : 'danger'}">${item.file_path ? 'Sudah Ditelaah' : 'Belum Ditelaah'}</span></td>
+							<td>${item.tanggal_telaah || '-'}</td>
+							<td>${item.file_path ? `<a href="${item.file_path}" target="_blank" class="btn btn-outline-primary btn-sm">Lihat File</a>` : '-'}</td>
+						`;
+						tableBody.appendChild(row);
+					});
+
 				} catch (error) {
-					console.error("Error:", error);
-					showAlert("Gagal memuat detail ICP: " + error.message, "danger");
+					console.error('Error fetching detail telaah:', error);
+					showAlert('Terjadi kesalahan saat mengambil data telaah', 'danger');
 				}
 			}
 
