@@ -863,16 +863,13 @@
 
 			let allICPData = []; // Menyimpan semua data ICP
 			let uniqueJurusan = new Set();
-			let uniqueKelas = new Set();
 
 			// Fungsi untuk memperbarui opsi filter
 			function updateFilterOptions() {
 				const jurusanFilter = document.getElementById('jurusanFilter');
-				const kelasFilter = document.getElementById('kelasFilter');
 
 				// Clear existing options except the first one
 				jurusanFilter.innerHTML = '<option value="">Semua Jurusan</option>';
-				kelasFilter.innerHTML = '<option value="">Semua Kelas</option>';
 
 				// Add unique jurusan options
 				[...uniqueJurusan].sort().forEach(jurusan => {
@@ -880,14 +877,6 @@
 					option.value = jurusan;
 					option.textContent = jurusan;
 					jurusanFilter.appendChild(option);
-				});
-
-				// Add unique kelas options
-				[...uniqueKelas].sort().forEach(kelas => {
-					const option = document.createElement('option');
-					option.value = kelas;
-					option.textContent = kelas;
-					kelasFilter.appendChild(option);
 				});
 			}
 
