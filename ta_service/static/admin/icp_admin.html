@@ -895,7 +895,7 @@
 			async function loadICPData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					console.log('Fetching ICP data...'); // Debug log
+					console.log('Fetching ICP data...');
 					
 					const response = await fetch('http://104.43.89.154:8082/finalicp/all', {
 						headers: {
@@ -908,14 +908,15 @@
 					}
 
 					const result = await response.json();
-					console.log('ICP Data received:', result); // Debug log
+					console.log('ICP Data received:', result);
 
 					if (result.status !== 'success') {
 						throw new Error(result.message || 'Failed to load data');
 					}
 
-					allICPData = result.data;
-					console.log('Processed ICP Data:', allICPData); // Debug log
+					// Pastikan data adalah array
+					allICPData = Array.isArray(result.data) ? result.data : [];
+					console.log('Processed ICP Data:', allICPData);
 
 					// Collect unique values
 					allICPData.forEach(item => {
@@ -936,16 +937,16 @@
 			// Fungsi untuk menampilkan data yang sudah difilter
 			function displayFilteredData() {
 				try {
-					console.log('Displaying filtered data...'); // Debug log
-					console.log('Current allICPData:', allICPData); // Debug log
+					console.log('Displaying filtered data...');
+					console.log('Current allICPData:', allICPData);
 					
 					const jurusanFilter = document.getElementById('jurusanFilter').value;
-					console.log('Selected jurusan filter:', jurusanFilter); // Debug log
+					console.log('Selected jurusan filter:', jurusanFilter);
 
 					const filteredData = allICPData.filter(item => {
 						return !jurusanFilter || item.jurusan === jurusanFilter;
 					});
-					console.log('Filtered data:', filteredData); // Debug log
+					console.log('Filtered data:', filteredData);
 
 					const tableBody = document.querySelector('.data-table tbody');
 					if (!tableBody) {
@@ -955,8 +956,7 @@
 					
 					tableBody.innerHTML = '';
 
-					if (filteredData.length === 0) {
-						// Tampilkan pesan jika tidak ada data
+					if (!Array.isArray(filteredData) || filteredData.length === 0) {
 						tableBody.innerHTML = `
 							<tr>
 								<td colspan="7" class="text-center">Tidak ada data yang tersedia</td>
@@ -966,12 +966,12 @@
 					}
 
 					filteredData.forEach(item => {
-						console.log('Processing item:', item); // Debug log
+						console.log('Processing item:', item);
 						const row = document.createElement('tr');
 						row.innerHTML = `
 							<td>${item.nama_lengkap || '-'}</td>
 							<td>${item.jurusan || '-'}</td>
-							<td>${item.topik_penelitian || '-'}</td>
+							<td>${item.topik_penelitian || item.topik || '-'}</td>
 							<td>${item.penelaah1_nama || '-'}</td>
 							<td>${item.penelaah2_nama || '-'}</td>
 							<td>
@@ -985,19 +985,19 @@
 										<i class="dw dw-more"></i>
 									</a>
 									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="showPenelaahModal(${item.id || item.final_icp_id}, '${item.penelaah1_id || ''}', '${item.penelaah2_id || ''}')">
+										<a class="dropdown-item" href="#" onclick="event.preventDefault(); showPenelaahModal(${item.taruna_id || item.id}, '${item.penelaah1_id || ''}', '${item.penelaah2_id || ''}')">
 											<i class="dw dw-user1"></i> Pilih Penelaah
 										</a>
-										<a class="dropdown-item" href="#" onclick="viewICP(${item.id || item.final_icp_id})">
+										<a class="dropdown-item" href="#" onclick="event.preventDefault(); viewICP(${item.taruna_id || item.id})">
 											<i class="dw dw-eye"></i> View
 										</a>
-										<a class="dropdown-item" href="#" onclick="downloadICP(${item.id || item.final_icp_id})">
+										<a class="dropdown-item" href="#" onclick="event.preventDefault(); downloadICP(${item.taruna_id || item.id})">
 											<i class="dw dw-download"></i> Download
 										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.id || item.final_icp_id}, 'approved')">
+										<a class="dropdown-item" href="#" onclick="event.preventDefault(); updateStatus(${item.taruna_id || item.id}, 'approved')">
 											<i class="dw dw-check"></i> Accept
 										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.id || item.final_icp_id}, 'rejected')">
+										<a class="dropdown-item" href="#" onclick="event.preventDefault(); updateStatus(${item.taruna_id || item.id}, 'rejected')">
 											<i class="dw dw-delete-3"></i> Reject
 										</a>
 									</div>
