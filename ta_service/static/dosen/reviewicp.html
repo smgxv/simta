@@ -905,6 +905,7 @@
 							if (dosen) {
 							localStorage.setItem('dosenID', dosen.id);
 							localStorage.setItem('dosenName', dosen.nama_lengkap);
+							fetchTarunaTopics(dosen.id);
 							console.log('DosenID set:', dosen.id); // Debug log
 							
 							// Update nama dosen di header
@@ -1246,10 +1247,6 @@
 			// Fungsi untuk mengambil data taruna dan topik penelitian berdasarkan penugasan penelaah
 			async function fetchTarunaTopics() {
 				try {
-					const dosenId = localStorage.getItem('dosenID'); // Ambil dari dosenID
-
-					console.log("Dosen ID:", dosenId); // Debug log
-
 					if (!dosenId || dosenId === 'null') {
 						console.error("Dosen ID tidak ditemukan di localStorage");
 						alert("Dosen ID tidak valid. Pastikan Anda sudah login sebagai dosen.");
@@ -1301,7 +1298,7 @@
 				}
 			}
 
-			document.addEventListener('DOMContentLoaded', fetchTarunaTopics);
+			// document.addEventListener('DOMContentLoaded', fetchTarunaTopics);
 
 			// Event listener untuk file input untuk upload hasil telaah ICP
 			document.getElementById('icpFile').addEventListener('change', function () {
