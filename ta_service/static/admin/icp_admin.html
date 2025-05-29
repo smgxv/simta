@@ -1073,6 +1073,7 @@
 			document.addEventListener('DOMContentLoaded', function() {
 				loadICPData();
 				loadDosenData(); // Load data dosen untuk dropdown
+				loadMonitoringTelaahData(); // Load monitoring data
 
 				// Set username dari localStorage
 				const username = document.getElementById('username');
@@ -1197,10 +1198,18 @@
 			// Load data monitoring telaah ICP
 			async function loadMonitoringTelaahData() {
 				try {
-					const response = await fetch('http://104.43.89.154:8082/hasiltelaah/monitoring');
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					const response = await fetch('http://104.43.89.154:8082/hasiltelaah/monitoring', {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+					
 					if (!response.ok) throw new Error('Gagal mengambil data monitoring telaah');
 
 					const result = await response.json();
+					console.log('Monitoring data:', result); // Debug log
+					
 					if (result.status !== 'success') throw new Error(result.message || 'Gagal memuat data telaah');
 
 					const tableBody = document.querySelector('#monitoringTable tbody');
@@ -1242,7 +1251,7 @@
 											<i class="dw dw-more"></i>
 										</a>
 										<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-											<a class="dropdown-item" href="#" onclick="viewTelaahDetails('${item.id}'); return false;">
+											<a class="dropdown-item" href="#" onclick="viewTelaahDetails('${item.final_icp_id}'); return false;">
 												<i class="dw dw-eye"></i> View Details
 											</a>
 										</div>
@@ -1254,7 +1263,7 @@
 
 				} catch (error) {
 					console.error('Error:', error);
-					alert('Gagal memuat data monitoring telaah ICP');
+					showAlert('Gagal memuat data monitoring telaah ICP: ' + error.message, 'danger');
 				}
 			}
 
