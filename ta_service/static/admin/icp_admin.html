@@ -895,6 +895,8 @@
 			async function loadICPData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					console.log('Fetching ICP data...'); // Debug log
+					
 					const response = await fetch('http://104.43.89.154:8082/finalicp/all', {
 						headers: {
 							'Authorization': `Bearer ${token}`
@@ -906,16 +908,18 @@
 					}
 
 					const result = await response.json();
+					console.log('ICP Data received:', result); // Debug log
+
 					if (result.status !== 'success') {
 						throw new Error(result.message || 'Failed to load data');
 					}
 
 					allICPData = result.data;
+					console.log('Processed ICP Data:', allICPData); // Debug log
 
 					// Collect unique values
 					allICPData.forEach(item => {
 						if (item.jurusan) uniqueJurusan.add(item.jurusan);
-						if (item.kelas) uniqueKelas.add(item.kelas);
 					});
 
 					// Update filter options
@@ -924,66 +928,88 @@
 					// Display data
 					displayFilteredData();
 				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to load ICP data', 'danger');
+					console.error('Error in loadICPData:', error);
+					showAlert('Failed to load ICP data: ' + error.message, 'danger');
 				}
 			}
 
 			// Fungsi untuk menampilkan data yang sudah difilter
 			function displayFilteredData() {
-				const jurusanFilter = document.getElementById('jurusanFilter').value;
-				const kelasFilter = document.getElementById('kelasFilter').value;
+				try {
+					console.log('Displaying filtered data...'); // Debug log
+					console.log('Current allICPData:', allICPData); // Debug log
+					
+					const jurusanFilter = document.getElementById('jurusanFilter').value;
+					console.log('Selected jurusan filter:', jurusanFilter); // Debug log
 
-				const filteredData = allICPData.filter(item => {
-					const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
-					const matchKelas = !kelasFilter || item.kelas === kelasFilter;
-					return matchJurusan && matchKelas;
-				});
+					const filteredData = allICPData.filter(item => {
+						return !jurusanFilter || item.jurusan === jurusanFilter;
+					});
+					console.log('Filtered data:', filteredData); // Debug log
 
-				const tableBody = document.querySelector('.data-table tbody');
-				tableBody.innerHTML = '';
+					const tableBody = document.querySelector('.data-table tbody');
+					if (!tableBody) {
+						console.error('Table body element not found!');
+						return;
+					}
+					
+					tableBody.innerHTML = '';
 
-				filteredData.forEach(item => {
-					const row = document.createElement('tr');
-					row.innerHTML = `
-						<td>${item.nama_lengkap || '-'}</td>
-						<td>${item.jurusan || '-'}</td>
-						<td>${item.kelas || '-'}</td>
-						<td>${item.topik_penelitian || '-'}</td>
-						<td>
-							${item.status ? 
-								`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
-								: '-'}
-						</td>
-						<td>
-							${item.final_icp_id > 0 ? 
-								`<div class="dropdown">
+					if (filteredData.length === 0) {
+						// Tampilkan pesan jika tidak ada data
+						tableBody.innerHTML = `
+							<tr>
+								<td colspan="7" class="text-center">Tidak ada data yang tersedia</td>
+							</tr>
+						`;
+						return;
+					}
+
+					filteredData.forEach(item => {
+						console.log('Processing item:', item); // Debug log
+						const row = document.createElement('tr');
+						row.innerHTML = `
+							<td>${item.nama_lengkap || '-'}</td>
+							<td>${item.jurusan || '-'}</td>
+							<td>${item.topik_penelitian || '-'}</td>
+							<td>${item.penelaah1_nama || '-'}</td>
+							<td>${item.penelaah2_nama || '-'}</td>
+							<td>
+								${item.status ? 
+									`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
+									: '-'}
+							</td>
+							<td>
+								<div class="dropdown">
 									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
 										<i class="dw dw-more"></i>
 									</a>
 									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="showPenelaahModal(${item.final_icp_id}, '${item.penelaah1_id || ''}', '${item.penelaah2_id || ''}')">
+										<a class="dropdown-item" href="#" onclick="showPenelaahModal(${item.id || item.final_icp_id}, '${item.penelaah1_id || ''}', '${item.penelaah2_id || ''}')">
 											<i class="dw dw-user1"></i> Pilih Penelaah
 										</a>
-										<a class="dropdown-item" href="#" onclick="viewICP(${item.final_icp_id})">
+										<a class="dropdown-item" href="#" onclick="viewICP(${item.id || item.final_icp_id})">
 											<i class="dw dw-eye"></i> View
 										</a>
-										<a class="dropdown-item" href="#" onclick="downloadICP(${item.final_icp_id})">
+										<a class="dropdown-item" href="#" onclick="downloadICP(${item.id || item.final_icp_id})">
 											<i class="dw dw-download"></i> Download
 										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_icp_id}, 'approved')">
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.id || item.final_icp_id}, 'approved')">
 											<i class="dw dw-check"></i> Accept
 										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_icp_id}, 'rejected')">
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.id || item.final_icp_id}, 'rejected')">
 											<i class="dw dw-delete-3"></i> Reject
 										</a>
 									</div>
-								</div>`
-								: '-'}
-						</td>
-					`;
-					tableBody.appendChild(row);
-				});
+								</div>
+							</td>
+						`;
+						tableBody.appendChild(row);
+					});
+				} catch (error) {
+					console.error('Error in displayFilteredData:', error);
+					showAlert('Error displaying data: ' + error.message, 'danger');
+				}
 			}
 
 			// Fungsi untuk menerapkan filter
