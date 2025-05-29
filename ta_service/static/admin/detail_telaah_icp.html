@@ -879,136 +879,88 @@
 				window.location.href = '/admin/profile';
 			}
 
-			// Fungsi untuk mendapatkan parameter dari URL
-			function getUrlParameter(name) {
-				name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-				var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-				var results = regex.exec(location.search);
-				return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-			}
+			// Fungsi untuk memuat detail telaah ICP
+			document.addEventListener("DOMContentLoaded", function () {
+				loadDetailTelaah();
+			});
 
-			// Fungsi untuk memuat data detail telaah ICP
-			async function loadTelaahDetails() {
+			// Fungsi untuk memuat detail telaah ICP
+			async function loadDetailTelaah() {
+				const urlParams = new URLSearchParams(window.location.search);
+				const icpId = urlParams.get("id");
+
+				if (!icpId) {
+					showAlert("ID ICP tidak valid", "danger");
+					return;
+				}
+
+				console.log("Fetching detail telaah for ICP ID:", icpId);
+
 				try {
-					const icpId = getUrlParameter('id');
-					if (!icpId) {
-						showAlert('ID ICP tidak ditemukan', 'danger');
-						return;
-					}
+					const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch(`http://104.43.89.154:8082/hasiltelaah/detail/${icpId}`, {
+					const response = await fetch(`http://104.43.89.154:8082/hasiltelaah/detail?id=${icpId}`, {
 						headers: {
-							'Authorization': `Bearer ${token}`
-						}
+							"Authorization": `Bearer ${token}`,
+						},
 					});
 
-					if (!response.ok) {
-						throw new Error('Failed to fetch telaah details');
-					}
+					if (!response.ok) throw new Error("Gagal mengambil data detail ICP");
 
 					const result = await response.json();
-					if (result.status !== 'success') {
-						throw new Error(result.message || 'Failed to load telaah details');
-					}
+					console.log("Detail telaah ICP:", result);
 
-					// Update informasi taruna
-					const data = result.data;
-					document.getElementById('nama-taruna').textContent = data.nama_taruna || '-';
-					document.getElementById('jurusan').textContent = data.jurusan || '-';
-					document.getElementById('kelas').textContent = data.kelas || '-';
-					document.getElementById('topik-penelitian').textContent = data.topik_penelitian || '-';
-					
-					// Update status dengan badge
-					const statusIcpElement = document.getElementById('status-icp');
-					statusIcpElement.innerHTML = `<span class="badge badge-${getStatusBadgeClass(data.status_icp)}">${data.status_icp || '-'}</span>`;
-					
-					const statusTelaahElement = document.getElementById('status-telaah');
-					statusTelaahElement.innerHTML = `<span class="badge badge-${getTelaahStatusBadgeClass(data.status_telaah)}">${data.status_telaah || '-'}</span>`;
+					if (result.status !== "success") throw new Error(result.message || "Gagal mengambil data");
 
-					// Update tabel hasil telaah
-					const tableBody = document.querySelector('.data-table tbody');
-					tableBody.innerHTML = '';
+					const { taruna, telaah } = result.data;
 
-					if (data.hasil_telaah && data.hasil_telaah.length > 0) {
-						data.hasil_telaah.forEach(telaah => {
-							const row = document.createElement('tr');
+					// Isi data taruna
+					document.getElementById("nama-taruna").textContent = taruna.nama_lengkap || "-";
+					document.getElementById("jurusan").textContent = taruna.jurusan || "-";
+					document.getElementById("kelas").textContent = taruna.kelas || "-";
+					document.getElementById("topik-penelitian").textContent = taruna.topik_penelitian || "-";
+					document.getElementById("status-icp").textContent = taruna.status_icp || "-";
+					document.getElementById("status-telaah").textContent = taruna.status_telaah || "-";
+
+					// Isi tabel hasil telaah
+					const tableBody = document.querySelector(".data-table tbody");
+					tableBody.innerHTML = "";
+
+					if (Array.isArray(telaah) && telaah.length > 0) {
+						telaah.forEach((item) => {
+							const row = document.createElement("tr");
+
 							row.innerHTML = `
-								<td>${telaah.nama_penelaah || '-'}</td>
-								<td><span class="badge badge-${getTelaahStatusBadgeClass(telaah.status)}">${telaah.status || '-'}</span></td>
-								<td>${formatDate(telaah.tanggal_telaah) || '-'}</td>
+								<td>${item.nama_dosen || "-"}</td>
+								<td><span class="badge badge-${item.status_telaah === "Lengkap" ? "success" : "warning"}">${item.status_telaah}</span></td>
+								<td>${item.tanggal_telaah || "-"}</td>
 								<td>
-									${telaah.file_telaah ? 
-										`<a href="#" onclick="downloadTelaah('${telaah.file_telaah}', ${telaah.id})" class="btn-download">
-											<i class="dw dw-download"></i> Download
-										</a>` 
-										: '-'}
+									${item.file_path 
+										? `<a href="http://104.43.89.154:8082/uploads/${item.file_path}" target="_blank">Lihat File</a>` 
+										: "-"}
 								</td>
 							`;
+
 							tableBody.appendChild(row);
 						});
 					} else {
-						tableBody.innerHTML = `
-							<tr>
-								<td colspan="4" class="text-center">Belum ada hasil telaah</td>
-							</tr>
-						`;
+						tableBody.innerHTML = `<tr><td colspan="4" class="text-center">Belum ada hasil telaah</td></tr>`;
 					}
 
 				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to load telaah details: ' + error.message, 'danger');
+					console.error("Error:", error);
+					showAlert("Gagal memuat detail ICP: " + error.message, "danger");
 				}
 			}
 
-			// Fungsi untuk format tanggal
-			function formatDate(dateString) {
-				if (!dateString) return '-';
-				const date = new Date(dateString);
-				return date.toLocaleDateString('id-ID', {
-					day: '2-digit',
-					month: 'long',
-					year: 'numeric'
-				});
+			// Fungsi notifikasi
+			function showAlert(message, type = "info") {
+				const alert = document.createElement("div");
+				alert.className = `alert alert-${type}`;
+				alert.textContent = message;
+				document.body.prepend(alert);
+				setTimeout(() => alert.remove(), 5000);
 			}
-
-			// Fungsi untuk menentukan class badge status ICP
-			function getStatusBadgeClass(status) {
-				switch (status?.toLowerCase()) {
-					case 'approved':
-						return 'success';
-					case 'rejected':
-						return 'danger';
-					case 'revision':
-						return 'warning';
-					default:
-						return 'secondary';
-				}
-			}
-
-			// Fungsi untuk menentukan class badge status telaah
-			function getTelaahStatusBadgeClass(status) {
-				if (!status) return 'secondary';
-				if (status.includes('✅')) return 'success';
-				if (status.includes('⚠️')) return 'warning';
-				return 'danger';
-			}
-
-			// Fungsi untuk download file telaah
-			async function downloadTelaah(fileName, telaahId) {
-				try {
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					window.open(`http://104.43.89.154:8082/hasiltelaah/download/${telaahId}?token=${token}`, '_blank');
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to download file: ' + error.message, 'danger');
-				}
-			}
-
-			// Load data saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', function() {
-				loadTelaahDetails();
-			});
 	
 		</script>
 

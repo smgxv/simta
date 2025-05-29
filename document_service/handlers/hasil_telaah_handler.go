@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -320,5 +321,86 @@ func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   results,
+	})
+}
+
+// Handler untuk mendapatkan detail telaah berdasarkan final_icp_id
+func GetDetailTelaahICPHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	finalICPIDStr := r.URL.Query().Get("id")
+	if finalICPIDStr == "" {
+		http.Error(w, "Missing id parameter", http.StatusBadRequest)
+		return
+	}
+
+	finalICPID, err := strconv.Atoi(finalICPIDStr)
+	if err != nil {
+		http.Error(w, "Invalid id parameter", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Ambil informasi umum taruna dan icp
+	infoQuery := `
+		SELECT u.nama_lengkap, fi.jurusan, fi.kelas, fi.topik_penelitian, fi.status
+		FROM final_icp fi
+		JOIN users u ON u.id = fi.user_id
+		WHERE fi.id = ?
+	`
+	var info struct {
+		NamaTaruna      string `json:"nama_taruna"`
+		Jurusan         string `json:"jurusan"`
+		Kelas           string `json:"kelas"`
+		TopikPenelitian string `json:"topik_penelitian"`
+		StatusICP       string `json:"status_icp"`
+	}
+	err = db.QueryRow(infoQuery, finalICPID).Scan(&info.NamaTaruna, &info.Jurusan, &info.Kelas, &info.TopikPenelitian, &info.StatusICP)
+	if err != nil {
+		http.Error(w, "ICP not found", http.StatusNotFound)
+		return
+	}
+
+	// Ambil informasi telaah dari hasil_telaah_icp
+	telaahQuery := `
+		SELECT d.nama_lengkap, ht.tanggal_telaah, ht.file_path
+		FROM hasil_telaah_icp ht
+		JOIN dosen d ON d.id = ht.dosen_id
+		WHERE ht.icp_id = ?
+	`
+
+	type Telaah struct {
+		NamaPenelaah  string `json:"nama_penelaah"`
+		TanggalTelaah string `json:"tanggal_telaah"`
+		FileTelaah    string `json:"file_telaah"`
+	}
+
+	var telaahList []Telaah
+	rows, err := db.Query(telaahQuery, finalICPID)
+	if err != nil {
+		http.Error(w, "Query error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var t Telaah
+		err := rows.Scan(&t.NamaPenelaah, &t.TanggalTelaah, &t.FileTelaah)
+		if err == nil {
+			telaahList = append(telaahList, t)
+		}
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"info":   info,
+		"telaah": telaahList,
 	})
 }

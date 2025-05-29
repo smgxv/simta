@@ -49,6 +49,7 @@ func main() {
 	r.HandleFunc("/hasiltelaah/upload", handlers.UploadHasilTelaahHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/hasiltelaah/taruna", handlers.GetHasilTelaahTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/hasiltelaah/monitoring", handlers.GetMonitoringTelaahHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/hasiltelaah/detail", handlers.GetDetailTelaahICPHandler).Methods("GET", "OPTIONS")
 
 	// Proposal routes
 	r.HandleFunc("/upload/proposal", handlers.UploadProposalHandler).Methods("POST", "OPTIONS")
