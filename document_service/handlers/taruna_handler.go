@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// GetTarunaTopicsHandler handles fetching taruna names and their research topics
+// Handler untuk mengambil taruna yang ditelaah
 func GetTarunaTopicsHandler(w http.ResponseWriter, r *http.Request) {
 	utils.EnableCors(&w)
 	if r.Method == "OPTIONS" {
@@ -16,9 +16,32 @@ func GetTarunaTopicsHandler(w http.ResponseWriter, r *http.Request) {
 
 	db, err := config.GetDB()
 	if err != nil {
-		http.Error(w, "Error connecting to database: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer db.Close()
+
+	// Gantilah angka 6 ini dengan ID dosen yang sedang login secara manual (jika perlu)
+	dosenUserID := 6
+
+	query := `
+	SELECT 
+		u.id AS user_id,
+		u.nama_lengkap,
+		fi.topik_penelitian
+	FROM penelaah_icp p
+	JOIN final_icp fi ON fi.id = p.final_icp_id
+	JOIN users u ON u.id = fi.user_id
+	WHERE p.penelaah_1_id = ? OR p.penelaah_2_id = ?
+	ORDER BY u.nama_lengkap ASC;
+	`
+
+	rows, err := db.Query(query, dosenUserID, dosenUserID)
+	if err != nil {
+		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
 	var results []struct {
 		UserID          int    `json:"user_id"`
@@ -26,37 +49,17 @@ func GetTarunaTopicsHandler(w http.ResponseWriter, r *http.Request) {
 		TopikPenelitian string `json:"topik_penelitian"`
 	}
 
-	query := `SELECT 
-		t.user_id,
-		t.nama_lengkap,
-		COALESCE(f.topik_penelitian, '') as topik_penelitian
-	FROM taruna t
-	LEFT JOIN final_proposal f ON t.user_id = f.user_id
-	ORDER BY t.nama_lengkap ASC`
-
-	rows, err := db.Query(query)
-	if err != nil {
-		http.Error(w, "Error fetching data: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
 	for rows.Next() {
-		var result struct {
+		var row struct {
 			UserID          int    `json:"user_id"`
 			NamaLengkap     string `json:"nama_lengkap"`
 			TopikPenelitian string `json:"topik_penelitian"`
 		}
-		if err := rows.Scan(&result.UserID, &result.NamaLengkap, &result.TopikPenelitian); err != nil {
-			http.Error(w, "Error scanning data: "+err.Error(), http.StatusInternalServerError)
+		if err := rows.Scan(&row.UserID, &row.NamaLengkap, &row.TopikPenelitian); err != nil {
+			http.Error(w, "Scan error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		results = append(results, result)
-	}
-
-	if err = rows.Err(); err != nil {
-		http.Error(w, "Error iterating rows: "+err.Error(), http.StatusInternalServerError)
-		return
+		results = append(results, row)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
