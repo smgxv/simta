@@ -1085,7 +1085,7 @@
 			async function loadDosenData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8081/users/dosen', {
+					const response = await fetch('http://104.43.89.154:8081/dosen', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
