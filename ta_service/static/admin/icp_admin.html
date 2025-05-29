@@ -974,19 +974,19 @@
 										<i class="dw dw-more"></i>
 									</a>
 									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); showPenelaahModal(${item.taruna_id || item.id}, '${item.penelaah1_id || ''}', '${item.penelaah2_id || ''}')">
+										<a class="dropdown-item" href="#" onclick="event.preventDefault(); showPenelaahModal(${item.id || item.final_icp_id}, '${item.penelaah1_id || ''}', '${item.penelaah2_id || ''}')">
 											<i class="dw dw-user1"></i> Pilih Penelaah
 										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); viewICP(${item.taruna_id || item.id})">
+										<a class="dropdown-item" href="#" onclick="event.preventDefault(); viewICP(${item.id || item.final_icp_id})">
 											<i class="dw dw-eye"></i> View
 										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); downloadICP(${item.taruna_id || item.id})">
+										<a class="dropdown-item" href="#" onclick="event.preventDefault(); downloadICP(${item.id || item.final_icp_id})">
 											<i class="dw dw-download"></i> Download
 										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); updateStatus(${item.taruna_id || item.id}, 'approved')">
+										<a class="dropdown-item" href="#" onclick="event.preventDefault(); updateStatus(${item.id || item.final_icp_id}, 'approved')">
 											<i class="dw dw-check"></i> Accept
 										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); updateStatus(${item.taruna_id || item.id}, 'rejected')">
+										<a class="dropdown-item" href="#" onclick="event.preventDefault(); updateStatus(${item.id || item.final_icp_id}, 'rejected')">
 											<i class="dw dw-delete-3"></i> Reject
 										</a>
 									</div>
@@ -1154,6 +1154,12 @@
 						return;
 					}
 
+					// Dapatkan data ICP yang sedang diproses
+					const currentICP = allICPData.find(item => item.id === parseInt(icpId) || item.final_icp_id === parseInt(icpId));
+					if (!currentICP) {
+						throw new Error('Data ICP tidak ditemukan');
+					}
+
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					const response = await fetch('http://104.43.89.154:8082/finalicp/penelaah', {
 						method: 'POST',
@@ -1162,9 +1168,11 @@
 							'Content-Type': 'application/json'
 						},
 						body: JSON.stringify({
-							icp_id: icpId,
-							penelaah1_id: penelaah1Id,
-							penelaah2_id: penelaah2Id
+							final_icp_id: parseInt(icpId),
+							user_id: currentICP.user_id || currentICP.taruna_id,
+							penelaah1_id: parseInt(penelaah1Id),
+							penelaah2_id: parseInt(penelaah2Id),
+							topik_penelitian: currentICP.topik_penelitian || currentICP.topik || ''
 						})
 					});
 
@@ -1182,7 +1190,7 @@
 					}
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Failed to update penelaah', 'danger');
+					showAlert('Failed to update penelaah: ' + error.message, 'danger');
 				}
 			}
 

@@ -355,3 +355,72 @@ func DownloadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.ServeFile(w, r, filePath)
 }
+
+// Handler untuk mengatur penelaah ICP
+func SetPenelaahICPHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	var requestData struct {
+		FinalICPID  int    `json:"final_icp_id"`
+		UserID      int    `json:"user_id"`          // Taruna
+		Penelaah1ID int    `json:"penelaah1_id"`     // Dosen 1
+		Penelaah2ID int    `json:"penelaah2_id"`     // Dosen 2
+		Topik       string `json:"topik_penelitian"` // Bisa diambil dari final_icp jika perlu
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Cek apakah sudah ada entri penelaah untuk final_icp_id tersebut
+	var existingID int
+	checkQuery := `SELECT id FROM penelaah_icp WHERE final_icp_id = ?`
+	err = db.QueryRow(checkQuery, requestData.FinalICPID).Scan(&existingID)
+
+	if err != nil && err != sql.ErrNoRows {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err == sql.ErrNoRows {
+		// Insert baru
+		insertQuery := `
+			INSERT INTO penelaah_icp (final_icp_id, user_id, penelaah_1_id, penelaah_2_id, topik_penelitian)
+			VALUES (?, ?, ?, ?, ?)
+		`
+		_, err = db.Exec(insertQuery, requestData.FinalICPID, requestData.UserID, requestData.Penelaah1ID, requestData.Penelaah2ID, requestData.Topik)
+	} else {
+		// Update yang sudah ada
+		updateQuery := `
+			UPDATE penelaah_icp 
+			SET penelaah_1_id = ?, penelaah_2_id = ?, topik_penelitian = ?, updated_at = CURRENT_TIMESTAMP 
+			WHERE final_icp_id = ?
+		`
+		_, err = db.Exec(updateQuery, requestData.Penelaah1ID, requestData.Penelaah2ID, requestData.Topik, requestData.FinalICPID)
+	}
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "success",
+		"message": "Penelaah berhasil diatur",
+	})
+}
