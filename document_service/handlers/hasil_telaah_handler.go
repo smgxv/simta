@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"document_service/config"
 	"encoding/json"
 	"fmt"
@@ -329,32 +330,22 @@ func GetDetailTelaahICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
-	finalICPIDStr := r.URL.Query().Get("id")
-	if finalICPIDStr == "" {
-		http.Error(w, "Missing id parameter", http.StatusBadRequest)
-		return
-	}
-
-	finalICPID, err := strconv.Atoi(finalICPIDStr)
-	if err != nil {
-		http.Error(w, "Invalid id parameter", http.StatusBadRequest)
+	// Ambil parameter ?id=
+	icpIDStr := r.URL.Query().Get("id")
+	icpID, err := strconv.Atoi(icpIDStr)
+	if err != nil || icpID <= 0 {
+		http.Error(w, "ID ICP tidak valid", http.StatusBadRequest)
 		return
 	}
 
 	db, err := config.GetDB()
 	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
-	// Ambil informasi umum taruna dan icp
-	infoQuery := `
-		SELECT u.nama_lengkap, fi.jurusan, fi.kelas, fi.topik_penelitian, fi.status
-		FROM final_icp fi
-		JOIN users u ON u.id = fi.user_id
-		WHERE fi.id = ?
-	`
+	// Ambil info taruna dan ICP
 	var info struct {
 		NamaTaruna      string `json:"nama_taruna"`
 		Jurusan         string `json:"jurusan"`
@@ -362,45 +353,86 @@ func GetDetailTelaahICPHandler(w http.ResponseWriter, r *http.Request) {
 		TopikPenelitian string `json:"topik_penelitian"`
 		StatusICP       string `json:"status_icp"`
 	}
-	err = db.QueryRow(infoQuery, finalICPID).Scan(&info.NamaTaruna, &info.Jurusan, &info.Kelas, &info.TopikPenelitian, &info.StatusICP)
+	infoQuery := `
+		SELECT u.nama_lengkap, fi.jurusan, fi.kelas, fi.topik_penelitian, fi.status
+		FROM final_icp fi
+		JOIN users u ON u.id = fi.user_id
+		WHERE fi.id = ?
+	`
+	err = db.QueryRow(infoQuery, icpID).Scan(&info.NamaTaruna, &info.Jurusan, &info.Kelas, &info.TopikPenelitian, &info.StatusICP)
 	if err != nil {
-		http.Error(w, "ICP not found", http.StatusNotFound)
+		http.Error(w, "ICP tidak ditemukan", http.StatusNotFound)
 		return
 	}
 
-	// Ambil informasi telaah dari hasil_telaah_icp
+	// Ambil info penelaah dan status telaahnya
 	telaahQuery := `
 		SELECT d.nama_lengkap, ht.tanggal_telaah, ht.file_path
-		FROM hasil_telaah_icp ht
-		JOIN dosen d ON d.id = ht.dosen_id
-		WHERE ht.icp_id = ?
+		FROM penelaah_icp p
+		JOIN dosen d ON d.id = p.penelaah_1_id
+		LEFT JOIN hasil_telaah_icp ht ON ht.icp_id = p.final_icp_id AND ht.dosen_id = p.penelaah_1_id
+		WHERE p.final_icp_id = ?
+
+		UNION ALL
+
+		SELECT d.nama_lengkap, ht.tanggal_telaah, ht.file_path
+		FROM penelaah_icp p
+		JOIN dosen d ON d.id = p.penelaah_2_id
+		LEFT JOIN hasil_telaah_icp ht ON ht.icp_id = p.final_icp_id AND ht.dosen_id = p.penelaah_2_id
+		WHERE p.final_icp_id = ?
 	`
 
-	type Telaah struct {
-		NamaPenelaah  string `json:"nama_penelaah"`
-		TanggalTelaah string `json:"tanggal_telaah"`
-		FileTelaah    string `json:"file_telaah"`
-	}
-
-	var telaahList []Telaah
-	rows, err := db.Query(telaahQuery, finalICPID)
+	rows, err := db.Query(telaahQuery, icpID, icpID)
 	if err != nil {
-		http.Error(w, "Query error", http.StatusInternalServerError)
+		http.Error(w, "Gagal mengambil data telaah", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
+	type TelaahItem struct {
+		NamaDosen     string `json:"nama_dosen"`
+		TanggalTelaah string `json:"tanggal_telaah"`
+		FilePath      string `json:"file_path"`
+	}
+	var telaahList []TelaahItem
+	telaahCount := 0
+
 	for rows.Next() {
-		var t Telaah
-		err := rows.Scan(&t.NamaPenelaah, &t.TanggalTelaah, &t.FileTelaah)
-		if err == nil {
-			telaahList = append(telaahList, t)
+		var item TelaahItem
+		var tanggal sql.NullString
+		var file sql.NullString
+
+		if err := rows.Scan(&item.NamaDosen, &tanggal, &file); err == nil {
+			if tanggal.Valid {
+				item.TanggalTelaah = tanggal.String
+				telaahCount++
+			}
+			if file.Valid {
+				item.FilePath = file.String
+			}
+			telaahList = append(telaahList, item)
 		}
 	}
 
+	// Tentukan status telaah berdasarkan jumlah
+	statusTelaah := "❌ Belum Ditelaah"
+	if telaahCount == 2 {
+		statusTelaah = "✅ Lengkap"
+	} else if telaahCount == 1 {
+		statusTelaah = "⚠️ Kurang 1 Telaah"
+	}
+
+	// Keluarkan JSON
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"info":   info,
+		"info": map[string]interface{}{
+			"nama_taruna":      info.NamaTaruna,
+			"jurusan":          info.Jurusan,
+			"kelas":            info.Kelas,
+			"topik_penelitian": info.TopikPenelitian,
+			"status_icp":       info.StatusICP,
+			"status_telaah":    statusTelaah,
+		},
 		"telaah": telaahList,
 	})
 }
