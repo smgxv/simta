@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>SIMTA - Idea Concept Project</title>
+		<title>SIMTA - Detail Telaah icp_id</title>
 
 		<!-- Site favicon -->
 		<link
@@ -77,8 +77,60 @@
 				color: #842029;
 			}
 
-			.table-responsive {
-				overflow-x: auto;
+			.detail-section {
+				background: #fff;
+				padding: 20px;
+				border-radius: 5px;
+				box-shadow: 0 0 28px rgba(0,0,0,0.08);
+				margin-bottom: 20px;
+			}
+
+			.section-title {
+				font-size: 1.2em;
+				font-weight: 600;
+				color: #1b00ff;
+				margin-bottom: 15px;
+				padding-bottom: 10px;
+				border-bottom: 1px solid #e5e5e5;
+			}
+
+			.info-table {
+				width: 100%;
+			}
+
+			.info-table td {
+				padding: 8px 0;
+			}
+
+			.info-table td:first-child {
+				width: 200px;
+				color: #666;
+			}
+
+			.badge-empty {
+				background-color: #dc3545;
+				color: white;
+				padding: 5px 10px;
+				border-radius: 4px;
+			}
+
+			.badge-exists {
+				background-color: #28a745;
+				color: white;
+				padding: 5px 10px;
+				border-radius: 4px;
+			}
+
+			.btn-download {
+				display: inline-block;
+				padding: 5px 10px;
+				color: #1b00ff;
+				text-decoration: none;
+				margin-left: 10px;
+			}
+
+			.btn-download:hover {
+				text-decoration: underline;
 			}
 		</style>
 
@@ -536,7 +588,7 @@
 								><span class="mtext">List ICP</span>
 							</a>
 						</li>
-
+						
 						<li>
 							<a href="/admin/listproposal" class="dropdown-toggle no-arrow">
 								<span class="micon bi bi-file-earmark-text"></span
@@ -573,34 +625,57 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Idea Concept Project</h4>
+									<h4>Detail Telaah icp_id</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
 										<li class="breadcrumb-item">
-											<a href="/admin/dashboard">Home</a>
+											<a href="/admin/listicp">List ICP</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											ICP
+											Detail Telaah ICP
 										</li>
 									</ol>
 								</nav>
 							</div>
-							
 						</div>
 					</div>
 
-					<!-- Simple Datatable start -->
+					<!-- Informasi Taruna -->
+					<div class="detail-section">
+						<div class="section-title">Informasi Taruna</div>
+						<table class="info-table">
+							<tr>
+								<td>Nama Taruna</td>
+								<td>: <span id="nama-taruna">-</span></td>
+							</tr>
+							<tr>
+								<td>Jurusan</td>
+								<td>: <span id="jurusan">-</span></td>
+							</tr>
+							<tr>
+								<td>Kelas</td>
+								<td>: <span id="kelas">-</span></td>
+							</tr>
+							<tr>
+								<td>Topik Penelitian</td>
+								<td>: <span id="topik-penelitian">-</span></td>
+							</tr>
+							<tr>
+								<td>Status ICP</td>
+								<td>: <span id="status-icp">-</span></td>
+							</tr>
+							<tr>
+								<td>Status Telaah</td>
+								<td>: <span id="status-telaah">-</span></td>
+							</tr>
+						</table>
+					</div>
+
+					<!-- Informasi Telaah ICP -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">List ICP Taruna</h4>
-						</div>
-
-						<!-- Filter hanya jurusan -->
-						<div class="col-md-3 col-sm-12 mb-3">
-							<select class="form-control" id="jurusanFilter" onchange="applyFilters()">
-								<option value="">Semua Jurusan</option>
-							</select>
+							<h4 class="text-blue h4">Informasi Telaah ICP</h4>
 						</div>
 
 						<!-- Wrapper scroll horizontal -->
@@ -608,13 +683,10 @@
 							<table class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
-										<th class="table-plus datatable-nosort">Nama Lengkap</th>
-										<th class="table-plus datatable-nosort">Jurusan</th>
-										<th class="table-plus datatable-nosort">Topik</th>
-										<th class="table-plus datatable-nosort">Penelaah 1</th>
-										<th class="table-plus datatable-nosort">Penelaah 2</th>
-										<th class="table-plus datatable-nosort">Status</th>
-										<th class="datatable-nosort">Action</th>
+										<th class="table-plus datatable-nosort">Nama Penelaah</th>
+										<th class="table-plus datatable-nosort">Status Telaah</th>
+										<th class="table-plus datatable-nosort">Tanggal Telaah</th>
+										<th class="table-plus datatable-nosort">File Telaah</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -624,65 +696,6 @@
 						</div>
 					</div>
 					<!-- Simple Datatable End -->
-
-					<!-- Modal Pilih Penelaah -->
-					<div class="modal fade" id="modalPilihPenelaah" tabindex="-1" role="dialog" aria-labelledby="modalPilihPenelaahLabel" aria-hidden="true">
-						<div class="modal-dialog" role="document">
-							<div class="modal-content">
-								<div class="modal-header">
-									<h5 class="modal-title" id="modalPilihPenelaahLabel">Pilih Penelaah</h5>
-									<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-										<span aria-hidden="true">&times;</span>
-									</button>
-								</div>
-								<div class="modal-body">
-									<input type="hidden" id="currentIcpId">
-									<div class="form-group">
-										<label for="penelaah1">Penelaah 1</label>
-										<select class="form-control" id="penelaah1">
-											<option value="">Pilih Penelaah 1</option>
-										</select>
-									</div>
-									<div class="form-group">
-										<label for="penelaah2">Penelaah 2</label>
-										<select class="form-control" id="penelaah2">
-											<option value="">Pilih Penelaah 2</option>
-										</select>
-									</div>
-								</div>
-								<div class="modal-footer">
-									<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-									<button type="button" class="btn btn-primary" onclick="savePenelaah()">Simpan</button>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<!-- Monitoring Hasil Telaah ICP -->
-					<div class="card-box mb-30">
-						<div class="pd-20">
-							<h4 class="text-blue h4">Monitoring Hasil Telaah ICP</h4>
-							<p class="mb-0">Daftar hasil telaah ICP untuk semua taruna</p>
-						</div>
-						<div class="pb-20">
-							<table id="monitoringTable"  class="data-table table stripe hover nowrap">
-								<thead>
-									<tr>
-										<th>Nama Taruna</th>
-										<th>Jurusan</th>
-										<th>Topik Penelitian</th>
-										<th>Status ICP</th>
-										<th>Jumlah Telaah</th>
-										<th>Status Telaah</th>
-										<th>Action</th>
-									</tr>
-								</thead>
-								<tbody>
-								</tbody>
-							</table>
-						</div>
-					</div>
-					<!-- End Monitoring Hasil Telaah ICP -->
 
 				</div>
 
@@ -861,152 +874,105 @@
 				}, 5000);
 			}
 
-			let allICPData = []; // Menyimpan semua data ICP
-			let uniqueJurusan = new Set();
-
-			// Fungsi untuk memperbarui opsi filter
-			function updateFilterOptions() {
-				const jurusanFilter = document.getElementById('jurusanFilter');
-
-				// Clear existing options except the first one
-				jurusanFilter.innerHTML = '<option value="">Semua Jurusan</option>';
-
-				// Add unique jurusan options
-				[...uniqueJurusan].sort().forEach(jurusan => {
-					const option = document.createElement('option');
-					option.value = jurusan;
-					option.textContent = jurusan;
-					jurusanFilter.appendChild(option);
-				});
+			// Fungsi untuk redirect ke profile
+			function redirectToProfile() {
+				window.location.href = '/admin/profile';
 			}
 
-			// Fungsi untuk memuat data ICP
-			async function loadICPData() {
+			// Fungsi untuk mendapatkan parameter dari URL
+			function getUrlParameter(name) {
+				name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+				var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+				var results = regex.exec(location.search);
+				return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+			}
+
+			// Fungsi untuk memuat data detail telaah ICP
+			async function loadTelaahDetails() {
 				try {
+					const icpId = getUrlParameter('id');
+					if (!icpId) {
+						showAlert('ID ICP tidak ditemukan', 'danger');
+						return;
+					}
+
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					console.log('Fetching ICP data...');
-					
-					const response = await fetch('http://104.43.89.154:8082/finalicp/all', {
+					const response = await fetch(`http://104.43.89.154:8082/hasiltelaah/detail/${icpId}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
 					});
 
 					if (!response.ok) {
-						throw new Error('Failed to fetch ICP data');
+						throw new Error('Failed to fetch telaah details');
 					}
 
 					const result = await response.json();
-					console.log('ICP Data received:', result);
-
 					if (result.status !== 'success') {
-						throw new Error(result.message || 'Failed to load data');
+						throw new Error(result.message || 'Failed to load telaah details');
 					}
 
-					// Pastikan data adalah array
-					allICPData = Array.isArray(result.data) ? result.data : [];
-					console.log('Processed ICP Data:', allICPData);
-
-					// Collect unique values
-					allICPData.forEach(item => {
-						if (item.jurusan) uniqueJurusan.add(item.jurusan);
-					});
-
-					// Update filter options
-					updateFilterOptions();
+					// Update informasi taruna
+					const data = result.data;
+					document.getElementById('nama-taruna').textContent = data.nama_taruna || '-';
+					document.getElementById('jurusan').textContent = data.jurusan || '-';
+					document.getElementById('kelas').textContent = data.kelas || '-';
+					document.getElementById('topik-penelitian').textContent = data.topik_penelitian || '-';
 					
-					// Display data
-					displayFilteredData();
-				} catch (error) {
-					console.error('Error in loadICPData:', error);
-					showAlert('Failed to load ICP data: ' + error.message, 'danger');
-				}
-			}
-
-			// Fungsi untuk menampilkan data yang sudah difilter
-			function displayFilteredData() {
-				try {
-					console.log('Displaying filtered data...');
-					console.log('Current allICPData:', allICPData);
+					// Update status dengan badge
+					const statusIcpElement = document.getElementById('status-icp');
+					statusIcpElement.innerHTML = `<span class="badge badge-${getStatusBadgeClass(data.status_icp)}">${data.status_icp || '-'}</span>`;
 					
-					const jurusanFilter = document.getElementById('jurusanFilter').value;
-					console.log('Selected jurusan filter:', jurusanFilter);
+					const statusTelaahElement = document.getElementById('status-telaah');
+					statusTelaahElement.innerHTML = `<span class="badge badge-${getTelaahStatusBadgeClass(data.status_telaah)}">${data.status_telaah || '-'}</span>`;
 
-					const filteredData = allICPData.filter(item => {
-						return !jurusanFilter || item.jurusan === jurusanFilter;
-					});
-					console.log('Filtered data:', filteredData);
-
+					// Update tabel hasil telaah
 					const tableBody = document.querySelector('.data-table tbody');
-					if (!tableBody) {
-						console.error('Table body element not found!');
-						return;
-					}
-					
 					tableBody.innerHTML = '';
 
-					if (!Array.isArray(filteredData) || filteredData.length === 0) {
+					if (data.hasil_telaah && data.hasil_telaah.length > 0) {
+						data.hasil_telaah.forEach(telaah => {
+							const row = document.createElement('tr');
+							row.innerHTML = `
+								<td>${telaah.nama_penelaah || '-'}</td>
+								<td><span class="badge badge-${getTelaahStatusBadgeClass(telaah.status)}">${telaah.status || '-'}</span></td>
+								<td>${formatDate(telaah.tanggal_telaah) || '-'}</td>
+								<td>
+									${telaah.file_telaah ? 
+										`<a href="#" onclick="downloadTelaah('${telaah.file_telaah}', ${telaah.id})" class="btn-download">
+											<i class="dw dw-download"></i> Download
+										</a>` 
+										: '-'}
+								</td>
+							`;
+							tableBody.appendChild(row);
+						});
+					} else {
 						tableBody.innerHTML = `
 							<tr>
-								<td colspan="7" class="text-center">Tidak ada data yang tersedia</td>
+								<td colspan="4" class="text-center">Belum ada hasil telaah</td>
 							</tr>
 						`;
-						return;
 					}
 
-					filteredData.forEach(item => {
-						console.log('Processing item:', item);
-						const row = document.createElement('tr');
-						row.innerHTML = `
-							<td>${item.nama_lengkap || '-'}</td>
-							<td>${item.jurusan || '-'}</td>
-							<td>${item.topik_penelitian || item.topik || '-'}</td>
-							<td>${item.penelaah1_nama || '-'}</td>
-							<td>${item.penelaah2_nama || '-'}</td>
-							<td>
-								${item.status ? 
-									`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
-									: '-'}
-							</td>
-							<td>
-								<div class="dropdown">
-									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-										<i class="dw dw-more"></i>
-									</a>
-									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); showPenelaahModal(${item.id || item.final_icp_id}, '${item.penelaah1_id || ''}', '${item.penelaah2_id || ''}')">
-											<i class="dw dw-user1"></i> Pilih Penelaah
-										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); viewICP(${item.id || item.final_icp_id})">
-											<i class="dw dw-eye"></i> View
-										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); downloadICP(${item.id || item.final_icp_id})">
-											<i class="dw dw-download"></i> Download
-										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); updateStatus(${item.id || item.final_icp_id}, 'approved')">
-											<i class="dw dw-check"></i> Accept
-										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); updateStatus(${item.id || item.final_icp_id}, 'rejected')">
-											<i class="dw dw-delete-3"></i> Reject
-										</a>
-									</div>
-								</div>
-							</td>
-						`;
-						tableBody.appendChild(row);
-					});
 				} catch (error) {
-					console.error('Error in displayFilteredData:', error);
-					showAlert('Error displaying data: ' + error.message, 'danger');
+					console.error('Error:', error);
+					showAlert('Failed to load telaah details: ' + error.message, 'danger');
 				}
 			}
 
-			// Fungsi untuk menerapkan filter
-			function applyFilters() {
-				displayFilteredData();
+			// Fungsi untuk format tanggal
+			function formatDate(dateString) {
+				if (!dateString) return '-';
+				const date = new Date(dateString);
+				return date.toLocaleDateString('id-ID', {
+					day: '2-digit',
+					month: 'long',
+					year: 'numeric'
+				});
 			}
 
-			// Fungsi untuk menentukan class badge berdasarkan status
+			// Fungsi untuk menentukan class badge status ICP
 			function getStatusBadgeClass(status) {
 				switch (status?.toLowerCase()) {
 					case 'approved':
@@ -1016,261 +982,34 @@
 					case 'revision':
 						return 'warning';
 					default:
-						return 'warning';
+						return 'secondary';
 				}
 			}
 
-			// Fungsi untuk melihat detail ICP
-			function viewICP(icpId) {
-				window.location.href = `/admin/viewicp?id=${icpId}`;
+			// Fungsi untuk menentukan class badge status telaah
+			function getTelaahStatusBadgeClass(status) {
+				if (!status) return 'secondary';
+				if (status.includes('✅')) return 'success';
+				if (status.includes('⚠️')) return 'warning';
+				return 'danger';
 			}
 
-			// Fungsi untuk redirect ke profile
-			function redirectToProfile() {
-				window.location.href = '/admin/profile';
-			}
-
-			// Fungsi untuk mengupdate status ICP
-			async function updateStatus(id, status) {
+			// Fungsi untuk download file telaah
+			async function downloadTelaah(fileName, telaahId) {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finalicp/status', {
-						method: 'POST',
-						headers: {
-							'Authorization': `Bearer ${token}`,
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({
-							id: id,
-							status: status
-						})
-					});
-
-					if (!response.ok) {
-						throw new Error('Failed to update status');
-					}
-
-					const result = await response.json();
-					if (result.status === 'success') {
-						showAlert(`ICP berhasil di${status}`, 'success');
-						loadICPData(); // Reload data
-					} else {
-						throw new Error(result.message || 'Failed to update status');
-					}
+					window.open(`http://104.43.89.154:8082/hasiltelaah/download/${telaahId}?token=${token}`, '_blank');
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Failed to update status', 'danger');
+					showAlert('Failed to download file: ' + error.message, 'danger');
 				}
 			}
 
-			// Fungsi untuk download ICP
-			function downloadICP(id) {
-				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				window.open(`http://104.43.89.154:8082/finalicp/download/${id}?token=${token}`, '_blank');
-			}
-
-			// Load data ICP saat halaman dimuat
+			// Load data saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
-				loadICPData();
-				loadDosenData(); // Load data dosen untuk dropdown
-
-				// Set username dari localStorage
-				const username = document.getElementById('username');
-				if (username) {
-					username.textContent = localStorage.getItem('username') || 'Admin';
-				}
+				loadTelaahDetails();
 			});
-
-			// Fungsi untuk memuat data dosen
-			async function loadDosenData() {
-				try {
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8081/dosen', {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-
-					if (!response.ok) {
-						throw new Error('Failed to fetch dosen data');
-					}
-
-					const result = await response.json();
-					if (result.status !== 'success') {
-						throw new Error(result.message || 'Failed to load dosen data');
-					}
-
-					// Populate dropdown penelaah
-					const penelaah1Select = document.getElementById('penelaah1');
-					const penelaah2Select = document.getElementById('penelaah2');
-					
-					// Clear existing options except the first one
-					penelaah1Select.innerHTML = '<option value="">Pilih Penelaah 1</option>';
-					penelaah2Select.innerHTML = '<option value="">Pilih Penelaah 2</option>';
-
-					// Add dosen options
-					result.data.forEach(dosen => {
-						const option1 = document.createElement('option');
-						option1.value = dosen.id;
-						option1.textContent = dosen.nama_lengkap;
-						penelaah1Select.appendChild(option1);
-
-						const option2 = document.createElement('option');
-						option2.value = dosen.id;
-						option2.textContent = dosen.nama_lengkap;
-						penelaah2Select.appendChild(option2);
-					});
-
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to load dosen data', 'danger');
-				}
-			}
-
-			// Fungsi untuk menampilkan modal pilih penelaah
-			function showPenelaahModal(icpId, penelaah1Id = '', penelaah2Id = '') {
-				document.getElementById('currentIcpId').value = icpId;
-				
-				// Set nilai penelaah yang sudah ada (jika ada)
-				if (penelaah1Id) {
-					document.getElementById('penelaah1').value = penelaah1Id;
-				}
-				if (penelaah2Id) {
-					document.getElementById('penelaah2').value = penelaah2Id;
-				}
-				
-				$('#modalPilihPenelaah').modal('show');
-			}
-
-			// Fungsi untuk menyimpan penelaah
-			async function savePenelaah() {
-				try {
-					const icpId = document.getElementById('currentIcpId').value;
-					const penelaah1Id = document.getElementById('penelaah1').value;
-					const penelaah2Id = document.getElementById('penelaah2').value;
-
-					if (!penelaah1Id || !penelaah2Id) {
-						showAlert('Silakan pilih kedua penelaah', 'warning');
-						return;
-					}
-
-					// Dapatkan data ICP yang sedang diproses
-					const currentICP = allICPData.find(item => item.id === parseInt(icpId) || item.final_icp_id === parseInt(icpId));
-					if (!currentICP) {
-						throw new Error('Data ICP tidak ditemukan');
-					}
-
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finalicp/penelaah', {
-						method: 'POST',
-						headers: {
-							'Authorization': `Bearer ${token}`,
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({
-							final_icp_id: parseInt(icpId),
-							user_id: currentICP.user_id || currentICP.taruna_id,
-							penelaah1_id: parseInt(penelaah1Id),
-							penelaah2_id: parseInt(penelaah2Id),
-							topik_penelitian: currentICP.topik_penelitian || currentICP.topik || ''
-						})
-					});
-
-					if (!response.ok) {
-						throw new Error('Failed to update penelaah');
-					}
-
-					const result = await response.json();
-					if (result.status === 'success') {
-						showAlert('Penelaah berhasil dipilih', 'success');
-						$('#modalPilihPenelaah').modal('hide');
-						loadICPData(); // Reload data
-					} else {
-						throw new Error(result.message || 'Failed to update penelaah');
-					}
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to update penelaah: ' + error.message, 'danger');
-				}
-			}
-
-			// Load data monitoring telaah ICP
-			async function loadMonitoringTelaahData() {
-				try {
-					const response = await fetch('http://104.43.89.154:8082/hasiltelaah/monitoring');
-					if (!response.ok) throw new Error('Gagal mengambil data monitoring telaah');
-
-					const result = await response.json();
-					if (result.status !== 'success') throw new Error(result.message || 'Gagal memuat data telaah');
-
-					const tableBody = document.querySelector('#monitoringTable tbody');
-					tableBody.innerHTML = '';
-
-					result.data.forEach(item => {
-						// Badge warna status ICP
-						let statusICPClass = '';
-						switch ((item.status_icp || '').toLowerCase()) {
-							case 'approved': statusICPClass = 'badge badge-success'; break;
-							case 'rejected': statusICPClass = 'badge badge-danger'; break;
-							case 'pending': statusICPClass = 'badge badge-warning'; break;
-							default: statusICPClass = 'badge badge-secondary';
-						}
-
-						// Warna status telaah
-						let statusTelaahClass = '';
-						if ((item.status_telaah || '').includes('✅')) {
-							statusTelaahClass = 'text-success';
-						} else if ((item.status_telaah || '').includes('⚠️')) {
-							statusTelaahClass = 'text-warning';
-						} else {
-							statusTelaahClass = 'text-danger';
-						}
-
-						// Tambahkan baris ke tabel
-						tableBody.innerHTML += `
-							<tr>
-								<td>${item.nama_taruna || '-'}</td>
-								<td>${item.jurusan || '-'}</td>
-								<td>${item.topik_penelitian || '-'}</td>
-								<td><span class="${statusICPClass}">${item.status_icp || '-'}</span></td>
-								<td class="text-center">${item.jumlah_telaah ?? 0}</td>
-								<td><span class="${statusTelaahClass}">${item.status_telaah || '-'}</span></td>
-								<td>
-									<div class="dropdown">
-										<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-											href="#" role="button" data-toggle="dropdown">
-											<i class="dw dw-more"></i>
-										</a>
-										<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-											<a class="dropdown-item" href="#" onclick="viewTelaahDetails(${item.final_icp_id}); return false;">
-												<i class="dw dw-eye"></i> View Details
-											</a>
-										</div>
-									</div>
-								</td>
-							</tr>
-						`;
-					});
-
-				} catch (error) {
-					console.error('Error:', error);
-					alert('Gagal memuat data monitoring telaah ICP');
-				}
-			}
-
-			// Jalankan saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', loadMonitoringTelaahData);
-
-			// Fungsi untuk menampilkan detail telaah ICP
-			function viewTelaahDetails(icpId) {
-				console.log('Viewing details for ICP ID:', icpId);
-				if (!icpId || icpId === 'undefined' || icpId === 'null') {
-					showAlert('ID ICP tidak valid', 'danger');
-					return;
-				}
-				window.location.href = `/admin/detail_telaah_icp?id=${icpId}`;
-			}
-			
+	
 		</script>
 
 		<style>

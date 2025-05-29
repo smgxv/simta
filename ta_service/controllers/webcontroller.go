@@ -690,3 +690,31 @@ func DetailBerkasProposal(w http.ResponseWriter, r *http.Request) {
 	// Serve the admin Proposal HTML file
 	http.ServeFile(w, r, "static/admin/detail_berkas_seminar_proposal.html")
 }
+
+// Handler untuk halaman Detail Telaah ICP admin
+func DetailTelaahICP(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "admin" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the admin Proposal HTML file
+	http.ServeFile(w, r, "static/admin/detail_telaah_icp.html")
+}
