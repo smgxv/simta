@@ -974,14 +974,14 @@
 			}
 
 			// Fungsi untuk menampilkan modal pilih dosen pembimbing
-			function showDosenPembimbingModal(icpId, dosenPembimbingId = '') {
-				document.getElementById('currentIcpId').value = icpId;
-				
-				// Set nilai dosen pembimbing yang sudah ada (jika ada)
+			function showDosenPembimbingModal(tarunaId, dosenPembimbingId = '') {
+				document.getElementById('currentTarunaId').value = tarunaId;
+
 				if (dosenPembimbingId) {
 					document.getElementById('dosenPembimbing').value = dosenPembimbingId;
 				}
-				
+
+				// Pastikan jQuery sudah diload, lalu tampilkan modal
 				$('#modalPilihDosenPembimbing').modal('show');
 			}
 
