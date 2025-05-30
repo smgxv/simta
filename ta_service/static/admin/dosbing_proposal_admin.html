@@ -800,7 +800,7 @@
 				});
 
 				// Validasi token dengan server
-				fetch('http://104.43.89.154:8080/taruna/dashboard', { // Ubah ke endpoint taruna
+				fetch('http://104.43.89.154:8080/admin/dashboard', {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -859,7 +859,7 @@
 			async function loadTarunaData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8081/taruna', {
+					const response = await fetch('http://104.43.89.154:8081/taruna/topik', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
