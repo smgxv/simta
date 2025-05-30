@@ -1247,13 +1247,14 @@
 			// Fungsi untuk mengambil data taruna dan topik penelitian berdasarkan penugasan penelaah
 			async function fetchTarunaTopics() {
 				try {
-					if (!dosenId || dosenId === 'null') {
+					const dosenID = localStorage.getItem('dosenID');
+					if (!dosenID) {
 						console.error("Dosen ID tidak ditemukan di localStorage");
 						alert("Dosen ID tidak valid. Pastikan Anda sudah login sebagai dosen.");
 						return;
 					}
 
-					const response = await fetch(`http://104.43.89.154:8082/finalicp/taruna-topics?dosen_id=${dosenId}`);
+					const response = await fetch(`http://104.43.89.154:8082/document/taruna-topics?dosen_id=${dosenID}`);
 					const data = await response.json();
 
 					if (!data || !Array.isArray(data)) {
@@ -1297,8 +1298,6 @@
 					alert("Terjadi kesalahan saat mengambil data taruna.");
 				}
 			}
-
-			// document.addEventListener('DOMContentLoaded', fetchTarunaTopics);
 
 			// Event listener untuk file input untuk upload hasil telaah ICP
 			document.getElementById('icpFile').addEventListener('change', function () {
