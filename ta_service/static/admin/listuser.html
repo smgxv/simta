@@ -538,6 +538,13 @@
 						</li>
 
 						<li>
+							<a href="/admin/dosbing_proposal" class="dropdown-toggle no-arrow">
+								<span class="micon bi bi-person-lines-fill"></span
+								><span class="mtext">List Pembimbing Proposal</span>
+							</a>
+						</li>
+
+						<li>
 							<a href="/admin/listproposal" class="dropdown-toggle no-arrow">
 								<span class="micon bi bi-file-earmark-text"></span
 								><span class="mtext">List Proposal</span>
@@ -655,6 +662,7 @@
 				}
 			}
 
+			// List User
 			document.addEventListener("DOMContentLoaded", function () {
 				const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 				
@@ -710,6 +718,7 @@
 				.catch(error => console.error("Error:", error));
 			});
 
+			// Logout
 			async function logout() {
 				try {
 					// Ambil token dari localStorage dan sessionStorage
@@ -754,6 +763,7 @@
 				}
 			}
 	
+			// Profile
 			document.addEventListener('DOMContentLoaded', function() {
 				// Cek token
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
