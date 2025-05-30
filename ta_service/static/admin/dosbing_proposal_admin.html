@@ -858,7 +858,7 @@
 			async function loadTarunaData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8081/taruna/topik', {
+					const response = await fetch('http://104.43.89.154:8081/taruna/dosbing', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -913,7 +913,7 @@
 						<td>${item.nama_lengkap || '-'}</td>
 						<td>${item.jurusan || '-'}</td>
 						<td>${item.kelas || '-'}</td>
-						<td>-</td> <!-- Dosen pembimbing kosong -->
+						<td>${item.dosen_pembimbing || '-'}</td>
 						<td>
 							<button class="btn btn-sm btn-primary" onclick="showDosenPembimbingModal(${item.id}, '')">
 								Pilih Dosen
