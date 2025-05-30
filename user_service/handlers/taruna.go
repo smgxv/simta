@@ -206,11 +206,9 @@ func GetTarunaWithTopik(w http.ResponseWriter, r *http.Request) {
 			t.id AS taruna_id,
 			t.nama_lengkap,
 			t.jurusan,
-			t.kelas,
-			f.topik_penelitian
+			t.kelas
 		FROM taruna t
 		JOIN users u ON t.user_id = u.id
-		LEFT JOIN final_icp f ON f.user_id = u.id
 		WHERE u.role = 'Taruna'
 	`
 
