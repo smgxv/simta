@@ -981,7 +981,7 @@
 			// Fungsi untuk menyimpan dosen pembimbing
 			async function savePembimbing() {
 				try {
-					const userId = parseInt(document.getElementById('currentTarunaId').value);
+					const tarunaId = parseInt(document.getElementById('currentTarunaId').value);
 					const dosenId = parseInt(document.getElementById('dosenPembimbing').value);
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
@@ -997,7 +997,7 @@
 							'Content-Type': 'application/json'
 						},
 						body: JSON.stringify({
-							user_id: userId,
+							taruna_id: tarunaId,
 							dosen_id: dosenId,
 							status: 'aktif'
 						})
