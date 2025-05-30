@@ -7,12 +7,12 @@ import (
 	"user_service/config"
 )
 
-type AssignDosbingRequest struct {
-	TarunaID int `json:"taruna_id"` // dari taruna.id
-	DosenID  int `json:"dosen_id"`  // dari dosen.id
+type AssignDosbingByNameRequest struct {
+	TarunaNama string `json:"taruna_nama"`
+	DosenID    int    `json:"dosen_id"`
 }
 
-func AssignDosbingProposal(w http.ResponseWriter, r *http.Request) {
+func AssignDosbingByNamaTaruna(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -27,7 +27,7 @@ func AssignDosbingProposal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req AssignDosbingRequest
+	var req AssignDosbingByNameRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
@@ -35,24 +35,24 @@ func AssignDosbingProposal(w http.ResponseWriter, r *http.Request) {
 
 	db, err := config.ConnectDB()
 	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
-	// Pastikan taruna.id → user_id valid
+	// Ambil user_id dari users berdasarkan nama_lengkap
 	var userID int
-	query := `SELECT user_id FROM taruna WHERE id = ?`
-	err = db.QueryRow(query, req.TarunaID).Scan(&userID)
+	query := `SELECT id FROM users WHERE nama_lengkap = ? LIMIT 1`
+	err = db.QueryRow(query, req.TarunaNama).Scan(&userID)
 	if err == sql.ErrNoRows {
-		http.Error(w, "Taruna not found", http.StatusNotFound)
+		http.Error(w, "Taruna tidak ditemukan", http.StatusNotFound)
 		return
 	} else if err != nil {
-		http.Error(w, "Query error", http.StatusInternalServerError)
+		http.Error(w, "Query gagal", http.StatusInternalServerError)
 		return
 	}
 
-	// Cek apakah dosbing sudah ada sebelumnya
+	// Insert/update dosbing_proposal
 	var existingID int
 	err = db.QueryRow("SELECT id FROM dosbing_proposal WHERE user_id = ?", userID).Scan(&existingID)
 
@@ -62,13 +62,11 @@ func AssignDosbingProposal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err == sql.ErrNoRows {
-		// Insert baru
 		_, err = db.Exec(`
 			INSERT INTO dosbing_proposal (user_id, dosen_id, tanggal_ditetapkan, status)
 			VALUES (?, ?, CURDATE(), 'aktif')
 		`, userID, req.DosenID)
 	} else {
-		// Update jika sudah ada
 		_, err = db.Exec(`
 			UPDATE dosbing_proposal 
 			SET dosen_id = ?, tanggal_ditetapkan = CURDATE(), status = 'aktif'
@@ -77,13 +75,13 @@ func AssignDosbingProposal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		http.Error(w, "Gagal menyimpan pembimbing", http.StatusInternalServerError)
+		http.Error(w, "Gagal menyimpan dosbing", http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]string{
 		"status":  "success",
-		"message": "Dosen pembimbing berhasil disimpan",
+		"message": "Pembimbing berhasil disimpan",
 	})
 }
 
