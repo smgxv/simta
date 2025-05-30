@@ -979,54 +979,46 @@
 			}
 
 			// Fungsi untuk menyimpan dosen pembimbing
-			async function saveDosenPembimbing() {
+			async function savePembimbing() {
 				try {
-					const icpId = document.getElementById('currentIcpId').value;
-					const dosenPembimbingId = document.getElementById('dosenPembimbing').value;
+					const userId = parseInt(document.getElementById('currentTarunaId').value);
+					const dosenId = parseInt(document.getElementById('dosenPembimbing').value);
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
-					if (!dosenPembimbingId) {
-						showAlert('Silakan pilih dosen pembimbing', 'warning');
+					if (!userId || !dosenId) {
+						showAlert('Pastikan semua field telah dipilih', 'warning');
 						return;
 					}
 
-					// Dapatkan data ICP yang sedang diproses
-					const currentICP = allICPData.find(item => item.id === parseInt(icpId) || item.final_icp_id === parseInt(icpId));
-					if (!currentICP) {
-						throw new Error('Data Taruna tidak ditemukan');
-					}
-
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8081/dosenpembimbing', {
+					const response = await fetch('http://104.43.89.154:8081/dosbing_proposal', {
 						method: 'POST',
 						headers: {
 							'Authorization': `Bearer ${token}`,
 							'Content-Type': 'application/json'
 						},
 						body: JSON.stringify({
-							final_icp_id: parseInt(icpId),
-							user_id: currentICP.user_id || currentICP.taruna_id,
-							dosen_id: parseInt(dosenPembimbingId),
-							topik_penelitian: currentICP.topik_penelitian || currentICP.topik || ''
+							user_id: userId,
+							dosen_id: dosenId,
+							status: 'aktif'
 						})
 					});
 
-					if (!response.ok) {
-						throw new Error('Failed to update dosen pembimbing');
+					const result = await response.json();
+
+					if (!response.ok || result.status !== 'success') {
+						throw new Error(result.message || 'Gagal menyimpan dosbing');
 					}
 
-					const result = await response.json();
-					if (result.status === 'success') {
-						showAlert('Dosen pembimbing berhasil dipilih', 'success');
-						$('#modalPilihDosenPembimbing').modal('hide');
-						loadTarunaData(); // Reload data
-					} else {
-						throw new Error(result.message || 'Failed to update dosen pembimbing');
-					}	
+					showAlert('Dosen pembimbing berhasil disimpan', 'success');
+					$('#modalPilihDosenPembimbing').modal('hide');
+					loadTarunaData(); // reload list taruna setelah simpan
+
 				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to update dosen pembimbing: ' + error.message, 'danger');
+					console.error('Error saving dosbing:', error);
+					showAlert('Gagal menyimpan dosen pembimbing: ' + error.message, 'danger');
 				}
 			}
+
 
 		</script>
 
