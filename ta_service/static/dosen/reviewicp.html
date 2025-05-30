@@ -1255,7 +1255,7 @@
 					}
 
 					console.log('Fetching taruna topics for dosenID:', dosenID);
-					const response = await fetch(`http://104.43.89.154:8082/document/taruna-topics?dosen_id=${dosenID}`);
+					const response = await fetch(`http://104.43.89.154:8081/finalicp/taruna-topics?dosen_id=${dosenID}`);
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
