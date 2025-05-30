@@ -2,7 +2,7 @@
 package entities
 
 type DosbingProposal struct {
-	UserID  int    `json:"user_id"`
-	DosenID int    `json:"dosen_id"`
-	Status  string `json:"status,omitempty"` // optional input
+	TarunaID int    `json:"taruna_id"` // Ganti jadi taruna_id
+	DosenID  int    `json:"dosen_id"`
+	Status   string `json:"status,omitempty"`
 }
