@@ -222,19 +222,18 @@ func GetTarunaWithTopik(w http.ResponseWriter, r *http.Request) {
 	var tarunas []map[string]interface{}
 	for rows.Next() {
 		var id int
-		var nama, jurusan, kelas, topik sql.NullString
+		var nama, jurusan, kelas sql.NullString
 
-		if err := rows.Scan(&id, &nama, &jurusan, &kelas, &topik); err != nil {
+		if err := rows.Scan(&id, &nama, &jurusan, &kelas); err != nil {
 			http.Error(w, "Data scan error", http.StatusInternalServerError)
 			return
 		}
 
 		taruna := map[string]interface{}{
-			"id":               id,
-			"nama_lengkap":     nama.String,
-			"jurusan":          jurusan.String,
-			"kelas":            kelas.String,
-			"topik_penelitian": topik.String,
+			"id":           id,
+			"nama_lengkap": nama.String,
+			"jurusan":      jurusan.String,
+			"kelas":        kelas.String,
 		}
 		tarunas = append(tarunas, taruna)
 	}
