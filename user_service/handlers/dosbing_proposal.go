@@ -67,42 +67,43 @@ func GetTarunaWithDosbing(w http.ResponseWriter, r *http.Request) {
 
 	db, err := config.ConnectDB()
 	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
 		return
 	}
+	defer db.Close()
 
 	query := `
-		SELECT t.id, t.nama_lengkap, t.jurusan, t.kelas, d.nama_lengkap AS dosen_pembimbing
+		SELECT 
+			t.nama_lengkap AS nama_taruna,
+			t.jurusan,
+			t.kelas,
+			d.nama_lengkap AS dosen_pembimbing
 		FROM taruna t
-		JOIN users u ON t.user_id = u.id
-		LEFT JOIN dosbing_proposal dp ON dp.user_id = u.id
-		LEFT JOIN users d ON dp.dosen_id = d.id
-		WHERE u.role = 'Taruna'
+		LEFT JOIN dosbing_proposal dp ON dp.user_id = t.user_id
+		LEFT JOIN dosen d ON dp.dosen_id = d.id;
 	`
 
 	rows, err := db.Query(query)
 	if err != nil {
-		http.Error(w, "Query error", http.StatusInternalServerError)
+		http.Error(w, "Query execution error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
 	var result []map[string]interface{}
 	for rows.Next() {
-		var id int
-		var nama, jurusan, kelas, dosen sql.NullString
+		var namaTaruna, jurusan, kelas, dosbing sql.NullString
 
-		if err := rows.Scan(&id, &nama, &jurusan, &kelas, &dosen); err != nil {
-			http.Error(w, "Scan error", http.StatusInternalServerError)
+		if err := rows.Scan(&namaTaruna, &jurusan, &kelas, &dosbing); err != nil {
+			http.Error(w, "Row scan error", http.StatusInternalServerError)
 			return
 		}
 
 		result = append(result, map[string]interface{}{
-			"id":               id,
-			"nama_lengkap":     nama.String,
+			"nama_lengkap":     namaTaruna.String,
 			"jurusan":          jurusan.String,
 			"kelas":            kelas.String,
-			"dosen_pembimbing": dosen.String,
+			"dosen_pembimbing": dosbing.String,
 		})
 	}
 
