@@ -21,8 +21,12 @@ func GetTarunaTopicsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Gantilah angka 6 ini dengan ID dosen yang sedang login secara manual (jika perlu)
-	dosenUserID := 6
+	// Get dosen_id from query parameter
+	dosenID := r.URL.Query().Get("dosen_id")
+	if dosenID == "" {
+		http.Error(w, "Missing dosen_id parameter", http.StatusBadRequest)
+		return
+	}
 
 	query := `
 	SELECT 
@@ -36,7 +40,7 @@ func GetTarunaTopicsHandler(w http.ResponseWriter, r *http.Request) {
 	ORDER BY u.nama_lengkap ASC;
 	`
 
-	rows, err := db.Query(query, dosenUserID, dosenUserID)
+	rows, err := db.Query(query, dosenID, dosenID)
 	if err != nil {
 		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -63,5 +67,8 @@ func GetTarunaTopicsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(results)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   results,
+	})
 }
