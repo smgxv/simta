@@ -970,12 +970,12 @@
 			function showDosenPembimbingModal(tarunaId, dosenPembimbingId = '') {
 				document.getElementById('currentTarunaId').value = tarunaId;
 
-				if (dosenPembimbingId) {
-					document.getElementById('dosenPembimbing').value = dosenPembimbingId;
-				}
-
-				// Pastikan jQuery sudah diload, lalu tampilkan modal
-				$('#modalPilihDosenPembimbing').modal('show');
+				loadDosenData().then(() => {
+					if (dosenPembimbingId) {
+						document.getElementById('dosenPembimbing').value = dosenPembimbingId;
+					}
+					$('#modalPilihDosenPembimbing').modal('show');
+				});
 			}
 
 			// Fungsi untuk menyimpan dosen pembimbing
