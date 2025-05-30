@@ -944,32 +944,25 @@
 						}
 					});
 
-					if (!response.ok) {
-						throw new Error('Failed to fetch dosen data');
-					}
+					if (!response.ok) throw new Error('Gagal mengambil data dosen');
 
 					const result = await response.json();
-					if (result.status !== 'success') {
-						throw new Error(result.message || 'Failed to load dosen data');
+					if (result.status !== 'success' || !Array.isArray(result.data)) {
+						throw new Error('Response format salah');
 					}
 
-					// Populate dropdown dosen pembimbing
-					const dosenPembimbingSelect = document.getElementById('dosenPembimbing');
-					
-					// Clear existing options except the first one
-					dosenPembimbingSelect.innerHTML = '<option value="">Pilih Dosen Pembimbing</option>';
+					const select = document.getElementById('dosenPembimbing');
+					select.innerHTML = '<option value="">Pilih Dosen Pembimbing</option>';
 
-					// Add dosen options
 					result.data.forEach(dosen => {
 						const option = document.createElement('option');
 						option.value = dosen.id;
 						option.textContent = dosen.nama_lengkap;
-						dosenPembimbingSelect.appendChild(option);
+						select.appendChild(option);
 					});
-
 				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to load dosen data', 'danger');
+					console.error('Error loadDosenData:', error);
+					showAlert('Gagal memuat data dosen: ' + error.message, 'danger');
 				}
 			}
 
