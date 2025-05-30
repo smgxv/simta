@@ -985,7 +985,7 @@
 					const dosenId = parseInt(document.getElementById('dosenPembimbing').value);
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
-					if (!userId || !dosenId) {
+					if (!tarunaId || !dosenId) {
 						showAlert('Pastikan semua field telah dipilih', 'warning');
 						return;
 					}
