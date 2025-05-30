@@ -22,7 +22,7 @@ func main() {
 	http.HandleFunc("/dosen/edituser", middleware.AuthMiddleware(handlers.EditUserDosen))
 	http.HandleFunc("/taruna/topik", middleware.AuthMiddleware(handlers.GetTarunaWithTopik))
 
-	http.HandleFunc("/dosbing_proposal", middleware.AuthMiddleware(handlers.AssignDosbingByNamaTaruna))
+	http.HandleFunc("/dosbing_proposal", middleware.AuthMiddleware(handlers.AssignDosbingProposal))
 
 	http.HandleFunc("/taruna/dosbing", middleware.AuthMiddleware(handlers.GetTarunaWithDosbing))
 

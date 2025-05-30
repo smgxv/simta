@@ -5,15 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"user_service/config"
+	"user_service/entities"
+	"user_service/models"
 )
 
-type AssignDosbingByNameRequest struct {
-	TarunaNama string `json:"taruna_nama"`
-	DosenID    int    `json:"dosen_id"`
-}
-
-func AssignDosbingByNamaTaruna(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+func AssignDosbingProposal(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
@@ -22,66 +20,32 @@ func AssignDosbingByNamaTaruna(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var req AssignDosbingByNameRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	var payload entities.DosbingProposal
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	db, err := config.ConnectDB()
+	model, err := models.NewDosbingModel()
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-	defer db.Close()
 
-	// Ambil user_id dari users berdasarkan nama_lengkap
-	var userID int
-	query := `SELECT id FROM users WHERE nama_lengkap = ? LIMIT 1`
-	err = db.QueryRow(query, req.TarunaNama).Scan(&userID)
-	if err == sql.ErrNoRows {
-		http.Error(w, "Taruna tidak ditemukan", http.StatusNotFound)
-		return
-	} else if err != nil {
-		http.Error(w, "Query gagal", http.StatusInternalServerError)
+	if err := model.AssignPembimbing(&payload); err != nil {
+		http.Error(w, "Failed to assign pembimbing", http.StatusInternalServerError)
 		return
 	}
 
-	// Insert/update dosbing_proposal
-	var existingID int
-	err = db.QueryRow("SELECT id FROM dosbing_proposal WHERE user_id = ?", userID).Scan(&existingID)
-
-	if err != nil && err != sql.ErrNoRows {
-		http.Error(w, "Check error", http.StatusInternalServerError)
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		_, err = db.Exec(`
-			INSERT INTO dosbing_proposal (user_id, dosen_id, tanggal_ditetapkan, status)
-			VALUES (?, ?, CURDATE(), 'aktif')
-		`, userID, req.DosenID)
-	} else {
-		_, err = db.Exec(`
-			UPDATE dosbing_proposal 
-			SET dosen_id = ?, tanggal_ditetapkan = CURDATE(), status = 'aktif'
-			WHERE user_id = ?
-		`, req.DosenID, userID)
-	}
-
-	if err != nil {
-		http.Error(w, "Gagal menyimpan dosbing", http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Pembimbing berhasil disimpan",
+		"message": "Dosen pembimbing berhasil disimpan",
 	})
 }
 
