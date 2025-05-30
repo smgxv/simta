@@ -820,6 +820,11 @@
 				}
 			});
 
+			// Load data taruna
+			document.addEventListener('DOMContentLoaded', function () {
+				loadTarunaData();
+			});
+
 			// Fungsi untuk menampilkan alert
 			function showAlert(message, type) {
 				const alertContainer = document.getElementById('alertContainer');
@@ -838,14 +843,10 @@
 			let allTarunaData = []; // Menyimpan semua data Taruna
 			let uniqueJurusan = new Set();
 
-			// Fungsi untuk memperbarui opsi filter
+			// Fungsi untuk memperbarui opsi filter jurusan
 			function updateFilterOptions() {
 				const jurusanFilter = document.getElementById('jurusanFilter');
-
-				// Clear existing options except the first one
 				jurusanFilter.innerHTML = '<option value="">Semua Jurusan</option>';
-
-				// Add unique jurusan options
 				[...uniqueJurusan].sort().forEach(jurusan => {
 					const option = document.createElement('option');
 					option.value = jurusan;
@@ -858,9 +859,7 @@
 			async function loadTarunaData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					console.log('Fetching ICP data...');
-					
-					const response = await fetch('http://104.43.89.154:8081/users', {
+					const response = await fetch('http://104.43.89.154:8081/taruna', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -871,25 +870,18 @@
 					}
 
 					const result = await response.json();
-					console.log('Taruna Data received:', result);
 
 					if (result.status !== 'success') {
 						throw new Error(result.message || 'Failed to load data');
 					}
 
-					// Pastikan data adalah array
 					allTarunaData = Array.isArray(result.data) ? result.data : [];
-					console.log('Processed Taruna Data:', allTarunaData);
 
-					// Collect unique values
 					allTarunaData.forEach(item => {
 						if (item.jurusan) uniqueJurusan.add(item.jurusan);
 					});
 
-					// Update filter options
 					updateFilterOptions();
-					
-					// Display data
 					displayFilteredData();
 				} catch (error) {
 					console.error('Error in loadTarunaData:', error);
@@ -899,80 +891,39 @@
 
 			// Fungsi untuk menampilkan data yang sudah difilter
 			function displayFilteredData() {
-				try {
-					console.log('Displaying filtered data...');
-					console.log('Current allICPData:', allICPData);
-					
-					const jurusanFilter = document.getElementById('jurusanFilter').value;
-					console.log('Selected jurusan filter:', jurusanFilter);
+				const jurusanFilter = document.getElementById('jurusanFilter').value;
+				const filteredData = allTarunaData.filter(item => {
+					return !jurusanFilter || item.jurusan === jurusanFilter;
+				});
 
-					const filteredData = allICPData.filter(item => {
-						return !jurusanFilter || item.jurusan === jurusanFilter;
-					});
-					console.log('Filtered data:', filteredData);
+				const tableBody = document.querySelector('.data-table tbody');
+				tableBody.innerHTML = '';
 
-					const tableBody = document.querySelector('.data-table tbody');
-					if (!tableBody) {
-						console.error('Table body element not found!');
-						return;
-					}
-					
-					tableBody.innerHTML = '';
-
-					if (!Array.isArray(filteredData) || filteredData.length === 0) {
-						tableBody.innerHTML = `
-							<tr>
-								<td colspan="7" class="text-center">Tidak ada data yang tersedia</td>
-							</tr>
-						`;
-						return;
-					}
-
-					filteredData.forEach(item => {
-						console.log('Processing item:', item);
-						const row = document.createElement('tr');
-						row.innerHTML = `
-							<td>${item.nama_lengkap || '-'}</td>
-							<td>${item.jurusan || '-'}</td>
-							<td>${item.topik_penelitian || item.topik || '-'}</td>
-							<td>${item.penelaah1_nama || '-'}</td>
-							<td>${item.penelaah2_nama || '-'}</td>
-							<td>
-								${item.status ? 
-									`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
-									: '-'}
-							</td>
-							<td>
-								<div class="dropdown">
-									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-										<i class="dw dw-more"></i>
-									</a>
-									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); showPenelaahModal(${item.id || item.final_icp_id}, '${item.penelaah1_id || ''}', '${item.penelaah2_id || ''}')">
-											<i class="dw dw-user1"></i> Pilih Penelaah
-										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); viewICP(${item.id || item.final_icp_id})">
-											<i class="dw dw-eye"></i> View
-										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); downloadICP(${item.id || item.final_icp_id})">
-											<i class="dw dw-download"></i> Download
-										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); updateStatus(${item.id || item.final_icp_id}, 'approved')">
-											<i class="dw dw-check"></i> Accept
-										</a>
-										<a class="dropdown-item" href="#" onclick="event.preventDefault(); updateStatus(${item.id || item.final_icp_id}, 'rejected')">
-											<i class="dw dw-delete-3"></i> Reject
-										</a>
-									</div>
-								</div>
-							</td>
-						`;
-						tableBody.appendChild(row);
-					});
-				} catch (error) {
-					console.error('Error in displayFilteredData:', error);
-					showAlert('Error displaying data: ' + error.message, 'danger');
+				if (filteredData.length === 0) {
+					tableBody.innerHTML = `
+						<tr>
+							<td colspan="6" class="text-center">Tidak ada data yang tersedia</td>
+						</tr>
+					`;
+					return;
 				}
+
+				filteredData.forEach(item => {
+					const row = document.createElement('tr');
+					row.innerHTML = `
+						<td>${item.nama_lengkap || '-'}</td>
+						<td>${item.jurusan || '-'}</td>
+						<td>${item.kelas || '-'}</td>
+						<td>-</td> <!-- Topik kosong -->
+						<td>-</td> <!-- Dosen pembimbing kosong -->
+						<td>
+							<button class="btn btn-sm btn-primary" onclick="showDosenPembimbingModal(${item.id}, '')">
+								Pilih Dosen
+							</button>
+						</td>
+					`;
+					tableBody.appendChild(row);
+				});
 			}
 
 			// Fungsi untuk menerapkan filter
