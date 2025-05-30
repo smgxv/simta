@@ -941,7 +941,7 @@
 							<td>${item.nama_dosen || '-'}</td>
 							<td><span class="badge badge-${item.file_path ? 'success' : 'danger'}">${item.file_path ? 'Sudah Ditelaah' : 'Belum Ditelaah'}</span></td>
 							<td>${item.tanggal_telaah || '-'}</td>
-							<td>${item.file_path ? `<a href="${item.file_path}" target="_blank" class="btn btn-outline-primary btn-sm">Lihat File</a>` : '-'}</td>
+							<td>${item.file_path ? `<a href="http://104.43.89.154:8082/download?path=${item.file_path}" download class="btn btn-outline-primary btn-sm">Download File</a>` : '-'}</td>
 						`;
 						tableBody.appendChild(row);
 					});
