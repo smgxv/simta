@@ -299,6 +299,10 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("Form keys:", r.Form)
+	log.Println("MultipartForm keys:", r.MultipartForm.Value)
+	log.Println("MultipartForm file keys:", r.MultipartForm.File)
+
 	// Get files
 	penilaianFile, penilaianHeader, err := r.FormFile("penilaian_file")
 	if err != nil {

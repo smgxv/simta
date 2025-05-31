@@ -976,10 +976,6 @@
 					const selectedUserId = formData.get('user_id');
 					
 					// Rename file input names to match backend expectations
-					const penilaianFile = this.querySelector('#penilaianFile').files[0];
-					const beritaAcaraFile = this.querySelector('#beritaAcaraFile').files[0];
-					formData.append('penilaian_file', penilaianFile);
-					formData.append('berita_acara_file', beritaAcaraFile);
 
 					
 					// Log FormData untuk debugging
