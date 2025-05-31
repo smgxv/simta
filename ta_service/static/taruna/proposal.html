@@ -679,7 +679,7 @@
 						</div>
 
 						<form id="finalProposalForm" enctype="multipart/form-data">
-							<div class="form-group">
+							<!-- <div class="form-group">
 								<label>Jurusan</label>
 								<select class="custom-select" name="jurusan" id="finalJurusan" required onchange="updateFinalKelas()">
 									<option value="" disabled selected>Pilih Jurusan</option>
@@ -692,7 +692,9 @@
 								<select class="custom-select" name="kelas" id="finalKelas" required>
 									<option value="" disabled selected>Pilih Kelas</option>
 								</select>
-							</div>
+							</div> -->
+							<input type="hidden" name="jurusan" id="hiddenJurusan">
+							<input type="hidden" name="kelas" id="hiddenKelas">
 							<div class="form-group">
 								<label>Topik Penelitian</label>
 								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
@@ -1273,6 +1275,36 @@
 				}, 5000);
 			}
 
+			// Fungsi untuk mengisi jurusan dan kelas dari taruna
+			async function isiJurusanDanKelasDariTaruna() {
+				const userId = localStorage.getItem('userId');
+				const token = localStorage.getItem('token');
+				if (!userId || !token) return;
+
+				try {
+					const res = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					headers: {
+						'Authorization': `Bearer ${token}`
+					}
+					});
+					const json = await res.json();
+					if (json.status === 'success' && Array.isArray(json.data)) {
+					const taruna = json.data.find(t => t.user_id === parseInt(userId));
+					if (taruna) {
+						document.getElementById('hiddenJurusan').value = taruna.jurusan || '';
+						document.getElementById('hiddenKelas').value = taruna.kelas || '';
+					}
+					}
+				} catch (err) {
+					console.error('Gagal ambil data taruna:', err);
+				}
+			}
+
+			// Panggil isiJurusanDanKelasDariTaruna saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', () => {
+				isiJurusanDanKelasDariTaruna();
+			});
+
 			// Update nama file saat file dipilih untuk Final Proposal
 			document.getElementById('finalProposalFile').addEventListener('change', function(e) {
 				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
@@ -1467,80 +1499,6 @@
 			document.addEventListener('DOMContentLoaded', () => {
 				loadFinalProposalData();
 			});
-
-			// Definisi kelas per jurusan
-			const kelasPerJurusan = {
-				'Keamanan Siber': [
-					'IV Rekayasa Keamanan Siber Echo',
-					'IV Rekayasa Keamanan Siber Trace',
-					'IV Rekayasa Keamanan Siber Route'
-				],
-				'Kriptografi': [
-					'IV Rekayasa Perangkat Lunak Kripto',
-					'IV Rekayasa Perangkat Keras Kriptografi',
-					'IV Rekayasa Sistem Kriptografi'
-				]
-			};
-
-			// Fungsi untuk mengupdate dropdown kelas berdasarkan jurusan yang dipilih
-			function updateFinalKelas() {
-				const jurusanSelect = document.getElementById('finalJurusan');
-				const kelasSelect = document.getElementById('finalKelas');
-				const selectedJurusan = jurusanSelect.value;
-				
-				// Reset kelas dropdown
-				kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
-				
-				if (selectedJurusan && kelasPerJurusan[selectedJurusan]) {
-					kelasPerJurusan[selectedJurusan].forEach(kelas => {
-						const option = document.createElement('option');
-						option.value = kelas;
-						option.textContent = kelas;
-						kelasSelect.appendChild(option);
-					});
-					kelasSelect.disabled = false;
-				} else {
-					kelasSelect.disabled = true;
-				}
-			}
-
-			// Add this function to get user data
-			async function getUserData() {
-				const userId = localStorage.getItem('userId');
-				const token = localStorage.getItem('token');
-				
-				if (!userId || !token) {
-					console.error('User ID or token not found');
-					return;
-				}
-
-				try {
-					const response = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-					
-					if (!response.ok) {
-						throw new Error('Failed to fetch taruna data');
-					}
-					
-					const data = await response.json();
-					
-					if (data && data.status === 'success' && data.data) {
-						// Set jurusan if available
-						const jurusanSelect = document.getElementById('finalJurusan');
-						if (data.data.jurusan) {
-							jurusanSelect.value = data.data.jurusan;
-							// Trigger kelas update
-							updateFinalKelas();
-						}
-					}
-				} catch (error) {
-					console.error('Error fetching taruna data:', error);
-					showAlert('Gagal memuat data taruna: ' + error.message, 'danger');
-				}
-			}
 
 			// Call getUserData when page loads
 			document.addEventListener('DOMContentLoaded', () => {

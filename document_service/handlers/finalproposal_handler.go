@@ -48,11 +48,8 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	keterangan := r.FormValue("keterangan")
 
 	// Validate required fields
-	if userID == "" || namaLengkap == "" || jurusan == "" || kelas == "" || topikPenelitian == "" {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Missing required fields",
-		})
+	if userID == "" || namaLengkap == "" || topikPenelitian == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
