@@ -618,6 +618,9 @@
 
 						<form id="proposalForm" enctype="multipart/form-data">
 							<div class="form-group">
+								<input type="hidden" name="final_proposal_id" id="finalProposalId" />
+							</div>
+							<div class="form-group">
 								<label>Nama Taruna</label>
 								<select class="form-control" id="tarunaSelect" name="user_id">
 									<option value="" disabled selected>Pilih Nama Taruna</option>
@@ -884,7 +887,7 @@
 				}
 			}
 
-			// Fungsi untuk memuat data taruna ke dropdown (berdasarkan penguji_proposal)
+			// Fungsi untuk memuat data taruna
 			async function loadTarunaDropdown() {
 				try {
 					const dosenId = localStorage.getItem('dosenID');
@@ -897,15 +900,18 @@
 					const data = await response.json();
 
 					const tarunaSelect = document.getElementById('tarunaSelect');
-					if (!tarunaSelect) {
-						console.error('Taruna select element not found');
+					const finalProposalIdInput = document.getElementById('finalProposalId');
+
+					if (!tarunaSelect || !finalProposalIdInput) {
+						console.error('Element tarunaSelect atau finalProposalId tidak ditemukan');
 						return;
 					}
 
 					tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Nama Taruna</option>';
 
-					// Simpan data topik penelitian
+					// Simpan data topik & final_proposal_id
 					const topikMap = new Map();
+					const proposalMap = new Map();
 
 					if (data.status === 'success' && Array.isArray(data.data)) {
 						data.data.forEach(taruna => {
@@ -914,17 +920,25 @@
 							option.textContent = taruna.nama_lengkap;
 							tarunaSelect.appendChild(option);
 
+							// Simpan data ke Map
 							topikMap.set(String(taruna.user_id), taruna.topik_penelitian);
+							proposalMap.set(String(taruna.user_id), taruna.final_proposal_id); // gunakan ini untuk form
 						});
 
-						// Saat pilihan berubah, update input topik penelitian
 						tarunaSelect.addEventListener('change', function () {
 							const selectedId = this.value;
+
 							const topik = topikMap.get(selectedId) || '';
+							const finalProposalId = proposalMap.get(selectedId) || '';
+
+							// Isi topik
 							const topikInput = document.querySelector('input[name="topik_penelitian"]');
 							if (topikInput) {
 								topikInput.value = topik;
 							}
+
+							// Isi final_proposal_id ke input hidden
+							finalProposalIdInput.value = finalProposalId;
 						});
 					} else {
 						showAlert('Tidak ada taruna yang sedang diuji', 'warning');
@@ -956,50 +970,50 @@
 			// Handle form submission untuk penilaian proposal
 			document.getElementById('proposalForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
-				
+
 				// Tampilkan loading state
 				const submitButton = this.querySelector('button[type="submit"]');
 				submitButton.disabled = true;
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-				
+
 				try {
 					const formData = new FormData(this);
-					
-					// Tambahkan dosen_id dari localStorage
+
+					// Ambil dosen_id dari localStorage
 					const dosenId = localStorage.getItem('dosenID');
 					if (!dosenId) {
 						throw new Error('Dosen ID tidak ditemukan');
 					}
 					formData.append('dosen_id', dosenId);
 
-					// Dapatkan seminar_proposal_id dari data yang tersimpan
-					const selectedUserId = formData.get('user_id');
-					
-					// Rename file input names to match backend expectations
+					// Validasi final_proposal_id
+					const finalProposalId = document.getElementById('finalProposalId').value;
+					if (!finalProposalId) {
+						throw new Error('Final Proposal ID tidak ditemukan');
+					}
+					formData.set('final_proposal_id', finalProposalId); // pastikan sudah ada
 
-					
 					// Log FormData untuk debugging
 					for (let pair of formData.entries()) {
-						console.log(pair[0] + ': ' + pair[1]);
+						console.log(pair[0] + ':', pair[1]);
 					}
-					
+
 					const response = await fetch('http://104.43.89.154:8082/penilaian/proposal', {
 						method: 'POST',
 						body: formData
 					});
-					
+
 					const data = await response.json();
-					
+
 					if (response.ok && data.status === 'success') {
 						showAlert('Penilaian proposal berhasil disimpan', 'success');
-						
+
 						// Reset form
 						this.reset();
 						document.querySelectorAll('.custom-file-label').forEach(label => {
 							label.textContent = 'Choose file';
 						});
-						
-						// Refresh data jika diperlukan
+
 						loadProposalData();
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat menyimpan penilaian');
@@ -1008,28 +1022,10 @@
 					console.error('Error:', error);
 					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
 				} finally {
-					// Reset button state
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Submit';
 				}
 			});
-
-			// Fungsi untuk mendapatkan data seminar proposal berdasarkan user_id
-			async function getSeminarProposalData(userId) {
-				try {
-					const dosenId = localStorage.getItem('dosenID');
-					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/dosen?dosen_id=${dosenId}`);
-					const data = await response.json();
-					
-					if (data.status === 'success' && data.data) {
-						return data.data.find(proposal => proposal.user_id === parseInt(userId));
-					}
-					return null;
-				} catch (error) {
-					console.error('Error fetching seminar proposal data:', error);
-					return null;
-				}
-			}
 
 		</script>
 

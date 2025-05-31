@@ -379,21 +379,26 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Insert into database
+	finalProposalID := r.FormValue("final_proposal_id")
+	if finalProposalID == "" {
+		http.Error(w, "Final Proposal ID is required", http.StatusBadRequest)
+		return
+	}
+
 	query := `
 		INSERT INTO seminar_proposal_penilaian (
-			user_id, dosen_id,
+			user_id, final_proposal_id, dosen_id,
 			file_penilaian_path, file_berita_acara_path,
 			status_pengumpulan, submitted_at
-		) VALUES (?, ?, ?, ?, 'belum', NOW())
+		) VALUES (?, ?, ?, ?, ?, 'belum', NOW())
 	`
 	_, err = db.Exec(query,
 		userID,
+		finalProposalID,
 		dosenID,
 		penilaianPath,
 		beritaAcaraPath,
 	)
-
 	if err != nil {
 		os.Remove(penilaianPath)
 		os.Remove(beritaAcaraPath)
