@@ -192,7 +192,6 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetTarunaListForDosenHandler menangani request untuk mendapatkan list taruna untuk dropdown penilaian proposal
 func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -227,7 +226,8 @@ func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 		SELECT DISTINCT 
 			pp.user_id, 
 			t.nama_lengkap, 
-			fp.topik_penelitian
+			fp.topik_penelitian,
+			fp.id AS final_proposal_id
 		FROM penguji_proposal pp
 		JOIN taruna t ON pp.user_id = t.user_id
 		LEFT JOIN final_proposal fp ON fp.user_id = t.user_id
@@ -248,12 +248,13 @@ func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 		UserID          int    `json:"user_id"`
 		NamaLengkap     string `json:"nama_lengkap"`
 		TopikPenelitian string `json:"topik_penelitian"`
+		FinalProposalID int    `json:"final_proposal_id"`
 	}
 
 	var tarunaList []TarunaData
 	for rows.Next() {
 		var t TarunaData
-		err := rows.Scan(&t.UserID, &t.NamaLengkap, &t.TopikPenelitian)
+		err := rows.Scan(&t.UserID, &t.NamaLengkap, &t.TopikPenelitian, &t.FinalProposalID)
 		if err != nil {
 			http.Error(w, "Error reading rows: "+err.Error(), http.StatusInternalServerError)
 			return

@@ -892,7 +892,7 @@
 				try {
 					const dosenId = localStorage.getItem('dosenID');
 					if (!dosenId) {
-						console.error('Dosen ID not found');
+						console.error('Dosen ID tidak ditemukan');
 						return;
 					}
 
@@ -901,17 +901,17 @@
 
 					const tarunaSelect = document.getElementById('tarunaSelect');
 					const finalProposalIdInput = document.getElementById('finalProposalId');
+					const topikInput = document.querySelector('input[name="topik_penelitian"]');
 
-					if (!tarunaSelect || !finalProposalIdInput) {
-						console.error('Element tarunaSelect atau finalProposalId tidak ditemukan');
+					if (!tarunaSelect || !finalProposalIdInput || !topikInput) {
+						console.error('Elemen yang dibutuhkan tidak ditemukan');
 						return;
 					}
 
 					tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Nama Taruna</option>';
 
-					// Simpan data topik & final_proposal_id
-					const topikMap = new Map();
 					const proposalMap = new Map();
+					const topikMap = new Map();
 
 					if (data.status === 'success' && Array.isArray(data.data)) {
 						data.data.forEach(taruna => {
@@ -920,25 +920,20 @@
 							option.textContent = taruna.nama_lengkap;
 							tarunaSelect.appendChild(option);
 
-							// Simpan data ke Map
+							proposalMap.set(String(taruna.user_id), taruna.final_proposal_id);
 							topikMap.set(String(taruna.user_id), taruna.topik_penelitian);
-							proposalMap.set(String(taruna.user_id), taruna.final_proposal_id); // gunakan ini untuk form
 						});
 
 						tarunaSelect.addEventListener('change', function () {
 							const selectedId = this.value;
 
-							const topik = topikMap.get(selectedId) || '';
 							const finalProposalId = proposalMap.get(selectedId) || '';
+							const topik = topikMap.get(selectedId) || '';
 
-							// Isi topik
-							const topikInput = document.querySelector('input[name="topik_penelitian"]');
-							if (topikInput) {
-								topikInput.value = topik;
-							}
-
-							// Isi final_proposal_id ke input hidden
 							finalProposalIdInput.value = finalProposalId;
+							topikInput.value = topik;
+
+							console.log('final_proposal_id:', finalProposalId);
 						});
 					} else {
 						showAlert('Tidak ada taruna yang sedang diuji', 'warning');
@@ -948,6 +943,7 @@
 					showAlert('Gagal memuat data taruna: ' + error.message, 'danger');
 				}
 			}
+
 
 			// Load data saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
