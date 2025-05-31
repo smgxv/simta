@@ -999,7 +999,12 @@
 						body: formData
 					});
 
-					const data = await response.json();
+					let data;
+					try {
+						data = await response.json();
+					} catch (jsonErr) {
+						throw new Error('Server error: response bukan JSON. Cek backend log.');
+					}
 
 					if (response.ok && data.status === 'success') {
 						showAlert('Penilaian proposal berhasil disimpan', 'success');

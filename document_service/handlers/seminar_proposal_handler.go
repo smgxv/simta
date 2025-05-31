@@ -393,6 +393,7 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 			status_pengumpulan, submitted_at
 		) VALUES (?, ?, ?, ?, ?, 'belum', NOW())
 	`
+
 	_, err = db.Exec(query,
 		userID,
 		finalProposalID,
@@ -400,6 +401,7 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		penilaianPath,
 		beritaAcaraPath,
 	)
+
 	if err != nil {
 		os.Remove(penilaianPath)
 		os.Remove(beritaAcaraPath)
