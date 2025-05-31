@@ -974,20 +974,25 @@
 						throw new Error('Response format salah');
 					}
 
-					const select = document.getElementById('dosenPembimbing');
-					select.innerHTML = '<option value="">Pilih Dosen Pembimbing</option>';
-
-					result.data.forEach(dosen => {
-						const option = document.createElement('option');
-						option.value = dosen.id;
-						option.textContent = dosen.nama_lengkap;
-						select.appendChild(option);
+					// ID select element yang valid
+					const selectIDs = ['ketuaPenguji', 'penguji1', 'penguji2'];
+					selectIDs.forEach(id => {
+						const select = document.getElementById(id);
+						select.innerHTML = `<option value="">Pilih ${select.labels[0].innerText}</option>`;
+						result.data.forEach(dosen => {
+							const option = document.createElement('option');
+							option.value = dosen.id;
+							option.textContent = dosen.nama_lengkap;
+							select.appendChild(option);
+						});
 					});
+
 				} catch (error) {
 					console.error('Error loadDosenData:', error);
 					showAlert('Gagal memuat data dosen: ' + error.message, 'danger');
 				}
 			}
+
 
 			function showPengujiModal(tarunaId, currentPenguji = {}) {
 				document.getElementById('currentTarunaId').value = tarunaId;
