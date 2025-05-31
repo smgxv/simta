@@ -416,7 +416,7 @@ func GetDosbingByUserID(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	query := `SELECT d.id, d.nama_lengkap FROM dosbing_proposal dp JOIN dosen d ON dp.dosen_id = d.id WHERE dp.taruna_id = ? LIMIT 1`
+	query := `SELECT d.id, d.nama_lengkap FROM dosbing_proposal dp JOIN dosen d ON dp.dosen_id = d.id WHERE dp.user_id = ? LIMIT 1`
 	row := db.QueryRow(query, userID)
 
 	var dosenID int
