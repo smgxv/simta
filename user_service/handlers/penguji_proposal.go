@@ -9,8 +9,8 @@ import (
 	"user_service/models"
 )
 
-// AssignDosbingProposal digunakan untuk menyimpan data dosen pembimbing ke dalam database
-func AssignDosbingProposal(w http.ResponseWriter, r *http.Request) {
+// AssignPengujiProposal digunakan untuk menyimpan data penguji ke dalam database
+func AssignPengujiProposal(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -27,31 +27,31 @@ func AssignDosbingProposal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload entities.DosbingProposal
+	var payload entities.PengujiProposal
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	model, err := models.NewDosbingModel()
+	model, err := models.NewPengujiModel()
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
-	if err := model.AssignPembimbing(&payload); err != nil {
-		http.Error(w, "Failed to assign pembimbing", http.StatusInternalServerError)
+	if err := model.AssignPenguji(&payload); err != nil {
+		http.Error(w, "Failed to assign penguji", http.StatusInternalServerError)
 		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Dosen pembimbing berhasil disimpan",
+		"message": "Penguji berhasil disimpan",
 	})
 }
 
-// GetTarunaWithDosbing digunakan untuk mengambil data taruna beserta dosen pembimbing
-func GetTarunaWithDosbing(w http.ResponseWriter, r *http.Request) {
+// GetTarunaWithPenguji digunakan untuk mengambil data taruna beserta penguji
+func GetTarunaWithPenguji(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")

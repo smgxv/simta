@@ -8,19 +8,19 @@ import (
 	"user_service/entities"
 )
 
-type DosbingModel struct {
+type PengujiModel struct {
 	DB *sql.DB
 }
 
-func NewDosbingModel() (*DosbingModel, error) {
+func NewPengujiModel() (*PengujiModel, error) {
 	db, err := config.ConnectDB()
 	if err != nil {
 		return nil, err
 	}
-	return &DosbingModel{DB: db}, nil
+	return &PengujiModel{DB: db}, nil
 }
 
-func (m *DosbingModel) AssignPembimbing(dp *entities.DosbingProposal) error {
+func (m *PengujiModel) AssignPenguji(dp *entities.PengujiProposal) error {
 	// Ambil user_id berdasarkan taruna_id
 	var userID int
 	err := m.DB.QueryRow("SELECT user_id FROM taruna WHERE id = ?", dp.TarunaID).Scan(&userID)
