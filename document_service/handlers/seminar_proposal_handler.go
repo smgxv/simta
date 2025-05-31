@@ -293,12 +293,6 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	seminarProposalID := r.FormValue("seminar_proposal_id")
-	if seminarProposalID == "" {
-		http.Error(w, "Seminar Proposal ID is required", http.StatusBadRequest)
-		return
-	}
-
 	dosenID := r.FormValue("dosen_id")
 	if dosenID == "" {
 		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
@@ -384,15 +378,13 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Insert into database
 	query := `
 		INSERT INTO seminar_proposal_penilaian (
-			user_id, seminar_proposal_id, dosen_id,
+			user_id, dosen_id,
 			file_penilaian_path, file_berita_acara_path,
 			status_pengumpulan, submitted_at
-		) VALUES (?, ?, ?, ?, ?, 'belum', NOW())
+		) VALUES (?, ?, ?, ?, 'belum', NOW())
 	`
-
 	_, err = db.Exec(query,
 		userID,
-		seminarProposalID,
 		dosenID,
 		penilaianPath,
 		beritaAcaraPath,

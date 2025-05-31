@@ -974,18 +974,13 @@
 
 					// Dapatkan seminar_proposal_id dari data yang tersimpan
 					const selectedUserId = formData.get('user_id');
-					const seminarProposalData = await getSeminarProposalData(selectedUserId);
-					if (!seminarProposalData) {
-						throw new Error('Data seminar proposal tidak ditemukan');
-					}
-					formData.append('seminar_proposal_id', seminarProposalData.id);
 					
 					// Rename file input names to match backend expectations
-					const penilaianFile = formData.get('file');
-					const beritaAcaraFile = formData.getAll('file')[1];
-					formData.delete('file');
+					const penilaianFile = this.querySelector('#penilaianFile').files[0];
+					const beritaAcaraFile = this.querySelector('#beritaAcaraFile').files[0];
 					formData.append('penilaian_file', penilaianFile);
 					formData.append('berita_acara_file', beritaAcaraFile);
+
 					
 					// Log FormData untuk debugging
 					for (let pair of formData.entries()) {
