@@ -18,6 +18,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// UploadProposalHandler digunakan untuk mengunggah proposal
 func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
@@ -41,6 +42,11 @@ func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 	dosenID := r.FormValue("dosen_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
+
+	if dosenID == "" || dosenID == "0" {
+		http.Error(w, "Dosen pembimbing belum ditentukan", http.StatusBadRequest)
+		return
+	}
 
 	// Get the file from form
 	file, handler, err := r.FormFile("file")
@@ -122,6 +128,7 @@ func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetProposalHandler digunakan untuk mengambil proposal berdasarkan user_id
 func GetProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
@@ -152,6 +159,7 @@ func GetProposalHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// DownloadFileProposalHandler digunakan untuk mengunduh file proposal
 func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 
@@ -304,6 +312,7 @@ func GetProposalByIDHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// EditProposalHandler digunakan untuk mengedit proposal
 func EditProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "PUT, OPTIONS")
@@ -386,5 +395,50 @@ func EditProposalHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": "Proposal berhasil diupdate",
+	})
+}
+
+// GetProposalByDosenIDHandler digunakan untuk mengambil proposal berdasarkan dosen_id
+func GetDosbingByUserID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Content-Type", "application/json")
+
+	userID := r.URL.Query().Get("user_id")
+	if userID == "" {
+		http.Error(w, "user_id is required", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	query := `SELECT d.id, d.nama_lengkap FROM dosbing_proposal dp JOIN dosen d ON dp.dosen_id = d.id WHERE dp.taruna_id = ? LIMIT 1`
+	row := db.QueryRow(query, userID)
+
+	var dosenID int
+	var namaLengkap string
+	err = row.Scan(&dosenID, &namaLengkap)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "empty",
+				"message": "Belum memiliki dosen pembimbing",
+			})
+			return
+		}
+		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data": map[string]interface{}{
+			"dosen_id": dosenID,
+			"nama":     namaLengkap,
+		},
 	})
 }

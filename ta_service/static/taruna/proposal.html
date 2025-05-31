@@ -593,9 +593,10 @@
 						<form id="proposalForm" enctype="multipart/form-data">
 							<div class="form-group">
 								<label>Dosen Pembimbing</label>
-								<select class="form-control" id="dosenSelect" name="dosen_id">
-									<option value="" disabled selected>Pilih Dosen Pembimbing</option>
-								</select>
+								<div id="dosbingInfo">
+									<p class="text-muted">Memuat data dosbing...</p>
+								</div>
+								<input type="hidden" id="dosenIdInput" name="dosen_id" />
 							</div>
 							<div class="form-group">
 								<label>Topik Penelitian</label>
@@ -1049,35 +1050,6 @@
 				}
 			}
 
-			// dropdown untuk menampilkan dosen yang terdaftar
-			document.addEventListener('DOMContentLoaded', function() {
-				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				
-				console.log('Fetching dosen data...');
-				
-				fetch('http://104.43.89.154:8081/dosen', {
-					headers: {
-						'Authorization': `Bearer ${token}`
-					}
-				})
-				.then(response => response.json())
-				.then(data => {
-					const dosenSelect = document.getElementById('dosenSelect');
-					
-					if (data.status === 'success' && Array.isArray(data.data)) {
-						data.data.forEach(dosen => {
-							const option = document.createElement('option');
-							option.value = dosen.id;
-							option.textContent = `${dosen.nama_lengkap} - ${dosen.jurusan}`;
-							dosenSelect.appendChild(option);
-						});
-					}
-				})
-				.catch(error => {
-					console.error('Error:', error);
-				});
-			});
-
 			// Tambahkan pengecekan autentikasi saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
 				// Cek token
@@ -1153,8 +1125,34 @@
 				}
 			});
 
+			// Load dosen pembimbing untuk taruna
+			async function loadDosbingForTaruna() {
+				const userId = localStorage.getItem('userId');
+				if (!userId) return;
+
+				try {
+					const response = await fetch(`http://104.43.89.154:8081/dosbingproposal?user_id=${userId}`);
+					const result = await response.json();
+
+					const dosbingInfo = document.getElementById('dosbingInfo');
+					const dosenIdInput = document.getElementById('dosenIdInput');
+
+					if (result.status === 'success') {
+						dosbingInfo.innerHTML = `<strong>${result.data.nama}</strong>`;
+						dosenIdInput.value = result.data.dosen_id;
+					} else {
+						dosbingInfo.innerHTML = `<span class="text-danger">Anda belum memiliki dosen pembimbing proposal</span>`;
+						dosenIdInput.value = '';
+					}
+				} catch (err) {
+					console.error('Error fetching dosbing:', err);
+					document.getElementById('dosbingInfo').innerHTML = `<span class="text-danger">Gagal memuat dosen pembimbing</span>`;
+				}
+			}
+
 			// Panggil loadProposalData dan loadProposalReviewData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
+				loadDosbingForTaruna();
 				loadProposalData();
 				loadProposalReviewData();
 			});
