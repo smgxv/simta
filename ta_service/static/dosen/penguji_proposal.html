@@ -893,7 +893,7 @@
 						return;
 					}
 
-					const response = await fetch(`http://104.43.89.154:8081/taruna-penguji?dosen_id=${dosenId}`);
+					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/taruna/list?dosen_id=${dosenId}`);
 					const data = await response.json();
 
 					const tarunaSelect = document.getElementById('tarunaSelect');
