@@ -915,7 +915,7 @@
 						<td>${item.kelas || '-'}</td>
 						<td>${item.dosen_pembimbing || '-'}</td>
 						<td>
-							<button class="btn btn-sm btn-primary" onclick="showDosenPembimbingModal(${item.id}, '')">
+							<button class="btn btn-sm btn-primary" onclick="showDosenPembimbingModal(${item.taruna_id}, '')">
 								Pilih Dosen
 							</button>
 						</td>
@@ -1009,6 +1009,7 @@
 						throw new Error(result.message || 'Gagal menyimpan dosbing');
 					}
 
+					console.log("Taruna ID yang akan dikirim:", tarunaId);
 					showAlert('Dosen pembimbing berhasil disimpan', 'success');
 					$('#modalPilihDosenPembimbing').modal('hide');
 					loadTarunaData(); // reload list taruna setelah simpan
