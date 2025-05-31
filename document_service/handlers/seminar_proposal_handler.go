@@ -271,69 +271,72 @@ func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 
 // PenilaianProposalHandler menangani request untuk menyimpan penilaian proposal
 func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
+	// Set header JSON di awal fungsi
+	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
+	// Fungsi helper untuk mengirim error response
+	sendErrorResponse := func(message string, statusCode int) {
+		w.WriteHeader(statusCode)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": message,
+		})
+	}
+
 	// Parse multipart form
 	err := r.ParseMultipartForm(10 << 20) // 10 MB
 	if err != nil {
-		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+		sendErrorResponse("Error parsing form: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Get form values
+	// Validasi input
 	userID := r.FormValue("user_id")
-	if userID == "" {
-		http.Error(w, "User ID is required", http.StatusBadRequest)
-		return
-	}
-
 	dosenID := r.FormValue("dosen_id")
-	if dosenID == "" {
-		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
+	finalProposalID := r.FormValue("final_proposal_id")
+
+	if userID == "" || dosenID == "" || finalProposalID == "" {
+		sendErrorResponse("user_id, dosen_id, dan final_proposal_id harus diisi", http.StatusBadRequest)
 		return
 	}
-
-	log.Println("Form keys:", r.Form)
-	log.Println("MultipartForm keys:", r.MultipartForm.Value)
-	log.Println("MultipartForm file keys:", r.MultipartForm.File)
 
 	// Get files
 	penilaianFile, penilaianHeader, err := r.FormFile("penilaian_file")
 	if err != nil {
-		http.Error(w, "Error retrieving penilaian file: "+err.Error(), http.StatusBadRequest)
+		sendErrorResponse("Error retrieving penilaian file: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer penilaianFile.Close()
 
 	beritaAcaraFile, beritaAcaraHeader, err := r.FormFile("berita_acara_file")
 	if err != nil {
-		http.Error(w, "Error retrieving berita acara file: "+err.Error(), http.StatusBadRequest)
+		sendErrorResponse("Error retrieving berita acara file: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer beritaAcaraFile.Close()
 
-	// Create upload directories if they don't exist
+	// Create directories
 	penilaianDir := "uploads/penilaian_proposal"
 	beritaAcaraDir := "uploads/berita_acara_proposal"
 
 	if err := os.MkdirAll(penilaianDir, 0777); err != nil {
-		http.Error(w, "Error creating penilaian directory: "+err.Error(), http.StatusInternalServerError)
+		sendErrorResponse("Error creating directories: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if err := os.MkdirAll(beritaAcaraDir, 0777); err != nil {
-		http.Error(w, "Error creating berita acara directory: "+err.Error(), http.StatusInternalServerError)
+		sendErrorResponse("Error creating directories: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Generate unique filenames
+	// Generate filenames
 	timestamp := time.Now().Format("20060102150405")
 	penilaianFilename := fmt.Sprintf("Penilaian_%s_%s_%s", userID, timestamp, penilaianHeader.Filename)
 	beritaAcaraFilename := fmt.Sprintf("BeritaAcara_%s_%s_%s", userID, timestamp, beritaAcaraHeader.Filename)
@@ -341,110 +344,88 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	penilaianPath := filepath.Join(penilaianDir, penilaianFilename)
 	beritaAcaraPath := filepath.Join(beritaAcaraDir, beritaAcaraFilename)
 
-	// Save penilaian file
-	penilaianDst, err := os.Create(penilaianPath)
-	if err != nil {
-		http.Error(w, "Error creating penilaian file: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer penilaianDst.Close()
-
-	if _, err = io.Copy(penilaianDst, penilaianFile); err != nil {
-		os.Remove(penilaianPath)
-		http.Error(w, "Error saving penilaian file: "+err.Error(), http.StatusInternalServerError)
+	// Save files
+	if err := saveFile(penilaianFile, penilaianPath); err != nil {
+		sendErrorResponse("Error saving penilaian file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Save berita acara file
-	beritaAcaraDst, err := os.Create(beritaAcaraPath)
-	if err != nil {
-		os.Remove(penilaianPath)
-		http.Error(w, "Error creating berita acara file: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer beritaAcaraDst.Close()
-
-	if _, err = io.Copy(beritaAcaraDst, beritaAcaraFile); err != nil {
-		os.Remove(penilaianPath)
-		os.Remove(beritaAcaraPath)
-		http.Error(w, "Error saving berita acara file: "+err.Error(), http.StatusInternalServerError)
+	if err := saveFile(beritaAcaraFile, beritaAcaraPath); err != nil {
+		os.Remove(penilaianPath) // cleanup
+		sendErrorResponse("Error saving berita acara file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Open database connection
+	// Database operation
 	db, err := config.GetDB()
 	if err != nil {
 		os.Remove(penilaianPath)
 		os.Remove(beritaAcaraPath)
-		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		sendErrorResponse("Database error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
-	finalProposalID := r.FormValue("final_proposal_id")
-	if finalProposalID == "" {
-		http.Error(w, "Final Proposal ID is required", http.StatusBadRequest)
-		return
-	}
-
-	// Tambahkan pengecekan duplikasi
-	checkQuery := `
-		SELECT COUNT(*) 
-		FROM seminar_proposal_penilaian 
-		WHERE user_id = ? AND dosen_id = ? AND final_proposal_id = ?
-	`
-	var count int
-	err = db.QueryRow(checkQuery, userID, dosenID, finalProposalID).Scan(&count)
+	// Use transaction for database operations
+	tx, err := db.Begin()
 	if err != nil {
 		os.Remove(penilaianPath)
 		os.Remove(beritaAcaraPath)
-		http.Error(w, "Error checking existing data: "+err.Error(), http.StatusInternalServerError)
+		sendErrorResponse("Transaction error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if count > 0 {
-		// Jika sudah ada, lakukan UPDATE
-		query := `
-			UPDATE seminar_proposal_penilaian 
-			SET file_penilaian_path = ?,
-				file_berita_acara_path = ?,
-				status_pengumpulan = 'belum',
-				submitted_at = NOW()
-			WHERE user_id = ? AND dosen_id = ? AND final_proposal_id = ?
-		`
-		_, err = db.Exec(query,
-			penilaianPath,
-			beritaAcaraPath,
-			userID,
-			dosenID,
-			finalProposalID,
-		)
+	// Check if record exists
+	var exists bool
+	err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM seminar_proposal_penilaian WHERE user_id = ? AND dosen_id = ? AND final_proposal_id = ?)",
+		userID, dosenID, finalProposalID).Scan(&exists)
+
+	if err != nil {
+		tx.Rollback()
+		os.Remove(penilaianPath)
+		os.Remove(beritaAcaraPath)
+		sendErrorResponse("Database query error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var query string
+	if exists {
+		query = `
+            UPDATE seminar_proposal_penilaian 
+            SET file_penilaian_path = ?,
+                file_berita_acara_path = ?,
+                submitted_at = NOW()
+            WHERE user_id = ? AND dosen_id = ? AND final_proposal_id = ?
+        `
+		_, err = tx.Exec(query, penilaianPath, beritaAcaraPath, userID, dosenID, finalProposalID)
 	} else {
-		// Jika belum ada, lakukan INSERT
-		query := `
-			INSERT INTO seminar_proposal_penilaian (
-				user_id, final_proposal_id, dosen_id,
-				file_penilaian_path, file_berita_acara_path,
-				status_pengumpulan, submitted_at
-			) VALUES (?, ?, ?, ?, ?, 'belum', NOW())
-		`
-		_, err = db.Exec(query,
-			userID,
-			finalProposalID,
-			dosenID,
-			penilaianPath,
-			beritaAcaraPath,
-		)
+		query = `
+            INSERT INTO seminar_proposal_penilaian (
+                user_id, final_proposal_id, dosen_id,
+                file_penilaian_path, file_berita_acara_path,
+                status_pengumpulan, submitted_at
+            ) VALUES (?, ?, ?, ?, ?, 'belum', NOW())
+        `
+		_, err = tx.Exec(query, userID, finalProposalID, dosenID, penilaianPath, beritaAcaraPath)
 	}
 
 	if err != nil {
+		tx.Rollback()
 		os.Remove(penilaianPath)
 		os.Remove(beritaAcaraPath)
-		http.Error(w, "Error saving to database: "+err.Error(), http.StatusInternalServerError)
+		sendErrorResponse("Database error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Return success response
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		os.Remove(penilaianPath)
+		os.Remove(beritaAcaraPath)
+		sendErrorResponse("Transaction commit error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Success response
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": "Penilaian proposal berhasil disimpan",
@@ -453,6 +434,18 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 			"berita_acara_path": beritaAcaraPath,
 		},
 	})
+}
+
+// Helper function untuk menyimpan file
+func saveFile(src io.Reader, destPath string) error {
+	dst, err := os.Create(destPath)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+	return err
 }
 
 // GetMonitoringPenilaianProposalHandler menangani request untuk mendapatkan data monitoring penilaian proposal
