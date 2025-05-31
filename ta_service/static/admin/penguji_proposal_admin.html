@@ -978,7 +978,12 @@
 					const selectIDs = ['ketuaPenguji', 'penguji1', 'penguji2'];
 					selectIDs.forEach(id => {
 						const select = document.getElementById(id);
-						select.innerHTML = `<option value="">Pilih ${select.labels[0].innerText}</option>`;
+						let label = 'Penguji';
+						if (id === 'ketuaPenguji') label = 'Ketua Penguji';
+						else if (id === 'penguji1') label = 'Penguji 1';
+						else if (id === 'penguji2') label = 'Penguji 2';
+
+						select.innerHTML = `<option value="">Pilih ${label}</option>`;
 						result.data.forEach(dosen => {
 							const option = document.createElement('option');
 							option.value = dosen.id;
