@@ -1017,7 +1017,34 @@
 				});
 			}
 
-			// Fungsi untuk menyimpan dosen pembimbing
+			async function getFinalProposalIdByTarunaId(tarunaId) {
+				try {
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					const response = await fetch(`http://104.43.89.154:8081/final_proposal?taruna_id=${tarunaId}`, {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+
+					const data = await response.json();
+					if (data.status === 'success' && data.data && data.data.id) {
+						return data.data.id;
+					} else {
+						console.warn('final_proposal tidak ditemukan untuk taruna_id:', tarunaId);
+						return null;
+					}
+				} catch (error) {
+					console.error('Error fetching final proposal ID:', error);
+					return null;
+				}
+			}
+
+			// Fungsi untuk mengambil ID final_proposal berdasarkan tarunaId
+			async function getFinalProposalIdByTarunaId(tarunaId) {
+				return 1; // Ganti dengan ID final_proposal yang valid di database kamu untuk testing
+			}
+
+			// Fungsi untuk menyimpan penguji
 			async function savePenguji() {
 				try {
 					const tarunaId = parseInt(document.getElementById('currentTarunaId').value);
