@@ -9,6 +9,7 @@ import (
 	"user_service/models"
 )
 
+// AssignDosbingProposal digunakan untuk menyimpan data dosen pembimbing ke dalam database
 func AssignDosbingProposal(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -49,6 +50,7 @@ func AssignDosbingProposal(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetTarunaWithDosbing digunakan untuk mengambil data taruna beserta dosen pembimbing
 func GetTarunaWithDosbing(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -74,6 +76,7 @@ func GetTarunaWithDosbing(w http.ResponseWriter, r *http.Request) {
 
 	query := `
 		SELECT 
+			t.id AS taruna_id,
 			t.nama_lengkap AS nama_taruna,
 			t.jurusan,
 			t.kelas,
@@ -92,14 +95,17 @@ func GetTarunaWithDosbing(w http.ResponseWriter, r *http.Request) {
 
 	var result []map[string]interface{}
 	for rows.Next() {
+		var tarunaID int
 		var namaTaruna, jurusan, kelas, dosbing sql.NullString
 
-		if err := rows.Scan(&namaTaruna, &jurusan, &kelas, &dosbing); err != nil {
+		// Scan kelima kolom sesuai SELECT
+		if err := rows.Scan(&tarunaID, &namaTaruna, &jurusan, &kelas, &dosbing); err != nil {
 			http.Error(w, "Row scan error", http.StatusInternalServerError)
 			return
 		}
 
 		result = append(result, map[string]interface{}{
+			"taruna_id":        tarunaID,
 			"nama_lengkap":     namaTaruna.String,
 			"jurusan":          jurusan.String,
 			"kelas":            kelas.String,
