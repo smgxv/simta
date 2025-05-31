@@ -192,6 +192,7 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetTarunaListForDosenHandler menangani request untuk mendapatkan daftar taruna yang belum memiliki final proposal
 func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -386,21 +387,55 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := `
-		INSERT INTO seminar_proposal_penilaian (
-			user_id, final_proposal_id, dosen_id,
-			file_penilaian_path, file_berita_acara_path,
-			status_pengumpulan, submitted_at
-		) VALUES (?, ?, ?, ?, ?, 'belum', NOW())
+	// Tambahkan pengecekan duplikasi
+	checkQuery := `
+		SELECT COUNT(*) 
+		FROM seminar_proposal_penilaian 
+		WHERE user_id = ? AND dosen_id = ? AND final_proposal_id = ?
 	`
+	var count int
+	err = db.QueryRow(checkQuery, userID, dosenID, finalProposalID).Scan(&count)
+	if err != nil {
+		os.Remove(penilaianPath)
+		os.Remove(beritaAcaraPath)
+		http.Error(w, "Error checking existing data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	_, err = db.Exec(query,
-		userID,
-		finalProposalID,
-		dosenID,
-		penilaianPath,
-		beritaAcaraPath,
-	)
+	if count > 0 {
+		// Jika sudah ada, lakukan UPDATE
+		query := `
+			UPDATE seminar_proposal_penilaian 
+			SET file_penilaian_path = ?,
+				file_berita_acara_path = ?,
+				status_pengumpulan = 'belum',
+				submitted_at = NOW()
+			WHERE user_id = ? AND dosen_id = ? AND final_proposal_id = ?
+		`
+		_, err = db.Exec(query,
+			penilaianPath,
+			beritaAcaraPath,
+			userID,
+			dosenID,
+			finalProposalID,
+		)
+	} else {
+		// Jika belum ada, lakukan INSERT
+		query := `
+			INSERT INTO seminar_proposal_penilaian (
+				user_id, final_proposal_id, dosen_id,
+				file_penilaian_path, file_berita_acara_path,
+				status_pengumpulan, submitted_at
+			) VALUES (?, ?, ?, ?, ?, 'belum', NOW())
+		`
+		_, err = db.Exec(query,
+			userID,
+			finalProposalID,
+			dosenID,
+			penilaianPath,
+			beritaAcaraPath,
+		)
+	}
 
 	if err != nil {
 		os.Remove(penilaianPath)
