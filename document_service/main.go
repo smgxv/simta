@@ -51,6 +51,9 @@ func main() {
 	r.HandleFunc("/hasiltelaah/monitoring", handlers.GetMonitoringTelaahHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/hasiltelaah/detail", handlers.GetDetailTelaahICPHandler).Methods("GET", "OPTIONS")
 
+	// Dosen Proposal routes
+	r.HandleFunc("/dosbingproposal", handlers.GetDosbingByUserID).Methods("GET", "OPTIONS")
+
 	// Proposal routes
 	r.HandleFunc("/upload/proposal", handlers.UploadProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/proposal", handlers.GetProposalHandler).Methods("GET", "OPTIONS")
