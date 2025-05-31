@@ -23,8 +23,10 @@ func main() {
 	http.HandleFunc("/taruna/topik", middleware.AuthMiddleware(handlers.GetTarunaWithTopik))
 
 	http.HandleFunc("/dosbing_proposal", middleware.AuthMiddleware(handlers.AssignDosbingProposal))
+	http.HandleFunc("/penguji_proposal", middleware.AuthMiddleware(handlers.AssignPengujiProposal))
 
 	http.HandleFunc("/taruna/dosbing", middleware.AuthMiddleware(handlers.GetTarunaWithDosbing))
+	http.HandleFunc("/taruna/penguji", middleware.AuthMiddleware(handlers.GetTarunaWithPenguji))
 
 	fmt.Println("API Server running on port 8081...")
 	log.Fatal(http.ListenAndServe(":8081", nil))
