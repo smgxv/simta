@@ -966,29 +966,36 @@
 			document.getElementById('proposalForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 
+				// Validasi form
+				const tarunaSelect = document.getElementById('tarunaSelect');
+				const finalProposalId = document.getElementById('finalProposalId').value;
+				const penilaianFile = document.getElementById('penilaianFile').files[0];
+				const beritaAcaraFile = document.getElementById('beritaAcaraFile').files[0];
+				const dosenId = localStorage.getItem('dosenID');
+
+				// Validasi semua field yang diperlukan
+				if (!tarunaSelect.value || !finalProposalId || !penilaianFile || !beritaAcaraFile || !dosenId) {
+					showAlert('Semua field harus diisi', 'warning');
+					return;
+				}
+
 				// Tampilkan loading state
 				const submitButton = this.querySelector('button[type="submit"]');
 				submitButton.disabled = true;
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 
 				try {
-					const formData = new FormData(this);
-
-					// Ambil dosen_id dari localStorage
-					const dosenId = localStorage.getItem('dosenID');
-					if (!dosenId) {
-						throw new Error('Dosen ID tidak ditemukan');
-					}
+					const formData = new FormData();
+					
+					// Tambahkan semua field yang diperlukan
+					formData.append('user_id', tarunaSelect.value);
+					formData.append('final_proposal_id', finalProposalId);
 					formData.append('dosen_id', dosenId);
+					formData.append('penilaian_file', penilaianFile);
+					formData.append('berita_acara_file', beritaAcaraFile);
 
-					// Validasi final_proposal_id
-					const finalProposalId = document.getElementById('finalProposalId').value;
-					if (!finalProposalId) {
-						throw new Error('Final Proposal ID tidak ditemukan');
-					}
-					formData.set('final_proposal_id', finalProposalId); // pastikan sudah ada
-
-					// Log FormData untuk debugging
+					// Log data yang akan dikirim
+					console.log('Sending data:');
 					for (let pair of formData.entries()) {
 						console.log(pair[0] + ':', pair[1]);
 					}
@@ -998,22 +1005,26 @@
 						body: formData
 					});
 
+					// Tambahkan penanganan response yang lebih detail
+					const contentType = response.headers.get('content-type');
 					let data;
-					try {
+					
+					if (contentType && contentType.includes('application/json')) {
 						data = await response.json();
-					} catch (jsonErr) {
-						throw new Error('Server error: response bukan JSON. Cek backend log.');
+					} else {
+						throw new Error('Response dari server bukan JSON');
 					}
 
 					if (response.ok && data.status === 'success') {
 						showAlert('Penilaian proposal berhasil disimpan', 'success');
-
+						
 						// Reset form
 						this.reset();
 						document.querySelectorAll('.custom-file-label').forEach(label => {
 							label.textContent = 'Choose file';
 						});
-
+						
+						// Reload data
 						loadProposalData();
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat menyimpan penilaian');
