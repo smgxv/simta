@@ -40,7 +40,7 @@ func AssignPengujiProposal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := model.AssignPenguji(&payload); err != nil {
-		http.Error(w, "Failed to assign penguji", http.StatusInternalServerError)
+		http.Error(w, "Failed to assign penguji: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -50,7 +50,6 @@ func AssignPengujiProposal(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetTarunaWithPenguji digunakan untuk mengambil data taruna beserta penguji
 func GetTarunaWithPenguji(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -80,10 +79,14 @@ func GetTarunaWithPenguji(w http.ResponseWriter, r *http.Request) {
 			t.nama_lengkap AS nama_taruna,
 			t.jurusan,
 			t.kelas,
-			d.nama_lengkap AS dosen_pembimbing
+			dk.nama_lengkap AS ketua_penguji,
+			dp1.nama_lengkap AS penguji_1,
+			dp2.nama_lengkap AS penguji_2
 		FROM taruna t
-		LEFT JOIN dosbing_proposal dp ON dp.user_id = t.user_id
-		LEFT JOIN dosen d ON dp.dosen_id = d.id;
+		LEFT JOIN penguji_proposal pp ON pp.user_id = t.user_id
+		LEFT JOIN dosen dk ON pp.ketua_penguji_id = dk.id
+		LEFT JOIN dosen dp1 ON pp.penguji_1_id = dp1.id
+		LEFT JOIN dosen dp2 ON pp.penguji_2_id = dp2.id;
 	`
 
 	rows, err := db.Query(query)
@@ -96,20 +99,22 @@ func GetTarunaWithPenguji(w http.ResponseWriter, r *http.Request) {
 	var result []map[string]interface{}
 	for rows.Next() {
 		var tarunaID int
-		var namaTaruna, jurusan, kelas, dosbing sql.NullString
+		var namaTaruna, jurusan, kelas sql.NullString
+		var ketua, penguji1, penguji2 sql.NullString
 
-		// Scan kelima kolom sesuai SELECT
-		if err := rows.Scan(&tarunaID, &namaTaruna, &jurusan, &kelas, &dosbing); err != nil {
+		if err := rows.Scan(&tarunaID, &namaTaruna, &jurusan, &kelas, &ketua, &penguji1, &penguji2); err != nil {
 			http.Error(w, "Row scan error", http.StatusInternalServerError)
 			return
 		}
 
 		result = append(result, map[string]interface{}{
-			"taruna_id":        tarunaID,
-			"nama_lengkap":     namaTaruna.String,
-			"jurusan":          jurusan.String,
-			"kelas":            kelas.String,
-			"dosen_pembimbing": dosbing.String,
+			"taruna_id":     tarunaID,
+			"nama_lengkap":  namaTaruna.String,
+			"jurusan":       jurusan.String,
+			"kelas":         kelas.String,
+			"ketua_penguji": ketua.String,
+			"penguji_1":     penguji1.String,
+			"penguji_2":     penguji2.String,
 		})
 	}
 

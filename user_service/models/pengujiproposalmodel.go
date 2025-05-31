@@ -20,27 +20,25 @@ func NewPengujiModel() (*PengujiModel, error) {
 	return &PengujiModel{DB: db}, nil
 }
 
-func (m *PengujiModel) AssignPenguji(dp *entities.PengujiProposal) error {
+func (m *PengujiModel) AssignPenguji(p *entities.PengujiProposal) error {
 	// Ambil user_id berdasarkan taruna_id
 	var userID int
-	err := m.DB.QueryRow("SELECT user_id FROM taruna WHERE id = ?", dp.TarunaID).Scan(&userID)
+	err := m.DB.QueryRow("SELECT user_id FROM taruna WHERE id = ?", p.TarunaID).Scan(&userID)
 	if err != nil {
 		return fmt.Errorf("taruna not found: %v", err)
 	}
 
 	query := `
-		INSERT INTO dosbing_proposal (user_id, dosen_id, tanggal_ditetapkan, status)
-		VALUES (?, ?, CURDATE(), ?)
+		INSERT INTO penguji_proposal 
+			(user_id, final_proposal_id, ketua_penguji_id, penguji_1_id, penguji_2_id, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, NOW(), NOW())
 		ON DUPLICATE KEY UPDATE 
-			dosen_id = VALUES(dosen_id),
-			tanggal_ditetapkan = CURDATE(),
-			status = VALUES(status)
+			ketua_penguji_id = VALUES(ketua_penguji_id),
+			penguji_1_id = VALUES(penguji_1_id),
+			penguji_2_id = VALUES(penguji_2_id),
+			updated_at = NOW()
 	`
-	status := dp.Status
-	if status == "" {
-		status = "aktif"
-	}
 
-	_, err = m.DB.Exec(query, userID, dp.DosenID, status)
+	_, err = m.DB.Exec(query, userID, p.FinalProposalID, p.KetuaID, p.Penguji1ID, p.Penguji2ID)
 	return err
 }

@@ -587,7 +587,7 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Pembimbing Proposal</h4>
+									<h4>Penguji Proposal</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
@@ -595,7 +595,7 @@
 											<a href="/admin/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											Pembimbing Proposal
+											Penguji Proposal
 										</li>
 									</ol>
 								</nav>
@@ -934,7 +934,9 @@
 						<td>${item.nama_lengkap || '-'}</td>
 						<td>${item.jurusan || '-'}</td>
 						<td>${item.kelas || '-'}</td>
-						<td>${item.dosen_pembimbing || '-'}</td>
+						<td>${item.ketua_penguji || '-'}</td>
+						<td>${item.penguji_1 || '-'}</td>
+						<td>${item.penguji_2 || '-'}</td>
 						<td>
 							<button class="btn btn-sm btn-primary" onclick="showDosenPembimbingModal(${item.taruna_id}, '')">
 								Pilih Dosen
@@ -987,15 +989,21 @@
 				}
 			}
 
-			// Fungsi untuk menampilkan modal pilih dosen pembimbing
-			function showDosenPembimbingModal(tarunaId, dosenPembimbingId = '') {
+			function showPengujiModal(tarunaId, currentPenguji = {}) {
 				document.getElementById('currentTarunaId').value = tarunaId;
 
 				loadDosenData().then(() => {
-					if (dosenPembimbingId) {
-						document.getElementById('dosenPembimbing').value = dosenPembimbingId;
+					// Isi nilai default jika ada data sebelumnya
+					if (currentPenguji.ketua_id) {
+						document.getElementById('ketuaPenguji').value = currentPenguji.ketua_id;
 					}
-					$('#modalPilihDosenPembimbing').modal('show');
+					if (currentPenguji.penguji_1_id) {
+						document.getElementById('penguji1').value = currentPenguji.penguji_1_id;
+					}
+					if (currentPenguji.penguji_2_id) {
+						document.getElementById('penguji2').value = currentPenguji.penguji_2_id;
+					}
+					$('#modalPilihPenguji').modal('show');
 				});
 			}
 
@@ -1008,8 +1016,15 @@
 					const penguji2Id = parseInt(document.getElementById('penguji2').value);
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
-					if (!tarunaId || !dosenId) {
-						showAlert('Pastikan semua field telah dipilih', 'warning');
+					if (!tarunaId || !ketuaPengujiId || !penguji1Id || !penguji2Id) {
+						showAlert('Semua penguji harus dipilih', 'warning');
+						return;
+					}
+
+					// Opsional: fetch final_proposal_id berdasarkan tarunaId dari backend
+					const finalProposalId = await getFinalProposalIdByTarunaId(tarunaId);
+					if (!finalProposalId) {
+						showAlert('Gagal menemukan final proposal ID', 'danger');
 						return;
 					}
 
@@ -1021,28 +1036,28 @@
 						},
 						body: JSON.stringify({
 							taruna_id: tarunaId,
-							dosen_id: dosenId,
-							status: 'aktif'
+							final_proposal_id: finalProposalId,
+							ketua_id: ketuaPengujiId,
+							penguji_1_id: penguji1Id,
+							penguji_2_id: penguji2Id
 						})
 					});
 
 					const result = await response.json();
 
 					if (!response.ok || result.status !== 'success') {
-						throw new Error(result.message || 'Gagal menyimpan dosbing');
+						throw new Error(result.message || 'Gagal menyimpan penguji');
 					}
 
-					console.log("Taruna ID yang akan dikirim:", tarunaId);
 					showAlert('Penguji berhasil disimpan', 'success');
 					$('#modalPilihPenguji').modal('hide');
-					loadTarunaData(); // reload list taruna setelah simpan
+					loadTarunaData();
 
 				} catch (error) {
-					console.error('Error saving dosbing:', error);
-					showAlert('Gagal menyimpan dosen pembimbing: ' + error.message, 'danger');
+					console.error('Error saving penguji:', error);
+					showAlert('Gagal menyimpan penguji: ' + error.message, 'danger');
 				}
 			}
-
 
 		</script>
 
