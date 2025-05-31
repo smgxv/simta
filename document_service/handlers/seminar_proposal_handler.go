@@ -192,7 +192,7 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetTarunaListForDosenHandler menangani request untuk mendapatkan list taruna untuk dropdown
+// GetTarunaListForDosenHandler menangani request untuk mendapatkan list taruna untuk dropdown penilaian proposal
 func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -204,7 +204,6 @@ func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil dosen_id dari query parameter
 	dosenID := r.URL.Query().Get("dosen_id")
 	if dosenID == "" {
 		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
@@ -217,7 +216,6 @@ func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Buka koneksi database
 	db, err := config.GetDB()
 	if err != nil {
 		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
@@ -225,17 +223,23 @@ func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Query untuk mendapatkan data taruna dan topik penelitian
 	query := `
-		SELECT DISTINCT sp.user_id, t.nama_lengkap, sp.topik_penelitian
-		FROM seminar_proposal sp
-		JOIN taruna t ON sp.user_id = t.user_id
-		WHERE sp.ketua_penguji_id = ? OR sp.penguji1_id = ? OR sp.penguji2_id = ?
+		SELECT DISTINCT 
+			pp.user_id, 
+			t.nama_lengkap, 
+			fp.topik_penelitian
+		FROM penguji_proposal pp
+		JOIN taruna t ON pp.user_id = t.user_id
+		LEFT JOIN final_proposal fp ON fp.user_id = t.user_id
+		WHERE 
+			pp.ketua_penguji_id = ? 
+			OR pp.penguji_1_id = ? 
+			OR pp.penguji_2_id = ?
 	`
 
 	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
 	if err != nil {
-		http.Error(w, "Error querying database: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -251,7 +255,7 @@ func GetTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 		var t TarunaData
 		err := rows.Scan(&t.UserID, &t.NamaLengkap, &t.TopikPenelitian)
 		if err != nil {
-			http.Error(w, "Error scanning rows: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error reading rows: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		tarunaList = append(tarunaList, t)

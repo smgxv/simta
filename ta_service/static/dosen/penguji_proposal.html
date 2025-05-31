@@ -884,17 +884,16 @@
 				}
 			}
 
-			// Fungsi untuk memuat data taruna ke dropdown
+			// Fungsi untuk memuat data taruna ke dropdown (berdasarkan penguji_proposal)
 			async function loadTarunaDropdown() {
 				try {
-					const dosenId = localStorage.getItem('dosenID'); // Gunakan dosenID yang sudah di-map
+					const dosenId = localStorage.getItem('dosenID');
 					if (!dosenId) {
 						console.error('Dosen ID not found');
 						return;
 					}
 
-					console.log('Fetching taruna data for dosen:', dosenId);
-					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/taruna/list?dosen_id=${dosenId}`);
+					const response = await fetch(`http://104.43.89.154:8081/taruna-penguji?dosen_id=${dosenId}`);
 					const data = await response.json();
 
 					const tarunaSelect = document.getElementById('tarunaSelect');
@@ -905,36 +904,34 @@
 
 					tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Nama Taruna</option>';
 
-					if (data.status === 'success' && data.data && Array.isArray(data.data)) {
-						// Simpan data topik penelitian untuk setiap taruna
-						const topikMap = new Map();
-						
+					// Simpan data topik penelitian
+					const topikMap = new Map();
+
+					if (data.status === 'success' && Array.isArray(data.data)) {
 						data.data.forEach(taruna => {
 							const option = document.createElement('option');
 							option.value = taruna.user_id;
 							option.textContent = taruna.nama_lengkap;
 							tarunaSelect.appendChild(option);
-							
-							// Simpan topik penelitian untuk taruna ini
-							topikMap.set(taruna.user_id.toString(), taruna.topik_penelitian);
+
+							topikMap.set(String(taruna.user_id), taruna.topik_penelitian);
 						});
 
-						// Event listener untuk mengisi topik penelitian otomatis
-						tarunaSelect.addEventListener('change', function() {
-							const selectedUserId = this.value;
-							const topikPenelitian = topikMap.get(selectedUserId);
+						// Saat pilihan berubah, update input topik penelitian
+						tarunaSelect.addEventListener('change', function () {
+							const selectedId = this.value;
+							const topik = topikMap.get(selectedId) || '';
 							const topikInput = document.querySelector('input[name="topik_penelitian"]');
-							if (topikInput && topikPenelitian) {
-								topikInput.value = topikPenelitian;
+							if (topikInput) {
+								topikInput.value = topik;
 							}
 						});
 					} else {
-						console.warn('No taruna data received or invalid format');
-						showAlert('Tidak ada data taruna yang tersedia', 'warning');
+						showAlert('Tidak ada taruna yang sedang diuji', 'warning');
 					}
 				} catch (error) {
 					console.error('Error loading taruna data:', error);
-					showAlert('Terjadi kesalahan saat memuat data taruna', 'danger');
+					showAlert('Gagal memuat data taruna: ' + error.message, 'danger');
 				}
 			}
 
