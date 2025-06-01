@@ -448,7 +448,6 @@ func saveFile(src io.Reader, destPath string) error {
 	return err
 }
 
-// GetMonitoringPenilaianProposalHandler menangani request untuk mendapatkan data monitoring penilaian proposal
 func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -460,7 +459,6 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Buka koneksi database
 	db, err := config.GetDB()
 	if err != nil {
 		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
@@ -468,37 +466,37 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 	}
 	defer db.Close()
 
-	// Query untuk mendapatkan data monitoring
 	query := `
-		SELECT 
-			sp.id as seminar_proposal_id,
+		SELECT
+			fp.id AS final_proposal_id,
 			u.nama_lengkap AS nama_taruna,
 			t.jurusan,
-			sp.topik_penelitian,
-			
+			fp.topik_penelitian,
+
 			d_ketua.nama_lengkap AS ketua_penguji,
 			d1.nama_lengkap AS penguji1,
 			d2.nama_lengkap AS penguji2,
 
-			-- Status kelengkapan berkas
+			-- Hitung kelengkapan berkas
 			CASE
-				WHEN COUNT(CASE WHEN spp.status_pengumpulan = 'sudah' THEN 1 END) = 3 THEN 'Lengkap'
+				WHEN COUNT(CASE WHEN spp.file_penilaian_path IS NOT NULL AND spp.file_berita_acara_path IS NOT NULL THEN 1 END) = 3 THEN 'Lengkap'
 				ELSE 'Belum Lengkap'
 			END AS status_kelengkapan
 
-		FROM seminar_proposal sp
-
-		JOIN users u ON u.id = sp.user_id
+		FROM penguji_proposal pp
+		JOIN final_proposal fp ON fp.id = pp.final_proposal_id
+		JOIN users u ON u.id = pp.user_id
 		JOIN taruna t ON t.user_id = u.id
 
-		JOIN dosen d_ketua ON d_ketua.id = sp.ketua_penguji_id
-		JOIN dosen d1 ON d1.id = sp.penguji1_id
-		JOIN dosen d2 ON d2.id = sp.penguji2_id
+		JOIN dosen d_ketua ON d_ketua.id = pp.ketua_penguji_id
+		JOIN dosen d1 ON d1.id = pp.penguji_1_id
+		JOIN dosen d2 ON d2.id = pp.penguji_2_id
 
-		LEFT JOIN seminar_proposal_penilaian spp ON spp.seminar_proposal_id = sp.id
+		LEFT JOIN seminar_proposal_penilaian spp
+			ON spp.final_proposal_id = pp.final_proposal_id
 
-		GROUP BY 
-			sp.id, u.nama_lengkap, t.jurusan, sp.topik_penelitian,
+		GROUP BY
+			fp.id, u.nama_lengkap, t.jurusan, fp.topik_penelitian,
 			d_ketua.nama_lengkap, d1.nama_lengkap, d2.nama_lengkap
 	`
 
@@ -514,7 +512,7 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 	defer rows.Close()
 
 	type MonitoringData struct {
-		SeminarProposalID int    `json:"seminar_proposal_id"`
+		FinalProposalID   int    `json:"final_proposal_id"`
 		NamaTaruna        string `json:"nama_taruna"`
 		Jurusan           string `json:"jurusan"`
 		TopikPenelitian   string `json:"topik_penelitian"`
@@ -528,7 +526,7 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 	for rows.Next() {
 		var m MonitoringData
 		err := rows.Scan(
-			&m.SeminarProposalID,
+			&m.FinalProposalID,
 			&m.NamaTaruna,
 			&m.Jurusan,
 			&m.TopikPenelitian,

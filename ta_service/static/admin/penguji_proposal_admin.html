@@ -1057,7 +1057,7 @@
 					// Opsional: fetch final_proposal_id berdasarkan tarunaId dari backend
 					const finalProposalId = await getFinalProposalIdByTarunaId(tarunaId);
 					if (!finalProposalId) {
-						showAlert('Gagal menemukan final proposal ID', 'danger');
+						showAlert('Taruna ini belum mengumpulkan proposal', 'danger');
 						return;
 					}
 
