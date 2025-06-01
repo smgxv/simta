@@ -391,20 +391,21 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	var query string
 	if exists {
 		query = `
-            UPDATE seminar_proposal_penilaian 
-            SET file_penilaian_path = ?,
-                file_berita_acara_path = ?,
-                submitted_at = NOW()
-            WHERE user_id = ? AND dosen_id = ? AND final_proposal_id = ?
+			UPDATE seminar_proposal_penilaian 
+			SET file_penilaian_path = ?,
+				file_berita_acara_path = ?,
+				submitted_at = NOW(),
+				status_pengumpulan = 'sudah'
+			WHERE user_id = ? AND dosen_id = ? AND final_proposal_id = ?
         `
 		_, err = tx.Exec(query, penilaianPath, beritaAcaraPath, userID, dosenID, finalProposalID)
 	} else {
 		query = `
-            INSERT INTO seminar_proposal_penilaian (
-                user_id, final_proposal_id, dosen_id,
-                file_penilaian_path, file_berita_acara_path,
-                status_pengumpulan, submitted_at
-            ) VALUES (?, ?, ?, ?, ?, 'belum', NOW())
+			INSERT INTO seminar_proposal_penilaian (
+				user_id, final_proposal_id, dosen_id,
+				file_penilaian_path, file_berita_acara_path,
+				status_pengumpulan, submitted_at
+			) VALUES (?, ?, ?, ?, ?, 'sudah', NOW())
         `
 		_, err = tx.Exec(query, userID, finalProposalID, dosenID, penilaianPath, beritaAcaraPath)
 	}
