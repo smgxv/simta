@@ -1066,7 +1066,7 @@
 						if (data.data.length > 0) {
 							data.data.forEach(item => {
 								const statusClass = item.status_kelengkapan === 'Lengkap' ? 'badge-success' : 'badge-warning';
-								
+
 								tbody.innerHTML += `
 									<tr>
 										<td>${item.nama_taruna || '-'}</td>
@@ -1087,7 +1087,7 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.seminar_proposal_id}); return false;">
+													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.final_proposal_id}); return false;">
 														<i class="dw dw-eye"></i> View Details
 													</a>
 												</div>
@@ -1111,14 +1111,15 @@
 			}
 
 			// Fungsi untuk menampilkan detail penilaian
-			function viewPenilaianDetails(proposalId) {
-				console.log('Viewing details for proposal ID:', proposalId);
-				if (!proposalId || proposalId === 'undefined' || proposalId === 'null') {
+			function viewPenilaianDetails(finalProposalId) {
+				console.log('Viewing details for final proposal ID:', finalProposalId);
+				if (!finalProposalId || finalProposalId === 'undefined' || finalProposalId === 'null') {
 					showAlert('ID Proposal tidak valid', 'danger');
 					return;
 				}
-				window.location.href = `/admin/detail_berkas_seminar_proposal?id=${proposalId}`;
+				window.location.href = `/admin/detail_berkas_penilaian_proposal?id=${finalProposalId}`;
 			}
+
 
 			// Load monitoring data saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
