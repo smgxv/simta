@@ -149,29 +149,45 @@ func GetFinalProposalByTarunaIDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	query := `SELECT id, user_id, topik_penelitian FROM final_proposal WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`
-
-	var id int
+	// Step 1: Get user_id from taruna.id
 	var userID int
-	var topik string
-
-	err = db.QueryRow(query, tarunaID).Scan(&id, &userID, &topik)
+	err = db.QueryRow("SELECT user_id FROM taruna WHERE id = ?", tarunaID).Scan(&userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"status":  "not_found",
-				"message": "Final proposal tidak ditemukan untuk taruna_id ini",
+				"message": "Taruna tidak ditemukan",
 			})
 			return
 		}
-		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error querying taruna: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Step 2: Get final_proposal by user_id
+	query := `SELECT id, topik_penelitian FROM final_proposal WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`
+
+	var proposalID int
+	var topik string
+
+	err = db.QueryRow(query, userID).Scan(&proposalID, &topik)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "not_found",
+				"message": "Taruna ini belum mengumpulkan proposal",
+			})
+			return
+		}
+		http.Error(w, "Error querying final_proposal: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Success response
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data": map[string]interface{}{
-			"id":               id,
+			"id":               proposalID,
 			"user_id":          userID,
 			"topik_penelitian": topik,
 		},
