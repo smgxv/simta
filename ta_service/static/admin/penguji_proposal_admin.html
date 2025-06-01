@@ -998,7 +998,7 @@
 				}
 			}
 
-
+			// Fungsi untuk menampilkan modal pilih penguji
 			function showPengujiModal(tarunaId, currentPenguji = {}) {
 				document.getElementById('currentTarunaId').value = tarunaId;
 
@@ -1017,6 +1017,7 @@
 				});
 			}
 
+			// Fungsi untuk mengambil ID final_proposal berdasarkan tarunaId
 			async function getFinalProposalIdByTarunaId(tarunaId) {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -1037,11 +1038,6 @@
 					console.error('Error fetching final proposal ID:', error);
 					return null;
 				}
-			}
-
-			// Fungsi untuk mengambil ID final_proposal berdasarkan tarunaId
-			async function getFinalProposalIdByTarunaId(tarunaId) {
-				return 1; // Ganti dengan ID final_proposal yang valid di database kamu untuk testing
 			}
 
 			// Fungsi untuk menyimpan penguji

@@ -24,6 +24,7 @@ func main() {
 
 	http.HandleFunc("/dosbing_proposal", middleware.AuthMiddleware(handlers.AssignDosbingProposal))
 	http.HandleFunc("/penguji_proposal", middleware.AuthMiddleware(handlers.AssignPengujiProposal))
+	http.HandleFunc("/final_proposal", middleware.AuthMiddleware(handlers.GetFinalProposalByTarunaIDHandler))
 
 	http.HandleFunc("/taruna/dosbing", middleware.AuthMiddleware(handlers.GetTarunaWithDosbing))
 	http.HandleFunc("/taruna/penguji", middleware.AuthMiddleware(handlers.GetTarunaWithPenguji))

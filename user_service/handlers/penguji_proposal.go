@@ -123,3 +123,57 @@ func GetTarunaWithPenguji(w http.ResponseWriter, r *http.Request) {
 		"data":   result,
 	})
 }
+
+// GetFinalProposalByTarunaIDHandler digunakan untuk mengambil data final proposal berdasarkan taruna_id
+func GetFinalProposalByTarunaIDHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	tarunaID := r.URL.Query().Get("taruna_id")
+	if tarunaID == "" {
+		http.Error(w, "taruna_id is required", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.ConnectDB()
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	query := `SELECT id, user_id, topik_penelitian FROM final_proposal WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`
+
+	var id int
+	var userID int
+	var topik string
+
+	err = db.QueryRow(query, tarunaID).Scan(&id, &userID, &topik)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "not_found",
+				"message": "Final proposal tidak ditemukan untuk taruna_id ini",
+			})
+			return
+		}
+		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data": map[string]interface{}{
+			"id":               id,
+			"user_id":          userID,
+			"topik_penelitian": topik,
+		},
+	})
+}
