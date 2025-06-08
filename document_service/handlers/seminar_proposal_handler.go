@@ -627,20 +627,24 @@ func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Fungsi ambil penilaian
 	getPenilaian := func(dosenID int) map[string]string {
+		var namaDosen string
+		err := db.QueryRow(`SELECT nama_lengkap FROM dosen WHERE id = ?`, dosenID).Scan(&namaDosen)
+		if err != nil {
+			namaDosen = "-"
+		}
+
 		var (
-			namaDosen, status, filePenilaian, fileBA string
+			status, filePenilaian, fileBA string
 		)
-		err := db.QueryRow(`
-			SELECT d.nama_lengkap, spp.status_pengumpulan, spp.file_penilaian_path, spp.file_berita_acara_path
-			FROM seminar_proposal_penilaian spp
-			JOIN dosen d ON d.id = spp.dosen_id
-			WHERE spp.final_proposal_id = ? AND spp.dosen_id = ?
+
+		err = db.QueryRow(`
+			SELECT status_pengumpulan, file_penilaian_path, file_berita_acara_path
+			FROM seminar_proposal_penilaian
+			WHERE final_proposal_id = ? AND dosen_id = ?
 			LIMIT 1
-		`, finalProposalID, dosenID).Scan(&namaDosen, &status, &filePenilaian, &fileBA)
+		`, finalProposalID, dosenID).Scan(&status, &filePenilaian, &fileBA)
 
 		if err != nil {
-			// fallback nama dosen
-			_ = db.QueryRow(`SELECT nama_lengkap FROM dosen WHERE id = ?`, dosenID).Scan(&namaDosen)
 			status = "belum"
 			filePenilaian = ""
 			fileBA = ""
