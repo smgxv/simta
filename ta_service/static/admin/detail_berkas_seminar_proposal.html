@@ -1037,6 +1037,7 @@
 				}
 			}
 
+			// Fungsi untuk memperbarui data penguji
 			function updatePengujiSection(type, data) {
 				const namaEl = document.getElementById(`${type}`);
 				if (namaEl) namaEl.textContent = data.nama_lengkap;
@@ -1051,7 +1052,7 @@
 							penilaianDownload.href = `http://104.43.89.154:8082/download?path=${data.file_penilaian_path}`;
 						}
 					} else {
-						penilaianStatus.innerHTML = '<span class="badge-empty">Kosong</span>';
+						penilaianStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
 						if (penilaianDownload) penilaianDownload.style.display = 'none';
 					}
 				}
@@ -1066,12 +1067,12 @@
 							beritaAcaraDownload.href = `http://104.43.89.154:8082/download?path=${data.file_berita_acara_path}`;
 						}
 					} else {
-						beritaAcaraStatus.innerHTML = '<span class="badge-empty">Kosong</span>';
+						beritaAcaraStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
 						if (beritaAcaraDownload) beritaAcaraDownload.style.display = 'none';
 					}
 				}
 			}
-			
+
 		</script>
 
 		<style>
