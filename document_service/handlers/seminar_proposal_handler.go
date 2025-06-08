@@ -566,8 +566,7 @@ func stringOrEmpty(s *string) string {
 	return *s
 }
 
-// GetSeminarProposalDetailHandler menangani request untuk mendapatkan detail berkas seminar proposal
-func GetSeminarProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
+func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -579,10 +578,9 @@ func GetSeminarProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	proposalID := vars["id"]
-
-	if proposalID == "" {
-		http.Error(w, "Proposal ID is required", http.StatusBadRequest)
+	finalProposalID := vars["id"]
+	if finalProposalID == "" {
+		http.Error(w, "Final Proposal ID is required", http.StatusBadRequest)
 		return
 	}
 
@@ -593,88 +591,79 @@ func GetSeminarProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	query := `
-		SELECT 
-			sp.id, sp.user_id, t.nama_lengkap, t.jurusan, t.kelas,
-			sp.topik_penelitian,
-			sp.ketua_penguji_id, d_ketua.nama_lengkap,
-			sp.penguji1_id, d1.nama_lengkap,
-			sp.penguji2_id, d2.nama_lengkap
-		FROM seminar_proposal sp
-		JOIN taruna t ON t.user_id = sp.user_id
-		JOIN dosen d_ketua ON d_ketua.id = sp.ketua_penguji_id
-		JOIN dosen d1 ON d1.id = sp.penguji1_id
-		JOIN dosen d2 ON d2.id = sp.penguji2_id
-		WHERE sp.id = ?
+	// Query proposal dan taruna
+	queryProposal := `
+		SELECT fp.id, u.nama_lengkap, u.jurusan, u.kelas, fp.topik_penelitian
+		FROM final_proposal fp
+		JOIN users u ON u.id = fp.user_id
+		WHERE fp.id = ?
 	`
-
-	var proposal struct {
-		ID              int    `json:"id"`
-		UserID          int    `json:"user_id"`
-		NamaTaruna      string `json:"nama_taruna"`
-		Jurusan         string `json:"jurusan"`
-		Kelas           string `json:"kelas"`
-		TopikPenelitian string `json:"topik_penelitian"`
-		KetuaID         int    `json:"ketua_penguji_id"`
-		KetuaNama       string `json:"ketua_penguji_nama"`
-		Penguji1ID      int    `json:"penguji1_id"`
-		Penguji1Nama    string `json:"penguji1_nama"`
-		Penguji2ID      int    `json:"penguji2_id"`
-		Penguji2Nama    string `json:"penguji2_nama"`
-	}
-
-	err = db.QueryRow(query, proposalID).Scan(
-		&proposal.ID, &proposal.UserID, &proposal.NamaTaruna, &proposal.Jurusan, &proposal.Kelas,
-		&proposal.TopikPenelitian,
-		&proposal.KetuaID, &proposal.KetuaNama,
-		&proposal.Penguji1ID, &proposal.Penguji1Nama,
-		&proposal.Penguji2ID, &proposal.Penguji2Nama,
+	var (
+		idProposal      int
+		namaTaruna      string
+		jurusan         string
+		kelas           string
+		topikPenelitian string
 	)
+	err = db.QueryRow(queryProposal, finalProposalID).Scan(&idProposal, &namaTaruna, &jurusan, &kelas, &topikPenelitian)
 	if err != nil {
-		http.Error(w, "Error getting proposal: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Proposal tidak ditemukan: "+err.Error(), http.StatusNotFound)
 		return
 	}
 
-	type Penilaian struct {
-		NamaDosen         string `json:"nama_dosen"`
-		StatusPengumpulan string `json:"status_pengumpulan"`
-		FilePenilaian     string `json:"file_penilaian"`
-		FileBeritaAcara   string `json:"file_berita_acara"`
+	// Query penguji
+	queryPenguji := `
+		SELECT ketua_penguji_id, penguji_1_id, penguji_2_id
+		FROM penguji_proposal
+		WHERE final_proposal_id = ?
+		LIMIT 1
+	`
+	var ketuaID, penguji1ID, penguji2ID int
+	err = db.QueryRow(queryPenguji, finalProposalID).Scan(&ketuaID, &penguji1ID, &penguji2ID)
+	if err != nil {
+		http.Error(w, "Data penguji tidak ditemukan: "+err.Error(), http.StatusNotFound)
+		return
 	}
 
-	// Ambil penilaian dari masing-masing penguji
-	getPenilaian := func(dosenID int) Penilaian {
-		var p Penilaian
-		query := `
+	// Fungsi ambil penilaian
+	getPenilaian := func(dosenID int) map[string]string {
+		var (
+			namaDosen, status, filePenilaian, fileBA string
+		)
+		err := db.QueryRow(`
 			SELECT d.nama_lengkap, spp.status_pengumpulan, spp.file_penilaian_path, spp.file_berita_acara_path
 			FROM seminar_proposal_penilaian spp
 			JOIN dosen d ON d.id = spp.dosen_id
-			WHERE spp.seminar_proposal_id = ? AND spp.dosen_id = ?
+			WHERE spp.final_proposal_id = ? AND spp.dosen_id = ?
 			LIMIT 1
-		`
-		err := db.QueryRow(query, proposalID, dosenID).Scan(
-			&p.NamaDosen, &p.StatusPengumpulan, &p.FilePenilaian, &p.FileBeritaAcara,
-		)
+		`, finalProposalID, dosenID).Scan(&namaDosen, &status, &filePenilaian, &fileBA)
+
 		if err != nil {
-			// jika belum ada data, tetap kembalikan nama dosen
-			p.NamaDosen = "-"
-			p.StatusPengumpulan = "belum"
-			p.FilePenilaian = ""
-			p.FileBeritaAcara = ""
+			// fallback nama dosen
+			_ = db.QueryRow(`SELECT nama_lengkap FROM dosen WHERE id = ?`, dosenID).Scan(&namaDosen)
+			status = "belum"
+			filePenilaian = ""
+			fileBA = ""
 		}
-		return p
+
+		return map[string]string{
+			"nama_dosen":         namaDosen,
+			"status_pengumpulan": status,
+			"file_penilaian":     filePenilaian,
+			"file_berita_acara":  fileBA,
+		}
 	}
 
 	response := map[string]interface{}{
 		"status": "success",
 		"data": map[string]interface{}{
-			"nama_taruna":      proposal.NamaTaruna,
-			"jurusan":          proposal.Jurusan,
-			"kelas":            proposal.Kelas,
-			"topik_penelitian": proposal.TopikPenelitian,
-			"ketua_penguji":    getPenilaian(proposal.KetuaID),
-			"penguji1":         getPenilaian(proposal.Penguji1ID),
-			"penguji2":         getPenilaian(proposal.Penguji2ID),
+			"nama_taruna":      namaTaruna,
+			"jurusan":          jurusan,
+			"kelas":            kelas,
+			"topik_penelitian": topikPenelitian,
+			"ketua_penguji":    getPenilaian(ketuaID),
+			"penguji1":         getPenilaian(penguji1ID),
+			"penguji2":         getPenilaian(penguji2ID),
 		},
 	}
 
