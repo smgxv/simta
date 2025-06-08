@@ -943,10 +943,6 @@
 				}, 5000);
 			}
 
-			let allProposalData = []; // Menyimpan semua data Proposal
-			let uniqueJurusan = new Set();
-			let uniqueKelas = new Set();
-
 			// Fungsi untuk menentukan class badge berdasarkan status
 			function getStatusBadgeClass(status) {
 				switch (status?.toLowerCase()) {
@@ -1041,37 +1037,41 @@
 				}
 			}
 
-			// Fungsi untuk memperbarui data penguji
 			function updatePengujiSection(type, data) {
-				// Update nama dosen
-				document.getElementById(`${type}`).textContent = data.nama_lengkap;
+				const namaEl = document.getElementById(`${type}`);
+				if (namaEl) namaEl.textContent = data.nama_lengkap;
 
-				// Update dokumen penilaian
 				const penilaianStatus = document.getElementById(`${type}-penilaian-status`);
 				const penilaianDownload = document.getElementById(`${type}-penilaian-download`);
-
-				if (data.file_penilaian_path) {
-					penilaianStatus.innerHTML = '<span class="badge-exists">Ada</span>';
-					penilaianDownload.style.display = 'inline-block';
-					penilaianDownload.href = `http://104.43.89.154:8082/download?path=${data.file_penilaian_path}`;
-				} else {
-					penilaianStatus.innerHTML = '<span class="badge-empty">Kosong</span>';
-					penilaianDownload.style.display = 'none';
+				if (penilaianStatus) {
+					if (data.file_penilaian_path) {
+						penilaianStatus.innerHTML = '<span class="badge-exists">Ada</span>';
+						if (penilaianDownload) {
+							penilaianDownload.style.display = 'inline-block';
+							penilaianDownload.href = `http://104.43.89.154:8082/download?path=${data.file_penilaian_path}`;
+						}
+					} else {
+						penilaianStatus.innerHTML = '<span class="badge-empty">Kosong</span>';
+						if (penilaianDownload) penilaianDownload.style.display = 'none';
+					}
 				}
 
-				// Update dokumen berita acara
 				const beritaAcaraStatus = document.getElementById(`${type}-berita-acara-status`);
 				const beritaAcaraDownload = document.getElementById(`${type}-berita-acara-download`);
-
-				if (data.file_berita_acara_path) {
-					beritaAcaraStatus.innerHTML = '<span class="badge-exists">Ada</span>';
-					beritaAcaraDownload.style.display = 'inline-block';
-					beritaAcaraDownload.href = `http://104.43.89.154:8082/download?path=${data.file_berita_acara_path}`;
-				} else {
-					beritaAcaraStatus.innerHTML = '<span class="badge-empty">Kosong</span>';
-					beritaAcaraDownload.style.display = 'none';
+				if (beritaAcaraStatus) {
+					if (data.file_berita_acara_path) {
+						beritaAcaraStatus.innerHTML = '<span class="badge-exists">Ada</span>';
+						if (beritaAcaraDownload) {
+							beritaAcaraDownload.style.display = 'inline-block';
+							beritaAcaraDownload.href = `http://104.43.89.154:8082/download?path=${data.file_berita_acara_path}`;
+						}
+					} else {
+						beritaAcaraStatus.innerHTML = '<span class="badge-empty">Kosong</span>';
+						if (beritaAcaraDownload) beritaAcaraDownload.style.display = 'none';
+					}
 				}
 			}
+			
 		</script>
 
 		<style>
