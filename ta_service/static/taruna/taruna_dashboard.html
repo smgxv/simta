@@ -780,13 +780,25 @@
 					document.getElementById('nama-taruna-header').textContent = result.data.nama_lengkap || 'Taruna';
 					document.getElementById('jurusan').textContent = result.data.jurusan || '-';
 					document.getElementById('kelas').textContent = result.data.kelas || '-';
-					document.getElementById('status-icp').textContent = result.data.status_icp || 'Belum mengumpulkan ICP';
+					// Tampilkan daftar ICP
+					const icpList = result.data.icp_list || [];
+					const statusIcpElem = document.getElementById('status-icp');
+					if (icpList.length === 0) {
+						statusIcpElem.innerHTML = 'Belum mengumpulkan ICP';
+					} else {
+						let html = '<ul style="padding-left: 1.2em;">';
+						icpList.forEach(icp => {
+							html += `<li><b>${icp.topik_penelitian || '-'}</b> &mdash; <span>${icp.status || '-'}</span></li>`;
+						});
+						html += '</ul>';
+						statusIcpElem.innerHTML = html;
+					}
 				} else {
 					document.getElementById('nama-taruna').textContent = '-';
 					document.getElementById('nama-taruna-header').textContent = 'Taruna';
 					document.getElementById('jurusan').textContent = '-';
 					document.getElementById('kelas').textContent = '-';
-					document.getElementById('status-icp').textContent = 'Belum mengumpulkan ICP';
+					document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
 				}
 			})
 			.catch(() => {
@@ -794,7 +806,7 @@
 				document.getElementById('nama-taruna-header').textContent = 'Taruna';
 				document.getElementById('jurusan').textContent = '-';
 				document.getElementById('kelas').textContent = '-';
-				document.getElementById('status-icp').textContent = 'Belum mengumpulkan ICP';
+				document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
 			});
 		});
 
