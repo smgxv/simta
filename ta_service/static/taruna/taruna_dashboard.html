@@ -747,7 +747,27 @@
 				return;
 			}
 
-			// Ambil data taruna dari API
+			// Ambil data user untuk dropdown profile (username)
+			fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
+				headers: {
+					'Authorization': `Bearer ${token}`
+				}
+			})
+			.then(response => response.json())
+			.then(user => {
+				const usernameElement = document.getElementById('username');
+				if (usernameElement) {
+					usernameElement.textContent = user.username || user.nama_lengkap || 'User';
+				}
+			})
+			.catch(() => {
+				const usernameElement = document.getElementById('username');
+				if (usernameElement) {
+					usernameElement.textContent = 'User';
+				}
+			});
+
+			// Ambil data taruna dari API untuk dashboard
 			fetch(`http://104.43.89.154:8081/taruna/dashboard?user_id=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
@@ -767,20 +787,11 @@
 					document.getElementById('kelas').textContent = '-';
 				}
 			})
-			.catch(error => {
+			.catch(() => {
 				document.getElementById('nama-taruna').textContent = '-';
 				document.getElementById('nama-taruna-header').textContent = 'Taruna';
 				document.getElementById('jurusan').textContent = '-';
 				document.getElementById('kelas').textContent = '-';
-			});
-
-			// Validasi token dengan server
-			fetch('http://104.43.89.154:8080/taruna/dashboard', { // Ubah ke endpoint taruna
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			}).catch(() => {
-				window.location.replace('/loginusers');
 			});
 		});
 
