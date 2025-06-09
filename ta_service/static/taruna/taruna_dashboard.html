@@ -794,14 +794,15 @@
 						statusIcpElem.innerHTML = html;
 					}
 					// Tampilkan dosen pembimbing
-					document.getElementById('dosen-pembimbing').textContent = result.data.dosen_pembimbing || '-';
+					const dosenPembimbing = result.data.dosen_pembimbing;
+					document.getElementById('dosen-pembimbing').textContent = (!dosenPembimbing || dosenPembimbing === '-') ? 'Anda belum memiliki dosen pembimbing' : dosenPembimbing;
 				} else {
 					document.getElementById('nama-taruna').textContent = '-';
 					document.getElementById('nama-taruna-header').textContent = 'Taruna';
 					document.getElementById('jurusan').textContent = '-';
 					document.getElementById('kelas').textContent = '-';
 					document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
-					document.getElementById('dosen-pembimbing').textContent = '-';
+					document.getElementById('dosen-pembimbing').textContent = 'Anda belum memiliki dosen pembimbing';
 				}
 			})
 			.catch(() => {
@@ -810,7 +811,7 @@
 				document.getElementById('jurusan').textContent = '-';
 				document.getElementById('kelas').textContent = '-';
 				document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
-				document.getElementById('dosen-pembimbing').textContent = '-';
+				document.getElementById('dosen-pembimbing').textContent = 'Anda belum memiliki dosen pembimbing';
 			});
 		});
 
