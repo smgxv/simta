@@ -593,12 +593,16 @@
 						</div>
 					  </div>
 					  <div class="col-md-4">
-						<div class="card shadow-sm p-3 mb-4">
-						  <h6 class="text-muted">Proposal</h6>
-						  <p class="mb-1">Status: <span class="fw-bold" id="status-proposal">Menunggu</span></p>
-						  <p class="mb-0">Ketua Penguji: <span id="penguji-ketua">-</span></p>
-						  <p class="mb-0">Penguji 1: <span id="penguji-1">-</span></p>
-						  <p class="mb-0">Penguji 2: <span id="penguji-2">-</span></p>
+						<div class="card shadow-sm p-3 mb-4 border-left-info" style="border-left: 5px solid #17a2b8;">
+						  <h6 class="text-muted"><i class="bi bi-journal-check text-primary"></i> Proposal</h6>
+						  <p class="mb-1">
+							Status: <span class="fw-bold" id="status-proposal-badge"><span id="status-proposal">Menunggu</span></span>
+						  </p>
+						  <ul class="list-group list-group-flush" id="list-penguji">
+							<li class="list-group-item p-1">Ketua Penguji: <span id="penguji-ketua">-</span></li>
+							<li class="list-group-item p-1">Penguji 1: <span id="penguji-1">-</span></li>
+							<li class="list-group-item p-1">Penguji 2: <span id="penguji-2">-</span></li>
+						  </ul>
 						</div>
 					  </div>
 					  <div class="col-md-4">
@@ -800,7 +804,13 @@
 					document.getElementById('dosen-pembimbing').textContent = (!dosenPembimbing || dosenPembimbing === '-') ? 'Anda belum memiliki dosen pembimbing' : dosenPembimbing;
 					// Tampilkan proposal
 					const proposal = result.data.proposal || {};
-					document.getElementById('status-proposal').textContent = proposal.status || 'Menunggu';
+					const statusProposal = proposal.status || 'Menunggu';
+					const statusBadge = document.getElementById('status-proposal-badge');
+					let badgeClass = 'badge bg-secondary';
+					if (statusProposal.toLowerCase() === 'pending') badgeClass = 'badge bg-warning text-dark';
+					if (statusProposal.toLowerCase() === 'approved') badgeClass = 'badge bg-success';
+					if (statusProposal.toLowerCase() === 'rejected') badgeClass = 'badge bg-danger';
+					statusBadge.innerHTML = `<span class=\"${badgeClass}\">${statusProposal}</span>`;
 					document.getElementById('penguji-ketua').textContent = proposal.penguji_ketua || '-';
 					document.getElementById('penguji-1').textContent = proposal.penguji_1 || '-';
 					document.getElementById('penguji-2').textContent = proposal.penguji_2 || '-';
