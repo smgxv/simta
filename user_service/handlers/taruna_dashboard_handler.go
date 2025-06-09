@@ -69,6 +69,16 @@ func TarunaDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	data["icp_list"] = icpList
 
+	// Ambil dosen pembimbing dari tabel dosbing_proposal (status aktif)
+	dosenPembimbing := "-"
+	dbQuery := `SELECT d.nama_lengkap FROM dosbing_proposal dp JOIN dosen d ON dp.dosen_id = d.id WHERE dp.user_id = ? AND dp.status = 'aktif' ORDER BY dp.tanggal_ditetapkan DESC LIMIT 1`
+	dbRow := db.QueryRow(dbQuery, userId)
+	var namaDosen string
+	if err := dbRow.Scan(&namaDosen); err == nil {
+		dosenPembimbing = namaDosen
+	}
+	data["dosen_pembimbing"] = dosenPembimbing
+
 	json.NewEncoder(w).Encode(TarunaDashboardResponse{
 		Status: "success",
 		Data:   data,

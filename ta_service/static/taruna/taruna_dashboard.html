@@ -793,12 +793,15 @@
 						html += '</ul>';
 						statusIcpElem.innerHTML = html;
 					}
+					// Tampilkan dosen pembimbing
+					document.getElementById('dosen-pembimbing').textContent = result.data.dosen_pembimbing || '-';
 				} else {
 					document.getElementById('nama-taruna').textContent = '-';
 					document.getElementById('nama-taruna-header').textContent = 'Taruna';
 					document.getElementById('jurusan').textContent = '-';
 					document.getElementById('kelas').textContent = '-';
 					document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
+					document.getElementById('dosen-pembimbing').textContent = '-';
 				}
 			})
 			.catch(() => {
@@ -807,6 +810,7 @@
 				document.getElementById('jurusan').textContent = '-';
 				document.getElementById('kelas').textContent = '-';
 				document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
+				document.getElementById('dosen-pembimbing').textContent = '-';
 			});
 		});
 
