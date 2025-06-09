@@ -90,7 +90,7 @@
 
 		<style>
 			body {
-				background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%);
+				background: #fff;
 				min-height: 100vh;
 			}
 			.card {
@@ -149,6 +149,9 @@
 			@media (max-width: 768px) {
 				.container.mt-4 { padding: 0 0.5rem; }
 				.card { margin-bottom: 1.2rem; }
+			}
+			.icp-list li {
+				margin-bottom: 0.5em;
 			}
 		</style>
 	</head>
@@ -840,7 +843,7 @@
 					if (icpList.length === 0) {
 						statusIcpElem.innerHTML = '<span class="badge bg-secondary">Belum mengumpulkan ICP</span>';
 					} else {
-						let html = '<ul style="padding-left: 1.2em;">';
+						let html = '<ul class="icp-list" style="padding-left: 1.2em;">';
 						icpList.forEach(icp => {
 							let badgeClass = 'badge bg-secondary';
 							if (icp.status && icp.status.toLowerCase() === 'pending') badgeClass = 'badge bg-warning text-dark';
