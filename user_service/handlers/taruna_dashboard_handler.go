@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -50,6 +51,17 @@ func TarunaDashboardHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+
+	// Ambil status ICP dari tabel final_icp
+	db := tarunaModel.GetDB() // tambahkan method GetDB() di TarunaModel jika belum ada
+	var statusICP string
+	err = db.QueryRow("SELECT status FROM final_icp WHERE user_id = ? ORDER BY created_at DESC LIMIT 1", userId).Scan(&statusICP)
+	if err == sql.ErrNoRows {
+		statusICP = "Belum mengumpulkan ICP"
+	} else if err != nil {
+		statusICP = "Error mengambil status ICP"
+	}
+	data["status_icp"] = statusICP
 
 	json.NewEncoder(w).Encode(TarunaDashboardResponse{
 		Status: "success",

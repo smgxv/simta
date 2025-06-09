@@ -30,6 +30,7 @@ func main() {
 	http.HandleFunc("/taruna/penguji", middleware.AuthMiddleware(handlers.GetTarunaWithPenguji))
 
 	http.HandleFunc("/taruna/dashboard", middleware.AuthMiddleware(handlers.TarunaDashboardHandler))
+	http.HandleFunc("/taruna/dashboard/icp", middleware.AuthMiddleware(handlers.TarunaDashboardHandler))
 
 	fmt.Println("API Server running on port 8081...")
 	log.Fatal(http.ListenAndServe(":8081", nil))

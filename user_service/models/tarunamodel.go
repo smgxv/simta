@@ -80,3 +80,7 @@ func (m *TarunaModel) GetTarunaByUserID(userID int) (map[string]interface{}, err
 		"kelas":        kelas,
 	}, nil
 }
+
+func (m *TarunaModel) GetDB() *sql.DB {
+	return m.db
+}
