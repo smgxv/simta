@@ -79,6 +79,36 @@ func TarunaDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	data["dosen_pembimbing"] = dosenPembimbing
 
+	// Ambil status proposal dari tabel final_proposal (terbaru)
+	var proposalStatus string = "-"
+	var finalProposalID int
+	err = db.QueryRow("SELECT id, status FROM final_proposal WHERE user_id = ? ORDER BY created_at DESC LIMIT 1", userId).Scan(&finalProposalID, &proposalStatus)
+	if err != nil {
+		proposalStatus = "Belum Submit"
+	}
+
+	// Ambil penguji dari tabel penguji_proposal (join ke dosen)
+	var ketuaPenguji, penguji1, penguji2 string
+	ketuaPenguji, penguji1, penguji2 = "-", "-", "-"
+	if finalProposalID != 0 {
+		row := db.QueryRow(`SELECT 
+			COALESCE(dk.nama_lengkap, '-') as ketua,
+			COALESCE(dp1.nama_lengkap, '-') as penguji1,
+			COALESCE(dp2.nama_lengkap, '-') as penguji2
+		FROM penguji_proposal pp
+		LEFT JOIN dosen dk ON pp.ketua_penguji_id = dk.id
+		LEFT JOIN dosen dp1 ON pp.penguji_1_id = dp1.id
+		LEFT JOIN dosen dp2 ON pp.penguji_2_id = dp2.id
+		WHERE pp.final_proposal_id = ? LIMIT 1`, finalProposalID)
+		row.Scan(&ketuaPenguji, &penguji1, &penguji2)
+	}
+	data["proposal"] = map[string]interface{}{
+		"status":        proposalStatus,
+		"penguji_ketua": ketuaPenguji,
+		"penguji_1":     penguji1,
+		"penguji_2":     penguji2,
+	}
+
 	json.NewEncoder(w).Encode(TarunaDashboardResponse{
 		Status: "success",
 		Data:   data,
