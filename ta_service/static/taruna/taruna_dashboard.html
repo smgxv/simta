@@ -740,36 +740,38 @@
 				return;
 			}
 
-			// Ambil ID user dari token
+			// Ambil ID user dari localStorage
 			const userId = localStorage.getItem('userId');
+			if (!userId) {
+				window.location.replace('/loginusers');
+				return;
+			}
 
-			// Ambil data user dari API
-			fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
+			// Ambil data taruna dari API
+			fetch(`http://104.43.89.154:8081/taruna/dashboard?user_id=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
 			})
-			.then(response => {
-				if (!response.ok) {
-					throw new Error('Gagal mengambil data user');
+			.then(response => response.json())
+			.then(result => {
+				if (result.status === 'success' && result.data) {
+					document.getElementById('nama-taruna').textContent = result.data.nama_lengkap || '-';
+					document.getElementById('nama-taruna-header').textContent = result.data.nama_lengkap || 'Taruna';
+					document.getElementById('jurusan').textContent = result.data.jurusan || '-';
+					document.getElementById('kelas').textContent = result.data.kelas || '-';
+				} else {
+					document.getElementById('nama-taruna').textContent = '-';
+					document.getElementById('nama-taruna-header').textContent = 'Taruna';
+					document.getElementById('jurusan').textContent = '-';
+					document.getElementById('kelas').textContent = '-';
 				}
-				return response.json();
-			})
-			.then(user => {
-				// Update username di header
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = user.username || user.nama_lengkap || 'User';
-				}
-				document.getElementById('nama-taruna').textContent = user.nama_lengkap || '-';
-				document.getElementById('nama-taruna-header').textContent = user.nama_lengkap || 'Taruna';
 			})
 			.catch(error => {
-				console.error('Error:', error);
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = 'User';
-				}
+				document.getElementById('nama-taruna').textContent = '-';
+				document.getElementById('nama-taruna-header').textContent = 'Taruna';
+				document.getElementById('jurusan').textContent = '-';
+				document.getElementById('kelas').textContent = '-';
 			});
 
 			// Validasi token dengan server

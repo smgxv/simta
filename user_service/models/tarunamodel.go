@@ -62,3 +62,21 @@ func (d *TarunaModel) UpdateTarunaPassword(userID int, hashedPassword string) er
 	_, err := d.db.Exec("UPDATE users SET password = ? WHERE id = ?", hashedPassword, userID)
 	return err
 }
+
+func (m *TarunaModel) GetTarunaByUserID(userID int) (map[string]interface{}, error) {
+	row := m.db.QueryRow("SELECT id, user_id, nama_lengkap, email, jurusan, kelas FROM taruna WHERE user_id = ?", userID)
+	var id, uid int
+	var nama, email, jurusan, kelas string
+	err := row.Scan(&id, &uid, &nama, &email, &jurusan, &kelas)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"id":           id,
+		"user_id":      uid,
+		"nama_lengkap": nama,
+		"email":        email,
+		"jurusan":      jurusan,
+		"kelas":        kelas,
+	}, nil
+}
