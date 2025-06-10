@@ -706,36 +706,169 @@
 
 
 		<script>
-		async function fetchDosenInfo() {
+		function redirectToProfile() {
+			window.location.href = '/dosen/profile';
+		}
+
+		// Fungsi untuk logout
+		async function logout() {
 			try {
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				const response = await fetch('http://104.43.89.154:8081/dosen/dashboard', {
+				
+				const response = await fetch('http://104.43.89.154:8080/logout', {
+					method: 'POST',
 					headers: {
-						'Authorization': `Bearer ${token}`
-					}
+						'Authorization': token ? `Bearer ${token}` : '',
+						'Content-Type': 'application/json'
+					},
+					credentials: 'include'
 				});
 
-				const result = await response.json();
-				if (result.status === "success" && result.data) {
-					document.getElementById('nama-dosen-header').textContent = result.data.nama || '-';
-					document.getElementById('nama-dosen').textContent = result.data.nama || '-';
-					document.getElementById('jurusan').textContent = result.data.jurusan || '-';
+				const data = await response.json();
+				
+				if (response.ok && data.status === 'success') {
+					// Clear localStorage
+					localStorage.clear();
+					
+					// Clear sessionStorage
+					sessionStorage.clear();
+					
+					// Clear all cookies for all possible paths
+					const paths = ['/', '/admin', '/dosen', '/admin/', '/dosen/'];
+					const cookies = document.cookie.split(';');
+					
+					for (let cookie of cookies) {
+						const eqPos = cookie.indexOf('=');
+						const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+						
+						// Hapus cookie untuk setiap path
+						paths.forEach(path => {
+							document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path}`;
+						});
+					}
+					
+					// Clear cache if browser supports it
+					if (window.caches) {
+						caches.keys().then(names => {
+							names.forEach(name => {
+								caches.delete(name);
+							});
+						});
+					}
+
+					// Clear application cache
+					if (window.applicationCache) {
+						window.applicationCache.abort();
+					}
+
+					// Clear service workers if any
+					if (navigator.serviceWorker) {
+						navigator.serviceWorker.getRegistrations().then(registrations => {
+							registrations.forEach(registration => {
+								registration.unregister();
+							});
+						});
+					}
+					
+					console.log('Logout berhasil');
+					
+					// Force reload halaman login untuk membersihkan cache
+					window.location.href = '/loginusers';
+					window.location.reload(true);
 				} else {
-					document.getElementById('nama-dosen-header').textContent = 'Dosen';
-					document.getElementById('nama-dosen').textContent = '-';
-					document.getElementById('jurusan').textContent = '-';
+					throw new Error(data.message || 'Gagal logout');
 				}
 			} catch (error) {
-				document.getElementById('nama-dosen-header').textContent = 'Dosen';
-				document.getElementById('nama-dosen').textContent = '-';
-				document.getElementById('jurusan').textContent = '-';
+				console.error('Error during logout:', error);
+				alert('Gagal logout. Silakan coba lagi.');
 			}
 		}
 
+		// Fungsi untuk mengambil data user
 		document.addEventListener('DOMContentLoaded', function() {
-			fetchDosenInfo();
-			// ... fungsi lain ...
+			const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+			if (!token) {
+				window.location.replace('/loginusers');
+				return;
+			}
+
+			// Ambil data dosen dari API untuk dashboard
+			fetch('http://104.43.89.154:8081/dosen/dashboard', {
+				headers: {
+					'Authorization': `Bearer ${token}`
+				}
+			})
+			.then(response => response.json())
+			.then(result => {
+				if (result.status === 'success' && result.data) {
+					document.getElementById('nama-dosen').textContent = result.data.nama || '-';
+					document.getElementById('nama-dosen-header').textContent = result.data.nama || 'Dosen';
+					document.getElementById('jurusan').textContent = result.data.jurusan || '-';
+				} else {
+					document.getElementById('nama-dosen').textContent = '-';
+					document.getElementById('nama-dosen-header').textContent = 'Dosen';
+					document.getElementById('jurusan').textContent = '-';
+				}
+			})
+			.catch(() => {
+				document.getElementById('nama-dosen').textContent = '-';
+				document.getElementById('nama-dosen-header').textContent = 'Dosen';
+				document.getElementById('jurusan').textContent = '-';
+			});
+
+			// Ambil ID user dari token
+			const userId = localStorage.getItem('userId');
+
+			// Ambil data user dari API
+			fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
+				headers: {
+					'Authorization': `Bearer ${token}`
+				}
+			})
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('Gagal mengambil data user');
+				}
+				return response.json();
+			})
+			.then(user => {
+				// Update username di header
+				const usernameElement = document.getElementById('username');
+				if (usernameElement) {
+					usernameElement.textContent = user.username || user.nama_lengkap || 'User';
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				const usernameElement = document.getElementById('username');
+				if (usernameElement) {
+					usernameElement.textContent = 'User';
+				}
+			});
+
+			// Validasi token dengan server
+			fetch('http://104.43.89.154:8080/dosen/dashboard', { // Ubah ke endpoint dosen
+				headers: {
+					'Authorization': `Bearer ${token}`
+				}
+			}).catch(() => {
+				window.location.replace('/loginusers');
+			});
 		});
+
+		// Event listener untuk tombol logout
+		document.addEventListener('DOMContentLoaded', function() {
+			const logoutButton = document.querySelector('a[onclick="logout()"]');
+			if (logoutButton) {
+				logoutButton.addEventListener('click', function(e) {
+					e.preventDefault();
+					logout();
+				});
+			}
+		});
+
+		
+
 		</script>
 
 	</body>
