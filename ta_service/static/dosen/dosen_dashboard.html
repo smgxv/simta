@@ -844,41 +844,32 @@
 			}
 		});
 
-		// Add new function to fetch dosen data
-		async function fetchDosenData() {
+		// Fungsi untuk mengambil data dosen yang sedang login
+		async function fetchDosenInfo() {
 			try {
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				const userId = localStorage.getItem('userId');
-
-				// Fetch dosen profile
-				const response = await fetch(`http://104.43.89.154:8081/dosen/${userId}`, {
+				const response = await fetch('http://104.43.89.154:8081/dosen/dashboard', {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
 				});
 
-				if (!response.ok) {
-					throw new Error('Failed to fetch dosen data');
+				const result = await response.json();
+				if (result.status === "success" && result.data) {
+					document.getElementById('nama-dosen-header').textContent = result.data.nama || '-';
+					document.getElementById('nama-dosen').textContent = result.data.nama || '-';
+					document.getElementById('jurusan').textContent = result.data.jurusan || '-';
+				} else {
+					document.getElementById('nama-dosen-header').textContent = 'Dosen';
+					document.getElementById('nama-dosen').textContent = '-';
+					document.getElementById('jurusan').textContent = '-';
 				}
-
-				const dosenData = await response.json();
-				
-				// Update dosen information
-				document.getElementById('dosen-name').textContent = dosenData.nama_lengkap || 'Nama Dosen';
-				document.getElementById('dosen-jurusan').textContent = dosenData.jurusan || 'Jurusan';
-				document.getElementById('dosen-nidn').textContent = `NIDN: ${dosenData.nidn || '-'}`;
-				
-				// Update username in header
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = dosenData.nama_lengkap || 'User';
-				}
-
 			} catch (error) {
-				console.error('Error fetching dosen data:', error);
+				document.getElementById('nama-dosen-header').textContent = 'Dosen';
+				document.getElementById('nama-dosen').textContent = '-';
+				document.getElementById('jurusan').textContent = '-';
 			}
 		}
-
 
 		// Modify the existing DOMContentLoaded event listener
 		document.addEventListener('DOMContentLoaded', function() {
