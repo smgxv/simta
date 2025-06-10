@@ -535,18 +535,22 @@
 
 		<div class="main-container">
 			<div class="xs-pd-20-10 pd-ltr-20">
-				<!-- Dosen Information Card -->
-				<div class="card-box height-100-p pd-20 mb-20">
-					<div class="d-flex align-items-center">
-						<div class="avatar mr-3">
-							<img src="vendors/images/photo1.jpg" class="border-radius-100 shadow" width="100" height="100" alt="" />
-						</div>
-						<div class="info">
-							<h4 class="mb-1" id="dosen-name">Nama Dosen</h4>
-							<p class="text-muted mb-0" id="dosen-jurusan">Jurusan</p>
-							<p class="text-muted mb-0" id="dosen-nidn">NIDN: -</p>
-						</div>
+				<div class="alert alert-primary mb-4" role="alert">
+					Selamat datang, <span id="nama-dosen-header">Dosen</span>!
+				</div>
+				<div class="row">
+				  <div class="col-md-4">
+					<div class="card shadow-sm p-3 mb-4">
+					  <h6 class="text-muted">Nama</h6>
+					  <p class="mb-0 fw-bold" id="nama-dosen">-</p>
 					</div>
+				  </div>
+				  <div class="col-md-4">
+					<div class="card shadow-sm p-3 mb-4">
+					  <h6 class="text-muted">Jurusan</h6>
+					  <p class="mb-0 fw-bold" id="jurusan">-</p>
+					</div>
+				  </div>
 				</div>
 
 				<div class="row">
@@ -556,23 +560,23 @@
 							<div class="d-flex justify-content-between align-items-center mb-20">
 								<h4 class="mb-0">ICP yang Ditelaah</h4>
 								<a href="/dosen/review_icp" class="btn btn-primary btn-sm">Lihat Semua</a>
-							</div>
+								</div>
 							<div class="table-responsive">
 								<table class="table table-hover">
-									<thead>
-										<tr>
+						<thead>
+							<tr>
 											<th>Nama Mahasiswa</th>
 											<th>Topik ICP</th>
 											<th>Status</th>
-										</tr>
-									</thead>
+							</tr>
+						</thead>
 									<tbody id="icp-list">
 										<!-- Data will be populated dynamically -->
 									</tbody>
 								</table>
-							</div>
-						</div>
-					</div>
+										</div>
+										</div>
+									</div>
 
 					<!-- Mahasiswa Bimbingan Card -->
 					<div class="col-lg-6 col-md-12 mb-20">
@@ -580,7 +584,7 @@
 							<div class="d-flex justify-content-between align-items-center mb-20">
 								<h4 class="mb-0">Mahasiswa Bimbingan</h4>
 								<a href="/dosen/bimbingan_proposal" class="btn btn-primary btn-sm">Lihat Semua</a>
-							</div>
+									</div>
 							<div class="table-responsive">
 								<table class="table table-hover">
 									<thead>
@@ -589,15 +593,15 @@
 											<th>NIM</th>
 											<th>Judul</th>
 											<th>Status</th>
-										</tr>
+							</tr>
 									</thead>
 									<tbody id="bimbingan-list">
 										<!-- Data will be populated dynamically -->
 									</tbody>
 								</table>
-							</div>
-						</div>
-					</div>
+										</div>
+										</div>
+									</div>
 
 					<!-- Mahasiswa yang Diuji Card -->
 					<div class="col-lg-6 col-md-12 mb-20">
@@ -605,7 +609,7 @@
 							<div class="d-flex justify-content-between align-items-center mb-20">
 								<h4 class="mb-0">Mahasiswa yang Diuji</h4>
 								<a href="/dosen/pengujian_proposal" class="btn btn-primary btn-sm">Lihat Semua</a>
-							</div>
+									</div>
 							<div class="table-responsive">
 								<table class="table table-hover">
 									<thead>
@@ -615,15 +619,15 @@
 											<th>Judul</th>
 											<th>Penguji Ke</th>
 											<th>Status</th>
-										</tr>
+							</tr>
 									</thead>
 									<tbody id="pengujian-list">
 										<!-- Data will be populated dynamically -->
 									</tbody>
 								</table>
-							</div>
-						</div>
-					</div>
+										</div>
+										</div>
+									</div>
 
 					<!-- Laporan 70% Card -->
 					<div class="col-lg-6 col-md-12 mb-20">
@@ -631,7 +635,7 @@
 							<div class="d-flex justify-content-between align-items-center mb-20">
 								<h4 class="mb-0">Review Laporan 70%</h4>
 								<a href="/dosen/review_ta70" class="btn btn-primary btn-sm">Lihat Semua</a>
-							</div>
+									</div>
 							<div class="table-responsive">
 								<table class="table table-hover">
 									<thead>
@@ -640,15 +644,15 @@
 											<th>NIM</th>
 											<th>Judul</th>
 											<th>Status</th>
-										</tr>
+							</tr>
 									</thead>
 									<tbody id="ta70-list">
 										<!-- Data will be populated dynamically -->
 									</tbody>
 								</table>
-							</div>
-						</div>
-					</div>
+										</div>
+										</div>
+									</div>
 
 					<!-- Laporan 100% Card -->
 					<div class="col-lg-6 col-md-12 mb-20">
@@ -656,7 +660,7 @@
 							<div class="d-flex justify-content-between align-items-center mb-20">
 								<h4 class="mb-0">Review Laporan 100%</h4>
 								<a href="/dosen/review_ta100" class="btn btn-primary btn-sm">Lihat Semua</a>
-							</div>
+									</div>
 							<div class="table-responsive">
 								<table class="table table-hover">
 									<thead>
@@ -665,16 +669,16 @@
 											<th>NIM</th>
 											<th>Judul</th>
 											<th>Status</th>
-										</tr>
+							</tr>
 									</thead>
 									<tbody id="ta100-list">
 										<!-- Data will be populated dynamically -->
-									</tbody>
-								</table>
-							</div>
-						</div>
-					</div>
+						</tbody>
+					</table>
 				</div>
+				</div>
+							</div>
+							</div>
 			</div>
 		</div>
 
@@ -1060,6 +1064,36 @@
 			}
 		}
 
+		// Fungsi untuk mengambil data dosen yang sedang login
+		async function fetchDosenInfo() {
+			try {
+				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				const response = await fetch('http://104.43.89.154:8081/dosen/dashboard', {
+					headers: {
+						'Authorization': `Bearer ${token}`
+					}
+				});
+
+				const result = await response.json();
+				if (result.status === "success" && result.data) {
+					// Tampilkan nama dan jurusan pada elemen yang sesuai
+					document.getElementById('nama-dosen-header').textContent = result.data.nama || '-';
+					document.getElementById('nama-dosen').textContent = result.data.nama || '-';
+					document.getElementById('jurusan').textContent = result.data.jurusan || '-';
+				} else {
+					// Jika error, tampilkan default
+					document.getElementById('nama-dosen-header').textContent = 'Dosen';
+					document.getElementById('nama-dosen').textContent = '-';
+					document.getElementById('jurusan').textContent = '-';
+				}
+			} catch (error) {
+				// Jika error, tampilkan default
+				document.getElementById('nama-dosen-header').textContent = 'Dosen';
+				document.getElementById('nama-dosen').textContent = '-';
+				document.getElementById('jurusan').textContent = '-';
+			}
+		}
+
 		// Modify the existing DOMContentLoaded event listener
 		document.addEventListener('DOMContentLoaded', function() {
 			// Check token
@@ -1085,6 +1119,9 @@
 			}).catch(() => {
 				window.location.replace('/loginusers');
 			});
+
+			// Panggil fungsi untuk mengambil data dosen yang sedang login
+			fetchDosenInfo();
 		});
 		</script>
 
