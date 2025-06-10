@@ -792,7 +792,6 @@
 				return;
 			}
 
-			// Ambil data dosen dari API untuk dashboard
 			fetch('http://104.43.89.154:8081/dosen/dashboard', {
 				headers: {
 					'Authorization': `Bearer ${token}`
@@ -801,18 +800,18 @@
 			.then(response => response.json())
 			.then(result => {
 				if (result.status === 'success' && result.data) {
-					document.getElementById('nama-dosen').textContent = result.data.nama || '-';
 					document.getElementById('nama-dosen-header').textContent = result.data.nama || 'Dosen';
+					document.getElementById('nama-dosen').textContent = result.data.nama || '-';
 					document.getElementById('jurusan').textContent = result.data.jurusan || '-';
 				} else {
-					document.getElementById('nama-dosen').textContent = '-';
 					document.getElementById('nama-dosen-header').textContent = 'Dosen';
+					document.getElementById('nama-dosen').textContent = '-';
 					document.getElementById('jurusan').textContent = '-';
 				}
 			})
 			.catch(() => {
-				document.getElementById('nama-dosen').textContent = '-';
 				document.getElementById('nama-dosen-header').textContent = 'Dosen';
+				document.getElementById('nama-dosen').textContent = '-';
 				document.getElementById('jurusan').textContent = '-';
 			});
 
@@ -846,14 +845,6 @@
 				}
 			});
 
-			// Validasi token dengan server
-			fetch('http://104.43.89.154:8080/dosen/dashboard', { // Ubah ke endpoint dosen
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			}).catch(() => {
-				window.location.replace('/loginusers');
-			});
 		});
 
 		// Event listener untuk tombol logout
