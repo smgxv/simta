@@ -3,55 +3,31 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"user_service/models"
+	"user_service/utils"
 )
 
-type DosenDashboardResponse struct {
-	Status string      `json:"status"`
-	Data   interface{} `json:"data,omitempty"`
-	Error  string      `json:"error,omitempty"`
-}
-
-// Pastikan dosenModel sudah diinisialisasi di main.go dan diimport/diakses di sini
-var DosenModelInstance *models.DosenModel
-
 func DosenDashboardHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	// Get user ID from context (set by AuthMiddleware)
+	userID := r.Context().Value("user_id").(string)
 
-	userIDVal := r.Context().Value("user_id")
-	if userIDVal == nil {
-		json.NewEncoder(w).Encode(DosenDashboardResponse{
-			Status: "error",
-			Error:  "Unauthorized",
-		})
-		return
-	}
-	userID, err := strconv.Atoi(userIDVal.(string))
+	// Get dosen data from database
+	dosen, err := models.GetDosenByUserID(userID)
 	if err != nil {
-		json.NewEncoder(w).Encode(DosenDashboardResponse{
-			Status: "error",
-			Error:  "Invalid user_id",
-		})
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to get dosen data")
 		return
 	}
 
-	dosen, err := DosenModelInstance.GetDosenByUserID(userID)
-	if err != nil {
-		json.NewEncoder(w).Encode(DosenDashboardResponse{
-			Status: "error",
-			Error:  "Dosen not found",
-		})
-		return
-	}
-
-	resp := map[string]interface{}{
-		"nama":    dosen.NamaLengkap,
-		"jurusan": dosen.Jurusan,
-	}
-
-	json.NewEncoder(w).Encode(DosenDashboardResponse{
+	// Create response
+	response := struct {
+		Status string       `json:"status"`
+		Data   models.Dosen `json:"data"`
+	}{
 		Status: "success",
-		Data:   resp,
-	})
+		Data:   dosen,
+	}
+
+	// Send response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
