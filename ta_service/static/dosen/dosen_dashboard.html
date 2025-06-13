@@ -784,68 +784,37 @@
 			}
 		}
 
-		// Fungsi untuk mengambil data user
-		document.addEventListener('DOMContentLoaded', function() {
-			const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-			if (!token) {
+		document.addEventListener('DOMContentLoaded', function () {
+			const token = localStorage.getItem('token');
+			const userId = localStorage.getItem('userId');
+
+			if (!token || !userId) {
 				window.location.replace('/loginusers');
 				return;
 			}
 
-			fetch('http://104.43.89.154:8081/dosen/dashboard', {
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			})
-			.then(response => response.json())
-			.then(result => {
-				if (result.status === 'success' && result.data) {
-					document.getElementById('nama-dosen-header').textContent = result.data.nama || 'Dosen';
-					document.getElementById('nama-dosen').textContent = result.data.nama || '-';
-					document.getElementById('jurusan').textContent = result.data.jurusan || '-';
-				} else {
-					document.getElementById('nama-dosen-header').textContent = 'Dosen';
-					document.getElementById('nama-dosen').textContent = '-';
-					document.getElementById('jurusan').textContent = '-';
-				}
-			})
-			.catch(() => {
-				document.getElementById('nama-dosen-header').textContent = 'Dosen';
-				document.getElementById('nama-dosen').textContent = '-';
-				document.getElementById('jurusan').textContent = '-';
-			});
-
-			// Ambil ID user dari token
-			const userId = localStorage.getItem('userId');
-
-			// Ambil data user dari API
-			fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
+			// Panggil API backend untuk mendapatkan data nama & jurusan dosen
+			fetch(`http://104.43.89.154:8081/dosen/dashboard?userId=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
 			})
 			.then(response => {
-				if (!response.ok) {
-					throw new Error('Gagal mengambil data user');
-				}
+				if (!response.ok) throw new Error('Gagal mengambil data dosen');
 				return response.json();
 			})
-			.then(user => {
-				// Update username di header
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = user.username || user.nama_lengkap || 'User';
-				}
+			.then(data => {
+				// Pastikan format respon sesuai: { nama_lengkap, jurusan }
+				document.getElementById('nama-dosen-header').textContent = data.nama_lengkap || 'Dosen';
+				document.getElementById('nama-dosen').textContent = data.nama_lengkap || '-';
+				document.getElementById('jurusan').textContent = data.jurusan || '-';
 			})
-			.catch(error => {
-				console.error('Error:', error);
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = 'User';
-				}
+			.catch(err => {
+				console.error('Gagal memuat data dosen:', err);
+				document.getElementById('nama-dosen-header').textContent = 'Dosen';
+				document.getElementById('nama-dosen').textContent = '-';
+				document.getElementById('jurusan').textContent = '-';
 			});
-
-
 		});
 
 		// Event listener untuk tombol logout

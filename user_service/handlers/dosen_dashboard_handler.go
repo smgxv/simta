@@ -5,70 +5,53 @@ import (
 	"net/http"
 	"strconv"
 	"user_service/models"
-	"user_service/utils"
 )
 
-// DosenDashboardResponseData merepresentasikan struktur data yang dikirim ke frontend.
-type DosenDashboardResponseData struct {
-	ID      int    `json:"id"`
-	UserID  int    `json:"user_id"`
-	Nama    string `json:"nama"`
-	Jurusan string `json:"jurusan"`
+type DosenDashboardResponse struct {
+	NamaLengkap string `json:"nama_lengkap"`
+	Jurusan     string `json:"jurusan"`
 }
 
 func DosenDashboardHandler(w http.ResponseWriter, r *http.Request) {
-	// Add CORS headers
+	// CORS setup
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Content-Type", "application/json")
 
-	// Handle preflight OPTIONS request
-	if r.Method == "OPTIONS" {
+	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	// Get user ID from context (set by AuthMiddleware)
-	userIDStr := r.Context().Value("user_id").(string)
+	// Ambil userId dari query param (atau bisa juga pakai header kalau frontend mengirim lewat itu)
+	userIDStr := r.URL.Query().Get("userId")
+	if userIDStr == "" {
+		http.Error(w, "userId is required", http.StatusBadRequest)
+		return
+	}
+
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid user ID")
+		http.Error(w, "Invalid userId", http.StatusBadRequest)
 		return
 	}
 
-	// Initialize DosenModel
 	dosenModel, err := models.NewDosenModel()
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to initialize dosen model")
+		http.Error(w, "Internal server error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Get dosen data from database
-	dosenEntity, err := dosenModel.GetDosenByUserID(userID)
+	dosen, err := dosenModel.GetDosenByUserID(userID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to get dosen data")
+		http.Error(w, "Dosen not found", http.StatusNotFound)
 		return
 	}
 
-	// Buat data respons dengan tag JSON yang diinginkan frontend
-	responseData := DosenDashboardResponseData{
-		ID:      dosenEntity.ID,
-		UserID:  dosenEntity.UserID,
-		Nama:    dosenEntity.NamaLengkap,
-		Jurusan: dosenEntity.Jurusan,
+	resp := DosenDashboardResponse{
+		NamaLengkap: dosen.NamaLengkap,
+		Jurusan:     dosen.Jurusan,
 	}
-
-	// Create response
-	response := struct {
-		Status string                     `json:"status"`
-		Data   DosenDashboardResponseData `json:"data"`
-	}{
-		Status: "success",
-		Data:   responseData,
-	}
-
-	// Send response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(resp)
 }
