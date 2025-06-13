@@ -793,7 +793,6 @@
 				return;
 			}
 
-			// Panggil API backend untuk mendapatkan data nama & jurusan dosen
 			fetch(`http://104.43.89.154:8081/dosen/dashboard?userId=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
@@ -804,18 +803,28 @@
 				return response.json();
 			})
 			.then(data => {
-				// Pastikan format respon sesuai: { nama_lengkap, jurusan }
 				document.getElementById('nama-dosen-header').textContent = data.nama_lengkap || 'Dosen';
 				document.getElementById('nama-dosen').textContent = data.nama_lengkap || '-';
 				document.getElementById('jurusan').textContent = data.jurusan || '-';
+
+				const usernameElement = document.getElementById('username');
+				if (usernameElement) {
+					usernameElement.textContent = data.nama_lengkap || 'User';
+				}
 			})
 			.catch(err => {
 				console.error('Gagal memuat data dosen:', err);
 				document.getElementById('nama-dosen-header').textContent = 'Dosen';
 				document.getElementById('nama-dosen').textContent = '-';
 				document.getElementById('jurusan').textContent = '-';
+
+				const usernameElement = document.getElementById('username');
+				if (usernameElement) {
+					usernameElement.textContent = 'User';
+				}
 			});
 		});
+
 
 		// Event listener untuk tombol logout
 		document.addEventListener('DOMContentLoaded', function() {
