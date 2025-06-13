@@ -533,7 +533,6 @@
 		</div>
 		<div class="mobile-menu-overlay"></div>
 
-		<!-- Dashboard dosen1 -->
 		<div class="main-container">
 			<div class="xs-pd-20-10 pd-ltr-20">
 				<div class="alert alert-primary mb-4" role="alert">
@@ -683,81 +682,6 @@
 			</div>
 		</div>
 
-		<div class="container mt-4">
-			<div class="alert alert-primary mb-4" role="alert">
-				Selamat datang, <span id="nama-dosen-header">Dosen</span>! Berikut dashboard Anda.
-			</div>
-			<div class="row">
-			  <div class="col-md-4">
-				<div class="card shadow-sm p-3 mb-4">
-				  <h6 class="text-muted">Nama</h6>
-				  <p class="mb-0 fw-bold" id="nama-dosen">-</p>
-				</div>
-			  </div>
-			  <div class="col-md-4">
-				<div class="card shadow-sm p-3 mb-4">
-				  <h6 class="text-muted">Jurusan</h6>
-				  <p class="mb-0 fw-bold" id="jurusan">-</p>
-				</div>
-			  </div>
-			</div>
-		  
-			<h4 class="section-title">📄 Status Tugas Akhir</h4>
-			<!-- <div class="row">
-			  <div class="col-md-4">
-				<div class="card shadow-sm p-3 mb-4 border-left-primary">
-				  <div class="d-flex align-items-center">
-					<i class="bi bi-file-earmark-text text-primary fs-2 me-3"></i>
-					<div>
-					  <h6 class="text-muted mb-1">ICP</h6>
-				  <p class="mb-0 fw-bold" id="status-icp">Belum Submit</p>
-					</div>
-				  </div>
-				</div>
-			  </div>
-			  <div class="col-md-4">
-				<div class="card shadow-sm p-3 mb-4">
-				  <h6 class="text-muted">Dosen Pembimbing</h6>
-				  <p class="mb-0 fw-bold" id="dosen-pembimbing">-</p>
-				</div>
-			  </div>
-			  <div class="col-md-4">
-				<div class="card shadow-sm p-3 mb-4 border-left-info" style="border-left: 5px solid #17a2b8;">
-				  <h6 class="text-muted"><i class="bi bi-journal-check text-primary"></i> Proposal</h6>
-				  <p class="mb-1">
-					Status: <span class="fw-bold" id="status-proposal-badge"><span id="status-proposal">Menunggu</span></span>
-				  </p>
-				  <ul class="list-group list-group-flush" id="list-penguji">
-					<li class="list-group-item p-1">Ketua Penguji: <span id="penguji-ketua">-</span></li>
-					<li class="list-group-item p-1">Penguji 1: <span id="penguji-1">-</span></li>
-					<li class="list-group-item p-1">Penguji 2: <span id="penguji-2">-</span></li>
-				  </ul>
-				</div>
-			  </div>
-			  <div class="col-md-4">
-				<div class="card shadow-sm p-3 mb-4">
-				  <h6 class="text-muted">Laporan 70%</h6>
-				  <p class="mb-1">Status: <span class="fw-bold" id="status-ta70">Belum Submit</span></p>
-				  <p class="mb-0">Penguji: <span id="penguji-ta70">-</span></p>
-				</div>
-			  </div>
-			  <div class="col-md-4">
-				<div class="card shadow-sm p-3 mb-4">
-				  <h6 class="text-muted">Laporan 100%</h6>
-				  <p class="mb-1">Status: <span class="fw-bold" id="status-ta100">Belum Submit</span></p>
-				  <p class="mb-0">Penguji: <span id="penguji-ta100">-</span></p>
-				</div>
-			  </div>
-			
-			
-			
-			</div> -->
-			<div class="progress mb-2">
-			  <div class="progress-bar bg-success" role="progressbar" style="width: 70%;" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100">70%</div>
-			</div>
-
-		</div>
-
 		<!-- js -->
 		<script src="vendors/scripts/core.js"></script>
 		<script src="vendors/scripts/script.min.js"></script>
@@ -860,44 +784,15 @@
 			}
 		}
 
-		// Modify the existing DOMContentLoaded event listener
+		// Fungsi untuk mengambil data user
 		document.addEventListener('DOMContentLoaded', function() {
-			// Cek token
 			const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 			if (!token) {
 				window.location.replace('/loginusers');
 				return;
 			}
 
-			// Ambil ID user dari localStorage
-			const userId = localStorage.getItem('userId');
-			if (!userId) {
-				window.location.replace('/loginusers');
-				return;
-			}
-
-			// Ambil data user untuk dropdown profile (username)
-			fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			})
-			.then(response => response.json())
-			.then(user => {
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = user.username || user.nama_lengkap || 'User';
-				}
-			})
-			.catch(() => {
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = 'User';
-				}
-			});
-
-			// Ambil data taruna dari API untuk dashboard
-			fetch(`http://104.43.89.154:8081/dosen/dashboard?user_id=${userId}`, {
+			fetch('http://104.43.89.154:8081/dosen/dashboard', {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
@@ -905,65 +800,52 @@
 			.then(response => response.json())
 			.then(result => {
 				if (result.status === 'success' && result.data) {
-					document.getElementById('nama-dosen').textContent = result.data.nama_lengkap || '-';
-					document.getElementById('nama-d0seh-header').textContent = result.data.nama_lengkap || 'Taruna';
+					document.getElementById('nama-dosen-header').textContent = result.data.nama || 'Dosen';
+					document.getElementById('nama-dosen').textContent = result.data.nama || '-';
 					document.getElementById('jurusan').textContent = result.data.jurusan || '-';
-					// Tampilkan daftar ICP
-					const icpList = result.data.icp_list || [];
-					const statusIcpElem = document.getElementById('status-icp');
-					if (icpList.length === 0) {
-						statusIcpElem.innerHTML = '<span class="badge bg-secondary">Belum mengumpulkan ICP</span>';
-					} else {
-						let html = '<ul class="icp-list" style="padding-left: 1.2em;">';
-						icpList.forEach(icp => {
-							let badgeClass = 'badge bg-secondary';
-							if (icp.status && icp.status.toLowerCase() === 'pending') badgeClass = 'badge bg-warning text-dark';
-							if (icp.status && icp.status.toLowerCase() === 'approved') badgeClass = 'badge bg-success';
-							if (icp.status && icp.status.toLowerCase() === 'rejected') badgeClass = 'badge bg-danger';
-							html += `<li><b>${icp.topik_penelitian || '-'}</b> &mdash; <span class="${badgeClass}">${icp.status || '-'}</span></li>`;
-						});
-						html += '</ul>';
-						statusIcpElem.innerHTML = html;
-					}
-					// Tampilkan dosen pembimbing
-					const dosenPembimbing = result.data.dosen_pembimbing;
-					document.getElementById('dosen-pembimbing').textContent = (!dosenPembimbing || dosenPembimbing === '-') ? 'Anda belum memiliki dosen pembimbing' : dosenPembimbing;
-					// Tampilkan proposal
-					const proposal = result.data.proposal || {};
-					const statusProposal = proposal.status || 'Menunggu';
-					const statusBadge = document.getElementById('status-proposal-badge');
-					let badgeClass = 'badge bg-secondary';
-					if (statusProposal.toLowerCase() === 'pending') badgeClass = 'badge bg-warning text-dark';
-					if (statusProposal.toLowerCase() === 'approved') badgeClass = 'badge bg-success';
-					if (statusProposal.toLowerCase() === 'rejected') badgeClass = 'badge bg-danger';
-					statusBadge.innerHTML = `<span class=\"${badgeClass}\">${statusProposal}</span>`;
-					document.getElementById('penguji-ketua').textContent = proposal.penguji_ketua || '-';
-					document.getElementById('penguji-1').textContent = proposal.penguji_1 || '-';
-					document.getElementById('penguji-2').textContent = proposal.penguji_2 || '-';
 				} else {
+					document.getElementById('nama-dosen-header').textContent = 'Dosen';
 					document.getElementById('nama-dosen').textContent = '-';
-					document.getElementById('nama-dosen-header').textContent = 'Taruna';
 					document.getElementById('jurusan').textContent = '-';
-					document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
-					document.getElementById('dosen-pembimbing').textContent = 'Anda belum memiliki dosen pembimbing';
-					document.getElementById('status-proposal').textContent = 'Menunggu';
-					document.getElementById('penguji-ketua').textContent = '-';
-					document.getElementById('penguji-1').textContent = '-';
-					document.getElementById('penguji-2').textContent = '-';
 				}
 			})
 			.catch(() => {
-				document.getElementById('nama-taruna').textContent = '-';
-				document.getElementById('nama-taruna-header').textContent = 'Taruna';
+				document.getElementById('nama-dosen-header').textContent = 'Dosen';
+				document.getElementById('nama-dosen').textContent = '-';
 				document.getElementById('jurusan').textContent = '-';
-				document.getElementById('kelas').textContent = '-';
-				document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
-				document.getElementById('dosen-pembimbing').textContent = 'Anda belum memiliki dosen pembimbing';
-				document.getElementById('status-proposal').textContent = 'Menunggu';
-				document.getElementById('penguji-ketua').textContent = '-';
-				document.getElementById('penguji-1').textContent = '-';
-				document.getElementById('penguji-2').textContent = '-';
 			});
+
+			// Ambil ID user dari token
+			const userId = localStorage.getItem('userId');
+
+			// Ambil data user dari API
+			fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
+				headers: {
+					'Authorization': `Bearer ${token}`
+				}
+			})
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('Gagal mengambil data user');
+				}
+				return response.json();
+			})
+			.then(user => {
+				// Update username di header
+				const usernameElement = document.getElementById('username');
+				if (usernameElement) {
+					usernameElement.textContent = user.username || user.nama_lengkap || 'User';
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				const usernameElement = document.getElementById('username');
+				if (usernameElement) {
+					usernameElement.textContent = 'User';
+				}
+			});
+
+
 		});
 
 		// Event listener untuk tombol logout
@@ -976,6 +858,8 @@
 				});
 			}
 		});
+
+		
 
 		</script>
 

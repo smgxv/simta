@@ -3,16 +3,29 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"user_service/models"
 	"user_service/utils"
 )
 
 func DosenDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by AuthMiddleware)
-	userID := r.Context().Value("user_id").(string)
+	userIDStr := r.Context().Value("user_id").(string)
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	// Initialize DosenModel
+	dosenModel, err := models.NewDosenModel()
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to initialize dosen model")
+		return
+	}
 
 	// Get dosen data from database
-	dosen, err := models.GetDosenByUserID(userID)
+	dosen, err := dosenModel.GetDosenByUserID(userID)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to get dosen data")
 		return
@@ -20,8 +33,8 @@ func DosenDashboardHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create response
 	response := struct {
-		Status string       `json:"status"`
-		Data   models.Dosen `json:"data"`
+		Status string      `json:"status"`
+		Data   interface{} `json:"data"`
 	}{
 		Status: "success",
 		Data:   dosen,
