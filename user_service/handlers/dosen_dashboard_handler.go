@@ -44,27 +44,26 @@ func DosenDashboardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil data dosen dari model
 	dosenModel, err := models.NewDosenModel()
 	if err != nil {
 		http.Error(w, "Internal server error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Ambil data dosen berdasarkan user_id
 	dosen, err := dosenModel.GetDosenByUserID(userID)
 	if err != nil {
 		http.Error(w, "Dosen not found", http.StatusNotFound)
 		return
 	}
 
-	// Ambil data ICP yang ditelaah
-	icpList, err := getICPListByDosen(userID)
+	// 🔁 Ambil ICP berdasarkan dosen.ID (bukan userID)
+	icpList, err := getICPListByDosen(dosen.ID)
 	if err != nil {
 		http.Error(w, "Gagal mengambil ICP: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Gabungkan hasilnya
 	resp := DosenDashboardResponse{
 		NamaLengkap: dosen.NamaLengkap,
 		Jurusan:     dosen.Jurusan,
@@ -96,7 +95,21 @@ func ICPDitelaahHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	icpList, err := getICPListByDosen(userID)
+	// Ambil ID dosen berdasarkan user_id
+	dosenModel, err := models.NewDosenModel()
+	if err != nil {
+		http.Error(w, "Gagal koneksi model", http.StatusInternalServerError)
+		return
+	}
+
+	dosen, err := dosenModel.GetDosenByUserID(userID)
+	if err != nil {
+		http.Error(w, "Dosen tidak ditemukan", http.StatusNotFound)
+		return
+	}
+
+	// Gunakan dosen.ID, bukan userID
+	icpList, err := getICPListByDosen(dosen.ID)
 	if err != nil {
 		http.Error(w, "Failed to fetch ICP list: "+err.Error(), http.StatusInternalServerError)
 		return
