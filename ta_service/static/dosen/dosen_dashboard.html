@@ -803,6 +803,7 @@
 				return response.json();
 			})
 			.then(data => {
+				// Data dasar dosen
 				document.getElementById('nama-dosen-header').textContent = data.nama_lengkap || 'Dosen';
 				document.getElementById('nama-dosen').textContent = data.nama_lengkap || '-';
 				document.getElementById('jurusan').textContent = data.jurusan || '-';
@@ -811,18 +812,40 @@
 				if (usernameElement) {
 					usernameElement.textContent = data.nama_lengkap || 'User';
 				}
-			})
-			.catch(err => {
-				console.error('Gagal memuat data dosen:', err);
-				document.getElementById('nama-dosen-header').textContent = 'Dosen';
-				document.getElementById('nama-dosen').textContent = '-';
-				document.getElementById('jurusan').textContent = '-';
 
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = 'User';
+				// Tampilkan daftar ICP yang ditelaah
+				const icpListElement = document.getElementById('icp-list');
+				icpListElement.innerHTML = ''; // Kosongkan dulu
+
+				if (Array.isArray(data.icp_ditelaah) && data.icp_ditelaah.length > 0) {
+					data.icp_ditelaah.forEach(icp => {
+						const row = document.createElement('tr');
+
+						const namaCell = document.createElement('td');
+						namaCell.textContent = icp.nama_taruna || '-';
+
+						const topikCell = document.createElement('td');
+						topikCell.textContent = icp.topik_penelitian || '-';
+
+						const statusCell = document.createElement('td');
+						statusCell.textContent = icp.status || '-';
+
+						row.appendChild(namaCell);
+						row.appendChild(topikCell);
+						row.appendChild(statusCell);
+
+						icpListElement.appendChild(row);
+					});
+				} else {
+					const row = document.createElement('tr');
+					const cell = document.createElement('td');
+					cell.colSpan = 3;
+					cell.textContent = 'Tidak ada data ICP yang ditelaah';
+					cell.classList.add('text-center');
+					row.appendChild(cell);
+					icpListElement.appendChild(row);
 				}
-			});
+			})
 		});
 
 
