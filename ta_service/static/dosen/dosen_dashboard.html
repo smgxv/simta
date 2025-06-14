@@ -830,12 +830,18 @@
 						const statusCell = document.createElement('td');
 						statusCell.textContent = icp.status || '-';
 
+						// Tambahkan pewarnaan berdasarkan status
+						if (icp.status === "Sudah Ditelaah") {
+							statusCell.classList.add("text-success", "fw-bold");
+						} else if (icp.status === "Belum Ditelaah") {
+							statusCell.classList.add("text-danger", "fw-bold");
+						}
+
 						row.appendChild(namaCell);
 						row.appendChild(topikCell);
 						row.appendChild(statusCell);
-
 						icpListElement.appendChild(row);
-					});
+					});	
 				} else {
 					const row = document.createElement('tr');
 					const cell = document.createElement('td');
