@@ -113,10 +113,9 @@ func getICPListByDosen(userID int) ([]ICPDitelaah, error) {
 	defer db.Close()
 
 	query := `
-		SELECT p.final_icp_id, t.nama_lengkap, p.topik_penelitian
+		SELECT f.id, f.nama_lengkap, f.topik_penelitian
 		FROM penelaah_icp p
 		JOIN final_icp f ON f.id = p.final_icp_id
-		JOIN taruna t ON f.taruna_id = t.id
 		WHERE p.penelaah_1_id = ? OR p.penelaah_2_id = ?
 	`
 
@@ -134,7 +133,6 @@ func getICPListByDosen(userID int) ([]ICPDitelaah, error) {
 			return nil, err
 		}
 
-		// Cek apakah sudah ditelaah
 		var count int
 		err := db.QueryRow(`
 			SELECT COUNT(*) FROM hasil_telaah_icp
