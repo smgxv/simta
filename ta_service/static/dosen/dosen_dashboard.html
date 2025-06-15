@@ -791,6 +791,7 @@
 				return;
 			}
 
+			// Fetch data dashboard utama (nama, jurusan, icp)
 			fetch(`http://104.43.89.154:8081/dosen/dashboard?userId=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
@@ -801,7 +802,6 @@
 				return response.json();
 			})
 			.then(data => {
-				// Data dasar dosen
 				document.getElementById('nama-dosen-header').textContent = data.nama_lengkap || 'Dosen';
 				document.getElementById('nama-dosen').textContent = data.nama_lengkap || '-';
 				document.getElementById('jurusan').textContent = data.jurusan || '-';
@@ -811,9 +811,9 @@
 					usernameElement.textContent = data.nama_lengkap || 'User';
 				}
 
-				// Tampilkan daftar ICP yang ditelaah
+				// Tampilkan ICP Ditelaah
 				const icpListElement = document.getElementById('icp-list');
-				icpListElement.innerHTML = ''; // Kosongkan dulu
+				icpListElement.innerHTML = '';
 
 				if (Array.isArray(data.icp_ditelaah) && data.icp_ditelaah.length > 0) {
 					data.icp_ditelaah.forEach(icp => {
@@ -827,11 +827,9 @@
 
 						const statusCell = document.createElement('td');
 						statusCell.textContent = icp.status || '-';
-
-						// Tambahkan pewarnaan berdasarkan status
 						if (icp.status === "Sudah Ditelaah") {
 							statusCell.classList.add("text-success", "fw-bold");
-						} else if (icp.status === "Belum Ditelaah") {
+						} else {
 							statusCell.classList.add("text-danger", "fw-bold");
 						}
 
@@ -839,7 +837,7 @@
 						row.appendChild(topikCell);
 						row.appendChild(statusCell);
 						icpListElement.appendChild(row);
-					});	
+					});
 				} else {
 					const row = document.createElement('tr');
 					const cell = document.createElement('td');
@@ -850,8 +848,76 @@
 					icpListElement.appendChild(row);
 				}
 			})
-		});
+			.catch(err => {
+				console.error('Gagal memuat data dosen:', err);
+				document.getElementById('nama-dosen').textContent = '-';
+				document.getElementById('jurusan').textContent = '-';
+			});
 
+			// Fetch Mahasiswa Bimbingan
+			const bimbinganListElement = document.getElementById('bimbingan-list');
+			bimbinganListElement.innerHTML = '';
+
+			fetch(`http://104.43.89.154:8081/dosen/dashboard/bimbingan?userId=${userId}`, {
+				headers: {
+					'Authorization': `Bearer ${token}`
+				}
+			})
+			.then(response => {
+				if (!response.ok) throw new Error('Gagal mengambil data bimbingan');
+				return response.json();
+			})
+			.then(data => {
+				if (Array.isArray(data) && data.length > 0) {
+					data.forEach(item => {
+						const row = document.createElement('tr');
+
+						const namaCell = document.createElement('td');
+						namaCell.textContent = item.nama_taruna || '-';
+
+						const nimCell = document.createElement('td');
+						nimCell.textContent = item.nim || '-';
+
+						const judulCell = document.createElement('td');
+						judulCell.textContent = item.judul || '-';
+
+						const statusCell = document.createElement('td');
+						statusCell.textContent = item.status || '-';
+						if (item.status === 'aktif') {
+							statusCell.classList.add('text-success', 'fw-bold');
+						} else if (item.status === 'selesai') {
+							statusCell.classList.add('text-primary', 'fw-bold');
+						} else {
+							statusCell.classList.add('text-muted');
+						}
+
+						row.appendChild(namaCell);
+						row.appendChild(nimCell);
+						row.appendChild(judulCell);
+						row.appendChild(statusCell);
+						bimbinganListElement.appendChild(row);
+					});
+				} else {
+					const row = document.createElement('tr');
+					const cell = document.createElement('td');
+					cell.colSpan = 4;
+					cell.textContent = 'Tidak ada mahasiswa bimbingan';
+					cell.classList.add('text-center');
+					row.appendChild(cell);
+					bimbinganListElement.appendChild(row);
+				}
+			})
+			.catch(err => {
+				console.error('Gagal memuat data bimbingan:', err);
+				const row = document.createElement('tr');
+				const cell = document.createElement('td');
+				cell.colSpan = 4;
+				cell.textContent = 'Gagal memuat data';
+				cell.classList.add('text-center', 'text-danger');
+				row.appendChild(cell);
+				bimbinganListElement.appendChild(row);
+			});
+		});
 
 		// Event listener untuk tombol logout
 		document.addEventListener('DOMContentLoaded', function() {
