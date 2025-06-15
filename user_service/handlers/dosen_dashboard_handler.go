@@ -21,9 +21,7 @@ type DosenDashboardResponse struct {
 
 type BimbinganResponse struct {
 	NamaTaruna string `json:"nama_taruna"`
-	NIM        string `json:"nim"`
-	Judul      string `json:"judul"`
-	Status     string `json:"status"`
+	Jurusan    string `json:"jurusan"`
 }
 
 func DosenDashboardHandler(w http.ResponseWriter, r *http.Request) {
@@ -212,7 +210,6 @@ func GetBimbinganByDosenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Query DB untuk data mahasiswa bimbingan
 	db, err := config.ConnectDB()
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
@@ -221,11 +218,10 @@ func GetBimbinganByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	query := `
-		SELECT t.nama_lengkap, t.nim, f.topik_penelitian, d.status
+		SELECT t.nama_lengkap, t.jurusan
 		FROM dosbing_proposal d
 		JOIN users u ON d.user_id = u.id
 		JOIN taruna t ON u.id = t.user_id
-		JOIN final_proposal f ON f.user_id = u.id
 		WHERE d.dosen_id = ?
 	`
 
@@ -238,17 +234,15 @@ func GetBimbinganByDosenHandler(w http.ResponseWriter, r *http.Request) {
 
 	var results []BimbinganResponse
 	for rows.Next() {
-		var nama, nim, judul, status string
-		err := rows.Scan(&nama, &nim, &judul, &status)
+		var nama, jurusan string
+		err := rows.Scan(&nama, &jurusan)
 		if err != nil {
 			http.Error(w, "Scan error", http.StatusInternalServerError)
 			return
 		}
 		results = append(results, BimbinganResponse{
 			NamaTaruna: nama,
-			NIM:        nim,
-			Judul:      judul,
-			Status:     status,
+			Jurusan:    jurusan,
 		})
 	}
 
