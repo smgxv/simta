@@ -19,6 +19,13 @@ type DosenDashboardResponse struct {
 	ICPs        []ICPDitelaah `json:"icp_ditelaah"`
 }
 
+type BimbinganResponse struct {
+	NamaTaruna string `json:"nama_taruna"`
+	NIM        string `json:"nim"`
+	Judul      string `json:"judul"`
+	Status     string `json:"status"`
+}
+
 func DosenDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	// CORS setup
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
@@ -168,4 +175,82 @@ func getICPListByDosen(userID int) ([]ICPDitelaah, error) {
 	}
 
 	return results, nil
+}
+
+func GetBimbinganByDosenHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	userIDStr := r.URL.Query().Get("userId")
+	if userIDStr == "" {
+		http.Error(w, "userId is required", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, "Invalid userId", http.StatusBadRequest)
+		return
+	}
+
+	dosenModel, err := models.NewDosenModel()
+	if err != nil {
+		http.Error(w, "Model error", http.StatusInternalServerError)
+		return
+	}
+
+	dosen, err := dosenModel.GetDosenByUserID(userID)
+	if err != nil {
+		http.Error(w, "Dosen tidak ditemukan", http.StatusNotFound)
+		return
+	}
+
+	// Query DB untuk data mahasiswa bimbingan
+	db, err := config.ConnectDB()
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	query := `
+		SELECT t.nama_lengkap, t.nim, f.topik_penelitian, d.status
+		FROM dosbing_proposal d
+		JOIN users u ON d.user_id = u.id
+		JOIN taruna t ON u.id = t.user_id
+		JOIN final_proposal f ON f.user_id = u.id
+		WHERE d.dosen_id = ?
+	`
+
+	rows, err := db.Query(query, dosen.ID)
+	if err != nil {
+		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var results []BimbinganResponse
+	for rows.Next() {
+		var nama, nim, judul, status string
+		err := rows.Scan(&nama, &nim, &judul, &status)
+		if err != nil {
+			http.Error(w, "Scan error", http.StatusInternalServerError)
+			return
+		}
+		results = append(results, BimbinganResponse{
+			NamaTaruna: nama,
+			NIM:        nim,
+			Judul:      judul,
+			Status:     status,
+		})
+	}
+
+	json.NewEncoder(w).Encode(results)
 }
