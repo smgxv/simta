@@ -319,7 +319,7 @@ func GetPengujianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	`
 
 	// Enam parameter: 3 untuk CASE, 1 untuk LEFT JOIN spp, dan 2 untuk WHERE OR
-	rows, err := db.Query(query, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID)
+	rows, err := db.Query(query, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID)
 	if err != nil {
 		log.Println("❌ QUERY ERROR:", err)
 		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
