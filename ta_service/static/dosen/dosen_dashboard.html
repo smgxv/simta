@@ -875,32 +875,17 @@
 						const namaCell = document.createElement('td');
 						namaCell.textContent = item.nama_taruna || '-';
 
-						const nimCell = document.createElement('td');
-						nimCell.textContent = item.nim || '-';
-
-						const judulCell = document.createElement('td');
-						judulCell.textContent = item.judul || '-';
-
-						const statusCell = document.createElement('td');
-						statusCell.textContent = item.status || '-';
-						if (item.status === 'aktif') {
-							statusCell.classList.add('text-success', 'fw-bold');
-						} else if (item.status === 'selesai') {
-							statusCell.classList.add('text-primary', 'fw-bold');
-						} else {
-							statusCell.classList.add('text-muted');
-						}
+						const jurusanCell = document.createElement('td');
+						jurusanCell.textContent = item.jurusan || '-';
 
 						row.appendChild(namaCell);
-						row.appendChild(nimCell);
-						row.appendChild(judulCell);
-						row.appendChild(statusCell);
+						row.appendChild(jurusanCell);
 						bimbinganListElement.appendChild(row);
 					});
 				} else {
 					const row = document.createElement('tr');
 					const cell = document.createElement('td');
-					cell.colSpan = 4;
+					cell.colSpan = 2;
 					cell.textContent = 'Tidak ada mahasiswa bimbingan';
 					cell.classList.add('text-center');
 					row.appendChild(cell);
