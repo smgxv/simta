@@ -248,3 +248,101 @@ func GetBimbinganByDosenHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(results)
 }
+
+func GetPengujianProposalHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	userIDStr := r.URL.Query().Get("userId")
+	if userIDStr == "" {
+		http.Error(w, "userId is required", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, "Invalid userId", http.StatusBadRequest)
+		return
+	}
+
+	dosenModel, err := models.NewDosenModel()
+	if err != nil {
+		http.Error(w, "Model error", http.StatusInternalServerError)
+		return
+	}
+
+	dosen, err := dosenModel.GetDosenByUserID(userID)
+	if err != nil {
+		http.Error(w, "Dosen tidak ditemukan", http.StatusNotFound)
+		return
+	}
+
+	db, err := config.ConnectDB()
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	query := `
+		SELECT 
+			fp.nama_lengkap,
+			fp.topik_penelitian,
+			CASE 
+				WHEN pp.ketua_penguji_id = ? THEN 'Ketua Penguji'
+				WHEN pp.penguji_1_id = ? THEN 'Penguji 1'
+				WHEN pp.penguji_2_id = ? THEN 'Penguji 2'
+				ELSE ''
+			END AS penguji_ke,
+			COALESCE(spp.status_pengumpulan, 'belum') AS status_pengumpulan
+		FROM penguji_proposal pp
+		JOIN final_proposal fp ON pp.final_proposal_id = fp.id
+		LEFT JOIN seminar_proposal_penilaian spp 
+			ON spp.final_proposal_id = pp.final_proposal_id 
+			AND spp.dosen_id = ?
+		WHERE 
+			pp.ketua_penguji_id = ? OR 
+			pp.penguji_1_id = ? OR 
+			pp.penguji_2_id = ?
+	`
+
+	rows, err := db.Query(query, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID)
+	if err != nil {
+		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type PengujianResponse struct {
+		NamaTaruna        string `json:"nama_taruna"`
+		Topik             string `json:"topik"`
+		PengujiKe         string `json:"penguji_ke"`
+		StatusPengumpulan string `json:"status_pengumpulan"`
+	}
+
+	var results []PengujianResponse
+	for rows.Next() {
+		var nama, topik, pengujiKe, status string
+		err := rows.Scan(&nama, &topik, &pengujiKe, &status)
+		if err != nil {
+			http.Error(w, "Scan error", http.StatusInternalServerError)
+			return
+		}
+
+		results = append(results, PengujianResponse{
+			NamaTaruna:        nama,
+			Topik:             topik,
+			PengujiKe:         pengujiKe,
+			StatusPengumpulan: status,
+		})
+	}
+
+	json.NewEncoder(w).Encode(results)
+}
