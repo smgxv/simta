@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"user_service/config"
@@ -250,16 +251,19 @@ func GetBimbinganByDosenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPengujianProposalHandler(w http.ResponseWriter, r *http.Request) {
+	// Setup Header
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
 
+	// Handle preflight
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
+	// Ambil userId dari query
 	userIDStr := r.URL.Query().Get("userId")
 	if userIDStr == "" {
 		http.Error(w, "userId is required", http.StatusBadRequest)
@@ -272,6 +276,7 @@ func GetPengujianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Ambil data dosen berdasarkan userId
 	dosenModel, err := models.NewDosenModel()
 	if err != nil {
 		http.Error(w, "Model error", http.StatusInternalServerError)
@@ -284,6 +289,7 @@ func GetPengujianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Koneksi database
 	db, err := config.ConnectDB()
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
@@ -291,6 +297,7 @@ func GetPengujianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Query data pengujian
 	query := `
 		SELECT 
 			fp.nama_lengkap,
@@ -299,7 +306,7 @@ func GetPengujianProposalHandler(w http.ResponseWriter, r *http.Request) {
 				WHEN pp.ketua_penguji_id = ? THEN 'Ketua Penguji'
 				WHEN pp.penguji_1_id = ? THEN 'Penguji 1'
 				WHEN pp.penguji_2_id = ? THEN 'Penguji 2'
-				ELSE ''
+				ELSE 'Tidak Dikenal'
 			END AS penguji_ke,
 			COALESCE(spp.status_pengumpulan, 'belum') AS status_pengumpulan
 		FROM penguji_proposal pp
@@ -315,6 +322,7 @@ func GetPengujianProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := db.Query(query, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID)
 	if err != nil {
+		log.Println("QUERY ERROR:", err)
 		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -332,6 +340,7 @@ func GetPengujianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		var nama, topik, pengujiKe, status string
 		err := rows.Scan(&nama, &topik, &pengujiKe, &status)
 		if err != nil {
+			log.Println("SCAN ERROR:", err)
 			http.Error(w, "Scan error", http.StatusInternalServerError)
 			return
 		}
@@ -342,6 +351,10 @@ func GetPengujianProposalHandler(w http.ResponseWriter, r *http.Request) {
 			PengujiKe:         pengujiKe,
 			StatusPengumpulan: status,
 		})
+	}
+
+	if len(results) == 0 {
+		log.Println("INFO: Tidak ada mahasiswa yang diuji oleh dosen id:", dosen.ID)
 	}
 
 	json.NewEncoder(w).Encode(results)
