@@ -90,6 +90,8 @@ func main() {
 	// Detail Berkas Seminar Proposal routes
 	r.HandleFunc("/seminarproposal/detail/{id}", handlers.GetFinalProposalDetailHandler).Methods("GET", "OPTIONS")
 
+	r.HandleFunc("/catatanperbaikan/taruna", handlers.GetCatatanPerbaikanTarunaHandler).Methods("GET", "OPTIONS")
+
 	// Setup CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},

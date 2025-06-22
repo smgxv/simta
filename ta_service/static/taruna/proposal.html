@@ -790,6 +790,31 @@
 					</div>
 					<!-- Form Seminar Proposal End -->
 
+					<!-- Tabel Catatan Perbaikan Dosen -->
+					<div class="pd-20 card-box mb-30">
+						<div class="clearfix">
+							<div class="pull-left">
+								<h4 class="text-blue h4">Catatan Perbaikan</h4>
+							</div>
+						</div>
+						<div class="pb-20">
+							<table class="table stripe hover nowrap" id="catatanPerbaikanTable">
+								<thead>
+									<tr>
+										<th>Nama Dosen</th>
+										<th>Topik Penelitian</th>
+										<th>Tanggal DIterima</th>
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody>
+									
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<!-- Tabel Catatan Perbaikan Dosen End -->
+
 				</div>
 
 			</div>
@@ -1506,6 +1531,7 @@
 				loadProposalData();
 				loadProposalReviewData();
 				loadFinalProposalData();
+				loadCatatanPerbaikanTaruna();
 			});
 
 			// Load dosen data for seminar proposal penguji
@@ -1658,6 +1684,77 @@
 				}
 			});
 
+			// Fungsi untuk memuat data Catatan Perbaikan Dosen
+			async function loadCatatanPerbaikanTaruna() {
+				const userId = localStorage.getItem('userId');
+				if (!userId) {
+					console.error('User ID not found in localStorage');
+					return;
+				}
+
+				try {
+					const response = await fetch(`http://104.43.89.154:8082/catatanperbaikan/taruna?user_id=${userId}`);
+					const data = await response.json();
+
+					const tableBody = document.querySelector('#catatanPerbaikanTable tbody');
+					if (!tableBody) {
+						console.error('Tabel catatan perbaikan tidak ditemukan');
+						return;
+					}
+
+					tableBody.innerHTML = '';
+
+					if (data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
+						data.data.forEach(item => {
+							const formattedDate = new Date(item.submitted_at).toLocaleString('id-ID', {
+								dateStyle: 'medium',
+								timeStyle: 'short'
+							});
+
+							tableBody.innerHTML += `
+								<tr>
+									<td>${item.nama_dosen || '-'}</td>
+									<td>${item.topik_penelitian || '-'}</td>
+									<td>${formattedDate}</td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+											href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${item.file_path}" target="_blank">
+													<i class="dw dw-eye"></i> Lihat Catatan
+												</a>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${item.file_path}" download>
+													<i class="dw dw-download"></i> Unduh Catatan
+												</a>
+											</div>
+										</div>
+									</td>
+								</tr>
+							`;
+						});
+					} else {
+						tableBody.innerHTML = `
+							<tr>
+								<td colspan="4" class="text-center">Belum ada catatan perbaikan</td>
+							</tr>
+						`;
+					}
+				} catch (error) {
+					console.error('Gagal memuat catatan perbaikan:', error);
+					const tableBody = document.querySelector('#catatanPerbaikanTable tbody');
+					if (tableBody) {
+						tableBody.innerHTML = `
+							<tr>
+								<td colspan="4" class="text-center text-danger">Gagal memuat data</td>
+							</tr>
+						`;
+					}
+				}
+			}		
+		
 		</script>
 
 		<style>

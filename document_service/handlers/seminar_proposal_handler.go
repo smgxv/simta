@@ -18,6 +18,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type CatatanPerbaikan struct {
+	ID              int    `json:"id"`
+	NamaDosen       string `json:"nama_dosen"`
+	TopikPenelitian string `json:"topik_penelitian"`
+	FilePath        string `json:"file_path"`
+	SubmittedAt     string `json:"submitted_at"`
+}
+
 func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
@@ -717,4 +725,73 @@ func getPengujiData(db *sql.DB, proposalID string, dosenID int) map[string]inter
 		"file_berita_acara_path": data.BeritaAcaraPath.String,
 		"status_pengumpulan":     data.StatusPengumpulan.String,
 	}
+}
+
+func GetCatatanPerbaikanTarunaHandler(w http.ResponseWriter, r *http.Request) {
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Ambil user_id dari query
+	userID := r.URL.Query().Get("user_id")
+	if userID == "" {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "User ID is required",
+		})
+		return
+	}
+
+	// Koneksi ke DB
+	db, err := config.GetDB()
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Database connection error: " + err.Error(),
+		})
+		return
+	}
+	defer db.Close()
+
+	// Query ambil catatan perbaikan
+	query := `
+		SELECT spp.id, d.nama_lengkap, fp.topik_penelitian, spp.file_penilaian_path, spp.submitted_at
+		FROM seminar_proposal_penilaian spp
+		JOIN dosen d ON spp.dosen_id = d.id
+		LEFT JOIN final_proposal fp ON spp.final_proposal_id = fp.id
+		WHERE spp.user_id = ? AND spp.status_pengumpulan = 'sudah'
+		ORDER BY spp.submitted_at DESC
+	`
+
+	rows, err := db.Query(query, userID)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Query error: " + err.Error(),
+		})
+		return
+	}
+	defer rows.Close()
+
+	var results []CatatanPerbaikan
+	for rows.Next() {
+		var c CatatanPerbaikan
+		err := rows.Scan(&c.ID, &c.NamaDosen, &c.TopikPenelitian, &c.FilePath, &c.SubmittedAt)
+		if err != nil {
+			continue // skip baris yang gagal diparse
+		}
+		results = append(results, c)
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   results,
+	})
 }
