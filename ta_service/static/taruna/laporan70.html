@@ -1206,7 +1206,7 @@
 							refreshTable();
 						}
 
-						loadProposalData(); // Refresh tabel
+						loadLaporan70Data(); // Refresh tabel
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
@@ -1508,9 +1508,9 @@
 			// Call getUserData when page loads
 			document.addEventListener('DOMContentLoaded', () => {
 				getUserData();
-				loadProposalData();
-				loadProposalReviewData();
-				loadFinalProposalData();
+				loadLaporan70Data();
+				loadLaporan70ReviewData();
+				loadFinalLaporan70Data();
 			});
 
 			// Load dosen data for seminar proposal penguji
