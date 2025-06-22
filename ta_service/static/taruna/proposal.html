@@ -1531,7 +1531,6 @@
 				loadProposalData();
 				loadProposalReviewData();
 				loadFinalProposalData();
-				loadCatatanPerbaikanTaruna();
 			});
 
 			// Load dosen data for seminar proposal penguji
@@ -1754,6 +1753,11 @@
 					}
 				}
 			}		
+
+			// Panggil fungsi saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', function() {
+				loadCatatanPerbaikanTaruna();
+			});
 		
 		</script>
 
