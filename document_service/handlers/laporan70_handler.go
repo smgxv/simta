@@ -18,7 +18,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// UploadProposalHandler digunakan untuk mengunggah proposal
+// UploadLaporan70Handler digunakan untuk mengunggah laporan 70%
 func UploadLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
