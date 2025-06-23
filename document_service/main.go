@@ -96,7 +96,19 @@ func main() {
 	r.HandleFunc("/upload/laporan70", handlers.UploadLaporan70Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/laporan70", handlers.GetLaporan70Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan70/{id}", handlers.GetLaporan70ByIDHandler).Methods("GET", "OPTIONS")
-	// r.HandleFunc("/laporan70/edit", handlers.EditLaporan70Handler).Methods("PUT", "OPTIONS")
+	r.HandleFunc("/laporan70/edit", handlers.EditLaporan70Handler).Methods("PUT", "OPTIONS")
+
+	// Review Laporan70 routes
+	r.HandleFunc("/reviewlaporan70", handlers.GetLaporan70ByDosenIDHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewlaporan70/dosen/list", handlers.GetReviewLaporan70DosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewlaporan70/dosen/detail", handlers.GetReviewLaporan70DosenDetailHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/upload/reviewlaporan70/dosen", handlers.UploadDosenReviewLaporan70Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/updatelaporan70status", handlers.UpdateLaporan70StatusHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/upload/revisilaporan70/taruna", handlers.UploadTarunaRevisiLaporan70Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/upload/reviewlaporan70", handlers.UploadReviewLaporan70Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/reviewlaporan70/taruna/list", handlers.GetRevisiLaporan70TarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewlaporan70/dosen/list", handlers.GetReviewLaporan70DosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewlaporan70/dosen/detail", handlers.GetReviewLaporan70DosenDetailHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{

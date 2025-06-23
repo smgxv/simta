@@ -1243,7 +1243,7 @@
 					// Tambahkan user_id sebagai taruna_id
 					formData.append('taruna_id', userId);
 					
-						const response = await fetch('http://104.43.89.154:8082/upload/revisiproposal/taruna', {
+						const response = await fetch('http://104.43.89.154:8082/upload/revisilaporan70/taruna', {
 						method: 'POST',
 						body: formData
 					});
@@ -1251,11 +1251,11 @@
 					const data = await response.json();
 					
 					if (data.status === 'success') {
-						showAlert('Revisi Proposal berhasil diunggah', 'success');
+						showAlert('Revisi Laporan 70% berhasil diunggah', 'success');
 						$('#uploadRevisionModal').modal('hide');
 						form.reset();
-						await loadProposalData();
-						await loadProposalReviewData();
+						await loadLaporan70Data();
+						await loadLaporan70ReviewData();
 					} else {
 						showAlert(data.message || 'Gagal mengunggah revisi', 'danger');
 					}

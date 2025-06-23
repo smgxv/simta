@@ -312,133 +312,88 @@ func GetLaporan70ByIDHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// // EditProposalHandler digunakan untuk mengedit proposal
-// func EditProposalHandler(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
-// 	w.Header().Set("Access-Control-Allow-Methods", "PUT, OPTIONS")
-// 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+// EditProposalHandler digunakan untuk mengedit proposal
+func EditLaporan70Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "PUT, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-// 	if r.Method == "OPTIONS" {
-// 		w.WriteHeader(http.StatusOK)
-// 		return
-// 	}
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
-// 	// Parse multipart form
-// 	err := r.ParseMultipartForm(10 << 20)
-// 	if err != nil {
-// 		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+	// Parse multipart form
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 
-// 	id := r.FormValue("id")
-// 	dosenID := r.FormValue("dosen_id")
-// 	topikPenelitian := r.FormValue("topik_penelitian")
-// 	keterangan := r.FormValue("keterangan")
+	id := r.FormValue("id")
+	dosenID := r.FormValue("dosen_id")
+	topikPenelitian := r.FormValue("topik_penelitian")
+	keterangan := r.FormValue("keterangan")
 
-// 	db, err := config.GetDB()
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-// 	defer db.Close()
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
 
-// 	proposalModel := models.NewProposalModel(db)
-// 	proposal, err := proposalModel.GetByID(id)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
+	laporan70Model := models.NewLaporan70Model(db)
+	laporan70, err := laporan70Model.GetByID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-// 	// Update fields
-// 	proposal.DosenID, _ = strconv.Atoi(dosenID)
-// 	proposal.TopikPenelitian = topikPenelitian
-// 	proposal.Keterangan = keterangan
+	// Update fields
+	laporan70.DosenID, _ = strconv.Atoi(dosenID)
+	laporan70.TopikPenelitian = topikPenelitian
+	laporan70.Keterangan = keterangan
 
-// 	// Handle file upload if new file is provided
-// 	file, handler, err := r.FormFile("file")
-// 	if err == nil {
-// 		defer file.Close()
+	// Handle file upload if new file is provided
+	file, handler, err := r.FormFile("file")
+	if err == nil {
+		defer file.Close()
 
-// 		uploadDir := "uploads/proposal"
-// 		filename := fmt.Sprintf("Proposal_%d_%s_%s",
-// 			proposal.UserID,
-// 			time.Now().Format("20060102150405"),
-// 			handler.Filename)
+		uploadDir := "uploads/laporan70"
+		filename := fmt.Sprintf("Laporan70_%d_%s_%s",
+			laporan70.UserID,
+			time.Now().Format("20060102150405"),
+			handler.Filename)
 
-// 		filePath := filepath.Join(uploadDir, filename)
+		filePath := filepath.Join(uploadDir, filename)
 
-// 		dst, err := os.Create(filePath)
-// 		if err != nil {
-// 			http.Error(w, "Error creating file: "+err.Error(), http.StatusInternalServerError)
-// 			return
-// 		}
-// 		defer dst.Close()
+		dst, err := os.Create(filePath)
+		if err != nil {
+			http.Error(w, "Error creating file: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
 
-// 		if _, err := io.Copy(dst, file); err != nil {
-// 			http.Error(w, "Error saving file: "+err.Error(), http.StatusInternalServerError)
-// 			return
-// 		}
+		if _, err := io.Copy(dst, file); err != nil {
+			http.Error(w, "Error saving file: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-// 		// Delete old file if exists
-// 		if proposal.FilePath != "" {
-// 			os.Remove(proposal.FilePath)
-// 		}
+		// Delete old file if exists
+		if laporan70.FilePath != "" {
+			os.Remove(laporan70.FilePath)
+		}
 
-// 		proposal.FilePath = filePath
-// 	}
+		laporan70.FilePath = filePath
+	}
 
-// 	if err := proposalModel.Update(proposal); err != nil {
-// 		http.Error(w, "Error updating Proposal: "+err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
+	if err := laporan70Model.Update(laporan70); err != nil {
+		http.Error(w, "Error updating Laporan 70: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-// 	json.NewEncoder(w).Encode(map[string]interface{}{
-// 		"status":  "success",
-// 		"message": "Proposal berhasil diupdate",
-// 	})
-// }
-
-// // GetProposalByDosenIDHandler digunakan untuk mengambil proposal berdasarkan dosen_id
-// func GetDosbingByUserID(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
-// 	w.Header().Set("Content-Type", "application/json")
-
-// 	userID := r.URL.Query().Get("user_id")
-// 	if userID == "" {
-// 		http.Error(w, "user_id is required", http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	db, err := config.GetDB()
-// 	if err != nil {
-// 		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-// 	defer db.Close()
-
-// 	query := `SELECT d.id, d.nama_lengkap FROM dosbing_proposal dp JOIN dosen d ON dp.dosen_id = d.id WHERE dp.user_id = ? LIMIT 1`
-// 	row := db.QueryRow(query, userID)
-
-// 	var dosenID int
-// 	var namaLengkap string
-// 	err = row.Scan(&dosenID, &namaLengkap)
-// 	if err != nil {
-// 		if err == sql.ErrNoRows {
-// 			json.NewEncoder(w).Encode(map[string]interface{}{
-// 				"status":  "empty",
-// 				"message": "Belum memiliki dosen pembimbing",
-// 			})
-// 			return
-// 		}
-// 		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	json.NewEncoder(w).Encode(map[string]interface{}{
-// 		"status": "success",
-// 		"data": map[string]interface{}{
-// 			"dosen_id": dosenID,
-// 			"nama":     namaLengkap,
-// 		},
-// 	})
-// }
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "success",
+		"message": "Laporan berhasil diupdate",
+	})
+}

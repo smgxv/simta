@@ -16,7 +16,7 @@ import (
 )
 
 // Handler untuk mengambil daftar ICP dari table icp
-func GetProposalByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
+func GetLaporan70ByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
 
@@ -33,8 +33,8 @@ func GetProposalByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	proposalModel := models.NewProposalModel(db)
-	proposals, err := proposalModel.GetByDosenID(dosenID)
+	laporan70Model := models.NewLaporan70Model(db)
+	laporan70s, err := laporan70Model.GetByDosenID(dosenID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -42,12 +42,12 @@ func GetProposalByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   proposals,
+		"data":   laporan70s,
 	})
 }
 
 // Handler untuk mengubah status ICP
-func UpdateProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
+func UpdateLaporan70StatusHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	status := r.URL.Query().Get("status")
 	if id == "" || status == "" {
@@ -68,19 +68,19 @@ func UpdateProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("UPDATE proposal SET status = ? WHERE id = ?", status, id)
+	_, err = db.Exec("UPDATE laporan_70 SET status = ? WHERE id = ?", status, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	msg := "Proposal berhasil diupdate"
+	msg := "Laporan 70% berhasil diupdate"
 	if status == "approved" {
-		msg = "Proposal berhasil di-approve"
+		msg = "Laporan 70% berhasil di-approve"
 	} else if status == "rejected" {
 		msg = "Proposal berhasil di-reject"
 	} else if status == "on review" {
-		msg = "Proposal berhasil diubah ke status review"
+		msg = "Laporan 70% berhasil diubah ke status review"
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -90,7 +90,7 @@ func UpdateProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler untuk mengupload review ICP oleh dosen ke table review_icp
-func UploadReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
+func UploadReviewLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -134,7 +134,7 @@ func UploadReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	uploadDir := "uploads/reviewproposal"
+	uploadDir := "uploads/reviewlaporan70"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -145,9 +145,9 @@ func UploadReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Determine if this is a dosen review or taruna revision based on the request origin
 	isDosenReview := r.Header.Get("X-User-Role") == "dosen"
-	filePrefix := "REVIEW_PROPOSAL"
+	filePrefix := "REVIEW_LAPORAN70"
 	if !isDosenReview {
-		filePrefix = "REVISI_PROPOSAL"
+		filePrefix = "REVISI_LAPORAN70"
 	}
 
 	filename := fmt.Sprintf("%s_%s_%s_%s",
@@ -197,10 +197,10 @@ func UploadReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update status PROPOSAL dalam transaksi
+	// Update status Laporan 79% dalam transaksi
 	// Status selalu "on review" baik untuk review dosen maupun revisi taruna
 	// Status hanya berubah ketika dosen melakukan approve/reject
-	_, err = tx.Exec("UPDATE proposal SET status = ? WHERE user_id = ? AND topik_penelitian = ?",
+	_, err = tx.Exec("UPDATE laporan_70 SET status = ? WHERE user_id = ? AND topik_penelitian = ?",
 		"on review", tarunaID, topikPenelitian)
 	if err != nil {
 		tx.Rollback()
@@ -218,7 +218,7 @@ func UploadReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now().Format("2006-01-02 15:04:05")
 	_, err = tx.Exec(`
-		INSERT INTO review_proposal (
+		INSERT INTO review_laporan_70 (
 			dosen_id, taruna_id, topik_penelitian, 
 			keterangan, file_path, status, 
 			created_at, updated_at
@@ -258,8 +258,8 @@ func UploadReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk upload review proposal oleh dosen ke table review_proposal_dosen
-func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
+// Handler untuk upload review laporan 70% oleh dosen ke table review_laporan70_dosen
+func UploadDosenReviewLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -323,16 +323,16 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the ICP ID using user_id and topik_penelitian
-	var proposalID int
+	var laporan70ID int
 	err = db.QueryRow(`
 		SELECT id 
-		FROM proposal 
+		FROM laporan_70 
 		WHERE user_id = ? AND topik_penelitian = ?`,
-		userID, topikPenelitian).Scan(&proposalID)
+		userID, topikPenelitian).Scan(&laporan70ID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Proposal not found for the given user and topic: " + err.Error(),
+			"message": "Laporan 70% not found for the given user and topic: " + err.Error(),
 		})
 		return
 	}
@@ -347,7 +347,7 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	uploadDir := "uploads/reviewproposal/dosen"
+	uploadDir := "uploads/reviewlaporan70/dosen"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -356,7 +356,7 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filename := fmt.Sprintf("REVIEW_PROPOSAL_DOSEN_%s_%s_%s",
+	filename := fmt.Sprintf("REVIEW_LAPORAN70_DOSEN_%s_%s_%s",
 		dosenID,
 		time.Now().Format("20060102150405"),
 		handler.Filename)
@@ -392,14 +392,14 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update status ICP dalam transaksi
-	_, err = tx.Exec("UPDATE proposal SET status = ? WHERE id = ?",
-		"on review", proposalID)
+	_, err = tx.Exec("UPDATE laporan_70 SET status = ? WHERE id = ?",
+		"on review", laporan70ID)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Failed to update proposal status: " + err.Error(),
+			"message": "Failed to update laporan 70% status: " + err.Error(),
 		})
 		return
 	}
@@ -408,8 +408,8 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	var cycleNumber int = 1
 	err = tx.QueryRow(`
 		SELECT COALESCE(MAX(cycle_number), 0) + 1 
-		FROM review_proposal_dosen 
-		WHERE proposal_id = ?`, proposalID).Scan(&cycleNumber)
+		FROM review_laporan70_dosen 
+		WHERE laporan70_id = ?`, laporan70ID).Scan(&cycleNumber)
 	if err != nil {
 		// If error, default to 1
 		cycleNumber = 1
@@ -420,12 +420,12 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
 	_, err = tx.Exec(`
-		INSERT INTO review_proposal_dosen (
-			proposal_id, taruna_id, dosen_id, cycle_number,
+		INSERT INTO review_laporan70_dosen (
+			laporan70_id, taruna_id, dosen_id, cycle_number,
 			topik_penelitian, file_path, keterangan,
 			created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-		proposalID, tarunaIDInt, dosenIDInt, cycleNumber,
+		laporan70ID, tarunaIDInt, dosenIDInt, cycleNumber,
 		topikPenelitian, filePath, keterangan,
 	)
 
@@ -460,7 +460,7 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler untuk mengambil daftar review ICP dosen dari table review_icp_dosen
-func GetReviewProposalDosenHandler(w http.ResponseWriter, r *http.Request) {
+func GetReviewLaporan70DosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
 
@@ -479,9 +479,9 @@ func GetReviewProposalDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	reviewModel := models.NewReviewProposalDosenModel(db)
+	reviewModel := models.NewReviewLaporan70DosenModel(db)
 
-	var reviews []entities.ReviewProposal
+	var reviews []entities.ReviewLaporan70
 	if dosenID != "" {
 		reviews, err = reviewModel.GetByDosenID(dosenID)
 	} else {
@@ -500,7 +500,7 @@ func GetReviewProposalDosenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler untuk upload revisi proposal oleh taruna ke table review_proposal_taruna
-func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
+func UploadTarunaRevisiLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -556,9 +556,9 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Then get the Proposal ID using the user_id
-	var proposalID int
-	err = db.QueryRow("SELECT id FROM proposal WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&proposalID)
+	// Then get the Laporna 70% ID using the user_id
+	var laporan70ID int
+	err = db.QueryRow("SELECT id FROM laporan_70 WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&laporan70ID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -577,7 +577,7 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	uploadDir := "uploads/reviewproposal/taruna"
+	uploadDir := "uploads/reviewlaporan70/taruna"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -586,7 +586,7 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filename := fmt.Sprintf("REVISI_PROPOSAL_TARUNA_%s_%s_%s",
+	filename := fmt.Sprintf("REVISI_LAPORAN70_TARUNA_%s_%s_%s",
 		dosenID,
 		time.Now().Format("20060102150405"),
 		handler.Filename)
@@ -622,8 +622,8 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update status ICP dalam transaksi
-	_, err = tx.Exec("UPDATE proposal SET status = ? WHERE id = ?",
-		"on review", proposalID)
+	_, err = tx.Exec("UPDATE laporan_70 SET status = ? WHERE id = ?",
+		"on review", laporan70ID)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
@@ -638,8 +638,8 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 	var cycleNumber int = 1
 	err = tx.QueryRow(`
 		SELECT COALESCE(MAX(cycle_number), 0) + 1 
-		FROM review_proposal_taruna 
-		WHERE proposal_id = ?`, proposalID).Scan(&cycleNumber)
+		FROM review_laporan70_taruna 
+		WHERE laporan70_id = ?`, laporan70ID).Scan(&cycleNumber)
 	if err != nil {
 		// If error, default to 1
 		cycleNumber = 1
@@ -649,12 +649,12 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 
 	_, err = tx.Exec(`
-		INSERT INTO review_proposal_taruna (
-			proposal_id, taruna_id, dosen_id, cycle_number,
+		INSERT INTO review_laporan70_taruna (
+			laporan70_id, taruna_id, dosen_id, cycle_number,
 			topik_penelitian, file_path, keterangan,
 			created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-		proposalID, tarunaID, dosenIDInt, cycleNumber,
+		laporan70ID, tarunaID, dosenIDInt, cycleNumber,
 		topikPenelitian, filePath, keterangan,
 	)
 
@@ -681,7 +681,7 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Revisi ICP taruna berhasil diunggah dan status diperbarui",
+		"message": "Revisi Laporan 70% taruna berhasil diunggah dan status diperbarui",
 		"data": map[string]interface{}{
 			"file_path": filePath,
 		},
@@ -689,13 +689,13 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler untuk mengambil daftar revisi ICP taruna dari table review_icp_taruna
-func GetRevisiProposalTarunaHandler(w http.ResponseWriter, r *http.Request) {
+func GetRevisiLaporan70TarunaHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
 
 	userID := r.URL.Query().Get("taruna_id") // We receive user_id as taruna_id from frontend
 	dosenID := r.URL.Query().Get("dosen_id")
-	proposalID := r.URL.Query().Get("proposal_id")
+	laporan70ID := r.URL.Query().Get("laporan70_id")
 
 	if userID == "" && dosenID == "" {
 		http.Error(w, "Either taruna_id or dosen_id is required", http.StatusBadRequest)
@@ -713,7 +713,7 @@ func GetRevisiProposalTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	query := `
 		SELECT 
 			rit.id,
-			rit.proposal_id,
+			rit.laporan70_id,
 			rit.taruna_id,
 			rit.dosen_id,
 			rit.topik_penelitian,
@@ -725,7 +725,7 @@ func GetRevisiProposalTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			t.nama_lengkap as taruna_nama,
 			t.user_id as user_id,
 			d.nama_lengkap as dosen_nama
-		FROM review_proposal_taruna rit
+		FROM review_laporan70_taruna rit
 		LEFT JOIN taruna t ON rit.taruna_id = t.id
 		LEFT JOIN dosen d ON rit.dosen_id = d.id
 		WHERE 1=1
@@ -742,9 +742,9 @@ func GetRevisiProposalTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		args = append(args, dosenID)
 	}
 
-	if proposalID != "" {
-		query += " AND rit.proposal_id = ?"
-		args = append(args, proposalID)
+	if laporan70ID != "" {
+		query += " AND rit.laporan70_id = ?"
+		args = append(args, laporan70ID)
 	}
 
 	query += " ORDER BY rit.cycle_number DESC, rit.created_at DESC"
@@ -760,7 +760,7 @@ func GetRevisiProposalTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var revision struct {
 			ID              int
-			ProposalID      int
+			Laporan70ID     int
 			TarunaID        int
 			DosenID         int
 			TopikPenelitian string
@@ -776,7 +776,7 @@ func GetRevisiProposalTarunaHandler(w http.ResponseWriter, r *http.Request) {
 
 		err := rows.Scan(
 			&revision.ID,
-			&revision.ProposalID,
+			&revision.Laporan70ID,
 			&revision.TarunaID,
 			&revision.DosenID,
 			&revision.TopikPenelitian,
@@ -796,7 +796,7 @@ func GetRevisiProposalTarunaHandler(w http.ResponseWriter, r *http.Request) {
 
 		revisions = append(revisions, map[string]interface{}{
 			"id":               revision.ID,
-			"proposal_id":      revision.ProposalID,
+			"laporan70_id":     revision.Laporan70ID,
 			"taruna_id":        revision.TarunaID,
 			"dosen_id":         revision.DosenID,
 			"topik_penelitian": revision.TopikPenelitian,
@@ -818,7 +818,7 @@ func GetRevisiProposalTarunaHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler untuk mengambil detail review ICP dosen berdasarkan ID
-func GetReviewProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
+func GetReviewLaporan70DetailHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
 
@@ -838,20 +838,20 @@ func GetReviewProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 
 	query := `
 		SELECT 
-			r.id, r.proposal_id, r.taruna_id, r.dosen_id, r.cycle_number,
+			r.id, r.laporan70_id, r.taruna_id, r.dosen_id, r.cycle_number,
 			r.topik_penelitian, r.file_path, r.keterangan, r.created_at,
 			r.updated_at, t.nama_lengkap as nama_taruna, d.nama_lengkap as dosen_nama
-		FROM review_proposal r
+		FROM review_laporan70 r
 		LEFT JOIN taruna t ON r.taruna_id = t.id
 		LEFT JOIN dosen d ON r.dosen_id = d.id
 		WHERE r.id = ?
 	`
 
-	var review entities.ReviewProposal
+	var review entities.ReviewLaporan70
 	var namaTaruna, dosenNama sql.NullString
 	err = db.QueryRow(query, reviewID).Scan(
 		&review.ID,
-		&review.ProposalID,
+		&review.Laporan70ID,
 		&review.TarunaID,
 		&review.DosenID,
 		&review.CycleNumber,
@@ -887,7 +887,7 @@ func GetReviewProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler untuk mengambil detail review ICP dosen berdasarkan ID
-func GetReviewProposalDosenDetailHandler(w http.ResponseWriter, r *http.Request) {
+func GetReviewLaporan70DosenDetailHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
 
@@ -907,20 +907,20 @@ func GetReviewProposalDosenDetailHandler(w http.ResponseWriter, r *http.Request)
 
 	query := `
 		SELECT 
-			r.id, r.proposal_id, r.taruna_id, r.dosen_id, r.cycle_number,
+			r.id, r.laporan70_id, r.taruna_id, r.dosen_id, r.cycle_number,
 			r.topik_penelitian, r.file_path, r.keterangan, r.created_at,
 			r.updated_at, t.nama_lengkap as nama_taruna, d.nama_lengkap as nama_dosen,
-			p.status as proposal_status
-		FROM review_proposal r
+			p.status as laporan70_status
+		FROM review_laporan70 r
 		LEFT JOIN taruna t ON r.taruna_id = t.id
 		LEFT JOIN dosen d ON r.dosen_id = d.id
-		LEFT JOIN proposal p ON r.proposal_id = p.id
+		LEFT JOIN laporan70 p ON r.laporan70_id = p.id
 		WHERE r.id = ?
 	`
 
 	var review struct {
 		ID              int            `json:"id"`
-		ProposalID      int            `json:"proposal_id"`
+		Laporan70ID     int            `json:"laporan70_id"`
 		TarunaID        int            `json:"taruna_id"`
 		DosenID         int            `json:"dosen_id"`
 		CycleNumber     int            `json:"cycle_number"`
@@ -931,12 +931,12 @@ func GetReviewProposalDosenDetailHandler(w http.ResponseWriter, r *http.Request)
 		UpdatedAt       string         `json:"updated_at"`
 		NamaTaruna      sql.NullString `json:"nama_taruna"`
 		NamaDosen       sql.NullString `json:"nama_dosen"`
-		ProposalStatus  sql.NullString `json:"proposal_status"`
+		Laporan70Status sql.NullString `json:"laporan70_status"`
 	}
 
 	err = db.QueryRow(query, reviewID).Scan(
 		&review.ID,
-		&review.ProposalID,
+		&review.Laporan70ID,
 		&review.TarunaID,
 		&review.DosenID,
 		&review.CycleNumber,
@@ -947,7 +947,7 @@ func GetReviewProposalDosenDetailHandler(w http.ResponseWriter, r *http.Request)
 		&review.UpdatedAt,
 		&review.NamaTaruna,
 		&review.NamaDosen,
-		&review.ProposalStatus,
+		&review.Laporan70Status,
 	)
 
 	if err != nil {
@@ -962,7 +962,7 @@ func GetReviewProposalDosenDetailHandler(w http.ResponseWriter, r *http.Request)
 	// Convert sql.NullString to string for JSON response
 	response := map[string]interface{}{
 		"id":               review.ID,
-		"proposal_id":      review.ProposalID,
+		"laporan70_id":     review.Laporan70ID,
 		"taruna_id":        review.TarunaID,
 		"dosen_id":         review.DosenID,
 		"cycle_number":     review.CycleNumber,
@@ -973,7 +973,7 @@ func GetReviewProposalDosenDetailHandler(w http.ResponseWriter, r *http.Request)
 		"updated_at":       review.UpdatedAt,
 		"nama_taruna":      review.NamaTaruna.String,
 		"nama_dosen":       review.NamaDosen.String,
-		"proposal_status":  review.ProposalStatus.String,
+		"laporan70_status": review.Laporan70Status.String,
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
