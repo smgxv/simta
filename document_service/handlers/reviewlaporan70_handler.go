@@ -28,7 +28,7 @@ func GetLaporan70ByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	db, err := config.GetDB()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Gagal menghubungkan ke database", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -36,13 +36,19 @@ func GetLaporan70ByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 	laporan70Model := models.NewLaporan70Model(db)
 	laporan70s, err := laporan70Model.GetByDosenID(dosenID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Gagal mengambil data laporan 70%", http.StatusInternalServerError)
 		return
 	}
 
+	// Pastikan data bukan nil agar aman di frontend
+	if laporan70s == nil {
+		laporan70s = []entities.Laporan70{}
+	}
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "success",
-		"data":   laporan70s,
+		"status":  "success",
+		"message": "Data laporan 70% berhasil diambil",
+		"data":    laporan70s,
 	})
 }
 
