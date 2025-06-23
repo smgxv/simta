@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-// Handler untuk mengambil daftar ICP dari table icp
+// Handler untuk mengambil daftar Proposal berdasarkan dosen_id
 func GetProposalByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Content-Type", "application/json")
@@ -28,7 +28,7 @@ func GetProposalByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	db, err := config.GetDB()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Gagal menghubungkan ke database", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -36,13 +36,19 @@ func GetProposalByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
 	proposalModel := models.NewProposalModel(db)
 	proposals, err := proposalModel.GetByDosenID(dosenID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Gagal mengambil data proposal", http.StatusInternalServerError)
 		return
 	}
 
+	// Pastikan data selalu array kosong jika tidak ada data
+	if proposals == nil {
+		proposals = []entities.Proposal{}
+	}
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "success",
-		"data":   proposals,
+		"status":  "success",
+		"message": "Data proposal berhasil diambil",
+		"data":    proposals,
 	})
 }
 
