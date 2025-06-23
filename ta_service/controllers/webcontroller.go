@@ -23,6 +23,7 @@ func LoginUsers(w http.ResponseWriter, r *http.Request) {
 	temp.Execute(w, nil)
 }
 
+// ADMIN WEB SERVICE
 func AdminDashboard(w http.ResponseWriter, r *http.Request) {
 	// Set header content type
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -237,6 +238,174 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Handler untuk halaman ICP admin
+func ListICP(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "admin" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the admin ICP HTML file
+	http.ServeFile(w, r, "static/admin/icp_admin.html")
+}
+
+// Handler untuk halaman Proposal admin
+func ListProposal(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "admin" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the admin Proposal HTML file
+	http.ServeFile(w, r, "static/admin/proposal_admin.html")
+}
+
+// Handler untuk halaman Detail Berkas Proposal admin
+func DetailBerkasProposal(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "admin" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the admin Proposal HTML file
+	http.ServeFile(w, r, "static/admin/detail_berkas_seminar_proposal.html")
+}
+
+// Handler untuk halaman Detail Telaah ICP admin
+func DetailTelaahICP(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "admin" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the admin Proposal HTML file
+	http.ServeFile(w, r, "static/admin/detail_telaah_icp.html")
+}
+
+// Handler untuk halaman List Pembimbing Proposal admin
+func ListPembimbingProposal(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "admin" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the admin Proposal HTML file
+	http.ServeFile(w, r, "static/admin/dosbing_proposal_admin.html")
+}
+
+// Handler untuk halaman List Penguji Proposal admin
+func ListPengujiProposal(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "admin" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the admin Proposal HTML file
+	http.ServeFile(w, r, "static/admin/penguji_proposal_admin.html")
+}
+
 // TARUNA WEB SERVICE
 // TarunaDashboard menangani tampilan dashboard untuk taruna
 func TarunaDashboard(w http.ResponseWriter, r *http.Request) {
@@ -374,6 +543,86 @@ func Laporan70(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/taruna/laporan70.html")
 }
 
+// Handler untuk profile taruna
+func ProfileTaruna(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "taruna" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	http.ServeFile(w, r, "static/taruna/profile_taruna.html")
+}
+
+// Handler untuk halaman edit profile taruna
+func EditProfileTaruna(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "taruna" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	http.ServeFile(w, r, "static/taruna/edituser_taruna.html")
+}
+
+// Handler for viewing ICP details for taruna
+func ViewICPTaruna(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "taruna" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	http.ServeFile(w, r, "static/taruna/viewicp_taruna.html")
+}
+
 // DOSEN WEB SERVICE
 // Halaman dashboard dosen
 func DosenDashboard(w http.ResponseWriter, r *http.Request) {
@@ -484,132 +733,6 @@ func EditProfileDosen(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/dosen/edituser_dosen.html")
 }
 
-// Handler untuk profile taruna
-func ProfileTaruna(w http.ResponseWriter, r *http.Request) {
-	// Set header content type
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// Ambil token dari cookie atau header
-	var tokenString string
-	cookie, err := r.Cookie("token")
-	if err == nil {
-		tokenString = cookie.Value
-	} else {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader != "" {
-			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
-		}
-	}
-
-	// Validasi token
-	claims, err := utils.ParseJWT(tokenString)
-	if err != nil || strings.ToLower(claims.Role) != "taruna" {
-		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
-		return
-	}
-
-	http.ServeFile(w, r, "static/taruna/profile_taruna.html")
-}
-
-// Handler untuk halaman edit profile taruna
-func EditProfileTaruna(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// Ambil token dari cookie atau header
-	var tokenString string
-	cookie, err := r.Cookie("token")
-	if err == nil {
-		tokenString = cookie.Value
-	} else {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader != "" {
-			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
-		}
-	}
-
-	// Validasi token
-	claims, err := utils.ParseJWT(tokenString)
-	if err != nil || strings.ToLower(claims.Role) != "taruna" {
-		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
-		return
-	}
-
-	http.ServeFile(w, r, "static/taruna/edituser_taruna.html")
-}
-
-// Handler for dosen view ICP page
-func ViewICPDosen(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	http.ServeFile(w, r, "static/dosen/viewicp_dosen.html")
-}
-
-// Handler for viewing ICP review details
-func ViewICPReviewDosen(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	http.ServeFile(w, r, "static/dosen/viewicp_review_dosen.html")
-}
-
-// Handler for viewing ICP revision details
-func ViewICPRevisiDosen(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	http.ServeFile(w, r, "static/dosen/viewicp_revisi_dosen.html")
-}
-
-// Handler for viewing ICP details for taruna
-func ViewICPTaruna(w http.ResponseWriter, r *http.Request) {
-	// Set header content type
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// Ambil token dari cookie atau header
-	var tokenString string
-	cookie, err := r.Cookie("token")
-	if err == nil {
-		tokenString = cookie.Value
-	} else {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader != "" {
-			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
-		}
-	}
-
-	// Validasi token
-	claims, err := utils.ParseJWT(tokenString)
-	if err != nil || strings.ToLower(claims.Role) != "taruna" {
-		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
-		return
-	}
-
-	http.ServeFile(w, r, "static/taruna/viewicp_taruna.html")
-}
-
-// Handler untuk halaman ICP admin
-func ListICP(w http.ResponseWriter, r *http.Request) {
-	// Set header content type
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// Ambil token dari cookie atau header
-	var tokenString string
-	cookie, err := r.Cookie("token")
-	if err == nil {
-		tokenString = cookie.Value
-	} else {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader != "" {
-			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
-		}
-	}
-
-	// Validasi token
-	claims, err := utils.ParseJWT(tokenString)
-	if err != nil || strings.ToLower(claims.Role) != "admin" {
-		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
-		return
-	}
-
-	// Serve the admin ICP HTML file
-	http.ServeFile(w, r, "static/admin/icp_admin.html")
-}
-
 // Handler for dosen review proposal
 func BimbinganProposal(w http.ResponseWriter, r *http.Request) {
 	// Set header content type
@@ -635,34 +758,6 @@ func BimbinganProposal(w http.ResponseWriter, r *http.Request) {
 
 	// Serve the review proposal HTML file
 	http.ServeFile(w, r, "static/dosen/bimbingan_proposal.html")
-}
-
-// Handler untuk halaman Proposal admin
-func ListProposal(w http.ResponseWriter, r *http.Request) {
-	// Set header content type
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// Ambil token dari cookie atau header
-	var tokenString string
-	cookie, err := r.Cookie("token")
-	if err == nil {
-		tokenString = cookie.Value
-	} else {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader != "" {
-			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
-		}
-	}
-
-	// Validasi token
-	claims, err := utils.ParseJWT(tokenString)
-	if err != nil || strings.ToLower(claims.Role) != "admin" {
-		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
-		return
-	}
-
-	// Serve the admin Proposal HTML file
-	http.ServeFile(w, r, "static/admin/proposal_admin.html")
 }
 
 // Handler untuk penguji proposal
@@ -692,96 +787,30 @@ func PengujiProposal(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/dosen/penguji_proposal.html")
 }
 
-// Handler untuk halaman Detail Berkas Proposal admin
-func DetailBerkasProposal(w http.ResponseWriter, r *http.Request) {
-	// Set header content type
+// Handler for dosen view ICP page
+func ViewICPDosen(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// Ambil token dari cookie atau header
-	var tokenString string
-	cookie, err := r.Cookie("token")
-	if err == nil {
-		tokenString = cookie.Value
-	} else {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader != "" {
-			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
-		}
-	}
-
-	// Validasi token
-	claims, err := utils.ParseJWT(tokenString)
-	if err != nil || strings.ToLower(claims.Role) != "admin" {
-		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
-		return
-	}
-
-	// Serve the admin Proposal HTML file
-	http.ServeFile(w, r, "static/admin/detail_berkas_seminar_proposal.html")
+	http.ServeFile(w, r, "static/dosen/viewicp_dosen.html")
 }
 
-// Handler untuk halaman Detail Telaah ICP admin
-func DetailTelaahICP(w http.ResponseWriter, r *http.Request) {
-	// Set header content type
+// Handler for viewing ICP review details
+func ViewICPReviewDosen(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// Ambil token dari cookie atau header
-	var tokenString string
-	cookie, err := r.Cookie("token")
-	if err == nil {
-		tokenString = cookie.Value
-	} else {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader != "" {
-			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
-		}
-	}
-
-	// Validasi token
-	claims, err := utils.ParseJWT(tokenString)
-	if err != nil || strings.ToLower(claims.Role) != "admin" {
-		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
-		return
-	}
-
-	// Serve the admin Proposal HTML file
-	http.ServeFile(w, r, "static/admin/detail_telaah_icp.html")
+	http.ServeFile(w, r, "static/dosen/viewicp_review_dosen.html")
 }
 
-// Handler untuk halaman Detail Telaah ICP admin
-func ListPembimbingProposal(w http.ResponseWriter, r *http.Request) {
-	// Set header content type
+// Handler for viewing ICP revision details
+func ViewICPRevisiDosen(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// Ambil token dari cookie atau header
-	var tokenString string
-	cookie, err := r.Cookie("token")
-	if err == nil {
-		tokenString = cookie.Value
-	} else {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader != "" {
-			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
-		}
-	}
-
-	// Validasi token
-	claims, err := utils.ParseJWT(tokenString)
-	if err != nil || strings.ToLower(claims.Role) != "admin" {
-		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
-		return
-	}
-
-	// Serve the admin Proposal HTML file
-	http.ServeFile(w, r, "static/admin/dosbing_proposal_admin.html")
+	http.ServeFile(w, r, "static/dosen/viewicp_revisi_dosen.html")
 }
 
-// Handler untuk halaman List Penguji Proposal admin
-func ListPengujiProposal(w http.ResponseWriter, r *http.Request) {
+// Handler for dosen review proposal
+func BimbinganLaporan70(w http.ResponseWriter, r *http.Request) {
 	// Set header content type
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	// Ambil token dari cookie atau header
+	// Validasi token dan role
 	var tokenString string
 	cookie, err := r.Cookie("token")
 	if err == nil {
@@ -793,13 +822,39 @@ func ListPengujiProposal(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Validasi token
 	claims, err := utils.ParseJWT(tokenString)
-	if err != nil || strings.ToLower(claims.Role) != "admin" {
+	if err != nil || strings.ToLower(claims.Role) != "dosen" {
 		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
 		return
 	}
 
-	// Serve the admin Proposal HTML file
-	http.ServeFile(w, r, "static/admin/penguji_proposal_admin.html")
+	// Serve the review proposal HTML file
+	http.ServeFile(w, r, "static/dosen/bimbingan_laporan70.html")
+}
+
+// Handler untuk penguji proposal
+func PengujiLaporan70(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Validasi token dan role
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "dosen" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the review proposal HTML file
+	http.ServeFile(w, r, "static/dosen/penguji_laporan70.html")
 }

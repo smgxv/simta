@@ -141,6 +141,8 @@ func main() {
 	dosenRoutes.HandleFunc("/viewicp_revisi", controllers.ViewICPRevisiDosen).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/bimbingan_proposal", controllers.BimbinganProposal).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/pengujian_proposal", controllers.PengujiProposal).Methods("GET", "OPTIONS")
+	dosenRoutes.HandleFunc("/bimbingan_laporan70", controllers.BimbinganLaporan70).Methods("GET", "OPTIONS")
+	dosenRoutes.HandleFunc("/pengujian_laporan70", controllers.PengujiLaporan70).Methods("GET", "OPTIONS")
 
 	// Tambahkan router ke http.Handle
 	http.Handle("/", router) // Tambahkan ini untuk menggunakan router mux
