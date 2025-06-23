@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>SIMTA - Pengujian Proposal</title>
+		<title>SIMTA - Bimbingan Laporan 70%</title>
 
 		<!-- Site favicon -->
 		<link
@@ -572,7 +572,7 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Penguji Proposal</h4>
+									<h4>Review Laporan 70%</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
@@ -580,7 +580,7 @@
 											<a href="/dosen/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											Penguji Proposal
+											Review Laporan 70%
 										</li>
 									</ol>
 								</nav>
@@ -588,10 +588,10 @@
 						</div>
 					</div>
 
-					<!-- Tabel Proposal -->
+					<!-- Tabel Laporan 70% -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">List Proposal</h4>
+							<h4 class="text-blue h4">List Laporan 70%</h4>
 						</div>
 						<div class="pb-20">
 							<table class="data-table table stripe hover nowrap">
@@ -599,6 +599,7 @@
 									<tr>
 										<th class="table-plus datatable-nosort">Topik</th>
 										<th class="table-plus datatable-nosort">Nama Taruna</th>
+										<th class="table-plus datatable-nosort">Status</th>
 										<th class="datatable-nosort">Action</th>
 									</tr>
 								</thead>
@@ -608,52 +609,31 @@
 							</table>
 						</div>
 					</div>
-					<!-- Tabel Proposal End -->
+					<!-- Tabel Laporan 70% End -->
 
-					<!-- Form Penilaian Proposal -->
-					<div class="pd-20 card-box mb-30">
-
-						<div class="clearfix">
-							<div class="pull-left">
-								<h4 class="text-blue h4">Penilaian Proposal</h4>
-								<p class="mb-30">Masukan dokumen penilaian proposal !!</p>
+					<!-- Tabel Hasil Revisi Laporan 70% -->
+					<div class="card-box mb-30">
+						<div class="pd-20">
+							<h4 class="text-blue h4">Tabel Hasil Revisi Laporan 70%</h4>
 							</div>
-						</div>
-
-						<form id="proposalForm" enctype="multipart/form-data">
-							<div class="form-group">
-								<input type="hidden" name="final_proposal_id" id="finalProposalId" />
+						<div class="pb-20">
+							<table id="revisiTable" class="data-table table stripe hover nowrap">
+								<thead>
+									<tr>
+										<th class="table-plus datatable-nosort">Topik</th>
+										<th class="table-plus datatable-nosort">Nama Taruna</th>
+										<th class="table-plus datatable-nosort">Revisi ke-</th>
+										<th class="table-plus datatable-nosort">Keterangan</th>
+										<th class="datatable-nosort">Action</th>
+									</tr>
+								</thead>
+								<tbody>
+									<!-- Data will be loaded here -->
+								</tbody>
+							</table>
 							</div>
-							<div class="form-group">
-								<label>Nama Taruna</label>
-								<select class="form-control" id="tarunaSelect" name="user_id">
-									<option value="" disabled selected>Pilih Nama Taruna</option>
-								</select>
-							</div>
-							<div class="form-group">
-								<label>Topik Penelitian</label>
-								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
-							</div>
-							<div class="form-group">
-								<label>File Penilaian (PDF)</label>
-								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="penilaianFile" name="penilaian_file" accept=".pdf" required>
-									<label class="custom-file-label" for="penilaianFile">Choose file</label>
-								</div>
-								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
-							</div>
-							<div class="form-group">
-								<label>File Berita Acara (PDF)</label>
-								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="beritaAcaraFile" name="berita_acara_file" accept=".pdf" required>
-									<label class="custom-file-label" for="beritaAcaraFile">Choose file</label>
-								</div>
-								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
-							</div>
-							<button type="submit" class="btn btn-primary">Submit</button>
-						</form>
 					</div>
-					<!-- Form Proposal End -->
+					<!-- Tabel Hasil Revisi Laporan 70% End -->
 
 				</div>
 
@@ -679,14 +659,117 @@
 		></noscript>
 		<!-- End Google Tag Manager (noscript) -->
 
+		<!-- Add upload review modal -->
+		<div class="modal fade" id="uploadReviewModal" tabindex="-1" role="dialog" aria-labelledby="uploadReviewModalLabel" aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="uploadReviewModalLabel">Upload Review Laporan 70%</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<form id="reviewForm" enctype="multipart/form-data">
+							<input type="hidden" id="reviewLaporan70Id" name="laporan70_id">
+							<input type="hidden" id="reviewTarunaId" name="taruna_id">
+							<input type="hidden" id="reviewTopikPenelitian" name="topik_penelitian">
+							<input type="hidden" id="reviewCycleNumber" name="cycle_number">
+							<input type="hidden" id="reviewUserId" name="user_id">
+							
+							<div class="form-group">
+								<label>Keterangan Review</label>
+								<textarea class="form-control" name="keterangan" required></textarea>
+							</div>
+							<div class="form-group">
+								<label>File Review Laporan 70% (PDF)</label>
+								<input type="file" class="form-control" name="file" accept=".pdf" required>
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+						<button type="button" class="btn btn-primary" onclick="submitReview()">Upload Review</button>
+					</div>
+				</div>
+			</div>
 		</div>
 
 		<script>
-			// Fungsi untuk redirect ke profile
 			function redirectToProfile() {
 				window.location.href = '/dosen/profile';
 			}
+			
+			let laporan70DataGlobal = [];
 
+			// Fungsi untuk menampilkan list Laporan 70% yang masuk ke dosen
+			async function loadLaporan70Data() {
+				const dosenID = localStorage.getItem('dosenID');
+				console.log('Memuat Laporan70 untuk dosenID:', dosenID); // Debug
+				if (!dosenID) return;
+				try {
+					const response = await fetch(`http://104.43.89.154:8082/reviewlaporan70?dosen_id=${dosenID}`);
+					const data = await response.json();
+					
+					if (data.status === 'success') {
+						const tbody = document.querySelector('.data-table tbody');
+						tbody.innerHTML = '';
+						
+						// First, display all Laporan 70%s immediately
+						data.data.forEach(laporan70 => {
+							const statusClass = {
+								'pending': 'badge badge-warning',
+								'approved': 'badge badge-success',
+								'rejected': 'badge badge-danger',
+								'on review': 'badge badge-secondary'
+							}[laporan70.status] || 'badge badge-secondary';
+
+							// Create a unique ID for this row to update later
+							const rowId = `laporan70-row-${laporan70.id}`;
+
+							tbody.innerHTML += `
+								<tr id="${rowId}">
+									<td>${laporan70.topik_penelitian}</td>
+									<td>${laporan70.nama_taruna || 'Nama tidak tersedia'}</td>
+									<td><span class="${statusClass}">${laporan70.status}</span></td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+											href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item view-laporan70-btn" href="#" data-laporan70-id="${laporan70.id}">
+													<i class="dw dw-eye"></i> View
+												</a>
+												<a class="dropdown-item" href="#" onclick="openUploadReviewModalLaporan70('${laporan70.topik_penelitian}', ${laporan70.id}, ${laporan70.user_id})">
+													<i class="dw dw-upload"></i> Upload Review
+												</a>
+												<a class="dropdown-item accept-laporan70-btn" href="#" data-id="${laporan70.id}">
+													<i class="dw dw-edit2"></i> Accept
+												</a>
+												<a class="dropdown-item reject-laporan70-btn" href="#" data-id="${laporan70.id}">
+													<i class="dw dw-delete-3"></i> Reject
+												</a>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${laporan70.file_path}" download>
+													<i class="dw dw-download"></i> Download
+												</a>
+											</div>
+										</div>
+									</td>
+								</tr>
+							`;
+						});
+
+						// Remove the old event listeners setup since we're now using onclick
+						
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Gagal memuat data Laporan 70%', 'danger');
+				}
+			}
+			
 			// Fungsi Logout
 			async function logout() {
 				try {
@@ -777,29 +860,29 @@
 				console.log('UserID:', userId); // Debug log
 
 				// Ambil data dosen dan set dosenID
-				fetch('http://104.43.89.154:8081/dosen', {
-					headers: {
-						'Authorization': `Bearer ${token}`
-					}
-				})
-				.then(response => response.json())
-				.then(data => {
-					if (data.status === 'success' && Array.isArray(data.data)) {
-						const dosen = data.data.find(d => String(d.user_id) === String(userId));
-						if (dosen) {
+					fetch('http://104.43.89.154:8081/dosen', {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					})
+					.then(response => response.json())
+					.then(data => {
+						if (data.status === 'success' && Array.isArray(data.data)) {
+							const dosen = data.data.find(d => String(d.user_id) === String(userId));
+							if (dosen) {
 							localStorage.setItem('dosenID', dosen.id);
 							localStorage.setItem('dosenName', dosen.nama_lengkap);
 							console.log('DosenID set:', dosen.id); // Debug log
 							
 							// Update nama dosen di header
-							const usernameElement = document.getElementById('username');
-							if (usernameElement) {
+					const usernameElement = document.getElementById('username');
+					if (usernameElement) {
 								usernameElement.textContent = dosen.nama_lengkap;
 							}
 							
 							// Setelah dosenID tersedia, panggil fungsi-fungsi yang membutuhkannya
-							loadProposalData();
-							loadTarunaDropdown();
+							loadLaporan70Data();
+							loadLaporan70ReviewData();
 						} else {
 							console.warn('Dosen with user_id', userId, 'not found');
 						}
@@ -808,6 +891,64 @@
 				.catch(error => {
 					console.error('Failed to fetch dosen data:', error);
 				});
+			});
+
+			// Panggil loadLaporan70Data saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', loadLaporan70Data);
+
+			// Event delegation untuk tombol Accept dan Reject
+			document.addEventListener('click', async function(e) {
+				if (e.target.closest('.accept-laporan70-btn')) {
+					e.preventDefault();
+					const btn = e.target.closest('.accept-laporan70-btn');
+					const laporan70Id = btn.getAttribute('data-id');
+					if (!laporan70Id) return;
+
+					if (!confirm('Yakin ingin meng-approve Laporan 70% ini?')) return;
+
+					try {
+						const response = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${laporan70Id}&status=approved`, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' }
+						});
+						const data = await response.json();
+						if (data.status === 'success') {
+							showAlert('Laporan 70% berhasil di-approve', 'success');
+							loadLaporan70Data(); // Refresh tabel
+							loadLaporan70ReviewData(); // Tambahkan ini
+						} else {
+							showAlert(data.message || 'Gagal meng-approve Laporan 70%', 'danger');
+						}
+					} catch (error) {
+						showAlert('Terjadi kesalahan pada server', 'danger');
+					}
+				}
+
+				if (e.target.closest('.reject-laporan70-btn')) {
+					e.preventDefault();
+					const btn = e.target.closest('.reject-laporan70-btn');
+					const laporan70Id = btn.getAttribute('data-id');
+					if (!laporan70Id) return;
+
+					if (!confirm('Yakin ingin menolak Laporan 70% ini?')) return;
+
+					try {
+						const response = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${laporan70Id}&status=rejected`, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' }
+						});
+						const data = await response.json();
+						if (data.status === 'success') {
+							showAlert('Laporan 70% berhasil di-reject', 'success');
+							loadLaporan70Data(); // Refresh tabel
+							loadLaporan70ReviewData(); // Tambahkan ini
+						} else {
+							showAlert(data.message || 'Gagal menolak Laporan 70%', 'danger');
+						}
+					} catch (error) {
+						showAlert('Terjadi kesalahan pada server', 'danger');
+					}
+				}
 			});
 
 			// Pastikan event listener untuk tombol logout terpasang dengan benar
@@ -836,209 +977,235 @@
 				}, 5000);
 			}
 
-			// Fungsi untuk memuat data proposal
-			async function loadProposalData() {
-				try {
-					const dosenId = localStorage.getItem('dosenID'); // Gunakan dosenID yang sudah di-map
-					if (!dosenId) {
-						console.error('Dosen ID not found');
-						return;
-					}
-
-					console.log('Fetching proposal data for dosen:', dosenId);
-					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/dosen?dosen_id=${dosenId}`);
-					const data = await response.json();
-
-					const tbody = document.querySelector('.data-table tbody');
-					if (!tbody) {
-						console.error('Table body element not found');
-						return;
-					}
-
-					tbody.innerHTML = '';
-
-					if (data.status === 'success' && data.data && data.data.length > 0) {
-						data.data.forEach(proposal => {
-							tbody.innerHTML += `
-								<tr>
-									<td>${proposal.topik_penelitian || '-'}</td>
-									<td>${proposal.taruna_nama || '-'}</td>
-									<td>
-										<div class="dropdown">
-											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												href="#" role="button" data-toggle="dropdown">
-												<i class="dw dw-more"></i>
-											</a>
-											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${proposal.file_path}" target="_blank">
-													<i class="dw dw-eye"></i> View
-												</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${proposal.file_path}" download>
-													<i class="dw dw-download"></i> Download
-												</a>
-											</div>
-										</div>
-									</td>
-								</tr>
-							`;
-						});
-					} else {
-						tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada data proposal</td></tr>';
-					}
-				} catch (error) {
-					console.error('Error loading proposal data:', error);
-					showAlert('Terjadi kesalahan saat memuat data proposal', 'danger');
-				}
-			}
-
-			// Fungsi untuk memuat data taruna
-			async function loadTarunaDropdown() {
-				try {
-					const dosenId = localStorage.getItem('dosenID');
-					if (!dosenId) {
-						console.error('Dosen ID tidak ditemukan');
-						return;
-					}
-
-					const response = await fetch(`http://104.43.89.154:8082/seminarproposal/taruna/list?dosen_id=${dosenId}`);
-					const data = await response.json();
-
-					const tarunaSelect = document.getElementById('tarunaSelect');
-					const finalProposalIdInput = document.getElementById('finalProposalId');
-					const topikInput = document.querySelector('input[name="topik_penelitian"]');
-
-					if (!tarunaSelect || !finalProposalIdInput || !topikInput) {
-						console.error('Elemen yang dibutuhkan tidak ditemukan');
-						return;
-					}
-
-					tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Nama Taruna</option>';
-
-					const proposalMap = new Map();
-					const topikMap = new Map();
-
-					if (data.status === 'success' && Array.isArray(data.data)) {
-						data.data.forEach(taruna => {
-							const option = document.createElement('option');
-							option.value = taruna.user_id;
-							option.textContent = taruna.nama_lengkap;
-							tarunaSelect.appendChild(option);
-
-							proposalMap.set(String(taruna.user_id), taruna.final_proposal_id);
-							topikMap.set(String(taruna.user_id), taruna.topik_penelitian);
-						});
-
-						tarunaSelect.addEventListener('change', function () {
-							const selectedId = this.value;
-
-							const finalProposalId = proposalMap.get(selectedId) || '';
-							const topik = topikMap.get(selectedId) || '';
-
-							finalProposalIdInput.value = finalProposalId;
-							topikInput.value = topik;
-
-							console.log('final_proposal_id:', finalProposalId);
-						});
-					} else {
-						showAlert('Tidak ada taruna yang sedang diuji', 'warning');
-					}
-				} catch (error) {
-					console.error('Error loading taruna data:', error);
-					showAlert('Gagal memuat data taruna: ' + error.message, 'danger');
-				}
-			}
-
-			// Load data saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', () => {
-				loadProposalData();
-				loadTarunaDropdown();
-			});
-
-			// Update nama file saat file penilaian dipilih
-			document.getElementById('penilaianFile').addEventListener('change', function(e) {
-				const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
-				this.nextElementSibling.textContent = fileName;
-			});
-
-			// Update nama file saat file berita acara dipilih
-			document.getElementById('beritaAcaraFile').addEventListener('change', function(e) {
-				const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
-				this.nextElementSibling.textContent = fileName;
-			});
-
-			// Handle form submission untuk penilaian proposal
-			document.getElementById('proposalForm').addEventListener('submit', async function(e) {
-				e.preventDefault();
-
-				// Validasi form
-				const tarunaSelect = document.getElementById('tarunaSelect');
-				const finalProposalId = document.getElementById('finalProposalId').value;
-				const penilaianFile = document.getElementById('penilaianFile').files[0];
-				const beritaAcaraFile = document.getElementById('beritaAcaraFile').files[0];
-				const dosenId = localStorage.getItem('dosenID');
-
-				// Validasi semua field yang diperlukan
-				if (!tarunaSelect.value || !finalProposalId || !penilaianFile || !beritaAcaraFile || !dosenId) {
-					showAlert('Semua field harus diisi', 'warning');
+			// Fungsi untuk memuat data revisi Laporan 70%
+			async function loadLaporan70ReviewData() {
+				console.log('loadLaporan70ReviewData function called');
+				const dosenID = localStorage.getItem('dosenID');
+				console.log('Loading review data for dosenID:', dosenID);
+				if (!dosenID) {
+					console.warn('DosenID not found in localStorage');
 					return;
 				}
-
-				// Tampilkan loading state
-				const submitButton = this.querySelector('button[type="submit"]');
-				submitButton.disabled = true;
-				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-
+				
 				try {
-					const formData = new FormData();
+					const url = `http://104.43.89.154:8082/reviewlaporan70/taruna/list?dosen_id=${dosenID}`;
+					console.log('Fetching from URL:', url);
 					
-					// Tambahkan semua field yang diperlukan
-					formData.append('user_id', tarunaSelect.value);
-					formData.append('final_proposal_id', finalProposalId);
-					formData.append('dosen_id', dosenId);
-					formData.append('penilaian_file', penilaianFile);
-					formData.append('berita_acara_file', beritaAcaraFile);
-
-					// Log data yang akan dikirim
-					console.log('Sending data:');
-					for (let pair of formData.entries()) {
-						console.log(pair[0] + ':', pair[1]);
-					}
-
-					const response = await fetch('http://104.43.89.154:8082/penilaian/proposal', {
-						method: 'POST',
-						body: formData
-					});
-
-					// Tambahkan penanganan response yang lebih detail
-					const contentType = response.headers.get('content-type');
-					let data;
+					const response = await fetch(url);
+					const data = await response.json();
+					console.log('Review data received:', data);
 					
-					if (contentType && contentType.includes('application/json')) {
-						data = await response.json();
-					} else {
-						throw new Error('Response dari server bukan JSON');
-					}
-
-					if (response.ok && data.status === 'success') {
-						showAlert('Penilaian proposal berhasil disimpan', 'success');
+					if (data.status === 'success') {
+						const tbody = document.querySelector('#revisiTable tbody');
+						console.log('Found tbody:', tbody);
 						
-						// Reset form
-						this.reset();
-						document.querySelectorAll('.custom-file-label').forEach(label => {
-							label.textContent = 'Choose file';
-						});
+						if (!tbody) {
+							console.error('Table body not found');
+							return;
+						}
+						tbody.innerHTML = '';
 						
-						// Reload data
-						loadProposalData();
+						if (data.data && data.data.length > 0) {
+							console.log('Processing', data.data.length, 'reviews');
+							data.data.forEach(review => {
+								tbody.innerHTML += `
+									<tr>
+										<td>${review.topik_penelitian || '-'}</td>
+										<td>${review.taruna_nama || '-'}</td>
+										<td>${review.cycle_number || 1}</td>
+										<td>${review.keterangan || '-'}</td>
+										<td>
+											<div class="dropdown">
+												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												href="#" role="button" data-toggle="dropdown">
+													<i class="dw dw-more"></i>
+												</a>
+												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+													<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${review.id}, ${review.laporan70_id})">
+														<i class="dw dw-eye"></i> View Revisi
+													</a>
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
+														<i class="dw dw-download"></i> Download Revisi
+													</a>
+													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.laporan70_id}, ${review.cycle_number || 0})">
+														<i class="dw dw-upload"></i> Upload Review Baru
+													</a>
+													<a class="dropdown-item" href="#" onclick="updateLaporan70Status(${review.laporan70_id}, 'approved')">
+														<i class="dw dw-check"></i> Approve Laporan 70%
+													</a>
+													<a class="dropdown-item" href="#" onclick="updateLaporan70Status(${review.laporan70_id}, 'rejected')">
+														<i class="dw dw-cancel"></i> Reject Laporan 70%
+													</a>
+												</div>
+											</div>
+										</td>
+									</tr>
+								`;
+							});
+							console.log('Table rows added');
+						} else {
+							console.log('No review data found');
+							tbody.innerHTML = `
+								<tr>
+									<td colspan="5" class="text-center">Tidak ada data revisi</td>
+								</tr>
+							`;
+						}
 					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat menyimpan penilaian');
+						showAlert('Gagal memuat data revisi: ' + (data.message || 'Unknown error'), 'danger');
 					}
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
-				} finally {
-					submitButton.disabled = false;
-					submitButton.innerHTML = 'Submit';
+					showAlert('Gagal memuat data revisi', 'danger');
+				}
+			}
+
+			// Fungsi untuk membuka modal upload review pada tabel hasil revisi 
+			function openUploadReviewModal(topikPenelitian, tarunaId, laporan70Id, currentCycle) {
+				console.log('Opening modal with:', { topikPenelitian, tarunaId, laporan70Id, currentCycle });
+				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
+				document.getElementById('reviewTarunaId').value = tarunaId;
+				document.getElementById('reviewLaporan70Id').value = laporan70Id;
+				document.getElementById('reviewCycleNumber').value = currentCycle + 1;
+				$('#uploadReviewModal').modal('show');
+			}
+
+			// Fungsi untuk membuka modal upload review pada tabel list Laporan 70%
+			async function openUploadReviewModalLaporan70(topikPenelitian, laporan70Id, userId) {
+				console.log('Opening modal with:', { topikPenelitian, laporan70Id, userId });
+				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
+				document.getElementById('reviewLaporan70Id').value = laporan70Id;
+				document.getElementById('reviewUserId').value = userId;
+				document.getElementById('reviewCycleNumber').value = 1;
+				
+				try {
+					// Get token from localStorage or sessionStorage
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					if (!token) {
+						showAlert('Token tidak ditemukan. Silakan login ulang.', 'danger');
+						return;
+					}
+
+					// Get taruna_id from user_id
+					const response = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+						headers: {
+							'Authorization': `Bearer ${token}`,
+							'Content-Type': 'application/json'
+						}
+					});
+
+					const data = await response.json();
+					console.log('Taruna data:', data);
+
+					if (data.status === 'success' && data.data && data.data.length > 0) {
+						// Find taruna with matching user_id
+						const taruna = data.data.find(t => t.user_id === parseInt(userId));
+						if (taruna) {
+							document.getElementById('reviewTarunaId').value = taruna.id;
+							$('#uploadReviewModal').modal('show');
+						} else {
+							showAlert('Data taruna tidak ditemukan untuk user_id ini', 'danger');
+						}
+					} else {
+						showAlert('Data taruna tidak ditemukan', 'danger');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Gagal mengambil data taruna', 'danger');
+				}
+			}
+
+			// Function to update Laporan 70% status (approve/reject)
+			async function updateLaporan70Status(laporan70Id, status) {
+				try {
+					const response = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${laporan70Id}&status=${status}`, {
+						method: 'POST'
+					});
+					
+					const data = await response.json();
+					
+					if (data.status === 'success') {
+						showAlert(`Laporan 70% berhasil di-${status}`, 'success');
+						await loadLaporan70ReviewData();
+					} else {
+						showAlert(data.message || `Gagal mengubah status Laporan 70% ke ${status}`, 'danger');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Terjadi kesalahan saat mengubah status Laporan 70%', 'danger');
+				}
+			}
+
+			// Function to submit new review
+			async function submitReview() {
+				const form = document.getElementById('reviewForm');
+				const formData = new FormData(form);
+				
+				try {
+					const dosenId = localStorage.getItem('dosenID');
+					if (!dosenId) {
+						showAlert('Dosen ID tidak ditemukan. Silakan login ulang.', 'danger');
+						return;
+					}
+
+					// Debug log untuk melihat data yang akan dikirim
+					const submissionData = {
+						dosenId: dosenId,
+						laporan70Id: formData.get('laporan70_id'),
+						tarunaId: formData.get('taruna_id'),
+						topikPenelitian: formData.get('topik_penelitian'),
+						keterangan: formData.get('keterangan'),
+						fileName: formData.get('file').name
+					};
+					console.log('Form data before submission:', submissionData);
+
+					formData.append('dosen_id', dosenId);
+					
+					// Update status Laporan 70% menjadi "on review"
+					const statusResponse = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${formData.get('laporan70_id')}&status=on review`, {
+						method: 'POST'
+					});
+
+					if (!statusResponse.ok) {
+						throw new Error('Failed to update Laporan 70% status');
+					}
+
+					// Kirim request untuk upload review
+					const response = await fetch('http://104.43.89.154:8082/upload/reviewlaporan70/dosen', {
+						method: 'POST',
+						body: formData
+					});
+					
+					const data = await response.json();
+					console.log('Upload response:', data); // Debug log untuk response
+
+					if (data.status === 'success') {
+						showAlert('Review berhasil diunggah', 'success');
+						$('#uploadReviewModal').modal('hide');
+						form.reset();
+						await loadLaporan70Data();
+						await loadLaporan70ReviewData();
+					} else {
+						showAlert(data.message || 'Gagal mengunggah review', 'danger');
+					}
+				} catch (error) {
+					console.error('Error details:', error); // Debug log untuk error
+					showAlert('Terjadi kesalahan: ' + error.message, 'danger');
+				}
+			}
+
+			// Fungsi untuk melihat detail revisi
+			function viewRevisiDetail(revisiId, laporan70Id) {
+				window.location.href = `/dosen/viewlaporan70_revisi?id=${revisiId}&laporan70_id=${laporan70Id}`;
+			}
+
+			// Event delegation untuk tombol view Laporan 70%
+			document.querySelector('.data-table tbody').addEventListener('click', function(e) {
+				const btn = e.target.closest('.view-laporan70-btn');
+				if (btn) {
+					e.preventDefault();
+					const laporan70Id = btn.getAttribute('data-laporan70-id');
+					window.location.href = `/dosen/viewlaporan70?id=${laporan70Id}`;
 				}
 			});
 

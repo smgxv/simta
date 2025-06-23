@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>SIMTA - Profile</title>
+		<title>SIMTA - Pengujian Laporan 70%</title>
 
 		<!-- Site favicon -->
 		<link
@@ -42,17 +42,38 @@
 			type="text/css"
 			href="vendors/styles/icon-font.min.css"
 		/>
-		<link
-			rel="stylesheet"
-			type="text/css"
-			href="src/plugins/datatables/css/dataTables.bootstrap4.min.css"
-		/>
-		<link
-			rel="stylesheet"
-			type="text/css"
-			href="src/plugins/datatables/css/responsive.bootstrap4.min.css"
-		/>
 		<link rel="stylesheet" type="text/css" href="vendors/styles/style.css" />
+
+		<style>
+			.alert-wrapper {
+				position: fixed;
+				top: 20px;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 9999;
+				width: 80%;
+				max-width: 500px;
+			}
+		
+			.alert {
+				padding: 15px;
+				border-radius: 4px;
+				margin-bottom: 10px;
+				text-align: center;
+			}
+		
+			.alert-success {
+				background-color: #d4edda;
+				border-color: #c3e6cb;
+				color: #155724;
+			}
+		
+			.alert-danger {
+				background-color: #f8d7da;
+				border-color: #f5c2c7;
+				color: #842029;
+			}
+		</style>
 
 		<!-- Global site tag (gtag.js) - Google Analytics -->
 		<script
@@ -90,7 +111,6 @@
 	</head>
 
 	<body>
-
 		<div class="pre-loader">
 			<div class="pre-loader-box">
 				<div class="loader-logo">
@@ -183,6 +203,7 @@
 						</a>
 					</div>
 				</div>
+
 				<div class="user-notification">
 					<div class="dropdown">
 						<a
@@ -262,6 +283,7 @@
 						</div>
 					</div>
 				</div>
+
 				<div class="user-info-dropdown">
 					<div class="dropdown">
 						<a
@@ -273,17 +295,17 @@
 							<span class="user-icon">
 								<img src="vendors/images/photo1.jpg" alt="" />
 							</span>
-							<span class="user-name">{{.username}}</span>
+							<span class="user-name" id="username"></span>
 						</a>
 						<div
 							class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list"
 						>
-							<a class="dropdown-item" href="/admin/profile"
-								><i class="dw dw-user1"></i> Profile</a
-							>
-							<a class="dropdown-item" href="/logout"
-								><i class="dw dw-logout"></i> Log Out</a
-							>
+							<a class="dropdown-item" href="#" onclick="redirectToProfile(); return false;">
+								<i class="dw dw-user1"></i> Profile
+							</a>
+							<a class="dropdown-item" href="#" onclick="logout(); return false;">
+								<i class="dw dw-logout"></i> Log Out
+							</a>
 						</div>
 					</div>
 				</div>
@@ -536,188 +558,140 @@
 		<div class="mobile-menu-overlay"></div>
 
 		<div class="main-container">
+
+			<!-- Tambahkan div untuk alert di bawah ini -->
+			<div class="alert-wrapper" id="alertContainer" style="display: none;">
+				<div class="alert" id="alertMessage" role="alert">
+				</div>
+			</div>
+
 			<div class="pd-ltr-20 xs-pd-20-10">
 				<div class="min-height-200px">
+
 					<div class="page-header">
 						<div class="row">
-							<div class="col-md-12 col-sm-12">
+							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Profile</h4>
+									<h4>Penguji Laporan 70%</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
 										<li class="breadcrumb-item">
-											<a href="/admin/dashboard">Home</a>
+											<a href="/dosen/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											Profile
+											Penguji Laporan 70%
 										</li>
 									</ol>
 								</nav>
 							</div>
 						</div>
 					</div>
-					<div class="row">
-						<div class="col-12 mb-30">
-							<div class="pd-20 card-box height-100-p">
-								<div class="profile-photo">
-									<a
-										href="modal"
-										data-toggle="modal"
-										data-target="#modal"
-										class="edit-avatar"
-										><i class="fa fa-pencil"></i
-									></a>
-									<img
-										src="vendors/images/photo1.jpg"
-										alt=""
-										class="avatar-photo"
-									/>
-									<div
-										class="modal fade"
-										id="modal"
-										tabindex="-1"
-										role="dialog"
-										aria-labelledby="modalLabel"
-										aria-hidden="true"
-									>
-										<div
-											class="modal-dialog modal-dialog-centered"
-											role="document"
-										>
-											<div class="modal-content">
-												<div class="modal-body pd-5">
-													<div class="img-container">
-														<img
-															id="image"
-															src="vendors/images/photo2.jpg"
-															alt="Picture"
-														/>
-													</div>
-												</div>
-												<div class="modal-footer">
-													<input
-														type="submit"
-														value="Update"
-														class="btn btn-primary"
-													/>
-													<button
-														type="button"
-														class="btn btn-default"
-														data-dismiss="modal"
-													>
-														Close
-													</button>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
-								<h5 class="text-center h5 mb-0" id="fullName">Nama Panjang</h5>
-								<p class="text-center text-muted font-14">
-									<span id="role">Role</span>
-								</p>
-								<div class="profile-info">
-									<h5 class="mb-20 h5 text-blue">Contact Information</h5>
-									<ul>
-										<li>
-											<span>Username:</span>
-											<span id="username"></span>
-										</li>
-										<li>
-											<span>Email:</span>
-											<span id="email"></span>
-										</li>
-										<li>
-											<span>Jurusan:</span>
-											<span id="jurusan"></span>
-										</li>
-										<li>
-											<span>Kelas:</span>
-											<span id="kelas"></span>
-										</li>
-									</ul>
-								</div>
-							</div>
+
+					<!-- Tabel Laporan 70% -->
+					<div class="card-box mb-30">
+						<div class="pd-20">
+							<h4 class="text-blue h4">List Laporan 70%</h4>
+						</div>
+						<div class="pb-20">
+							<table class="data-table table stripe hover nowrap">
+								<thead>
+									<tr>
+										<th class="table-plus datatable-nosort">Topik</th>
+										<th class="table-plus datatable-nosort">Nama Taruna</th>
+										<th class="datatable-nosort">Action</th>
+									</tr>
+								</thead>
+								<tbody>
+									
+								</tbody>
+							</table>
 						</div>
 					</div>
+					<!-- Tabel Laporan 70% End -->
+
+					<!-- Form Penilaian Laporan 70% -->
+					<div class="pd-20 card-box mb-30">
+
+						<div class="clearfix">
+							<div class="pull-left">
+								<h4 class="text-blue h4">Penilaian Laporan 70%</h4>
+								<p class="mb-30">Masukan dokumen penilaian Laporan 70% !!</p>
+							</div>
+						</div>
+
+						<form id="laporan70Form" enctype="multipart/form-data">
+							<div class="form-group">
+								<input type="hidden" name="final_laporan70_id" id="finalLaporan70Id" />
+							</div>
+							<div class="form-group">
+								<label>Nama Taruna</label>
+								<select class="form-control" id="tarunaSelect" name="user_id">
+									<option value="" disabled selected>Pilih Nama Taruna</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>Topik Penelitian</label>
+								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
+							</div>
+							<div class="form-group">
+								<label>File Penilaian (PDF)</label>
+								<div class="custom-file">
+									<input type="file" class="custom-file-input" id="penilaianFile" name="penilaian_file" accept=".pdf" required>
+									<label class="custom-file-label" for="penilaianFile">Choose file</label>
+								</div>
+								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
+							</div>
+							<div class="form-group">
+								<label>File Berita Acara (PDF)</label>
+								<div class="custom-file">
+									<input type="file" class="custom-file-input" id="beritaAcaraFile" name="berita_acara_file" accept=".pdf" required>
+									<label class="custom-file-label" for="beritaAcaraFile">Choose file</label>
+								</div>
+								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
+							</div>
+							<button type="submit" class="btn btn-primary">Submit</button>
+						</form>
+					</div>
+					<!-- Form Laporan 70% End -->
+
 				</div>
+
 			</div>
+
+					
 		</div>
+
 
 		<!-- js -->
 		<script src="vendors/scripts/core.js"></script>
 		<script src="vendors/scripts/script.min.js"></script>
 		<script src="vendors/scripts/process.js"></script>
 		<script src="vendors/scripts/layout-settings.js"></script>
-		<script src="src/plugins/cropperjs/dist/cropper.js"></script>
-        <script src="src/plugins/bootstrap-select/bootstrap-select.min.js"></script>
+		<!-- Google Tag Manager (noscript) -->
+		<noscript
+			><iframe
+				src="https://www.googletagmanager.com/ns.html?id=GTM-NXZMQSS"
+				height="0"
+				width="0"
+				style="display: none; visibility: hidden"
+			></iframe
+		></noscript>
+		<!-- End Google Tag Manager (noscript) -->
+
+		</div>
 
 		<script>
-			document.addEventListener("DOMContentLoaded", function() {
-				// Ambil token dari storage
-				const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-				if (!token) {
-					window.location.replace("/loginusers");
-					return;
-				}
+			// Fungsi untuk redirect ke profile
+			function redirectToProfile() {
+				window.location.href = '/dosen/profile';
+			}
 
-				// Ambil ID dari parameter URL
-				const urlParams = new URLSearchParams(window.location.search);
-				const userId = urlParams.get('id');
-
-				// Jika ada ID, ambil data user spesifik
-				if (userId) {
-					fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
-						headers: {
-							"Authorization": `Bearer ${token}`
-						}
-					})
-					.then(response => {
-						if (!response.ok) {
-							throw new Error("Gagal mengambil data user");
-						}
-						return response.json();
-					})
-					.then(user => {
-						// Update informasi profile dengan pengecekan data kosong
-						const updateElement = (elementId, value) => {
-							const element = document.getElementById(elementId);
-							if (element) {
-								element.textContent = value || '-';
-							}
-						};
-
-						// Update setiap elemen dengan pengecekan data kosong
-						updateElement("fullName", user.nama_lengkap);
-						updateElement("role", user.role);
-						updateElement("username", user.username);
-						updateElement("email", user.email);
-						updateElement("jurusan", user.jurusan);
-						updateElement("kelas", user.kelas);
-						updateElement("roleInfo", user.role);
-					})
-					.catch(error => {
-						console.error("Error:", error);
-						// Hanya tampilkan alert jika error bukan karena data kosong
-						if (error.message !== "Gagal mengambil data user") {
-							alert("Terjadi kesalahan saat mengakses server");
-						}
-					});
-				} else {
-					// Jika tidak ada ID, tampilkan pesan atau redirect
-					console.log("ID user tidak ditemukan");
-					// Optional: redirect ke halaman lain
-					// window.location.replace("/admin/listuser");
-				}
-			});
-
+			// Fungsi Logout
 			async function logout() {
 				try {
-					// Ambil token dari localStorage dan sessionStorage
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					
-					// Kirim request logout ke server
 					const response = await fetch('http://104.43.89.154:8080/logout', {
 						method: 'POST',
 						headers: {
@@ -730,23 +704,54 @@
 					const data = await response.json();
 					
 					if (response.ok && data.status === 'success') {
-						// Hapus semua data storage
+						// Clear localStorage
 						localStorage.clear();
+						
+						// Clear sessionStorage
 						sessionStorage.clear();
 						
-						// Hapus semua cookies
+						// Clear all cookies for all possible paths
+						const paths = ['/', '/admin', '/dosen', '/admin/', '/dosen/'];
 						const cookies = document.cookie.split(';');
+						
 						for (let cookie of cookies) {
 							const eqPos = cookie.indexOf('=');
-							const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-							document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-							document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/admin';
+							const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+							
+							// Hapus cookie untuk setiap path
+							paths.forEach(path => {
+								document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path}`;
+							});
+						}
+						
+						// Clear cache if browser supports it
+						if (window.caches) {
+							caches.keys().then(names => {
+								names.forEach(name => {
+									caches.delete(name);
+								});
+							});
+						}
+
+						// Clear application cache
+						if (window.applicationCache) {
+							window.applicationCache.abort();
+						}
+
+						// Clear service workers if any
+						if (navigator.serviceWorker) {
+							navigator.serviceWorker.getRegistrations().then(registrations => {
+								registrations.forEach(registration => {
+									registration.unregister();
+								});
+							});
 						}
 						
 						console.log('Logout berhasil');
 						
 						// Force reload halaman login untuk membersihkan cache
-						window.location.replace('/loginusers');
+						window.location.href = '/loginusers';
+						window.location.reload(true);
 					} else {
 						throw new Error(data.message || 'Gagal logout');
 					}
@@ -756,23 +761,52 @@
 				}
 			}
 
-			// Tambahkan pengecekan autentikasi saat halaman dimuat
+			// Tambahkan pengecekan autentikasi dan mapping dosenID saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
-				// Cek token
+				console.log('DOM Content Loaded'); // Debug log
+				
+				// Cek token dan ambil dosenID
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 				if (!token) {
+					console.warn('No token found');
 					window.location.replace('/loginusers');
 					return;
 				}
 
-				// Validasi token dengan server
-				fetch('http://104.43.89.154:8080/admin/dashboard', {
+				const userId = localStorage.getItem('userId');
+				console.log('UserID:', userId); // Debug log
+
+				// Ambil data dosen dan set dosenID
+				fetch('http://104.43.89.154:8081/dosen', {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
-				}).catch(() => {
-					// Jika ada error, redirect ke login
-					window.location.replace('/loginusers');
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.status === 'success' && Array.isArray(data.data)) {
+						const dosen = data.data.find(d => String(d.user_id) === String(userId));
+						if (dosen) {
+							localStorage.setItem('dosenID', dosen.id);
+							localStorage.setItem('dosenName', dosen.nama_lengkap);
+							console.log('DosenID set:', dosen.id); // Debug log
+							
+							// Update nama dosen di header
+							const usernameElement = document.getElementById('username');
+							if (usernameElement) {
+								usernameElement.textContent = dosen.nama_lengkap;
+							}
+							
+							// Setelah dosenID tersedia, panggil fungsi-fungsi yang membutuhkannya
+							loadLaporan70Data();
+							loadTarunaDropdown();
+						} else {
+							console.warn('Dosen with user_id', userId, 'not found');
+						}
+					}
+				})
+				.catch(error => {
+					console.error('Failed to fetch dosen data:', error);
 				});
 			});
 
@@ -786,17 +820,253 @@
 					});
 				}
 			});
+
+			// Fungsi untuk menampilkan alert
+			function showAlert(message, type) {
+				const alertContainer = document.getElementById('alertContainer');
+				const alertMessage = document.getElementById('alertMessage');
+				
+				alertMessage.className = `alert alert-${type}`;
+				alertMessage.textContent = message;
+				alertContainer.style.display = 'block';
+				
+				// Sembunyikan alert setelah 5 detik
+				setTimeout(() => {
+					alertContainer.style.display = 'none';
+				}, 5000);
+			}
+
+			// Fungsi untuk memuat data laporan70
+			async function loadLaporan70Data() {
+				try {
+					const dosenId = localStorage.getItem('dosenID'); // Gunakan dosenID yang sudah di-map
+					if (!dosenId) {
+						console.error('Dosen ID not found');
+						return;
+					}
+
+					console.log('Fetching Laporan 70% data for dosen:', dosenId);
+					const response = await fetch(`http://104.43.89.154:8082/seminarlaporan70/dosen?dosen_id=${dosenId}`);
+					const data = await response.json();
+
+					const tbody = document.querySelector('.data-table tbody');
+					if (!tbody) {
+						console.error('Table body element not found');
+						return;
+					}
+
+					tbody.innerHTML = '';
+
+					if (data.status === 'success' && data.data && data.data.length > 0) {
+						data.data.forEach(laporan70 => {
+							tbody.innerHTML += `
+								<tr>
+									<td>${laporan70.topik_penelitian || '-'}</td>
+									<td>${laporan70.taruna_nama || '-'}</td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${laporan70.file_path}" target="_blank">
+													<i class="dw dw-eye"></i> View
+												</a>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${laporan70.file_path}" download>
+													<i class="dw dw-download"></i> Download
+												</a>
+											</div>
+										</div>
+									</td>
+								</tr>
+							`;
+						});
+					} else {
+						tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada data laporan 70%</td></tr>';
+					}
+				} catch (error) {
+					console.error('Error loading laporan 70% data:', error);
+					showAlert('Terjadi kesalahan saat memuat data Laporan 70%', 'danger');
+				}
+			}
+
+			// Fungsi untuk memuat data taruna
+			async function loadTarunaDropdown() {
+				try {
+					const dosenId = localStorage.getItem('dosenID');
+					if (!dosenId) {
+						console.error('Dosen ID tidak ditemukan');
+						return;
+					}
+
+					const response = await fetch(`http://104.43.89.154:8082/seminarlaporan70/taruna/list?dosen_id=${dosenId}`);
+					const data = await response.json();
+
+					const tarunaSelect = document.getElementById('tarunaSelect');
+					const finalLaporan70IdInput = document.getElementById('finalLaporan70Id');
+					const topikInput = document.querySelector('input[name="topik_penelitian"]');
+
+					if (!tarunaSelect || !finalLaporan70IdInput || !topikInput) {
+						console.error('Elemen yang dibutuhkan tidak ditemukan');
+						return;
+					}
+
+					tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Nama Taruna</option>';
+
+					const laporan70Map = new Map();
+					const topikMap = new Map();
+
+					if (data.status === 'success' && Array.isArray(data.data)) {
+						data.data.forEach(taruna => {
+							const option = document.createElement('option');
+							option.value = taruna.user_id;
+							option.textContent = taruna.nama_lengkap;
+							tarunaSelect.appendChild(option);
+
+							laporan70Map.set(String(taruna.user_id), taruna.final_laporan70_id);
+							topikMap.set(String(taruna.user_id), taruna.topik_penelitian);
+						});
+
+						tarunaSelect.addEventListener('change', function () {
+							const selectedId = this.value;
+
+							const finalLaporan70Id = laporan70Map.get(selectedId) || '';
+							const topik = topikMap.get(selectedId) || '';
+
+							finalLaporan70IdInput.value = finalLaporan70Id;
+							topikInput.value = topik;
+
+							console.log('final_laporan70_id:', finalLaporan70Id);
+						});
+					} else {
+						showAlert('Tidak ada taruna yang sedang diuji', 'warning');
+					}
+				} catch (error) {
+					console.error('Error loading taruna data:', error);
+					showAlert('Gagal memuat data taruna: ' + error.message, 'danger');
+				}
+			}
+
+			// Load data saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', () => {
+				loadLaporan70Data();
+				loadTarunaDropdown();
+			});
+
+			// Update nama file saat file penilaian dipilih
+			document.getElementById('penilaianFile').addEventListener('change', function(e) {
+				const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
+				this.nextElementSibling.textContent = fileName;
+			});
+
+			// Update nama file saat file berita acara dipilih
+			document.getElementById('beritaAcaraFile').addEventListener('change', function(e) {
+				const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
+				this.nextElementSibling.textContent = fileName;
+			});
+
+			// Handle form submission untuk penilaian laporan70
+			document.getElementById('laporan70Form').addEventListener('submit', async function(e) {
+				e.preventDefault();
+
+				// Validasi form
+				const tarunaSelect = document.getElementById('tarunaSelect');
+				const finalLaporan70Id = document.getElementById('finalLaporan70Id').value;
+				const penilaianFile = document.getElementById('penilaianFile').files[0];
+				const beritaAcaraFile = document.getElementById('beritaAcaraFile').files[0];
+				const dosenId = localStorage.getItem('dosenID');
+
+				// Validasi semua field yang diperlukan
+				if (!tarunaSelect.value || !finalLaporan70Id || !penilaianFile || !beritaAcaraFile || !dosenId) {
+					showAlert('Semua field harus diisi', 'warning');
+					return;
+				}
+
+				// Tampilkan loading state
+				const submitButton = this.querySelector('button[type="submit"]');
+				submitButton.disabled = true;
+				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+
+				try {
+					const formData = new FormData();
+					
+					// Tambahkan semua field yang diperlukan
+					formData.append('user_id', tarunaSelect.value);
+					formData.append('final_laporan70_id', finalLaporan70Id);
+					formData.append('dosen_id', dosenId);
+					formData.append('penilaian_file', penilaianFile);
+					formData.append('berita_acara_file', beritaAcaraFile);
+
+					// Log data yang akan dikirim
+					console.log('Sending data:');
+					for (let pair of formData.entries()) {
+						console.log(pair[0] + ':', pair[1]);
+					}
+
+					const response = await fetch('http://104.43.89.154:8082/penilaian/laporan70', {
+						method: 'POST',
+						body: formData
+					});
+
+					// Tambahkan penanganan response yang lebih detail
+					const contentType = response.headers.get('content-type');
+					let data;
+					
+					if (contentType && contentType.includes('application/json')) {
+						data = await response.json();
+					} else {
+						throw new Error('Response dari server bukan JSON');
+					}
+
+					if (response.ok && data.status === 'success') {
+						showAlert('Penilaian laporan70 berhasil disimpan', 'success');
+						
+						// Reset form
+						this.reset();
+						document.querySelectorAll('.custom-file-label').forEach(label => {
+							label.textContent = 'Choose file';
+						});
+						
+						// Reload data
+						loadLaporan70Data();
+					} else {
+						throw new Error(data.message || 'Terjadi kesalahan saat menyimpan penilaian');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
+				} finally {
+					submitButton.disabled = false;
+					submitButton.innerHTML = 'Submit';
+				}
+			});
+
 		</script>
-		
-		<!-- Google Tag Manager (noscript) -->	
-		<noscript
-			><iframe
-				src="https://www.googletagmanager.com/ns.html?id=GTM-NXZMQSS"
-				height="0"
-				width="0"
-				style="display: none; visibility: hidden"
-			></iframe
-		></noscript>
-		<!-- End Google Tag Manager (noscript) -->
+
+		<style>
+		.badge {
+			padding: 5px 10px;
+			border-radius: 4px;
+			font-weight: normal;
+		}
+		.badge-warning {
+			background-color: #ffc107;
+			color: #000;
+		}
+		.badge-success {
+			background-color: #28a745;
+			color: #fff;
+		}
+		.badge-danger {
+			background-color: #dc3545;
+			color: #fff;
+		}
+		.badge-secondary {
+			background-color: #bdbdbd;
+			color: #fff;
+		}
+		</style>
+
 	</body>
 </html>
