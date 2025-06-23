@@ -1310,8 +1310,8 @@
 				isiJurusanDanKelasDariTaruna();
 			});
 
-			// Update nama file saat file dipilih untuk Final Proposal
-			document.getElementById('finalProposalFile').addEventListener('change', function(e) {
+			// Update nama file saat file dipilih untuk Final Laporan 70%
+			document.getElementById('finalLaporan70File').addEventListener('change', function(e) {
 				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
 				var label = this.nextElementSibling;
 				label.textContent = fileName;
@@ -1325,8 +1325,8 @@
 				}
 			});
 
-			// Handle form submission untuk Final Proposal
-			document.getElementById('finalProposalForm').addEventListener('submit', async function(e) {
+			// Handle form submission untuk Final Laporan 70%
+			document.getElementById('finalLaporan70Form').addEventListener('submit', async function(e) {
 				e.preventDefault();
 				
 				// Tampilkan loading state
@@ -1380,7 +1380,7 @@
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
 					
-					const response = await fetch('http://104.43.89.154:8082/finalproposal/upload', {
+					const response = await fetch('http://104.43.89.154:8082/finallaporan70/upload', {
 						method: 'POST',
 						body: formData
 					});
@@ -1389,20 +1389,20 @@
 					
 					if (response.ok && data.status === 'success') {
 						// Tampilkan pesan sukses
-						showAlert('Final Proposal berhasil diunggah', 'success');
+						showAlert('Final Laporan 70% berhasil diunggah', 'success');
 						
 						// Reset form
 						this.reset();
-						document.querySelector('#finalProposalFile').nextElementSibling.textContent = 'Choose file';
+						document.querySelector('#finalLaporan70File').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('finalSelectedFileName').style.display = 'none';
 						
 						// Refresh data
-						loadFinalProposalData();
+						loadFinalLaporan70Data();
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
 				} catch (error) {
-					console.error('Error saat upload final Proposal:', error);
+					console.error('Error saat upload final Laporan 70%:', error);
 					let errorMessage = 'Terjadi kesalahan pada server';
 					
 					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
@@ -1419,12 +1419,12 @@
 				} finally {
 					// Reset button state
 					submitButton.disabled = false;
-					submitButton.innerHTML = 'Upload Final Proposal';
+					submitButton.innerHTML = 'Upload Final Laporan 70%';
 				}
 			});
 
-			// Update fungsi loadFinalProposalData
-			async function loadFinalProposalData() {
+			// Update fungsi loadFinalLaporan70Data
+			async function loadFinalLaporan70Data() {
 				const userId = localStorage.getItem('userId');
 				if (!userId) {
 					console.error('User ID not found in localStorage');
@@ -1434,17 +1434,17 @@
 				
 				try {
 					console.log('Fetching Final Proposal data for user:', userId);
-					const response = await fetch(`http://104.43.89.154:8082/finalproposal/list?user_id=${userId}`);
+					const response = await fetch(`http://104.43.89.154:8082/finallaporan70/list?user_id=${userId}`);
 					
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
 					
 					const data = await response.json();
-					console.log('Received Final Proposal data:', data);
+					console.log('Received Final Laporan 70% data:', data);
 					
 					if (data.status === 'success') {
-						const tbody = document.querySelector('#finalProposalTable tbody');
+						const tbody = document.querySelector('#finalLaporan70Table tbody');
 						if (!tbody) {
 							console.error('Table body element not found');
 							return;
@@ -1453,20 +1453,20 @@
 						tbody.innerHTML = '';
 						
 						if (data.data && data.data.length > 0) {
-							data.data.forEach(finalProposal => {
+							data.data.forEach(finalLaporan70 => {
 								const statusClass = {
 									'pending': 'badge badge-warning',
 									'approved': 'badge badge-success',
 									'rejected': 'badge badge-danger',
 									'on review': 'badge badge-info'
-								}[finalProposal.status] || 'badge badge-secondary';
+								}[finalLaporan70.status] || 'badge badge-secondary';
 
 								tbody.innerHTML += `
 									<tr>
-										<td>${finalProposal.topik_penelitian || '-'}</td>
-										<td>${finalProposal.jurusan || '-'}</td>
-										<td>${finalProposal.kelas || '-'}</td>
-										<td><span class="${statusClass}">${finalProposal.status || 'pending'}</span></td>
+										<td>${finalLaporan70.topik_penelitian || '-'}</td>
+										<td>${finalLaporan70.jurusan || '-'}</td>
+										<td>${finalLaporan70.kelas || '-'}</td>
+										<td><span class="${statusClass}">${finalLaporan70.status || 'pending'}</span></td>
 										<td>
 											<div class="dropdown">
 												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
@@ -1474,7 +1474,7 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${finalProposal.file_path}" download>
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${finalLaporan70.file_path}" download>
 														<i class="dw dw-download"></i> Download
 													</a>
 												</div>
@@ -1486,23 +1486,23 @@
 						} else {
 							tbody.innerHTML = `
 								<tr>
-									<td colspan="5" class="text-center">Belum ada Final Proposal yang diupload</td>
+									<td colspan="5" class="text-center">Belum ada Final Laporan 70% yang diupload</td>
 								</tr>
 							`;
 						}
 					} else {
-						console.error('Failed to load Final Proposal data:', data.message);
-						showAlert('Gagal memuat data Final Proposal: ' + (data.message || 'Unknown error'), 'danger');
+						console.error('Failed to load Final Laporan 70% data:', data.message);
+						showAlert('Gagal memuat data Final Laporan 70%: ' + (data.message || 'Unknown error'), 'danger');
 					}
 				} catch (error) {
-					console.error('Error loading Final Proposal data:', error);
-					showAlert('Terjadi kesalahan saat memuat data Final Proposal: ' + error.message, 'danger');
+					console.error('Error loading Final Laporan 70% data:', error);
+					showAlert('Terjadi kesalahan saat memuat data Final Laporan 70%: ' + error.message, 'danger');
 				}
 			}
 
-			// Load Final Proposal data saat halaman dimuat
+			// Load Final Laporan 70% data saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
-				loadFinalProposalData();
+				loadFinalLaporan70Data();
 			});
 
 			// Call getUserData when page loads

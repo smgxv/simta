@@ -78,7 +78,7 @@ func UpdateLaporan70StatusHandler(w http.ResponseWriter, r *http.Request) {
 	if status == "approved" {
 		msg = "Laporan 70% berhasil di-approve"
 	} else if status == "rejected" {
-		msg = "Proposal berhasil di-reject"
+		msg = "Laporan 70% berhasil di-reject"
 	} else if status == "on review" {
 		msg = "Laporan 70% berhasil diubah ke status review"
 	}
@@ -452,7 +452,7 @@ func UploadDosenReviewLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Review proposal dosen berhasil diunggah dan status diperbarui",
+		"message": "Review laporan 70% dosen berhasil diunggah dan status diperbarui",
 		"data": map[string]interface{}{
 			"file_path": filePath,
 		},
@@ -499,7 +499,7 @@ func GetReviewLaporan70DosenHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk upload revisi proposal oleh taruna ke table review_proposal_taruna
+// Handler untuk upload revisi laporan 70% oleh taruna ke table review_laporan70_taruna
 func UploadTarunaRevisiLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
@@ -562,7 +562,7 @@ func UploadTarunaRevisiLaporan70Handler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Proposal not found for the given taruna and topic",
+			"message": "Laporan 70% not found for the given taruna and topic",
 		})
 		return
 	}

@@ -89,7 +89,6 @@ func main() {
 
 	// Detail Berkas Seminar Proposal routes
 	r.HandleFunc("/seminarproposal/detail/{id}", handlers.GetFinalProposalDetailHandler).Methods("GET", "OPTIONS")
-
 	r.HandleFunc("/catatanperbaikan/taruna", handlers.GetCatatanPerbaikanTarunaHandler).Methods("GET", "OPTIONS")
 
 	// Laporan 70%
@@ -109,6 +108,14 @@ func main() {
 	r.HandleFunc("/reviewlaporan70/taruna/list", handlers.GetRevisiLaporan70TarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewlaporan70/dosen/list", handlers.GetReviewLaporan70DosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewlaporan70/dosen/detail", handlers.GetReviewLaporan70DosenDetailHandler).Methods("GET", "OPTIONS")
+
+	// Final Proposal routes
+	r.HandleFunc("/finallaporan70/upload", handlers.UploadFinalLaporan70Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/finallaporan70/list", handlers.GetFinalLaporan70Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finallaporan70/all", handlers.GetAllFinalLaporan70WithTarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finallaporan70/status", handlers.UpdateFinalLaporan70StatusHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/finallaporan70/download/{id}", handlers.DownloadFinalLaporan70Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finallaporan70/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{

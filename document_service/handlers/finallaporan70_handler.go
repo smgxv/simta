@@ -18,7 +18,7 @@ import (
 )
 
 // Handler untuk mengupload final proposal
-func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
+func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -65,7 +65,7 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	// Create upload directory if not exists
-	uploadDir := "uploads/finalproposal"
+	uploadDir := "uploads/finallaporan70"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -75,7 +75,7 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate unique filename
-	filename := fmt.Sprintf("FINAL_PROPOSAL_%s_%s_%s",
+	filename := fmt.Sprintf("FINAL_LAPORAN70_%s_%s_%s",
 		userID,
 		time.Now().Format("20060102150405"),
 		handler.Filename)
@@ -115,8 +115,8 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// Create Final Proposal record
-	finalProposalModel := models.NewFinalProposalModel(db)
-	finalProposal := &entities.FinalProposal{
+	finalLaporan70Model := models.NewFinalLaporan70Model(db)
+	finalLaporan70 := &entities.FinalLaporan70{
 		UserID:          utils.ParseInt(userID),
 		NamaLengkap:     namaLengkap,
 		Jurusan:         jurusan,
@@ -126,7 +126,7 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 		Keterangan:      keterangan,
 	}
 
-	if err := finalProposalModel.Create(finalProposal); err != nil {
+	if err := finalLaporan70Model.Create(finalLaporan70); err != nil {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -137,16 +137,16 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Final Proposal berhasil diunggah",
+		"message": "Final Laporan 70% berhasil diunggah",
 		"data": map[string]interface{}{
-			"id":        finalProposal.ID,
+			"id":        finalLaporan70.ID,
 			"file_path": filePath,
 		},
 	})
 }
 
 // Handler untuk mengambil daftar final proposal berdasarkan user_id
-func GetFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
+func GetFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -170,8 +170,8 @@ func GetFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	finalProposalModel := models.NewFinalProposalModel(db)
-	finalProposals, err := finalProposalModel.GetByUserID(userID)
+	finalLaporan70Model := models.NewFinalLaporan70Model(db)
+	finalLaporan70s, err := finalLaporan70Model.GetByUserID(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -179,12 +179,12 @@ func GetFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   finalProposals,
+		"data":   finalLaporan70s,
 	})
 }
 
 // Handler untuk mengambil data gabungan taruna dan final proposal
-func GetAllFinalProposalWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
+func GetAllFinalLaporan70WithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -211,9 +211,9 @@ func GetAllFinalProposalWithTarunaHandler(w http.ResponseWriter, r *http.Request
 			t.kelas,
 			COALESCE(f.topik_penelitian, '') as topik_penelitian,
 			COALESCE(f.status, '') as status,
-			COALESCE(f.id, 0) as final_proposal_id
+			COALESCE(f.id, 0) as final_laporan70_id
 		FROM taruna t
-		LEFT JOIN final_proposal f ON t.user_id = f.user_id
+		LEFT JOIN final_laporan70 f ON t.user_id = f.user_id
 		ORDER BY t.nama_lengkap ASC`
 
 	rows, err := db.Query(query)
@@ -223,19 +223,19 @@ func GetAllFinalProposalWithTarunaHandler(w http.ResponseWriter, r *http.Request
 	}
 	defer rows.Close()
 
-	type TarunaProposal struct {
-		TarunaID        int    `json:"taruna_id"`
-		NamaLengkap     string `json:"nama_lengkap"`
-		Jurusan         string `json:"jurusan"`
-		Kelas           string `json:"kelas"`
-		TopikPenelitian string `json:"topik_penelitian"`
-		Status          string `json:"status"`
-		FinalProposalID int    `json:"final_proposal_id"`
+	type TarunaLaporan70 struct {
+		TarunaID         int    `json:"taruna_id"`
+		NamaLengkap      string `json:"nama_lengkap"`
+		Jurusan          string `json:"jurusan"`
+		Kelas            string `json:"kelas"`
+		TopikPenelitian  string `json:"topik_penelitian"`
+		Status           string `json:"status"`
+		FinalLaporan70ID int    `json:"final_laporan70_id"`
 	}
 
-	var results []TarunaProposal
+	var results []TarunaLaporan70
 	for rows.Next() {
-		var data TarunaProposal
+		var data TarunaLaporan70
 		err := rows.Scan(
 			&data.TarunaID,
 			&data.NamaLengkap,
@@ -243,7 +243,7 @@ func GetAllFinalProposalWithTarunaHandler(w http.ResponseWriter, r *http.Request
 			&data.Kelas,
 			&data.TopikPenelitian,
 			&data.Status,
-			&data.FinalProposalID,
+			&data.FinalLaporan70ID,
 		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -259,7 +259,7 @@ func GetAllFinalProposalWithTarunaHandler(w http.ResponseWriter, r *http.Request
 }
 
 // Handler untuk update status Final Proposal
-func UpdateFinalProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
+func UpdateFinalLaporan70StatusHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -287,7 +287,7 @@ func UpdateFinalProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	query := "UPDATE final_proposal SET status = ? WHERE id = ?"
+	query := "UPDATE final_laporan70 SET status = ? WHERE id = ?"
 	_, err = db.Exec(query, requestData.Status, requestData.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -301,7 +301,7 @@ func UpdateFinalProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler untuk download file Final Proposal
-func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
+func DownloadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -312,7 +312,7 @@ func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	proposalID := vars["id"]
+	laporan70ID := vars["id"]
 
 	db, err := config.GetDB()
 	if err != nil {
@@ -322,8 +322,8 @@ func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	var filePath string
-	query := "SELECT file_path FROM final_proposal WHERE id = ?"
-	err = db.QueryRow(query, proposalID).Scan(&filePath)
+	query := "SELECT file_path FROM final_laporan70 WHERE id = ?"
+	err = db.QueryRow(query, laporan70ID).Scan(&filePath)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "File not found", http.StatusNotFound)
