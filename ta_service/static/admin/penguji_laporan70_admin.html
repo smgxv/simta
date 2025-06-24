@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>SIMTA - Proposal</title>
+		<title>SIMTA - Penguji Laporan 70%</title>
 
 		<!-- Site favicon -->
 		<link
@@ -75,6 +75,10 @@
 				background-color: #f8d7da;
 				border-color: #f5c2c7;
 				color: #842029;
+			}
+
+			.table-responsive {
+				overflow-x: auto;
 			}
 		</style>
 
@@ -597,7 +601,7 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Proposal</h4>
+									<h4>Penguji Laporan 70%</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
@@ -605,80 +609,81 @@
 											<a href="/admin/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											Proposal
+											Penguji Laporan 70%
 										</li>
 									</ol>
 								</nav>
 							</div>
-							<div class="col-md-6 col-sm-12">
-								<div class="d-flex justify-content-end align-items-center">
-									<div class="form-group mb-0 mr-2">
-										<select class="form-control" id="jurusanFilter" onchange="applyFilters()">
-											<option value="">Semua Jurusan</option>
-										</select>
-									</div>
-									<div class="form-group mb-0">
-										<select class="form-control" id="kelasFilter" onchange="applyFilters()">
-											<option value="">Semua Kelas</option>
-										</select>
-									</div>
-								</div>
-							</div>
+							
 						</div>
 					</div>
 
-					<!-- List Proposal Taruna -->
+					<!-- Simple Datatable start -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">List Proposal Taruna</h4>
+							<h4 class="text-blue h4">List Taruna</h4>
 						</div>
-						<div class="pb-20">
+
+						<!-- Filter hanya jurusan -->
+						<div class="col-md-3 col-sm-12 mb-3">
+							<select class="form-control" id="jurusanFilter" onchange="applyFilters()">
+								<option value="">Semua Jurusan</option>
+							</select>
+						</div>
+
+						<!-- Wrapper scroll horizontal -->
+						<div class="table-responsive">
 							<table class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
 										<th class="table-plus datatable-nosort">Nama Lengkap</th>
 										<th class="table-plus datatable-nosort">Jurusan</th>
 										<th class="table-plus datatable-nosort">Kelas</th>
-										<th class="table-plus datatable-nosort">Topik</th>
-										<th class="table-plus datatable-nosort">Status</th>
+										<th class="table-plus datatable-nosort">Penguji 1</th>
+										<th class="table-plus datatable-nosort">Penguji 2</th>
 										<th class="datatable-nosort">Action</th>
 									</tr>
 								</thead>
 								<tbody>
-									
+									<!-- Data akan dimuat di sini lewat JavaScript -->
 								</tbody>
 							</table>
 						</div>
 					</div>
-					<!-- End List Proposal Taruna -->
+					<!-- Simple Datatable End -->
 
-					
-					<!-- Monitoring Penilaian Proposal -->
-					<div class="card-box mb-30">
-						<div class="pd-20">
-							<h4 class="text-blue h4">Monitoring Penilaian Proposal</h4>
-							<p class="mb-0">Daftar Penilaian Proposal untuk semua taruna</p>
-						</div>
-						<div class="pb-20">
-							<table id="monitoringTable"  class="data-table table stripe hover nowrap">
-								<thead>
-									<tr>
-										<th>Nama Taruna</th>
-										<th>Jurusan</th>
-										<th>Topik Penelitian</th>
-										<th>Ketua Penguji</th>
-										<th>Penguji 1</th>
-										<th>Penguji 2</th>
-										<th>Status Kelengkapan</th>
-										<th>Action</th>
-									</tr>
-								</thead>
-								<tbody>
-								</tbody>
-							</table>
+					<!-- Modal Pilih Penguji -->
+					<div class="modal fade" id="modalPilihPenguji" tabindex="-1" role="dialog" aria-labelledby="modalPilihPengujiLabel" aria-hidden="true">
+						<div class="modal-dialog" role="document">
+							<div class="modal-content">
+								<div class="modal-header">
+									<h5 class="modal-title" id="modalPilihPengujiLabel">Pilih Penguji</h5>
+									<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+										<span aria-hidden="true">&times;</span>
+									</button>
+								</div>
+								<div class="modal-body">
+									<input type="hidden" id="currentTarunaId">
+									<div class="form-group">
+										<label for="penguji">Penguji 1</label>
+										<select class="form-control" id="penguji1">
+											<option value="">Pilih Penguji 1</option>
+										</select>
+									</div>
+									<div class="form-group">
+										<label for="penguji">Penguji 2</label>
+										<select class="form-control" id="penguji2">
+											<option value="">Pilih Penguji 2</option>
+										</select>
+									</div>
+								</div>
+								<div class="modal-footer">
+									<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+									<button type="button" class="btn btn-primary" onclick="savePenguji()">Simpan</button>
+								</div>
+							</div>
 						</div>
 					</div>
-					<!-- End Monitoring Penilaian Proposal -->
 
 				</div>
 
@@ -822,7 +827,7 @@
 				});
 
 				// Validasi token dengan server
-				fetch('http://104.43.89.154:8080/taruna/dashboard', { // Ubah ke endpoint taruna
+				fetch('http://104.43.89.154:8080/admin/dashboard', {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -842,6 +847,11 @@
 				}
 			});
 
+			// Load data taruna
+			document.addEventListener('DOMContentLoaded', function () {
+				loadTarunaData();
+			});
+
 			// Fungsi untuk menampilkan alert
 			function showAlert(message, type) {
 				const alertContainer = document.getElementById('alertContainer');
@@ -857,87 +867,73 @@
 				}, 5000);
 			}
 
-			let allProposalData = []; // Menyimpan semua data Proposal
+			let allTarunaData = []; // Menyimpan semua data Taruna
 			let uniqueJurusan = new Set();
-			let uniqueKelas = new Set();
 
-			// Fungsi untuk memperbarui opsi filter
+			// Fungsi untuk memperbarui opsi filter jurusan
 			function updateFilterOptions() {
 				const jurusanFilter = document.getElementById('jurusanFilter');
-				const kelasFilter = document.getElementById('kelasFilter');
-
-				// Clear existing options except the first one
 				jurusanFilter.innerHTML = '<option value="">Semua Jurusan</option>';
-				kelasFilter.innerHTML = '<option value="">Semua Kelas</option>';
-
-				// Add unique jurusan options
 				[...uniqueJurusan].sort().forEach(jurusan => {
 					const option = document.createElement('option');
 					option.value = jurusan;
 					option.textContent = jurusan;
 					jurusanFilter.appendChild(option);
 				});
-
-				// Add unique kelas options
-				[...uniqueKelas].sort().forEach(kelas => {
-					const option = document.createElement('option');
-					option.value = kelas;
-					option.textContent = kelas;
-					kelasFilter.appendChild(option);
-				});
 			}
 
-			// Fungsi untuk memuat data Proposal
-			async function loadProposalData() {
+			// Fungsi untuk memuat data Taruna
+			async function loadTarunaData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finalproposal/all', {
+					const response = await fetch('http://104.43.89.154:8081/taruna/pengujiLaporan70', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
 					});
 
 					if (!response.ok) {
-						throw new Error('Failed to fetch Proposal data');
+						throw new Error('Failed to fetch Taruna data');
 					}
 
 					const result = await response.json();
+
 					if (result.status !== 'success') {
 						throw new Error(result.message || 'Failed to load data');
 					}
 
-					allProposalData = result.data;
+					allTarunaData = Array.isArray(result.data) ? result.data : [];
 
-					// Collect unique values
-					allProposalData.forEach(item => {
+					allTarunaData.forEach(item => {
 						if (item.jurusan) uniqueJurusan.add(item.jurusan);
-						if (item.kelas) uniqueKelas.add(item.kelas);
 					});
 
-					// Update filter options
 					updateFilterOptions();
-					
-					// Display data
 					displayFilteredData();
 				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to load Proposal data', 'danger');
+					console.error('Error in loadTarunaData:', error);
+					showAlert('Failed to load Taruna data: ' + error.message, 'danger');
 				}
 			}
 
 			// Fungsi untuk menampilkan data yang sudah difilter
 			function displayFilteredData() {
 				const jurusanFilter = document.getElementById('jurusanFilter').value;
-				const kelasFilter = document.getElementById('kelasFilter').value;
-
-				const filteredData = allProposalData.filter(item => {
-					const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
-					const matchKelas = !kelasFilter || item.kelas === kelasFilter;
-					return matchJurusan && matchKelas;
+				const filteredData = allTarunaData.filter(item => {
+					return !jurusanFilter || item.jurusan === jurusanFilter;
 				});
 
 				const tableBody = document.querySelector('.data-table tbody');
 				tableBody.innerHTML = '';
+
+				if (filteredData.length === 0) {
+					tableBody.innerHTML = `
+						<tr>
+							<td colspan="6" class="text-center">Tidak ada data yang tersedia</td>
+						</tr>
+					`;
+					return;
+				}
 
 				filteredData.forEach(item => {
 					const row = document.createElement('tr');
@@ -945,34 +941,13 @@
 						<td>${item.nama_lengkap || '-'}</td>
 						<td>${item.jurusan || '-'}</td>
 						<td>${item.kelas || '-'}</td>
-						<td>${item.topik_penelitian || '-'}</td>
+						<td>${item.ketua_penguji || '-'}</td>
+						<td>${item.penguji_1 || '-'}</td>
+						<td>${item.penguji_2 || '-'}</td>
 						<td>
-							${item.status ? 
-								`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
-								: '-'}
-						</td>
-						<td>
-							${item.final_proposal_id > 0 ? 
-								`<div class="dropdown">
-									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-										<i class="dw dw-more"></i>
-									</a>
-									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="viewProposal(${item.final_proposal_id})">
-											<i class="dw dw-eye"></i> View
-										</a>
-										<a class="dropdown-item" href="#" onclick="downloadProposal(${item.final_proposal_id})">
-											<i class="dw dw-download"></i> Download
-										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_proposal_id}, 'approved')">
-											<i class="dw dw-check"></i> Accept
-										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_proposal_id}, 'rejected')">
-											<i class="dw dw-delete-3"></i> Reject
-										</a>
-									</div>
-								</div>`
-								: '-'}
+							<button class="btn btn-sm btn-primary" onclick="showPengujiModal(${item.taruna_id})">
+								Pilih Dosen
+							</button>
 						</td>
 					`;
 					tableBody.appendChild(row);
@@ -984,161 +959,145 @@
 				displayFilteredData();
 			}
 
-			// Fungsi untuk menentukan class badge berdasarkan status
-			function getStatusBadgeClass(status) {
-				switch (status?.toLowerCase()) {
-					case 'approved':
-						return 'success';
-					case 'rejected':
-						return 'danger';
-					case 'revision':
-						return 'warning';
-					default:
-						return 'warning';
-				}
-			}
-
-			// Fungsi untuk melihat detail Proposal
-			function viewProposal(proposalId) {
-				window.location.href = `/admin/viewproposal?id=${proposalId}`;
-			}
-
 			// Fungsi untuk redirect ke profile
 			function redirectToProfile() {
 				window.location.href = '/admin/profile';
 			}
 
-			// Fungsi untuk mengupdate status Proposal
-			async function updateStatus(id, status) {
+			// Fungsi untuk memuat data dosen
+			async function loadDosenData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finalproposal/status', {
+					const response = await fetch('http://104.43.89.154:8081/dosen', {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+
+					if (!response.ok) throw new Error('Gagal mengambil data dosen');
+
+					const result = await response.json();
+					if (result.status !== 'success' || !Array.isArray(result.data)) {
+						throw new Error('Response format salah');
+					}
+
+					// ID select element yang valid
+					const selectIDs = ['ketuaPenguji', 'penguji1', 'penguji2'];
+					selectIDs.forEach(id => {
+						const select = document.getElementById(id);
+						let label = 'Penguji';
+						if (id === 'ketuaPenguji') label = 'Ketua Penguji';
+						else if (id === 'penguji1') label = 'Penguji 1';
+						else if (id === 'penguji2') label = 'Penguji 2';
+
+						select.innerHTML = `<option value="">Pilih ${label}</option>`;
+						result.data.forEach(dosen => {
+							const option = document.createElement('option');
+							option.value = dosen.id;
+							option.textContent = dosen.nama_lengkap;
+							select.appendChild(option);
+						});
+					});
+
+				} catch (error) {
+					console.error('Error loadDosenData:', error);
+					showAlert('Gagal memuat data dosen: ' + error.message, 'danger');
+				}
+			}
+
+			// Fungsi untuk menampilkan modal pilih penguji
+			function showPengujiModal(tarunaId, currentPenguji = {}) {
+				document.getElementById('currentTarunaId').value = tarunaId;
+
+				loadDosenData().then(() => {
+					// Isi nilai default jika ada data sebelumnya
+					if (currentPenguji.ketua_id) {
+						document.getElementById('ketuaPenguji').value = currentPenguji.ketua_id;
+					}
+					if (currentPenguji.penguji_1_id) {
+						document.getElementById('penguji1').value = currentPenguji.penguji_1_id;
+					}
+					if (currentPenguji.penguji_2_id) {
+						document.getElementById('penguji2').value = currentPenguji.penguji_2_id;
+					}
+					$('#modalPilihPenguji').modal('show');
+				});
+			}
+
+			// Fungsi untuk mengambil ID final_proposal berdasarkan tarunaId
+			async function getFinalProposalIdByTarunaId(tarunaId) {
+				try {
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					const response = await fetch(`http://104.43.89.154:8081/final_proposal?taruna_id=${tarunaId}`, {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+
+					const data = await response.json();
+					if (data.status === 'success' && data.data && data.data.id) {
+						return data.data.id;
+					} else {
+						console.warn('final_proposal tidak ditemukan untuk taruna_id:', tarunaId);
+						return null;
+					}
+				} catch (error) {
+					console.error('Error fetching final proposal ID:', error);
+					return null;
+				}
+			}
+
+			// Fungsi untuk menyimpan penguji
+			async function savePenguji() {
+				try {
+					const tarunaId = parseInt(document.getElementById('currentTarunaId').value);
+					const ketuaPengujiId = parseInt(document.getElementById('ketuaPenguji').value);
+					const penguji1Id = parseInt(document.getElementById('penguji1').value);
+					const penguji2Id = parseInt(document.getElementById('penguji2').value);
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+					if (!tarunaId || !ketuaPengujiId || !penguji1Id || !penguji2Id) {
+						showAlert('Semua penguji harus dipilih', 'warning');
+						return;
+					}
+
+					// Opsional: fetch final_proposal_id berdasarkan tarunaId dari backend
+					const finalProposalId = await getFinalProposalIdByTarunaId(tarunaId);
+					if (!finalProposalId) {
+						showAlert('Taruna ini belum mengumpulkan proposal', 'danger');
+						return;
+					}
+
+					const response = await fetch('http://104.43.89.154:8081/penguji_proposal', {
 						method: 'POST',
 						headers: {
 							'Authorization': `Bearer ${token}`,
 							'Content-Type': 'application/json'
 						},
 						body: JSON.stringify({
-							id: id,
-							status: status
+							taruna_id: tarunaId,
+							final_proposal_id: finalProposalId,
+							ketua_id: ketuaPengujiId,
+							penguji_1_id: penguji1Id,
+							penguji_2_id: penguji2Id
 						})
 					});
 
-					if (!response.ok) {
-						throw new Error('Failed to update status');
-					}
-
 					const result = await response.json();
-					if (result.status === 'success') {
-						showAlert(`Proposal berhasil di${status}`, 'success');
-						loadProposalData(); // Reload data
-					} else {
-						throw new Error(result.message || 'Failed to update status');
+
+					if (!response.ok || result.status !== 'success') {
+						throw new Error(result.message || 'Gagal menyimpan penguji');
 					}
+
+					showAlert('Penguji berhasil disimpan', 'success');
+					$('#modalPilihPenguji').modal('hide');
+					loadTarunaData();
+
 				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to update status', 'danger');
+					console.error('Error saving penguji:', error);
+					showAlert('Gagal menyimpan penguji: ' + error.message, 'danger');
 				}
 			}
-
-			// Fungsi untuk download Proposal
-			function downloadProposal(id) {
-				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				window.open(`http://104.43.89.154:8082/finalproposal/download/${id}?token=${token}`, '_blank');
-			}
-
-			// Load data Proposal saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', function() {
-				loadProposalData();
-
-				// Set username dari localStorage
-				const username = document.getElementById('username');
-				if (username) {
-					username.textContent = localStorage.getItem('username') || 'Admin';
-				}
-			});
-
-			// Fungsi untuk memuat data monitoring penilaian proposal
-			async function loadMonitoringData() {
-				try {
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/monitoring/penilaian_proposal', {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
-					}
-					const data = await response.json();
-					console.log('Monitoring data response:', data); // Debug log
-
-					const tbody = document.querySelector('#monitoringTable tbody');
-					tbody.innerHTML = '';
-
-					if (data.status === 'success' && Array.isArray(data.data)) {
-						if (data.data.length > 0) {
-							data.data.forEach(item => {
-								const statusClass = item.status_kelengkapan === 'Lengkap' ? 'badge-success' : 'badge-warning';
-
-								tbody.innerHTML += `
-									<tr>
-										<td>${item.nama_taruna || '-'}</td>
-										<td>${item.jurusan || '-'}</td>
-										<td>${item.topik_penelitian || '-'}</td>
-										<td>${item.ketua_penguji || '-'}</td>
-										<td>${item.penguji1 || '-'}</td>
-										<td>${item.penguji2 || '-'}</td>
-										<td>
-											<span class="badge ${statusClass}">
-												${item.status_kelengkapan || 'Belum Lengkap'}
-											</span>
-										</td>
-										<td>
-											<div class="dropdown">
-												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-													href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
-												</a>
-												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.final_proposal_id}); return false;">
-														<i class="dw dw-eye"></i> View Details
-													</a>
-												</div>
-											</div>
-										</td>
-									</tr>
-								`;
-							});
-						} else {
-							tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada data monitoring</td></tr>';
-						}
-					} else {
-						throw new Error(data.message || 'Invalid response format');
-					}
-				} catch (error) {
-					console.error('Error loading monitoring data:', error);
-					const tbody = document.querySelector('#monitoringTable tbody');
-					tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error: Gagal memuat data monitoring</td></tr>';
-					showAlert('Terjadi kesalahan saat memuat data monitoring: ' + error.message, 'danger');
-				}
-			}
-
-			// Fungsi untuk menampilkan detail penilaian
-			function viewPenilaianDetails(finalProposalId) {
-				console.log('Viewing details for final proposal ID:', finalProposalId);
-				if (!finalProposalId || finalProposalId === 'undefined' || finalProposalId === 'null') {
-					showAlert('ID Proposal tidak valid', 'danger');
-					return;
-				}
-				window.location.href = `/admin/detail_berkas_seminar_proposal?id=${finalProposalId}`;
-			}
-
-
-			// Load monitoring data saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', () => {
-				loadMonitoringData();
-			});
 
 		</script>
 

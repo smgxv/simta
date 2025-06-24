@@ -113,6 +113,8 @@ func main() {
 	adminRouter.HandleFunc("/detail_telaah_icp", controllers.DetailTelaahICP).Methods("GET", "OPTIONS")                   // Tambahkan route untuk Detail Telaah ICP admin
 	adminRouter.HandleFunc("/dosbing_proposal", controllers.ListPembimbingProposal).Methods("GET", "OPTIONS")             // Tambahkan route untuk List Pembimbing Proposal admin
 	adminRouter.HandleFunc("/penguji_proposal", controllers.ListPengujiProposal).Methods("GET", "OPTIONS")                // Tambahkan route untuk List Penguji Proposal admin
+	adminRouter.HandleFunc("/penguji_laporan70", controllers.ListPengujiLaporan70).Methods("GET", "OPTIONS")
+	adminRouter.HandleFunc("/listlaporan70", controllers.ListLaporan70).Methods("GET", "OPTIONS")
 
 	// Tambahkan routes untuk taruna
 	tarunaRoutes := router.PathPrefix("/taruna").Subrouter()

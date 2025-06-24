@@ -8,19 +8,19 @@ import (
 	"user_service/entities"
 )
 
-type PengujiProposalModel struct {
+type PengujiLaporan70Model struct {
 	DB *sql.DB
 }
 
-func NewPengujiProposalModel() (*PengujiProposalModel, error) {
+func NewPengujiLaporan70Model() (*PengujiLaporan70Model, error) {
 	db, err := config.ConnectDB()
 	if err != nil {
 		return nil, err
 	}
-	return &PengujiProposalModel{DB: db}, nil
+	return &PengujiLaporan70Model{DB: db}, nil
 }
 
-func (m *PengujiProposalModel) AssignPengujiProposal(p *entities.PengujiProposal) error {
+func (m *PengujiLaporan70Model) AssignPengujiLaporan70(p *entities.PengujiLaporan70) error {
 	// Ambil user_id berdasarkan taruna_id
 	var userID int
 	err := m.DB.QueryRow("SELECT user_id FROM taruna WHERE id = ?", p.TarunaID).Scan(&userID)
@@ -29,16 +29,15 @@ func (m *PengujiProposalModel) AssignPengujiProposal(p *entities.PengujiProposal
 	}
 
 	query := `
-		INSERT INTO penguji_proposal 
-			(user_id, final_proposal_id, ketua_penguji_id, penguji_1_id, penguji_2_id, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+		INSERT INTO penguji_laporan70
+			(user_id, final_laporan70_id, penguji_1_id, penguji_2_id, created_at, updated_at)
+		VALUES (?, ?, ?, ?, NOW(), NOW())
 		ON DUPLICATE KEY UPDATE 
-			ketua_penguji_id = VALUES(ketua_penguji_id),
 			penguji_1_id = VALUES(penguji_1_id),
 			penguji_2_id = VALUES(penguji_2_id),
 			updated_at = NOW()
 	`
 
-	_, err = m.DB.Exec(query, userID, p.FinalProposalID, p.KetuaID, p.Penguji1ID, p.Penguji2ID)
+	_, err = m.DB.Exec(query, userID, p.FinalLaporan70ID, p.Penguji1ID, p.Penguji2ID)
 	return err
 }

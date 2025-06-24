@@ -27,7 +27,7 @@ func main() {
 	http.HandleFunc("/final_proposal", middleware.AuthMiddleware(handlers.GetFinalProposalByTarunaIDHandler))
 
 	http.HandleFunc("/taruna/dosbing", middleware.AuthMiddleware(handlers.GetTarunaWithDosbing))
-	http.HandleFunc("/taruna/penguji", middleware.AuthMiddleware(handlers.GetTarunaWithPenguji))
+	http.HandleFunc("/taruna/pengujiproposal", middleware.AuthMiddleware(handlers.GetTarunaWithPengujiProposal))
 
 	http.HandleFunc("/taruna/dashboard", middleware.AuthMiddleware(handlers.TarunaDashboardHandler))
 	http.HandleFunc("/taruna/dashboard/icp", middleware.AuthMiddleware(handlers.TarunaDashboardHandler))
@@ -37,6 +37,8 @@ func main() {
 	http.HandleFunc("/dosen/dashboard/icp", middleware.AuthMiddleware(handlers.ICPDitelaahHandler))
 	http.HandleFunc("/dosen/dashboard/bimbingan", middleware.AuthMiddleware(handlers.GetBimbinganByDosenHandler))
 	http.HandleFunc("/dosen/dashboard/pengujian", middleware.AuthMiddleware(handlers.GetPengujianProposalHandler))
+
+	http.HandleFunc("/taruna/pengujilaporan70", middleware.AuthMiddleware(handlers.GetTarunaWithPengujiLaporan70))
 
 	fmt.Println("API Server running on port 8081...")
 	log.Fatal(http.ListenAndServe(":8081", nil))

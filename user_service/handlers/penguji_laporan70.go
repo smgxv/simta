@@ -9,8 +9,8 @@ import (
 	"user_service/models"
 )
 
-// AssignPengujiProposal digunakan untuk menyimpan data penguji ke dalam database
-func AssignPengujiProposal(w http.ResponseWriter, r *http.Request) {
+// AssignPengujiLaporan70 digunakan untuk menyimpan data penguji ke dalam database
+func AssignPengujiLaporan70(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -27,19 +27,19 @@ func AssignPengujiProposal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload entities.PengujiProposal
+	var payload entities.PengujiLaporan70
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	model, err := models.NewPengujiProposalModel()
+	model, err := models.NewPengujiLaporan70Model()
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
-	if err := model.AssignPengujiProposal(&payload); err != nil {
+	if err := model.AssignPengujiLaporan70(&payload); err != nil {
 		http.Error(w, "Failed to assign penguji: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -50,7 +50,7 @@ func AssignPengujiProposal(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func GetTarunaWithPengujiProposal(w http.ResponseWriter, r *http.Request) {
+func GetTarunaWithPengujiLaporan70(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -79,12 +79,10 @@ func GetTarunaWithPengujiProposal(w http.ResponseWriter, r *http.Request) {
 			t.nama_lengkap AS nama_taruna,
 			t.jurusan,
 			t.kelas,
-			dk.nama_lengkap AS ketua_penguji,
 			dp1.nama_lengkap AS penguji_1,
 			dp2.nama_lengkap AS penguji_2
 		FROM taruna t
-		LEFT JOIN penguji_proposal pp ON pp.user_id = t.user_id
-		LEFT JOIN dosen dk ON pp.ketua_penguji_id = dk.id
+		LEFT JOIN penguji_laporan70 pp ON pp.user_id = t.user_id
 		LEFT JOIN dosen dp1 ON pp.penguji_1_id = dp1.id
 		LEFT JOIN dosen dp2 ON pp.penguji_2_id = dp2.id;
 	`
@@ -100,21 +98,20 @@ func GetTarunaWithPengujiProposal(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var tarunaID int
 		var namaTaruna, jurusan, kelas sql.NullString
-		var ketua, penguji1, penguji2 sql.NullString
+		var penguji1, penguji2 sql.NullString
 
-		if err := rows.Scan(&tarunaID, &namaTaruna, &jurusan, &kelas, &ketua, &penguji1, &penguji2); err != nil {
+		if err := rows.Scan(&tarunaID, &namaTaruna, &jurusan, &kelas, &penguji1, &penguji2); err != nil {
 			http.Error(w, "Row scan error", http.StatusInternalServerError)
 			return
 		}
 
 		result = append(result, map[string]interface{}{
-			"taruna_id":     tarunaID,
-			"nama_lengkap":  namaTaruna.String,
-			"jurusan":       jurusan.String,
-			"kelas":         kelas.String,
-			"ketua_penguji": ketua.String,
-			"penguji_1":     penguji1.String,
-			"penguji_2":     penguji2.String,
+			"taruna_id":    tarunaID,
+			"nama_lengkap": namaTaruna.String,
+			"jurusan":      jurusan.String,
+			"kelas":        kelas.String,
+			"penguji_1":    penguji1.String,
+			"penguji_2":    penguji2.String,
 		})
 	}
 
@@ -124,8 +121,8 @@ func GetTarunaWithPengujiProposal(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetFinalProposalByTarunaIDHandler digunakan untuk mengambil data final proposal berdasarkan taruna_id
-func GetFinalProposalByTarunaIDHandler(w http.ResponseWriter, r *http.Request) {
+// GetFinalLaporan70ByTarunaIDHandler digunakan untuk mengambil data final laporan70 berdasarkan taruna_id
+func GetFinalLaporan70ByTarunaIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -164,22 +161,22 @@ func GetFinalProposalByTarunaIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Step 2: Get final_proposal by user_id
-	query := `SELECT id, topik_penelitian FROM final_proposal WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`
+	// Step 2: Get final_laporan70 by user_id
+	query := `SELECT id, topik_penelitian FROM final_laporan70 WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`
 
-	var proposalID int
+	var laporan70ID int
 	var topik string
 
-	err = db.QueryRow(query, userID).Scan(&proposalID, &topik)
+	err = db.QueryRow(query, userID).Scan(&laporan70ID, &topik)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"status":  "not_found",
-				"message": "Taruna ini belum mengumpulkan proposal",
+				"message": "Taruna ini belum mengumpulkan Laporan 70%",
 			})
 			return
 		}
-		http.Error(w, "Error querying final_proposal: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error querying final_laporan70: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -187,7 +184,7 @@ func GetFinalProposalByTarunaIDHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data": map[string]interface{}{
-			"id":               proposalID,
+			"id":               laporan70ID,
 			"user_id":          userID,
 			"topik_penelitian": topik,
 		},
