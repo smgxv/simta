@@ -597,7 +597,7 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Proposal</h4>
+									<h4>Laporan 70%</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
@@ -627,10 +627,10 @@
 						</div>
 					</div>
 
-					<!-- List Proposal Taruna -->
+					<!-- List Laporan 70% Taruna -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">List Proposal Taruna</h4>
+							<h4 class="text-blue h4">List Laporan 70% Taruna</h4>
 						</div>
 						<div class="pb-20">
 							<table class="data-table table stripe hover nowrap">
@@ -650,14 +650,14 @@
 							</table>
 						</div>
 					</div>
-					<!-- End List Proposal Taruna -->
+					<!-- End List Laporan 70% Taruna -->
 
 					
-					<!-- Monitoring Penilaian Proposal -->
+					<!-- Monitoring Penilaian Laporan 70% -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">Monitoring Penilaian Proposal</h4>
-							<p class="mb-0">Daftar Penilaian Proposal untuk semua taruna</p>
+							<h4 class="text-blue h4">Monitoring Penilaian Laporan 70%</h4>
+							<p class="mb-0">Daftar Penilaian Laporan 70% untuk semua taruna</p>
 						</div>
 						<div class="pb-20">
 							<table id="monitoringTable"  class="data-table table stripe hover nowrap">
@@ -678,7 +678,7 @@
 							</table>
 						</div>
 					</div>
-					<!-- End Monitoring Penilaian Proposal -->
+					<!-- End Monitoring Penilaian Laporan 70% -->
 
 				</div>
 
@@ -857,7 +857,7 @@
 				}, 5000);
 			}
 
-			let allProposalData = []; // Menyimpan semua data Proposal
+			let allLaporan70Data = []; // Menyimpan semua data Laporan 70%
 			let uniqueJurusan = new Set();
 			let uniqueKelas = new Set();
 
@@ -887,18 +887,18 @@
 				});
 			}
 
-			// Fungsi untuk memuat data Proposal
-			async function loadProposalData() {
+			// Fungsi untuk memuat data Laporan 70%
+			async function loadLaporan70Data() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finalproposal/all', {
+					const response = await fetch('http://104.43.89.154:8082/finallaporan70/all', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
 					});
 
 					if (!response.ok) {
-						throw new Error('Failed to fetch Proposal data');
+						throw new Error('Failed to fetch Laporan 70% data');
 					}
 
 					const result = await response.json();
@@ -906,10 +906,10 @@
 						throw new Error(result.message || 'Failed to load data');
 					}
 
-					allProposalData = result.data;
+					allLaporan70Data = result.data;
 
 					// Collect unique values
-					allProposalData.forEach(item => {
+					allLaporan70Data.forEach(item => {
 						if (item.jurusan) uniqueJurusan.add(item.jurusan);
 						if (item.kelas) uniqueKelas.add(item.kelas);
 					});
@@ -921,7 +921,7 @@
 					displayFilteredData();
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Failed to load Proposal data', 'danger');
+					showAlert('Failed to load Laporan 70% data', 'danger');
 				}
 			}
 
@@ -930,7 +930,7 @@
 				const jurusanFilter = document.getElementById('jurusanFilter').value;
 				const kelasFilter = document.getElementById('kelasFilter').value;
 
-				const filteredData = allProposalData.filter(item => {
+				const filteredData = allLaporan70Data.filter(item => {
 					const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
 					const matchKelas = !kelasFilter || item.kelas === kelasFilter;
 					return matchJurusan && matchKelas;
@@ -952,22 +952,22 @@
 								: '-'}
 						</td>
 						<td>
-							${item.final_proposal_id > 0 ? 
+							${item.final_laporan70_id > 0 ? 
 								`<div class="dropdown">
 									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
 										<i class="dw dw-more"></i>
 									</a>
 									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="viewProposal(${item.final_proposal_id})">
+										<a class="dropdown-item" href="#" onclick="viewLaporan70(${item.final_laporan70_id})">
 											<i class="dw dw-eye"></i> View
 										</a>
-										<a class="dropdown-item" href="#" onclick="downloadProposal(${item.final_proposal_id})">
+										<a class="dropdown-item" href="#" onclick="downloadLaporan70(${item.final_laporan70_id})">
 											<i class="dw dw-download"></i> Download
 										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_proposal_id}, 'approved')">
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan70_id}, 'approved')">
 											<i class="dw dw-check"></i> Accept
 										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_proposal_id}, 'rejected')">
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan70_id}, 'rejected')">
 											<i class="dw dw-delete-3"></i> Reject
 										</a>
 									</div>
@@ -998,9 +998,9 @@
 				}
 			}
 
-			// Fungsi untuk melihat detail Proposal
-			function viewProposal(proposalId) {
-				window.location.href = `/admin/viewproposal?id=${proposalId}`;
+			// Fungsi untuk melihat detail Laporan70
+			function viewLaporan70(laporan70Id) {
+				window.location.href = `/admin/viewlaporan70?id=${laporan70Id}`;
 			}
 
 			// Fungsi untuk redirect ke profile
@@ -1008,11 +1008,11 @@
 				window.location.href = '/admin/profile';
 			}
 
-			// Fungsi untuk mengupdate status Proposal
+			// Fungsi untuk mengupdate status Laporan70
 			async function updateStatus(id, status) {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finalproposal/status', {
+					const response = await fetch('http://104.43.89.154:8082/finallaporan70/status', {
 						method: 'POST',
 						headers: {
 							'Authorization': `Bearer ${token}`,
@@ -1030,8 +1030,8 @@
 
 					const result = await response.json();
 					if (result.status === 'success') {
-						showAlert(`Proposal berhasil di${status}`, 'success');
-						loadProposalData(); // Reload data
+						showAlert(`Laporan70 berhasil di${status}`, 'success');
+						loadLaporan70Data(); // Reload data
 					} else {
 						throw new Error(result.message || 'Failed to update status');
 					}
@@ -1041,15 +1041,15 @@
 				}
 			}
 
-			// Fungsi untuk download Proposal
-			function downloadProposal(id) {
+			// Fungsi untuk download Laporan70
+			function downloadLaporan70(id) {
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				window.open(`http://104.43.89.154:8082/finalproposal/download/${id}?token=${token}`, '_blank');
+				window.open(`http://104.43.89.154:8082/finallaporan70/download/${id}?token=${token}`, '_blank');
 			}
 
-			// Load data Proposal saat halaman dimuat
+			// Load data Laporan70 saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
-				loadProposalData();
+				loadLaporan70Data();
 
 				// Set username dari localStorage
 				const username = document.getElementById('username');
@@ -1058,11 +1058,11 @@
 				}
 			});
 
-			// Fungsi untuk memuat data monitoring penilaian proposal
+			// Fungsi untuk memuat data monitoring penilaian laporan70
 			async function loadMonitoringData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/monitoring/penilaian_proposal', {
+					const response = await fetch('http://104.43.89.154:8082/monitoring/penilaian_laporan70', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -1101,7 +1101,7 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.final_proposal_id}); return false;">
+													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.final_laporan70_id}); return false;">
 														<i class="dw dw-eye"></i> View Details
 													</a>
 												</div>
@@ -1125,13 +1125,13 @@
 			}
 
 			// Fungsi untuk menampilkan detail penilaian
-			function viewPenilaianDetails(finalProposalId) {
-				console.log('Viewing details for final proposal ID:', finalProposalId);
-				if (!finalProposalId || finalProposalId === 'undefined' || finalProposalId === 'null') {
-					showAlert('ID Proposal tidak valid', 'danger');
+			function viewPenilaianDetails(finalLaporan70Id) {
+				console.log('Viewing details for final laporan70 ID:', finalLaporan70Id);
+				if (!finalLaporan70Id || finalLaporan70Id === 'undefined' || finalLaporan70Id === 'null') {
+					showAlert('ID Laporan70 tidak valid', 'danger');
 					return;
 				}
-				window.location.href = `/admin/detail_berkas_seminar_proposal?id=${finalProposalId}`;
+				window.location.href = `/admin/detail_berkas_seminar_laporan70?id=${finalLaporan70Id}`;
 			}
 
 
