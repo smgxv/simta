@@ -774,7 +774,7 @@
 					<div class="pd-20 card-box mb-30">
 						<div class="clearfix">
 							<div class="pull-left">
-								<h4 class="text-blue h4">Catatan Perbaikan</h4>
+								<h4 class="text-blue h4">Catatan Perbaikan Laporan 70%</h4>
 							</div>
 						</div>
 						<div class="pb-20">
@@ -1672,7 +1672,7 @@
 				}
 
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/catatanperbaikan/taruna?user_id=${userId}`);
+					const response = await fetch(`http://104.43.89.154:8082/catatanperbaikanlaporan70/taruna?user_id=${userId}`);
 					const data = await response.json();
 
 					const tableBody = document.querySelector('#catatanPerbaikanTable tbody');
