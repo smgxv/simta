@@ -1692,7 +1692,7 @@
 				}
 
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/catatanperbaikan/taruna?user_id=${userId}`);
+					const response = await fetch(`http://104.43.89.154:8082/catatanperbaikanproposal/taruna?user_id=${userId}`);
 					const data = await response.json();
 
 					const tableBody = document.querySelector('#catatanPerbaikanTable tbody');

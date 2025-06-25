@@ -8,3 +8,11 @@ func ParseInt(s string) int {
 	fmt.Sscanf(s, "%d", &i)
 	return i
 }
+
+// Helper function to handle null strings
+func StringOrEmpty(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}

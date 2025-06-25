@@ -83,13 +83,13 @@ func main() {
 	// Register seminar proposal routes
 	r.HandleFunc("/upload/seminarproposal", handlers.UploadSeminarProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/seminarproposal/dosen", handlers.GetSeminarProposalByDosenHandler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/seminarproposal/taruna/list", handlers.GetTarunaListForDosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/seminarproposal/taruna/list", handlers.GetSeminarProposalTarunaListForDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/penilaian/proposal", handlers.PenilaianProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/monitoring/penilaian_proposal", handlers.GetMonitoringPenilaianProposalHandler).Methods("GET", "OPTIONS")
 
 	// Detail Berkas Seminar Proposal routes
 	r.HandleFunc("/seminarproposal/detail/{id}", handlers.GetFinalProposalDetailHandler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/catatanperbaikan/taruna", handlers.GetCatatanPerbaikanTarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/catatanperbaikanproposal/taruna", handlers.GetCatatanPerbaikanTarunaProposalHandler).Methods("GET", "OPTIONS")
 
 	// Laporan 70%
 	r.HandleFunc("/upload/laporan70", handlers.UploadLaporan70Handler).Methods("POST", "OPTIONS")
@@ -116,6 +116,17 @@ func main() {
 	r.HandleFunc("/finallaporan70/status", handlers.UpdateFinalLaporan70StatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/finallaporan70/download/{id}", handlers.DownloadFinalLaporan70Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finallaporan70/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
+
+	// Register seminar proposal routes
+	r.HandleFunc("/upload/seminarlaporan70", handlers.UploadSeminarLaporan70Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/seminarlaporan70/dosen", handlers.GetSeminarLaporan70ByDosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/seminarlaporan70/taruna/list", handlers.GetSeminarLaporan70TarunaListForDosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/penilaian/laporan70", handlers.PenilaianLaporan70Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/monitoring/penilaian_laporan70", handlers.GetMonitoringPenilaianLaporan70Handler).Methods("GET", "OPTIONS")
+
+	// Detail Berkas Seminar Laporan70 routes
+	r.HandleFunc("/seminarlaporan70/detail/{id}", handlers.GetFinalLaporan70DetailHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/catatanperbaikanlaporan70/taruna", handlers.GetCatatanPerbaikanTarunaLaporan70Handler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{

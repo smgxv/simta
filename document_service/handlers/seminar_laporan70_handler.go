@@ -18,7 +18,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type CatatanPerbaikan struct {
+type CatatanPerbaikanLaporan70 struct {
 	ID              int    `json:"id"`
 	NamaDosen       string `json:"nama_dosen"`
 	TopikPenelitian string `json:"topik_penelitian"`
@@ -26,7 +26,7 @@ type CatatanPerbaikan struct {
 	SubmittedAt     string `json:"submitted_at"`
 }
 
-func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
+func UploadSeminarLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -48,7 +48,6 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Ambil nilai form
 	userID := r.FormValue("user_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
-	ketuaPenguji := r.FormValue("ketua_penguji")
 	penguji1 := r.FormValue("penguji1")
 	penguji2 := r.FormValue("penguji2")
 
@@ -61,14 +60,14 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	// Buat direktori uploads jika belum ada
-	uploadDir := "uploads/seminar_proposal"
+	uploadDir := "uploads/seminar_laporan70"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		http.Error(w, "Error creating upload directory: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// Simpan file dengan nama unik
-	filename := fmt.Sprintf("SeminarProposal_%s_%s_%s", userID, time.Now().Format("20060102150405"), handler.Filename)
+	filename := fmt.Sprintf("SeminarLaporan70_%s_%s_%s", userID, time.Now().Format("20060102150405"), handler.Filename)
 	filePath := filepath.Join(uploadDir, filename)
 
 	log.Printf("Saving file to: %s", filePath)
@@ -96,21 +95,19 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Konversi form string ke int
 	userIDInt, _ := strconv.Atoi(userID)
-	ketuaPengujiInt, _ := strconv.Atoi(ketuaPenguji)
 	penguji1Int, _ := strconv.Atoi(penguji1)
 	penguji2Int, _ := strconv.Atoi(penguji2)
 
 	// Simpan entitas ke DB
-	proposal := &entities.SeminarProposal{
-		UserID:           userIDInt,
-		TopikPenelitian:  topikPenelitian,
-		FileProposalPath: filePath,
-		KetuaPengujiID:   ketuaPengujiInt,
-		Penguji1ID:       penguji1Int,
-		Penguji2ID:       penguji2Int,
+	laporan70 := &entities.SeminarLaporan70{
+		UserID:            userIDInt,
+		TopikPenelitian:   topikPenelitian,
+		FileLaporan70Path: filePath,
+		Penguji1ID:        penguji1Int,
+		Penguji2ID:        penguji2Int,
 	}
 
-	if err := models.InsertSeminarProposal(db, proposal); err != nil {
+	if err := models.InsertSeminarLaporan70(db, laporan70); err != nil {
 		os.Remove(filePath)
 		http.Error(w, "Error saving to database: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -119,15 +116,15 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Sukses
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Seminar proposal berhasil diunggah",
+		"message": "Seminar Laporan 70% berhasil diunggah",
 		"data": map[string]interface{}{
 			"file_path": filePath,
 		},
 	})
 }
 
-// GetSeminarProposalByDosenHandler menangani request untuk mendapatkan data seminar proposal berdasarkan ID dosen
-func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
+// GetSeminarLaporan70ByDosenHandler menangani request untuk mendapatkan data seminar laporan70 berdasarkan ID dosen
+func GetSeminarLaporan70ByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -159,13 +156,13 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Query untuk mendapatkan data seminar proposal
+	// Query untuk mendapatkan data seminar laporan70
 	query := `
-		SELECT sp.id, sp.user_id, sp.topik_penelitian, sp.file_proposal_path,
+		SELECT sp.id, sp.user_id, sp.topik_penelitian, sp.file_laporan70_path,
 			   t.nama_lengkap as taruna_nama
-		FROM seminar_proposal sp
+		FROM seminar_laporan70 sp
 		JOIN taruna t ON sp.user_id = t.user_id
-		WHERE sp.ketua_penguji_id = ? OR sp.penguji1_id = ? OR sp.penguji2_id = ?
+		WHERE sp.penguji1_id = ? OR sp.penguji2_id = ?
 	`
 
 	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
@@ -175,7 +172,7 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	type ProposalData struct {
+	type Laporan70Data struct {
 		ID              int    `json:"id"`
 		UserID          int    `json:"user_id"`
 		TopikPenelitian string `json:"topik_penelitian"`
@@ -183,25 +180,25 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 		TarunaNama      string `json:"taruna_nama"`
 	}
 
-	var proposals []ProposalData
+	var laporan70s []Laporan70Data
 	for rows.Next() {
-		var p ProposalData
+		var p Laporan70Data
 		err := rows.Scan(&p.ID, &p.UserID, &p.TopikPenelitian, &p.FilePath, &p.TarunaNama)
 		if err != nil {
 			http.Error(w, "Error scanning rows: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		proposals = append(proposals, p)
+		laporan70s = append(laporan70s, p)
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   proposals,
+		"data":   laporan70s,
 	})
 }
 
-// GetTarunaListForDosenHandler menangani request untuk mendapatkan daftar taruna yang belum memiliki final proposal
-func GetSeminarProposalTarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
+// GetTarunaListForDosenHandler menangani request untuk mendapatkan daftar taruna yang belum memiliki final laporan70
+func GetSeminarLaporan70TarunaListForDosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -236,13 +233,12 @@ func GetSeminarProposalTarunaListForDosenHandler(w http.ResponseWriter, r *http.
 			pp.user_id, 
 			t.nama_lengkap, 
 			fp.topik_penelitian,
-			fp.id AS final_proposal_id
-		FROM penguji_proposal pp
+			fp.id AS final_laporan70_id
+		FROM penguji_laporan70 pp
 		JOIN taruna t ON pp.user_id = t.user_id
-		LEFT JOIN final_proposal fp ON fp.user_id = t.user_id
+		LEFT JOIN final_laporan70 fp ON fp.user_id = t.user_id
 		WHERE 
-			pp.ketua_penguji_id = ? 
-			OR pp.penguji_1_id = ? 
+			pp.penguji_1_id = ? 
 			OR pp.penguji_2_id = ?
 	`
 
@@ -254,16 +250,16 @@ func GetSeminarProposalTarunaListForDosenHandler(w http.ResponseWriter, r *http.
 	defer rows.Close()
 
 	type TarunaData struct {
-		UserID          int    `json:"user_id"`
-		NamaLengkap     string `json:"nama_lengkap"`
-		TopikPenelitian string `json:"topik_penelitian"`
-		FinalProposalID int    `json:"final_proposal_id"`
+		UserID           int    `json:"user_id"`
+		NamaLengkap      string `json:"nama_lengkap"`
+		TopikPenelitian  string `json:"topik_penelitian"`
+		FinalLaporan70ID int    `json:"final_laporan70_id"`
 	}
 
 	var tarunaList []TarunaData
 	for rows.Next() {
 		var t TarunaData
-		err := rows.Scan(&t.UserID, &t.NamaLengkap, &t.TopikPenelitian, &t.FinalProposalID)
+		err := rows.Scan(&t.UserID, &t.NamaLengkap, &t.TopikPenelitian, &t.FinalLaporan70ID)
 		if err != nil {
 			http.Error(w, "Error reading rows: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -277,8 +273,8 @@ func GetSeminarProposalTarunaListForDosenHandler(w http.ResponseWriter, r *http.
 	})
 }
 
-// PenilaianProposalHandler menangani request untuk menyimpan penilaian proposal
-func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
+// PenilaianLaporan70Handler menangani request untuk menyimpan penilaian laporan70
+func PenilaianLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	// Set header JSON di awal fungsi
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
@@ -309,10 +305,10 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Validasi input
 	userID := r.FormValue("user_id")
 	dosenID := r.FormValue("dosen_id")
-	finalProposalID := r.FormValue("final_proposal_id")
+	finalLaporan70ID := r.FormValue("final_laporan70_id")
 
-	if userID == "" || dosenID == "" || finalProposalID == "" {
-		sendErrorResponse("user_id, dosen_id, dan final_proposal_id harus diisi", http.StatusBadRequest)
+	if userID == "" || dosenID == "" || finalLaporan70ID == "" {
+		sendErrorResponse("user_id, dosen_id, dan final_laporan70_id harus diisi", http.StatusBadRequest)
 		return
 	}
 
@@ -332,8 +328,8 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	defer beritaAcaraFile.Close()
 
 	// Create directories
-	penilaianDir := "uploads/penilaian_proposal"
-	beritaAcaraDir := "uploads/berita_acara_proposal"
+	penilaianDir := "uploads/penilaian_laporan70"
+	beritaAcaraDir := "uploads/berita_acara_laporan70"
 
 	if err := os.MkdirAll(penilaianDir, 0777); err != nil {
 		sendErrorResponse("Error creating directories: "+err.Error(), http.StatusInternalServerError)
@@ -353,12 +349,12 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	beritaAcaraPath := filepath.Join(beritaAcaraDir, beritaAcaraFilename)
 
 	// Save files
-	if err := saveProposal(penilaianFile, penilaianPath); err != nil {
+	if err := saveFile(penilaianFile, penilaianPath); err != nil {
 		sendErrorResponse("Error saving penilaian file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if err := saveProposal(beritaAcaraFile, beritaAcaraPath); err != nil {
+	if err := saveFile(beritaAcaraFile, beritaAcaraPath); err != nil {
 		os.Remove(penilaianPath) // cleanup
 		sendErrorResponse("Error saving berita acara file: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -385,8 +381,8 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Check if record exists
 	var exists bool
-	err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM seminar_proposal_penilaian WHERE user_id = ? AND dosen_id = ? AND final_proposal_id = ?)",
-		userID, dosenID, finalProposalID).Scan(&exists)
+	err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM seminar_laporan70_penilaian WHERE user_id = ? AND dosen_id = ? AND final_laporan70_id = ?)",
+		userID, dosenID, finalLaporan70ID).Scan(&exists)
 
 	if err != nil {
 		tx.Rollback()
@@ -399,23 +395,23 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	var query string
 	if exists {
 		query = `
-			UPDATE seminar_proposal_penilaian 
+			UPDATE seminar_laporan70_penilaian 
 			SET file_penilaian_path = ?,
 				file_berita_acara_path = ?,
 				submitted_at = NOW(),
 				status_pengumpulan = 'sudah'
-			WHERE user_id = ? AND dosen_id = ? AND final_proposal_id = ?
+			WHERE user_id = ? AND dosen_id = ? AND final_laporan70_id = ?
         `
-		_, err = tx.Exec(query, penilaianPath, beritaAcaraPath, userID, dosenID, finalProposalID)
+		_, err = tx.Exec(query, penilaianPath, beritaAcaraPath, userID, dosenID, finalLaporan70ID)
 	} else {
 		query = `
-			INSERT INTO seminar_proposal_penilaian (
-				user_id, final_proposal_id, dosen_id,
+			INSERT INTO seminar_laporan70_penilaian (
+				user_id, final_laporan70_id, dosen_id,
 				file_penilaian_path, file_berita_acara_path,
 				status_pengumpulan, submitted_at
 			) VALUES (?, ?, ?, ?, ?, 'sudah', NOW())
         `
-		_, err = tx.Exec(query, userID, finalProposalID, dosenID, penilaianPath, beritaAcaraPath)
+		_, err = tx.Exec(query, userID, finalLaporan70ID, dosenID, penilaianPath, beritaAcaraPath)
 	}
 
 	if err != nil {
@@ -437,7 +433,7 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Success response
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Penilaian proposal berhasil disimpan",
+		"message": "Penilaian laporan70 berhasil disimpan",
 		"data": map[string]interface{}{
 			"penilaian_path":    penilaianPath,
 			"berita_acara_path": beritaAcaraPath,
@@ -446,7 +442,7 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Helper function untuk menyimpan file
-func saveProposal(src io.Reader, destPath string) error {
+func saveFile(src io.Reader, destPath string) error {
 	dst, err := os.Create(destPath)
 	if err != nil {
 		return err
@@ -457,7 +453,7 @@ func saveProposal(src io.Reader, destPath string) error {
 	return err
 }
 
-func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
+func GetMonitoringPenilaianLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -477,12 +473,11 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 
 	query := `
 		SELECT
-			fp.id AS final_proposal_id,
+			fp.id AS final_laporan70_id,
 			u.nama_lengkap AS nama_taruna,
 			t.jurusan,
 			fp.topik_penelitian,
 
-			d_ketua.nama_lengkap AS ketua_penguji,
 			d1.nama_lengkap AS penguji1,
 			d2.nama_lengkap AS penguji2,
 
@@ -492,21 +487,20 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 				ELSE 'Belum Lengkap'
 			END AS status_kelengkapan
 
-		FROM penguji_proposal pp
-		JOIN final_proposal fp ON fp.id = pp.final_proposal_id
+		FROM penguji_laporan70 pp
+		JOIN final_laporan70 fp ON fp.id = pp.final_laporan70_id
 		JOIN users u ON u.id = pp.user_id
 		JOIN taruna t ON t.user_id = u.id
 
-		JOIN dosen d_ketua ON d_ketua.id = pp.ketua_penguji_id
 		JOIN dosen d1 ON d1.id = pp.penguji_1_id
 		JOIN dosen d2 ON d2.id = pp.penguji_2_id
 
-		LEFT JOIN seminar_proposal_penilaian spp
-			ON spp.final_proposal_id = pp.final_proposal_id
+		LEFT JOIN seminar_laporan70_penilaian spp
+			ON spp.final_laporan70_id = pp.final_laporan70_id
 
 		GROUP BY
 			fp.id, u.nama_lengkap, t.jurusan, fp.topik_penelitian,
-			d_ketua.nama_lengkap, d1.nama_lengkap, d2.nama_lengkap
+			d1.nama_lengkap, d2.nama_lengkap
 	`
 
 	rows, err := db.Query(query)
@@ -521,11 +515,10 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 	defer rows.Close()
 
 	type MonitoringData struct {
-		FinalProposalID   int    `json:"final_proposal_id"`
+		FinalLaporan70ID  int    `json:"final_laporan70_id"`
 		NamaTaruna        string `json:"nama_taruna"`
 		Jurusan           string `json:"jurusan"`
 		TopikPenelitian   string `json:"topik_penelitian"`
-		KetuaPenguji      string `json:"ketua_penguji"`
 		Penguji1          string `json:"penguji1"`
 		Penguji2          string `json:"penguji2"`
 		StatusKelengkapan string `json:"status_kelengkapan"`
@@ -535,11 +528,10 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 	for rows.Next() {
 		var m MonitoringData
 		err := rows.Scan(
-			&m.FinalProposalID,
+			&m.FinalLaporan70ID,
 			&m.NamaTaruna,
 			&m.Jurusan,
 			&m.TopikPenelitian,
-			&m.KetuaPenguji,
 			&m.Penguji1,
 			&m.Penguji2,
 			&m.StatusKelengkapan,
@@ -566,7 +558,7 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
+func GetFinalLaporan70DetailHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -578,9 +570,9 @@ func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	finalProposalID := vars["id"]
-	if finalProposalID == "" {
-		http.Error(w, "Final Proposal ID is required", http.StatusBadRequest)
+	finalLaporan70ID := vars["id"]
+	if finalLaporan70ID == "" {
+		http.Error(w, "Final Laporan70 ID is required", http.StatusBadRequest)
 		return
 	}
 
@@ -591,35 +583,35 @@ func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Query proposal dan taruna
-	queryProposal := `
+	// Query laporan70 dan taruna
+	queryLaporan70 := `
 		SELECT fp.id, u.nama_lengkap, u.jurusan, u.kelas, fp.topik_penelitian
-		FROM final_proposal fp
+		FROM final_laporan70 fp
 		JOIN users u ON u.id = fp.user_id
 		WHERE fp.id = ?
 	`
 	var (
-		idProposal      int
+		idLaporan70     int
 		namaTaruna      string
 		jurusan         string
 		kelas           string
 		topikPenelitian string
 	)
-	err = db.QueryRow(queryProposal, finalProposalID).Scan(&idProposal, &namaTaruna, &jurusan, &kelas, &topikPenelitian)
+	err = db.QueryRow(queryLaporan70, finalLaporan70ID).Scan(&idLaporan70, &namaTaruna, &jurusan, &kelas, &topikPenelitian)
 	if err != nil {
-		http.Error(w, "Proposal tidak ditemukan: "+err.Error(), http.StatusNotFound)
+		http.Error(w, "Laporan70 tidak ditemukan: "+err.Error(), http.StatusNotFound)
 		return
 	}
 
 	// Query penguji
 	queryPenguji := `
-		SELECT ketua_penguji_id, penguji_1_id, penguji_2_id
-		FROM penguji_proposal
-		WHERE final_proposal_id = ?
+		SELECT penguji_1_id, penguji_2_id
+		FROM penguji_laporan70
+		WHERE final_laporan70_id = ?
 		LIMIT 1
 	`
-	var ketuaID, penguji1ID, penguji2ID int
-	err = db.QueryRow(queryPenguji, finalProposalID).Scan(&ketuaID, &penguji1ID, &penguji2ID)
+	var penguji1ID, penguji2ID int
+	err = db.QueryRow(queryPenguji, finalLaporan70ID).Scan(&penguji1ID, &penguji2ID)
 	if err != nil {
 		http.Error(w, "Data penguji tidak ditemukan: "+err.Error(), http.StatusNotFound)
 		return
@@ -639,10 +631,10 @@ func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 
 		err = db.QueryRow(`
 			SELECT status_pengumpulan, file_penilaian_path, file_berita_acara_path
-			FROM seminar_proposal_penilaian
-			WHERE final_proposal_id = ? AND dosen_id = ?
+			FROM seminar_laporan70_penilaian
+			WHERE final_laporan70_id = ? AND dosen_id = ?
 			LIMIT 1
-		`, finalProposalID, dosenID).Scan(&status, &filePenilaian, &fileBA)
+		`, finalLaporan70ID, dosenID).Scan(&status, &filePenilaian, &fileBA)
 
 		if err != nil {
 			status = "belum"
@@ -665,7 +657,6 @@ func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 			"jurusan":          jurusan,
 			"kelas":            kelas,
 			"topik_penelitian": topikPenelitian,
-			"ketua_penguji":    getPenilaian(ketuaID),
 			"penguji1":         getPenilaian(penguji1ID),
 			"penguji2":         getPenilaian(penguji2ID),
 		},
@@ -675,7 +666,7 @@ func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Helper function untuk mendapatkan data penilaian dosen
-func getPengujiData(db *sql.DB, proposalID string, dosenID int) map[string]interface{} {
+func getPengujiLaporan70Data(db *sql.DB, laporan70ID string, dosenID int) map[string]interface{} {
 	query := `
 		SELECT 
 			d.nama_lengkap,
@@ -683,8 +674,8 @@ func getPengujiData(db *sql.DB, proposalID string, dosenID int) map[string]inter
 			spp.file_berita_acara_path,
 			spp.status_pengumpulan
 		FROM dosen d
-		LEFT JOIN seminar_proposal_penilaian spp ON spp.dosen_id = d.id 
-			AND spp.seminar_proposal_id = ?
+		LEFT JOIN seminar_laporan70_penilaian spp ON spp.dosen_id = d.id 
+			AND spp.seminar_laporan70_id = ?
 		WHERE d.id = ?
 	`
 
@@ -695,7 +686,7 @@ func getPengujiData(db *sql.DB, proposalID string, dosenID int) map[string]inter
 		StatusPengumpulan sql.NullString
 	}
 
-	err := db.QueryRow(query, proposalID, dosenID).Scan(
+	err := db.QueryRow(query, laporan70ID, dosenID).Scan(
 		&data.NamaLengkap,
 		&data.FilePenilaianPath,
 		&data.BeritaAcaraPath,
@@ -719,7 +710,7 @@ func getPengujiData(db *sql.DB, proposalID string, dosenID int) map[string]inter
 	}
 }
 
-func GetCatatanPerbaikanTarunaProposalHandler(w http.ResponseWriter, r *http.Request) {
+func GetCatatanPerbaikanTarunaLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -755,9 +746,9 @@ func GetCatatanPerbaikanTarunaProposalHandler(w http.ResponseWriter, r *http.Req
 	// Query ambil catatan perbaikan
 	query := `
 		SELECT spp.id, d.nama_lengkap, fp.topik_penelitian, spp.file_penilaian_path, spp.submitted_at
-		FROM seminar_proposal_penilaian spp
+		FROM seminar_laporan70_penilaian spp
 		JOIN dosen d ON spp.dosen_id = d.id
-		LEFT JOIN final_proposal fp ON spp.final_proposal_id = fp.id
+		LEFT JOIN final_laporan70 fp ON spp.final_laporan70_id = fp.id
 		WHERE spp.user_id = ? AND spp.status_pengumpulan = 'sudah'
 		ORDER BY spp.submitted_at DESC
 	`
