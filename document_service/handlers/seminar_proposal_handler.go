@@ -127,7 +127,7 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetSeminarProposalByDosenHandler menangani request untuk mendapatkan data seminar proposal berdasarkan ID dosen
-func GetFinalProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
+func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
