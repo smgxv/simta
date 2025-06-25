@@ -480,7 +480,7 @@ func GetMonitoringPenilaianLaporan70Handler(w http.ResponseWriter, r *http.Reque
 
 			-- Hitung kelengkapan berkas
 			CASE
-				WHEN COUNT(CASE WHEN spp.file_penilaian_path IS NOT NULL AND spp.file_berita_acara_path IS NOT NULL THEN 1 END) = 3 THEN 'Lengkap'
+				WHEN COUNT(CASE WHEN spp.file_penilaian_path IS NOT NULL AND spp.file_berita_acara_path IS NOT NULL THEN 1 END) = 2 THEN 'Lengkap'
 				ELSE 'Belum Lengkap'
 			END AS status_kelengkapan
 

@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>SIMTA - Laporan 70%</title>
+		<title>SIMTA - Detail Berkas Seminar Laporan 70%</title>
 
 		<!-- Site favicon -->
 		<link
@@ -75,6 +75,62 @@
 				background-color: #f8d7da;
 				border-color: #f5c2c7;
 				color: #842029;
+			}
+
+			.detail-section {
+				background: #fff;
+				padding: 20px;
+				border-radius: 5px;
+				box-shadow: 0 0 28px rgba(0,0,0,0.08);
+				margin-bottom: 20px;
+			}
+
+			.section-title {
+				font-size: 1.2em;
+				font-weight: 600;
+				color: #1b00ff;
+				margin-bottom: 15px;
+				padding-bottom: 10px;
+				border-bottom: 1px solid #e5e5e5;
+			}
+
+			.info-table {
+				width: 100%;
+			}
+
+			.info-table td {
+				padding: 8px 0;
+			}
+
+			.info-table td:first-child {
+				width: 200px;
+				color: #666;
+			}
+
+			.badge-empty {
+				background-color: #dc3545;
+				color: white;
+				padding: 5px 10px;
+				border-radius: 4px;
+			}
+
+			.badge-exists {
+				background-color: #28a745;
+				color: white;
+				padding: 5px 10px;
+				border-radius: 4px;
+			}
+
+			.btn-download {
+				display: inline-block;
+				padding: 5px 10px;
+				color: #1b00ff;
+				text-decoration: none;
+				margin-left: 10px;
+			}
+
+			.btn-download:hover {
+				text-decoration: underline;
 			}
 		</style>
 
@@ -597,87 +653,103 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Laporan 70%</h4>
+									<h4>Detail Berkas Seminar Laporan 70%</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
 										<li class="breadcrumb-item">
-											<a href="/admin/dashboard">Home</a>
+											<a href="/admin/listlaporan70">List Laporan 70%</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											Proposal
+											Detail Berkas
 										</li>
 									</ol>
 								</nav>
 							</div>
-							<div class="col-md-6 col-sm-12">
-								<div class="d-flex justify-content-end align-items-center">
-									<div class="form-group mb-0 mr-2">
-										<select class="form-control" id="jurusanFilter" onchange="applyFilters()">
-											<option value="">Semua Jurusan</option>
-										</select>
-									</div>
-									<div class="form-group mb-0">
-										<select class="form-control" id="kelasFilter" onchange="applyFilters()">
-											<option value="">Semua Kelas</option>
-										</select>
-									</div>
-								</div>
-							</div>
 						</div>
 					</div>
 
-					<!-- List Laporan 70% Taruna -->
-					<div class="card-box mb-30">
-						<div class="pd-20">
-							<h4 class="text-blue h4">List Laporan 70% Taruna</h4>
-						</div>
-						<div class="pb-20">
-							<table class="data-table table stripe hover nowrap">
-								<thead>
-									<tr>
-										<th class="table-plus datatable-nosort">Nama Lengkap</th>
-										<th class="table-plus datatable-nosort">Jurusan</th>
-										<th class="table-plus datatable-nosort">Kelas</th>
-										<th class="table-plus datatable-nosort">Topik</th>
-										<th class="table-plus datatable-nosort">Status</th>
-										<th class="datatable-nosort">Action</th>
-									</tr>
-								</thead>
-								<tbody>
-									
-								</tbody>
-							</table>
-						</div>
+					<!-- Informasi Taruna -->
+					<div class="detail-section">
+						<div class="section-title">Informasi Taruna</div>
+						<table class="info-table">
+							<tr>
+								<td>Nama Taruna</td>
+								<td>: <span id="nama-taruna">-</span></td>
+							</tr>
+							<tr>
+								<td>Jurusan</td>
+								<td>: <span id="jurusan">-</span></td>
+							</tr>
+							<tr>
+								<td>Kelas</td>
+								<td>: <span id="kelas">-</span></td>
+							</tr>
+							<tr>
+								<td>Topik Penelitian</td>
+								<td>: <span id="topik-penelitian">-</span></td>
+							</tr>
+						</table>
 					</div>
-					<!-- End List Laporan 70% Taruna -->
 
-					
-					<!-- Monitoring Penilaian Laporan 70% -->
-					<div class="card-box mb-30">
-						<div class="pd-20">
-							<h4 class="text-blue h4">Monitoring Penilaian Laporan 70%</h4>
-							<p class="mb-0">Daftar Penilaian Laporan 70% untuk semua taruna</p>
-						</div>
-						<div class="pb-20">
-							<table id="monitoringTable"  class="data-table table stripe hover nowrap">
-								<thead>
-									<tr>
-										<th>Nama Taruna</th>
-										<th>Jurusan</th>
-										<th>Topik Penelitian</th>
-										<th>Penguji 1</th>
-										<th>Penguji 2</th>
-										<th>Status Kelengkapan</th>
-										<th>Action</th>
-									</tr>
-								</thead>
-								<tbody>
-								</tbody>
-							</table>
-						</div>
+
+					<!-- Penguji 1 -->
+					<div class="detail-section">
+						<div class="section-title">Penguji 1</div>
+						<table class="info-table">
+							<tr>
+								<td>Nama Dosen</td>
+								<td>: <span id="penguji1">-</span></td>
+							</tr>
+							<tr>
+								<td>Dokumen Penilaian</td>
+								<td>
+									<span id="penguji1-penilaian-status">-</span>
+									<a href="#" id="penguji1-penilaian-download" class="btn-download" style="display:none;">
+										<i class="dw dw-download"></i> Download
+									</a>
+								</td>
+							</tr>
+							<tr>
+								<td>Dokumen Berita Acara</td>
+								<td>
+									<span id="penguji1-berita-acara-status">-</span>
+									<a href="#" id="penguji1-berita-acara-download" class="btn-download" style="display:none;">
+										<i class="dw dw-download"></i> Download
+									</a>
+								</td>
+							</tr>
+						</table>
 					</div>
-					<!-- End Monitoring Penilaian Laporan 70% -->
+
+					<!-- Penguji 2 -->
+					<div class="detail-section">
+						<div class="section-title">Penguji 2</div>
+						<table class="info-table">
+							<tr>
+								<td>Nama Dosen</td>
+								<td>: <span id="penguji2">-</span></td>
+							</tr>
+							<tr>
+								<td>Dokumen Penilaian</td>
+								<td>
+									<span id="penguji2-penilaian-status">-</span>
+									<a href="#" id="penguji2-penilaian-download" class="btn-download" style="display:none;">
+										<i class="dw dw-download"></i> Download
+									</a>
+								</td>
+							</tr>
+							<tr>
+								<td>Dokumen Berita Acara</td>
+								<td>
+									<span id="penguji2-berita-acara-status">-</span>
+									<a href="#" id="penguji2-berita-acara-download" class="btn-download" style="display:none;">
+										<i class="dw dw-download"></i> Download
+									</a>
+								</td>
+							</tr>
+						</table>
+					</div>
 
 				</div>
 
@@ -856,133 +928,6 @@
 				}, 5000);
 			}
 
-			let allLaporan70Data = []; // Menyimpan semua data Laporan 70%
-			let uniqueJurusan = new Set();
-			let uniqueKelas = new Set();
-
-			// Fungsi untuk memperbarui opsi filter
-			function updateFilterOptions() {
-				const jurusanFilter = document.getElementById('jurusanFilter');
-				const kelasFilter = document.getElementById('kelasFilter');
-
-				// Clear existing options except the first one
-				jurusanFilter.innerHTML = '<option value="">Semua Jurusan</option>';
-				kelasFilter.innerHTML = '<option value="">Semua Kelas</option>';
-
-				// Add unique jurusan options
-				[...uniqueJurusan].sort().forEach(jurusan => {
-					const option = document.createElement('option');
-					option.value = jurusan;
-					option.textContent = jurusan;
-					jurusanFilter.appendChild(option);
-				});
-
-				// Add unique kelas options
-				[...uniqueKelas].sort().forEach(kelas => {
-					const option = document.createElement('option');
-					option.value = kelas;
-					option.textContent = kelas;
-					kelasFilter.appendChild(option);
-				});
-			}
-
-			// Fungsi untuk memuat data Laporan 70%
-			async function loadLaporan70Data() {
-				try {
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finallaporan70/all', {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-
-					if (!response.ok) {
-						throw new Error('Failed to fetch Laporan 70% data');
-					}
-
-					const result = await response.json();
-					if (result.status !== 'success') {
-						throw new Error(result.message || 'Failed to load data');
-					}
-
-					allLaporan70Data = result.data;
-
-					// Collect unique values
-					allLaporan70Data.forEach(item => {
-						if (item.jurusan) uniqueJurusan.add(item.jurusan);
-						if (item.kelas) uniqueKelas.add(item.kelas);
-					});
-
-					// Update filter options
-					updateFilterOptions();
-					
-					// Display data
-					displayFilteredData();
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to load Laporan 70% data', 'danger');
-				}
-			}
-
-			// Fungsi untuk menampilkan data yang sudah difilter
-			function displayFilteredData() {
-				const jurusanFilter = document.getElementById('jurusanFilter').value;
-				const kelasFilter = document.getElementById('kelasFilter').value;
-
-				const filteredData = allLaporan70Data.filter(item => {
-					const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
-					const matchKelas = !kelasFilter || item.kelas === kelasFilter;
-					return matchJurusan && matchKelas;
-				});
-
-				const tableBody = document.querySelector('.data-table tbody');
-				tableBody.innerHTML = '';
-
-				filteredData.forEach(item => {
-					const row = document.createElement('tr');
-					row.innerHTML = `
-						<td>${item.nama_lengkap || '-'}</td>
-						<td>${item.jurusan || '-'}</td>
-						<td>${item.kelas || '-'}</td>
-						<td>${item.topik_penelitian || '-'}</td>
-						<td>
-							${item.status ? 
-								`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
-								: '-'}
-						</td>
-						<td>
-							${item.final_laporan70_id > 0 ? 
-								`<div class="dropdown">
-									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-										<i class="dw dw-more"></i>
-									</a>
-									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="viewLaporan70(${item.final_laporan70_id})">
-											<i class="dw dw-eye"></i> View
-										</a>
-										<a class="dropdown-item" href="#" onclick="downloadLaporan70(${item.final_laporan70_id})">
-											<i class="dw dw-download"></i> Download
-										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan70_id}, 'approved')">
-											<i class="dw dw-check"></i> Accept
-										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan70_id}, 'rejected')">
-											<i class="dw dw-delete-3"></i> Reject
-										</a>
-									</div>
-								</div>`
-								: '-'}
-						</td>
-					`;
-					tableBody.appendChild(row);
-				});
-			}
-
-			// Fungsi untuk menerapkan filter
-			function applyFilters() {
-				displayFilteredData();
-			}
-
 			// Fungsi untuk menentukan class badge berdasarkan status
 			function getStatusBadgeClass(status) {
 				switch (status?.toLowerCase()) {
@@ -997,146 +942,121 @@
 				}
 			}
 
-			// Fungsi untuk melihat detail Laporan70
-			function viewLaporan70(laporan70Id) {
-				window.location.href = `/admin/viewlaporan70?id=${laporan70Id}`;
-			}
-
 			// Fungsi untuk redirect ke profile
 			function redirectToProfile() {
 				window.location.href = '/admin/profile';
 			}
 
-			// Fungsi untuk mengupdate status Laporan70
-			async function updateStatus(id, status) {
-				try {
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finallaporan70/status', {
-						method: 'POST',
-						headers: {
-							'Authorization': `Bearer ${token}`,
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({
-							id: id,
-							status: status
-						})
-					});
-
-					if (!response.ok) {
-						throw new Error('Failed to update status');
-					}
-
-					const result = await response.json();
-					if (result.status === 'success') {
-						showAlert(`Laporan70 berhasil di${status}`, 'success');
-						loadLaporan70Data(); // Reload data
-					} else {
-						throw new Error(result.message || 'Failed to update status');
-					}
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to update status', 'danger');
-				}
-			}
-
-			// Fungsi untuk download Laporan70
-			function downloadLaporan70(id) {
-				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				window.open(`http://104.43.89.154:8082/finallaporan70/download/${id}?token=${token}`, '_blank');
-			}
-
-			// Load data Laporan70 saat halaman dimuat
+			// Fungsi untuk menampilkan data Laporan 70%
 			document.addEventListener('DOMContentLoaded', function() {
-				loadLaporan70Data();
+				// Get laporan70 ID from URL parameter
+				const urlParams = new URLSearchParams(window.location.search);
+				const laporan70Id = urlParams.get('id');
 
-				// Set username dari localStorage
-				const username = document.getElementById('username');
-				if (username) {
-					username.textContent = localStorage.getItem('username') || 'Admin';
+				if (!laporan70Id) {
+					showAlert('ID Laporan70 tidak ditemukan', 'danger');
+					window.location.href = '/admin/listlaporan70';
+					return;
 				}
+
+				loadLaporan70Details(laporan70Id);
 			});
 
-			// Fungsi untuk memuat data monitoring penilaian laporan70
-			async function loadMonitoringData() {
+			// Fungsi untuk memuat detail laporan70
+			async function loadLaporan70Details(laporan70Id) {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/monitoring/penilaian_laporan70', {
+					const response = await fetch(`http://104.43.89.154:8082/seminarlaporan70/detail/${laporan70Id}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
 					});
+					
 					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
+						throw new Error('Failed to fetch laporan70 details');
 					}
-					const data = await response.json();
-					console.log('Monitoring data response:', data); // Debug log
 
-					const tbody = document.querySelector('#monitoringTable tbody');
-					tbody.innerHTML = '';
+					const result = await response.json();
+					if (result.status !== 'success') {
+						throw new Error(result.message || 'Failed to load data');
+					}
 
-					if (data.status === 'success' && Array.isArray(data.data)) {
-						if (data.data.length > 0) {
-							data.data.forEach(item => {
-								const statusClass = item.status_kelengkapan === 'Lengkap' ? 'badge-success' : 'badge-warning';
+					const data = result.data;
 
-								tbody.innerHTML += `
-									<tr>
-										<td>${item.nama_taruna || '-'}</td>
-										<td>${item.jurusan || '-'}</td>
-										<td>${item.topik_penelitian || '-'}</td>
-										<td>${item.penguji1 || '-'}</td>
-										<td>${item.penguji2 || '-'}</td>
-										<td>
-											<span class="badge ${statusClass}">
-												${item.status_kelengkapan || 'Belum Lengkap'}
-											</span>
-										</td>
-										<td>
-											<div class="dropdown">
-												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-													href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
-												</a>
-												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.final_laporan70_id}); return false;">
-														<i class="dw dw-eye"></i> View Details
-													</a>
-												</div>
-											</div>
-										</td>
-									</tr>
-								`;
-							});
-						} else {
-							tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada data monitoring</td></tr>';
+					// Update informasi taruna
+					document.getElementById('nama-taruna').textContent = data.nama_taruna || '-';
+					document.getElementById('jurusan').textContent = data.jurusan || '-';
+					document.getElementById('kelas').textContent = data.kelas || '-';
+					document.getElementById('topik-penelitian').textContent = data.topik_penelitian || '-';
+
+					// Update ketua penguji
+					const ketuaPenguji = data.ketua_penguji || {};
+					updatePengujiSection('ketua', {
+						nama_lengkap: ketuaPenguji.nama_dosen || '-',
+						file_penilaian_path: ketuaPenguji.file_penilaian || '',
+						file_berita_acara_path: ketuaPenguji.file_berita_acara || '',
+						status_pengumpulan: ketuaPenguji.status_pengumpulan || 'belum'
+					});
+
+					// Update penguji 1
+					const penguji1 = data.penguji1 || {};
+					updatePengujiSection('penguji1', {
+						nama_lengkap: penguji1.nama_dosen || '-',
+						file_penilaian_path: penguji1.file_penilaian || '',
+						file_berita_acara_path: penguji1.file_berita_acara || '',
+						status_pengumpulan: penguji1.status_pengumpulan || 'belum'
+					});
+
+					// Update penguji 2
+					const penguji2 = data.penguji2 || {};
+					updatePengujiSection('penguji2', {
+						nama_lengkap: penguji2.nama_dosen || '-',
+						file_penilaian_path: penguji2.file_penilaian || '',
+						file_berita_acara_path: penguji2.file_berita_acara || '',
+						status_pengumpulan: penguji2.status_pengumpulan || 'belum'
+					});
+
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Terjadi kesalahan saat memuat data', 'danger');
+				}
+			}
+
+			// Fungsi untuk memperbarui data penguji
+			function updatePengujiSection(type, data) {
+				const namaEl = document.getElementById(`${type}`);
+				if (namaEl) namaEl.textContent = data.nama_lengkap;
+
+				const penilaianStatus = document.getElementById(`${type}-penilaian-status`);
+				const penilaianDownload = document.getElementById(`${type}-penilaian-download`);
+				if (penilaianStatus) {
+					if (data.file_penilaian_path) {
+						penilaianStatus.innerHTML = '<span class="badge-exists">Ada</span>';
+						if (penilaianDownload) {
+							penilaianDownload.style.display = 'inline-block';
+							penilaianDownload.href = `http://104.43.89.154:8082/download?path=${data.file_penilaian_path}`;
 						}
 					} else {
-						throw new Error(data.message || 'Invalid response format');
+						penilaianStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
+						if (penilaianDownload) penilaianDownload.style.display = 'none';
 					}
-				} catch (error) {
-					console.error('Error loading monitoring data:', error);
-					const tbody = document.querySelector('#monitoringTable tbody');
-					tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error: Gagal memuat data monitoring</td></tr>';
-					showAlert('Terjadi kesalahan saat memuat data monitoring: ' + error.message, 'danger');
+				}
+
+				const beritaAcaraStatus = document.getElementById(`${type}-berita-acara-status`);
+				const beritaAcaraDownload = document.getElementById(`${type}-berita-acara-download`);
+				if (beritaAcaraStatus) {
+					if (data.file_berita_acara_path) {
+						beritaAcaraStatus.innerHTML = '<span class="badge-exists">Ada</span>';
+						if (beritaAcaraDownload) {
+							beritaAcaraDownload.style.display = 'inline-block';
+							beritaAcaraDownload.href = `http://104.43.89.154:8082/download?path=${data.file_berita_acara_path}`;
+						}
+					} else {
+						beritaAcaraStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
+						if (beritaAcaraDownload) beritaAcaraDownload.style.display = 'none';
+					}
 				}
 			}
-
-			// Fungsi untuk menampilkan detail penilaian
-			function viewPenilaianDetails(finalLaporan70Id) {
-				console.log('Viewing details for final laporan70 ID:', finalLaporan70Id);
-				if (!finalLaporan70Id || finalLaporan70Id === 'undefined' || finalLaporan70Id === 'null') {
-					showAlert('ID Laporan70 tidak valid', 'danger');
-					return;
-				}
-				window.location.href = `/admin/detail_berkas_seminar_laporan70?id=${finalLaporan70Id}`;
-			}
-
-
-			// Load monitoring data saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', () => {
-				loadMonitoringData();
-			});
 
 		</script>
 
