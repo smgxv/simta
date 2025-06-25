@@ -127,7 +127,7 @@ func UploadSeminarProposalHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetSeminarProposalByDosenHandler menangani request untuk mendapatkan data seminar proposal berdasarkan ID dosen
-func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
+func GetFinalProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -138,7 +138,6 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil dosen_id dari query parameter
 	dosenID := r.URL.Query().Get("dosen_id")
 	if dosenID == "" {
 		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
@@ -151,7 +150,6 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Buka koneksi database
 	db, err := config.GetDB()
 	if err != nil {
 		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
@@ -159,13 +157,13 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Query untuk mendapatkan data seminar proposal
+	// Ambil final proposal yang diuji oleh dosen_id
 	query := `
-		SELECT sp.id, sp.user_id, sp.topik_penelitian, sp.file_proposal_path,
-			   t.nama_lengkap as taruna_nama
-		FROM seminar_proposal sp
-		JOIN taruna t ON sp.user_id = t.user_id
-		WHERE sp.ketua_penguji_id = ? OR sp.penguji1_id = ? OR sp.penguji2_id = ?
+		SELECT fp.id, fp.user_id, fp.topik_penelitian, fp.file_path, u.nama_lengkap
+		FROM final_proposal fp
+		JOIN users u ON fp.user_id = u.id
+		JOIN penguji_proposal pp ON fp.id = pp.final_proposal_id
+		WHERE pp.ketua_penguji_id = ? OR pp.penguji_1_id = ? OR pp.penguji_2_id = ?
 	`
 
 	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
@@ -175,7 +173,7 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	type ProposalData struct {
+	type FinalProposalData struct {
 		ID              int    `json:"id"`
 		UserID          int    `json:"user_id"`
 		TopikPenelitian string `json:"topik_penelitian"`
@@ -183,20 +181,20 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 		TarunaNama      string `json:"taruna_nama"`
 	}
 
-	var proposals []ProposalData
+	var data []FinalProposalData
 	for rows.Next() {
-		var p ProposalData
-		err := rows.Scan(&p.ID, &p.UserID, &p.TopikPenelitian, &p.FilePath, &p.TarunaNama)
+		var item FinalProposalData
+		err := rows.Scan(&item.ID, &item.UserID, &item.TopikPenelitian, &item.FilePath, &item.TarunaNama)
 		if err != nil {
-			http.Error(w, "Error scanning rows: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error scanning data: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		proposals = append(proposals, p)
+		data = append(data, item)
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   proposals,
+		"data":   data,
 	})
 }
 

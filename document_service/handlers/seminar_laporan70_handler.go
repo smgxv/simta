@@ -135,7 +135,6 @@ func GetSeminarLaporan70ByDosenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil dosen_id dari query parameter
 	dosenID := r.URL.Query().Get("dosen_id")
 	if dosenID == "" {
 		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
@@ -148,7 +147,6 @@ func GetSeminarLaporan70ByDosenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Buka koneksi database
 	db, err := config.GetDB()
 	if err != nil {
 		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
@@ -156,16 +154,15 @@ func GetSeminarLaporan70ByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Query untuk mendapatkan data seminar laporan70
 	query := `
-		SELECT sp.id, sp.user_id, sp.topik_penelitian, sp.file_laporan70_path,
-			   t.nama_lengkap as taruna_nama
-		FROM seminar_laporan70 sp
-		JOIN taruna t ON sp.user_id = t.user_id
-		WHERE sp.penguji1_id = ? OR sp.penguji2_id = ?
+		SELECT fl.id, fl.user_id, fl.topik_penelitian, fl.file_path, u.nama_lengkap
+		FROM final_laporan70 fl
+		JOIN users u ON fl.user_id = u.id
+		JOIN penguji_laporan70 pl ON fl.id = pl.final_laporan70_id
+		WHERE pl.penguji_1_id = ? OR pl.penguji_2_id = ?
 	`
 
-	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
+	rows, err := db.Query(query, dosenIDInt, dosenIDInt)
 	if err != nil {
 		http.Error(w, "Error querying database: "+err.Error(), http.StatusInternalServerError)
 		return
