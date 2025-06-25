@@ -242,7 +242,7 @@ func GetSeminarLaporan70TarunaListForDosenHandler(w http.ResponseWriter, r *http
 			OR pp.penguji_2_id = ?
 	`
 
-	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
+	rows, err := db.Query(query, dosenIDInt, dosenIDInt)
 	if err != nil {
 		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
 		return
