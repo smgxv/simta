@@ -128,6 +128,12 @@ func main() {
 	r.HandleFunc("/seminarlaporan70/detail/{id}", handlers.GetFinalLaporan70DetailHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/catatanperbaikanlaporan70/taruna", handlers.GetCatatanPerbaikanTarunaLaporan70Handler).Methods("GET", "OPTIONS")
 
+	// Laporan 100%
+	r.HandleFunc("/upload/laporan100", handlers.UploadLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/laporan100", handlers.GetLaporan100Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/laporan100/{id}", handlers.GetLaporan100ByIDHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/laporan100/edit", handlers.EditLaporan100Handler).Methods("PUT", "OPTIONS")
+
 	// Setup CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},

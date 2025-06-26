@@ -707,6 +707,34 @@ func ViewICPTaruna(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/taruna/viewicp_taruna.html")
 }
 
+// untuk halaman laporan 70% taruna
+func Laporan100(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "taruna" { // Ubah dari "admin" menjadi "taruna"
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the Proposal HTML file
+	http.ServeFile(w, r, "static/taruna/laporan100.html")
+}
+
 // DOSEN WEB SERVICE
 // Halaman dashboard dosen
 func DosenDashboard(w http.ResponseWriter, r *http.Request) {
