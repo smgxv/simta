@@ -109,7 +109,7 @@ func main() {
 	r.HandleFunc("/reviewlaporan70/dosen/list", handlers.GetReviewLaporan70DosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewlaporan70/dosen/detail", handlers.GetReviewLaporan70DosenDetailHandler).Methods("GET", "OPTIONS")
 
-	// Final Proposal routes
+	// Final Laporan 70% routes
 	r.HandleFunc("/finallaporan70/upload", handlers.UploadFinalLaporan70Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/finallaporan70/list", handlers.GetFinalLaporan70Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finallaporan70/all", handlers.GetAllFinalLaporan70WithTarunaHandler).Methods("GET", "OPTIONS")
@@ -133,6 +133,14 @@ func main() {
 	r.HandleFunc("/laporan100", handlers.GetLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan100/{id}", handlers.GetLaporan100ByIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan100/edit", handlers.EditLaporan100Handler).Methods("PUT", "OPTIONS")
+
+	// Final Laporan 100% routes
+	r.HandleFunc("/finallaporan100/upload", handlers.UploadFinalLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/finallaporan100/list", handlers.GetFinalLaporan100Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finallaporan100/all", handlers.GetAllFinalLaporan100WithTarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finallaporan100/status", handlers.UpdateFinalLaporan100StatusHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/finallaporan100/download/{id}", handlers.DownloadFinalLaporan100Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finallaporan100/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{

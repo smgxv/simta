@@ -1194,7 +1194,7 @@
 					
 					if (response.ok) {
 						// Tampilkan pesan sukses
-						showAlert('Proposal berhasil diunggah', 'success');
+						showAlert('Laporan 70% berhasil diunggah', 'success');
 						
 						// Reset form
 						this.reset();
@@ -1216,11 +1216,11 @@
 				} finally {
 					// Reset button state
 					submitButton.disabled = false;
-					submitButton.innerHTML = 'Tambah Proposal';
+					submitButton.innerHTML = 'Tambah Laporan 70%';
 				}
 			});
 
-			// Add function to open upload modal untuk mengunggah revisi Proposal
+			// Add function to open upload modal untuk mengunggah revisi Laporan 70%
 			function openUploadRevisionModal(dosenId, topikPenelitian) {
 				console.log('Opening modal with:', { dosenId, topikPenelitian });
 				document.getElementById('revisionDosenId').value = dosenId;
@@ -1228,7 +1228,7 @@
 				$('#uploadRevisionModal').modal('show');
 			}
 
-			// Add function to submit revision untuk mengunggah revisi Proposal
+			// Add function to submit revision untuk mengunggah revisi Laporan 70%
 			async function submitRevision() {
 				const form = document.getElementById('revisionForm');
 				const formData = new FormData(form);
@@ -1433,7 +1433,7 @@
 				}
 				
 				try {
-					console.log('Fetching Final Proposal data for user:', userId);
+					console.log('Fetching Final Laporan 70% data for user:', userId);
 					const response = await fetch(`http://104.43.89.154:8082/finallaporan70/list?user_id=${userId}`);
 					
 					if (!response.ok) {

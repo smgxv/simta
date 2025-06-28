@@ -159,7 +159,7 @@ func GetLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// DownloadFileProposalHandler digunakan untuk mengunduh file proposal
+// DownloadFileLaporan100Handler digunakan untuk mengunduh file proposal
 func DownloadFileLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 
@@ -312,7 +312,7 @@ func GetLaporan100ByIDHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// EditProposalHandler digunakan untuk mengedit proposal
+// EditLaporan100Handler digunakan untuk mengedit proposal
 func EditLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "PUT, OPTIONS")
