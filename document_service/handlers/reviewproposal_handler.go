@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -288,9 +289,14 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	dosenID := r.FormValue("dosen_id")
 	tarunaID := r.FormValue("taruna_id")
-	userID := r.FormValue("user_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
+
+	log.Println("=== DATA DITERIMA FRONTEND ===")
+	log.Println("dosen_id:", dosenID)
+	log.Println("taruna_id:", tarunaID)
+	log.Println("topik_penelitian:", topikPenelitian)
+	log.Println("keterangan:", keterangan)
 
 	if dosenID == "" || tarunaID == "" || topikPenelitian == "" {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -310,25 +316,19 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Verify taruna_id and user_id match
-	var verifiedTarunaID int
-	err = db.QueryRow("SELECT id FROM taruna WHERE id = ? AND user_id = ?", tarunaID, userID).Scan(&verifiedTarunaID)
+	// Ambil user_id dari taruna_id
+	var userID int
+	err = db.QueryRow("SELECT user_id FROM taruna WHERE id = ?", tarunaID).Scan(&userID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"status":  "error",
-				"message": "Invalid taruna_id and user_id combination",
-			})
-			return
-		}
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Database error: " + err.Error(),
+			"message": "Taruna tidak ditemukan berdasarkan taruna_id",
 		})
 		return
 	}
+	log.Println("user_id hasil lookup:", userID)
 
-	// Get the ICP ID using user_id and topik_penelitian
+	// Ambil ID proposal berdasarkan user_id dan topik_penelitian
 	var proposalID int
 	err = db.QueryRow(`
 		SELECT id 
@@ -338,16 +338,17 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Proposal not found for the given user and topic: " + err.Error(),
+			"message": "Proposal tidak ditemukan: " + err.Error(),
 		})
 		return
 	}
 
+	// Ambil file
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
+			"message": "Gagal mengambil file: " + err.Error(),
 		})
 		return
 	}
@@ -357,7 +358,7 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": "Gagal membuat direktori upload: " + err.Error(),
 		})
 		return
 	}
@@ -372,7 +373,7 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
+			"message": "Gagal membuat file: " + err.Error(),
 		})
 		return
 	}
@@ -382,7 +383,7 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
+			"message": "Gagal menyimpan file: " + err.Error(),
 		})
 		return
 	}
@@ -392,39 +393,37 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Failed to start transaction: " + err.Error(),
+			"message": "Gagal memulai transaksi: " + err.Error(),
 		})
 		return
 	}
 
-	// Update status ICP dalam transaksi
-	_, err = tx.Exec("UPDATE proposal SET status = ? WHERE id = ?",
-		"on review", proposalID)
+	// Update status proposal
+	_, err = tx.Exec("UPDATE proposal SET status = ? WHERE id = ?", "on review", proposalID)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Failed to update proposal status: " + err.Error(),
+			"message": "Gagal update status proposal: " + err.Error(),
 		})
 		return
 	}
 
-	// Get current cycle number
-	var cycleNumber int = 1
+	// Ambil nomor siklus
+	var cycleNumber int
 	err = tx.QueryRow(`
 		SELECT COALESCE(MAX(cycle_number), 0) + 1 
 		FROM review_proposal_dosen 
 		WHERE proposal_id = ?`, proposalID).Scan(&cycleNumber)
 	if err != nil {
-		// If error, default to 1
 		cycleNumber = 1
 	}
 
-	// Insert review ICP dosen dalam transaksi
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
+	// Simpan review dosen
 	_, err = tx.Exec(`
 		INSERT INTO review_proposal_dosen (
 			proposal_id, taruna_id, dosen_id, cycle_number,
@@ -440,18 +439,17 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
+			"message": "Gagal menyimpan review proposal: " + err.Error(),
 		})
 		return
 	}
 
-	// Commit transaksi
 	if err := tx.Commit(); err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Failed to commit transaction: " + err.Error(),
+			"message": "Gagal commit transaksi: " + err.Error(),
 		})
 		return
 	}
