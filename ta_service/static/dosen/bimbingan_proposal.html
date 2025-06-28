@@ -1164,6 +1164,7 @@
 					console.log('Form data before submission:', submissionData);
 
 					formData.append('dosen_id', dosenId);
+					formData.append('user_id', formData.get('user_id'));
 					
 					// Update status Proposal menjadi "on review"
 					const statusResponse = await fetch(`http://104.43.89.154:8082/updateproposalstatus?id=${formData.get('proposal_id')}&status=on review`, {

@@ -1164,6 +1164,7 @@
 					console.log('Form data before submission:', submissionData);
 
 					formData.append('dosen_id', dosenId);
+					formData.append('user_id', formData.get('user_id'));
 					
 					// Update status Laporan 70% menjadi "on review"
 					const statusResponse = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${formData.get('laporan70_id')}&status=on review`, {
