@@ -537,8 +537,8 @@
 								><span class="mtext">Tugas Akhir 100%</span>
 							</a>
 							<ul class="submenu">
-								<li><a href="/dosen/bimbingan_laporan70">Bimbingan Laporan 100%</a></li>
-								<li><a href="/dosen/pengujian_laporan70">Pengujian Laporan 100%</a></li>
+								<li><a href="/dosen/bimbingan_laporan100">Bimbingan Laporan 100%</a></li>
+								<li><a href="/dosen/pengujian_laporan100">Pengujian Laporan 100%</a></li>
 							</ul>
 						</li>
 
@@ -576,7 +576,7 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Review Laporan 70%</h4>
+									<h4>Review Laporan 100%</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
@@ -584,7 +584,7 @@
 											<a href="/dosen/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											Review Laporan 70%
+											Review Laporan 100%
 										</li>
 									</ol>
 								</nav>
@@ -592,10 +592,10 @@
 						</div>
 					</div>
 
-					<!-- Tabel Laporan 70% -->
+					<!-- Tabel Laporan 100% -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">List Laporan 70%</h4>
+							<h4 class="text-blue h4">List Laporan 100%</h4>
 						</div>
 						<div class="pb-20">
 							<table class="data-table table stripe hover nowrap">
@@ -613,12 +613,12 @@
 							</table>
 						</div>
 					</div>
-					<!-- Tabel Laporan 70% End -->
+					<!-- Tabel Laporan 100% End -->
 
-					<!-- Tabel Hasil Revisi Laporan 70% -->
+					<!-- Tabel Hasil Revisi Laporan 100% -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">Tabel Hasil Revisi Laporan 70%</h4>
+							<h4 class="text-blue h4">Tabel Hasil Revisi Laporan 100%</h4>
 							</div>
 						<div class="pb-20">
 							<table id="revisiTable" class="data-table table stripe hover nowrap">
@@ -637,7 +637,7 @@
 							</table>
 							</div>
 					</div>
-					<!-- Tabel Hasil Revisi Laporan 70% End -->
+					<!-- Tabel Hasil Revisi Laporan 100% End -->
 
 				</div>
 
@@ -668,14 +668,14 @@
 			<div class="modal-dialog" role="document">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h5 class="modal-title" id="uploadReviewModalLabel">Upload Review Laporan 70%</h5>
+						<h5 class="modal-title" id="uploadReviewModalLabel">Upload Review Laporan 100%</h5>
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 							<span aria-hidden="true">&times;</span>
 						</button>
 					</div>
 					<div class="modal-body">
 						<form id="reviewForm" enctype="multipart/form-data">
-							<input type="hidden" id="reviewLaporan70Id" name="laporan70_id">
+							<input type="hidden" id="reviewLaporan100Id" name="laporan100_id">
 							<input type="hidden" id="reviewTarunaId" name="taruna_id">
 							<input type="hidden" id="reviewTopikPenelitian" name="topik_penelitian">
 							<input type="hidden" id="reviewCycleNumber" name="cycle_number">
@@ -686,7 +686,7 @@
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
-								<label>File Review Laporan 70% (PDF)</label>
+								<label>File Review Laporan 100% (PDF)</label>
 								<input type="file" class="form-control" name="file" accept=".pdf" required>
 							</div>
 						</form>
@@ -704,38 +704,38 @@
 				window.location.href = '/dosen/profile';
 			}
 			
-			let laporan70DataGlobal = [];
+			let laporan100DataGlobal = [];
 
-			// Fungsi untuk menampilkan list Laporan 70% yang masuk ke dosen
-			async function loadLaporan70Data() {
+			// Fungsi untuk menampilkan list Laporan 100% yang masuk ke dosen
+			async function loadLaporan100Data() {
 				const dosenID = localStorage.getItem('dosenID');
-				console.log('Memuat Laporan70 untuk dosenID:', dosenID); // Debug
+				console.log('Memuat Laporan100 untuk dosenID:', dosenID); // Debug
 				if (!dosenID) return;
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/reviewlaporan70?dosen_id=${dosenID}`);
+					const response = await fetch(`http://104.43.89.154:8082/reviewlaporan100?dosen_id=${dosenID}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
 						const tbody = document.querySelector('.data-table tbody');
 						tbody.innerHTML = '';
 						
-						// First, display all Laporan 70%s immediately
-						data.data.forEach(laporan70 => {
+						// First, display all Laporan 100%s immediately
+						data.data.forEach(laporan100 => {
 							const statusClass = {
 								'pending': 'badge badge-warning',
 								'approved': 'badge badge-success',
 								'rejected': 'badge badge-danger',
 								'on review': 'badge badge-secondary'
-							}[laporan70.status] || 'badge badge-secondary';
+							}[laporan100.status] || 'badge badge-secondary';
 
 							// Create a unique ID for this row to update later
-							const rowId = `laporan70-row-${laporan70.id}`;
+							const rowId = `laporan100-row-${laporan100.id}`;
 
 							tbody.innerHTML += `
 								<tr id="${rowId}">
-									<td>${laporan70.topik_penelitian}</td>
-									<td>${laporan70.nama_taruna || 'Nama tidak tersedia'}</td>
-									<td><span class="${statusClass}">${laporan70.status}</span></td>
+									<td>${laporan100.topik_penelitian}</td>
+									<td>${laporan100.nama_taruna || 'Nama tidak tersedia'}</td>
+									<td><span class="${statusClass}">${laporan100.status}</span></td>
 									<td>
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
@@ -743,19 +743,19 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item view-laporan70-btn" href="#" data-laporan70-id="${laporan70.id}">
+												<a class="dropdown-item view-laporan100-btn" href="#" data-laporan100-id="${laporan100.id}">
 													<i class="dw dw-eye"></i> View
 												</a>
-												<a class="dropdown-item" href="#" onclick="openUploadReviewModalLaporan70('${laporan70.topik_penelitian}', ${laporan70.id}, ${laporan70.user_id})">
+												<a class="dropdown-item" href="#" onclick="openUploadReviewModalLaporan100('${laporan100.topik_penelitian}', ${laporan100.id}, ${laporan100.user_id})">
 													<i class="dw dw-upload"></i> Upload Review
 												</a>
-												<a class="dropdown-item accept-laporan70-btn" href="#" data-id="${laporan70.id}">
+												<a class="dropdown-item accept-laporan100-btn" href="#" data-id="${laporan100.id}">
 													<i class="dw dw-edit2"></i> Accept
 												</a>
-												<a class="dropdown-item reject-laporan70-btn" href="#" data-id="${laporan70.id}">
+												<a class="dropdown-item reject-laporan100-btn" href="#" data-id="${laporan100.id}">
 													<i class="dw dw-delete-3"></i> Reject
 												</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${laporan70.file_path}" download>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${laporan100.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -770,7 +770,7 @@
 					}
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Gagal memuat data Laporan 70%', 'danger');
+					showAlert('Gagal memuat data Laporan 100%', 'danger');
 				}
 			}
 			
@@ -885,8 +885,8 @@
 							}
 							
 							// Setelah dosenID tersedia, panggil fungsi-fungsi yang membutuhkannya
-							loadLaporan70Data();
-							loadLaporan70ReviewData();
+							loadLaporan100Data();
+							loadLaporan100ReviewData();
 						} else {
 							console.warn('Dosen with user_id', userId, 'not found');
 						}
@@ -897,57 +897,57 @@
 				});
 			});
 
-			// Panggil loadLaporan70Data saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', loadLaporan70Data);
+			// Panggil loadLaporan100Data saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', loadLaporan100Data);
 
 			// Event delegation untuk tombol Accept dan Reject
 			document.addEventListener('click', async function(e) {
-				if (e.target.closest('.accept-laporan70-btn')) {
+				if (e.target.closest('.accept-laporan100-btn')) {
 					e.preventDefault();
-					const btn = e.target.closest('.accept-laporan70-btn');
-					const laporan70Id = btn.getAttribute('data-id');
-					if (!laporan70Id) return;
+					const btn = e.target.closest('.accept-laporan100-btn');
+					const laporan100Id = btn.getAttribute('data-id');
+					if (!laporan100Id) return;
 
-					if (!confirm('Yakin ingin meng-approve Laporan 70% ini?')) return;
+					if (!confirm('Yakin ingin meng-approve Laporan 100% ini?')) return;
 
 					try {
-						const response = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${laporan70Id}&status=approved`, {
+						const response = await fetch(`http://104.43.89.154:8082/updatelaporan100status?id=${laporan100Id}&status=approved`, {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' }
 						});
 						const data = await response.json();
 						if (data.status === 'success') {
-							showAlert('Laporan 70% berhasil di-approve', 'success');
-							loadLaporan70Data(); // Refresh tabel
-							loadLaporan70ReviewData(); // Tambahkan ini
+							showAlert('Laporan 100% berhasil di-approve', 'success');
+							loadLaporan100Data(); // Refresh tabel
+							loadLaporan100ReviewData(); // Tambahkan ini
 						} else {
-							showAlert(data.message || 'Gagal meng-approve Laporan 70%', 'danger');
+							showAlert(data.message || 'Gagal meng-approve Laporan 100%', 'danger');
 						}
 					} catch (error) {
 						showAlert('Terjadi kesalahan pada server', 'danger');
 					}
 				}
 
-				if (e.target.closest('.reject-laporan70-btn')) {
+				if (e.target.closest('.reject-laporan100-btn')) {
 					e.preventDefault();
-					const btn = e.target.closest('.reject-laporan70-btn');
-					const laporan70Id = btn.getAttribute('data-id');
-					if (!laporan70Id) return;
+					const btn = e.target.closest('.reject-laporan100-btn');
+					const laporan100Id = btn.getAttribute('data-id');
+					if (!laporan100Id) return;
 
-					if (!confirm('Yakin ingin menolak Laporan 70% ini?')) return;
+					if (!confirm('Yakin ingin menolak Laporan 100% ini?')) return;
 
 					try {
-						const response = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${laporan70Id}&status=rejected`, {
+						const response = await fetch(`http://104.43.89.154:8082/updatelaporan100status?id=${laporan100Id}&status=rejected`, {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' }
 						});
 						const data = await response.json();
 						if (data.status === 'success') {
-							showAlert('Laporan 70% berhasil di-reject', 'success');
-							loadLaporan70Data(); // Refresh tabel
-							loadLaporan70ReviewData(); // Tambahkan ini
+							showAlert('Laporan 100% berhasil di-reject', 'success');
+							loadLaporan100Data(); // Refresh tabel
+							loadLaporan100ReviewData(); // Tambahkan ini
 						} else {
-							showAlert(data.message || 'Gagal menolak Laporan 70%', 'danger');
+							showAlert(data.message || 'Gagal menolak Laporan 100%', 'danger');
 						}
 					} catch (error) {
 						showAlert('Terjadi kesalahan pada server', 'danger');
@@ -981,9 +981,9 @@
 				}, 5000);
 			}
 
-			// Fungsi untuk memuat data revisi Laporan 70%
-			async function loadLaporan70ReviewData() {
-				console.log('loadLaporan70ReviewData function called');
+			// Fungsi untuk memuat data revisi Laporan 100%
+			async function loadLaporan100ReviewData() {
+				console.log('loadLaporan100ReviewData function called');
 				const dosenID = localStorage.getItem('dosenID');
 				console.log('Loading review data for dosenID:', dosenID);
 				if (!dosenID) {
@@ -992,7 +992,7 @@
 				}
 				
 				try {
-					const url = `http://104.43.89.154:8082/reviewlaporan70/taruna/list?dosen_id=${dosenID}`;
+					const url = `http://104.43.89.154:8082/reviewlaporan100/taruna/list?dosen_id=${dosenID}`;
 					console.log('Fetching from URL:', url);
 					
 					const response = await fetch(url);
@@ -1025,20 +1025,20 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${review.id}, ${review.laporan70_id})">
+													<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${review.id}, ${review.laporan100_id})">
 														<i class="dw dw-eye"></i> View Revisi
 													</a>
 													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Revisi
 													</a>
-													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.laporan70_id}, ${review.cycle_number || 0})">
+													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.laporan100_id}, ${review.cycle_number || 0})">
 														<i class="dw dw-upload"></i> Upload Review Baru
 													</a>
-													<a class="dropdown-item" href="#" onclick="updateLaporan70Status(${review.laporan70_id}, 'approved')">
-														<i class="dw dw-check"></i> Approve Laporan 70%
+													<a class="dropdown-item" href="#" onclick="updateLaporan100Status(${review.laporan100_id}, 'approved')">
+														<i class="dw dw-check"></i> Approve Laporan 100%
 													</a>
-													<a class="dropdown-item" href="#" onclick="updateLaporan70Status(${review.laporan70_id}, 'rejected')">
-														<i class="dw dw-cancel"></i> Reject Laporan 70%
+													<a class="dropdown-item" href="#" onclick="updateLaporan100Status(${review.laporan100_id}, 'rejected')">
+														<i class="dw dw-cancel"></i> Reject Laporan 100%
 													</a>
 												</div>
 											</div>
@@ -1065,20 +1065,20 @@
 			}
 
 			// Fungsi untuk membuka modal upload review pada tabel hasil revisi 
-			function openUploadReviewModal(topikPenelitian, tarunaId, laporan70Id, currentCycle) {
-				console.log('Opening modal with:', { topikPenelitian, tarunaId, laporan70Id, currentCycle });
+			function openUploadReviewModal(topikPenelitian, tarunaId, laporan100Id, currentCycle) {
+				console.log('Opening modal with:', { topikPenelitian, tarunaId, laporan100Id, currentCycle });
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
 				document.getElementById('reviewTarunaId').value = tarunaId;
-				document.getElementById('reviewLaporan70Id').value = laporan70Id;
+				document.getElementById('reviewLaporan100Id').value = laporan100Id;
 				document.getElementById('reviewCycleNumber').value = currentCycle + 1;
 				$('#uploadReviewModal').modal('show');
 			}
 
-			// Fungsi untuk membuka modal upload review pada tabel list Laporan 70%
-			async function openUploadReviewModalLaporan70(topikPenelitian, laporan70Id, userId) {
-				console.log('Opening modal with:', { topikPenelitian, laporan70Id, userId });
+			// Fungsi untuk membuka modal upload review pada tabel list Laporan 100%
+			async function openUploadReviewModalLaporan100(topikPenelitian, laporan100Id, userId) {
+				console.log('Opening modal with:', { topikPenelitian, laporan100Id, userId });
 				document.getElementById('reviewTopikPenelitian').value = topikPenelitian;
-				document.getElementById('reviewLaporan70Id').value = laporan70Id;
+				document.getElementById('reviewLaporan100Id').value = laporan100Id;
 				document.getElementById('reviewUserId').value = userId;
 				document.getElementById('reviewCycleNumber').value = 1;
 				
@@ -1119,24 +1119,24 @@
 				}
 			}
 
-			// Function to update Laporan 70% status (approve/reject)
-			async function updateLaporan70Status(laporan70Id, status) {
+			// Function to update Laporan 100% status (approve/reject)
+			async function updateLaporan100Status(laporan100Id, status) {
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${laporan70Id}&status=${status}`, {
+					const response = await fetch(`http://104.43.89.154:8082/updatelaporan100status?id=${laporan100Id}&status=${status}`, {
 						method: 'POST'
 					});
 					
 					const data = await response.json();
 					
 					if (data.status === 'success') {
-						showAlert(`Laporan 70% berhasil di-${status}`, 'success');
-						await loadLaporan70ReviewData();
+						showAlert(`Laporan 100% berhasil di-${status}`, 'success');
+						await loadLaporan100ReviewData();
 					} else {
-						showAlert(data.message || `Gagal mengubah status Laporan 70% ke ${status}`, 'danger');
+						showAlert(data.message || `Gagal mengubah status Laporan 100% ke ${status}`, 'danger');
 					}
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Terjadi kesalahan saat mengubah status Laporan 70%', 'danger');
+					showAlert('Terjadi kesalahan saat mengubah status Laporan 100%', 'danger');
 				}
 			}
 
@@ -1155,7 +1155,7 @@
 					// Debug log untuk melihat data yang akan dikirim
 					const submissionData = {
 						dosenId: dosenId,
-						laporan70Id: formData.get('laporan70_id'),
+						laporan100Id: formData.get('laporan100_id'),
 						tarunaId: formData.get('taruna_id'),
 						topikPenelitian: formData.get('topik_penelitian'),
 						keterangan: formData.get('keterangan'),
@@ -1165,17 +1165,17 @@
 
 					formData.append('dosen_id', dosenId);
 					
-					// Update status Laporan 70% menjadi "on review"
-					const statusResponse = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${formData.get('laporan70_id')}&status=on review`, {
+					// Update status Laporan 100% menjadi "on review"
+					const statusResponse = await fetch(`http://104.43.89.154:8082/updatelaporan100status?id=${formData.get('laporan100_id')}&status=on review`, {
 						method: 'POST'
 					});
 
 					if (!statusResponse.ok) {
-						throw new Error('Failed to update Laporan 70% status');
+						throw new Error('Failed to update Laporan 100% status');
 					}
 
 					// Kirim request untuk upload review
-					const response = await fetch('http://104.43.89.154:8082/upload/reviewlaporan70/dosen', {
+					const response = await fetch('http://104.43.89.154:8082/upload/reviewlaporan100/dosen', {
 						method: 'POST',
 						body: formData
 					});
@@ -1187,8 +1187,8 @@
 						showAlert('Review berhasil diunggah', 'success');
 						$('#uploadReviewModal').modal('hide');
 						form.reset();
-						await loadLaporan70Data();
-						await loadLaporan70ReviewData();
+						await loadLaporan100Data();
+						await loadLaporan100ReviewData();
 					} else {
 						showAlert(data.message || 'Gagal mengunggah review', 'danger');
 					}
@@ -1199,17 +1199,17 @@
 			}
 
 			// Fungsi untuk melihat detail revisi
-			function viewRevisiDetail(revisiId, laporan70Id) {
-				window.location.href = `/dosen/viewlaporan70_revisi?id=${revisiId}&laporan70_id=${laporan70Id}`;
+			function viewRevisiDetail(revisiId, laporan100Id) {
+				window.location.href = `/dosen/viewlaporan100_revisi?id=${revisiId}&laporan100_id=${laporan100Id}`;
 			}
 
-			// Event delegation untuk tombol view Laporan 70%
+			// Event delegation untuk tombol view Laporan 100%
 			document.querySelector('.data-table tbody').addEventListener('click', function(e) {
-				const btn = e.target.closest('.view-laporan70-btn');
+				const btn = e.target.closest('.view-laporan100-btn');
 				if (btn) {
 					e.preventDefault();
-					const laporan70Id = btn.getAttribute('data-laporan70-id');
-					window.location.href = `/dosen/viewlaporan70?id=${laporan70Id}`;
+					const laporan100Id = btn.getAttribute('data-laporan100-id');
+					window.location.href = `/dosen/viewlaporan100?id=${laporan100Id}`;
 				}
 			});
 

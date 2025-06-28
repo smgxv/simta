@@ -134,6 +134,18 @@ func main() {
 	r.HandleFunc("/laporan100/{id}", handlers.GetLaporan100ByIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan100/edit", handlers.EditLaporan100Handler).Methods("PUT", "OPTIONS")
 
+	// Review Laporan100 routes
+	r.HandleFunc("/reviewlaporan100", handlers.GetLaporan100ByDosenIDHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewlaporan100/dosen/list", handlers.GetReviewLaporan100DosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewlaporan100/dosen/detail", handlers.GetReviewLaporan100DosenDetailHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/upload/reviewlaporan100/dosen", handlers.UploadDosenReviewLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/updatelaporan100status", handlers.UpdateLaporan100StatusHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/upload/revisilaporan100/taruna", handlers.UploadTarunaRevisiLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/upload/reviewlaporan100", handlers.UploadReviewLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/reviewlaporan100/taruna/list", handlers.GetRevisiLaporan100TarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewlaporan100/dosen/list", handlers.GetReviewLaporan100DosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewlaporan70/dosen/detail", handlers.GetReviewLaporan100DosenDetailHandler).Methods("GET", "OPTIONS")
+
 	// Final Laporan 100% routes
 	r.HandleFunc("/finallaporan100/upload", handlers.UploadFinalLaporan100Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/finallaporan100/list", handlers.GetFinalLaporan100Handler).Methods("GET", "OPTIONS")
