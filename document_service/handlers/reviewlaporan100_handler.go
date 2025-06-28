@@ -289,15 +289,12 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 
 	dosenID := r.FormValue("dosen_id")
 	tarunaID := r.FormValue("taruna_id")
-	userID := r.FormValue("user_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	// 🚨 Tambahkan log di sini
 	log.Println("=== DATA DITERIMA FRONTEND ===")
 	log.Println("dosen_id:", dosenID)
 	log.Println("taruna_id:", tarunaID)
-	log.Println("user_id:", userID)
 	log.Println("topik_penelitian:", topikPenelitian)
 	log.Println("keterangan:", keterangan)
 
@@ -319,25 +316,19 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 	}
 	defer db.Close()
 
-	// Verify taruna_id and user_id match
-	var verifiedTarunaID int
-	err = db.QueryRow("SELECT id FROM taruna WHERE id = ? AND user_id = ?", tarunaID, userID).Scan(&verifiedTarunaID)
+	// Cari user_id berdasarkan taruna_id
+	var userID int
+	err = db.QueryRow("SELECT user_id FROM taruna WHERE id = ?", tarunaID).Scan(&userID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"status":  "error",
-				"message": "Invalid taruna_id and user_id combination",
-			})
-			return
-		}
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Database error: " + err.Error(),
+			"message": "Taruna tidak ditemukan berdasarkan taruna_id",
 		})
 		return
 	}
+	log.Println("user_id hasil lookup:", userID)
 
-	// Get the ICP ID using user_id and topik_penelitian
+	// Ambil ID laporan_100 berdasarkan user_id dan topik
 	var laporan100ID int
 	err = db.QueryRow(`
 		SELECT id 
@@ -347,16 +338,17 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Laporan 100% not found for the given user and topic: " + err.Error(),
+			"message": "Laporan 100% tidak ditemukan: " + err.Error(),
 		})
 		return
 	}
 
+	// Ambil file
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
+			"message": "Gagal mengambil file: " + err.Error(),
 		})
 		return
 	}
@@ -366,7 +358,7 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": "Gagal membuat direktori upload: " + err.Error(),
 		})
 		return
 	}
@@ -381,7 +373,7 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
+			"message": "Gagal membuat file: " + err.Error(),
 		})
 		return
 	}
@@ -391,7 +383,7 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
+			"message": "Gagal menyimpan file: " + err.Error(),
 		})
 		return
 	}
@@ -401,12 +393,12 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Failed to start transaction: " + err.Error(),
+			"message": "Gagal memulai transaksi: " + err.Error(),
 		})
 		return
 	}
 
-	// Update status ICP dalam transaksi
+	// Update status laporan_100
 	_, err = tx.Exec("UPDATE laporan_100 SET status = ? WHERE id = ?",
 		"on review", laporan100ID)
 	if err != nil {
@@ -414,26 +406,25 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Failed to update laporan 70% status: " + err.Error(),
+			"message": "Gagal update status laporan_100: " + err.Error(),
 		})
 		return
 	}
 
-	// Get current cycle number
-	var cycleNumber int = 1
+	// Hitung cycle_number
+	var cycleNumber int
 	err = tx.QueryRow(`
 		SELECT COALESCE(MAX(cycle_number), 0) + 1 
 		FROM review_laporan100_dosen 
 		WHERE laporan100_id = ?`, laporan100ID).Scan(&cycleNumber)
 	if err != nil {
-		// If error, default to 1
 		cycleNumber = 1
 	}
 
-	// Insert review ICP dosen dalam transaksi
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
+	// Insert review
 	_, err = tx.Exec(`
 		INSERT INTO review_laporan100_dosen (
 			laporan100_id, taruna_id, dosen_id, cycle_number,
@@ -443,31 +434,30 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 		laporan100ID, tarunaIDInt, dosenIDInt, cycleNumber,
 		topikPenelitian, filePath, keterangan,
 	)
-
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
+			"message": "Gagal menyimpan review: " + err.Error(),
 		})
 		return
 	}
 
-	// Commit transaksi
+	// Commit
 	if err := tx.Commit(); err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Failed to commit transaction: " + err.Error(),
+			"message": "Gagal commit transaksi: " + err.Error(),
 		})
 		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Review laporan 70% dosen berhasil diunggah dan status diperbarui",
+		"message": "Review laporan 100% dosen berhasil diunggah dan status diperbarui",
 		"data": map[string]interface{}{
 			"file_path": filePath,
 		},
