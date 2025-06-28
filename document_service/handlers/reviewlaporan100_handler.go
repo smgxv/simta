@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -80,13 +81,13 @@ func UpdateLaporan100StatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg := "Laporan 70% berhasil diupdate"
+	msg := "Laporan 100% berhasil diupdate"
 	if status == "approved" {
-		msg = "Laporan 70% berhasil di-approve"
+		msg = "Laporan 100% berhasil di-approve"
 	} else if status == "rejected" {
-		msg = "Laporan 70% berhasil di-reject"
+		msg = "Laporan 100% berhasil di-reject"
 	} else if status == "on review" {
-		msg = "Laporan 70% berhasil diubah ke status review"
+		msg = "Laporan 100% berhasil diubah ke status review"
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -292,6 +293,14 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
+	// 🚨 Tambahkan log di sini
+	log.Println("=== DATA DITERIMA FRONTEND ===")
+	log.Println("dosen_id:", dosenID)
+	log.Println("taruna_id:", tarunaID)
+	log.Println("user_id:", userID)
+	log.Println("topik_penelitian:", topikPenelitian)
+	log.Println("keterangan:", keterangan)
+
 	if dosenID == "" || tarunaID == "" || topikPenelitian == "" {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -338,7 +347,7 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Laporan 70% not found for the given user and topic: " + err.Error(),
+			"message": "Laporan 100% not found for the given user and topic: " + err.Error(),
 		})
 		return
 	}
@@ -562,13 +571,13 @@ func UploadTarunaRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Then get the Laporna 70% ID using the user_id
+	// Then get the Laporan 100% ID using the user_id
 	var laporan100ID int
 	err = db.QueryRow("SELECT id FROM laporan_100 WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&laporan100ID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Laporan 70% not found for the given taruna and topic",
+			"message": "Laporan 100% not found for the given taruna and topic",
 		})
 		return
 	}
@@ -687,7 +696,7 @@ func UploadTarunaRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request)
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Revisi Laporan 70% taruna berhasil diunggah dan status diperbarui",
+		"message": "Revisi Laporan 100% taruna berhasil diunggah dan status diperbarui",
 		"data": map[string]interface{}{
 			"file_path": filePath,
 		},
