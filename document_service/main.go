@@ -154,6 +154,17 @@ func main() {
 	r.HandleFunc("/finallaporan100/download/{id}", handlers.DownloadFinalLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finallaporan100/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
+	// Register seminar proposal routes
+	r.HandleFunc("/upload/seminarlaporan100", handlers.UploadSeminarLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/seminarlaporan100/dosen", handlers.GetSeminarLaporan100ByDosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/seminarlaporan100/taruna/list", handlers.GetSeminarLaporan100TarunaListForDosenHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/penilaian/laporan100", handlers.PenilaianLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/monitoring/penilaian_laporan100", handlers.GetMonitoringPenilaianLaporan100Handler).Methods("GET", "OPTIONS")
+
+	// Detail Berkas Seminar Proposal routes
+	r.HandleFunc("/seminarlaporan100/detail/{id}", handlers.GetFinalLaporan100DetailHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/catatanperbaikanlaporan100/taruna", handlers.GetCatatanPerbaikanTarunaLaporan100Handler).Methods("GET", "OPTIONS")
+
 	// Setup CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
