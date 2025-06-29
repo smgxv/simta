@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>SIMTA - Pengujian Laporan 70%</title>
+		<title>SIMTA - Pengujian Laporan100</title>
 
 		<!-- Site favicon -->
 		<link
@@ -537,9 +537,16 @@
 								><span class="mtext">Tugas Akhir 100%</span>
 							</a>
 							<ul class="submenu">
-								<li><a href="/dosen/bimbingan_laporan70">Bimbingan Laporan 100%</a></li>
-								<li><a href="/dosen/pengujian_laporan70">Pengujian Laporan 100%</a></li>
+								<li><a href="/dosen/bimbingan_laporan100">Bimbingan Laporan 100%</a></li>
+								<li><a href="/dosen/pengujian_laporan100">Pengujian Laporan 100%</a></li>
 							</ul>
+						</li>
+
+						<li>
+							<a href="/dosen/calendar" class="dropdown-toggle no-arrow">
+								<span class="micon bi bi-calendar4-week"></span
+								><span class="mtext">Calendar</span>
+							</a>
 						</li>
 
 						<li>
@@ -569,7 +576,7 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Penguji Laporan 70%</h4>
+									<h4>Penguji Laporan 100%</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
@@ -577,7 +584,7 @@
 											<a href="/dosen/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											Penguji Laporan 70%
+											Penguji Laporan 100%
 										</li>
 									</ol>
 								</nav>
@@ -585,10 +592,10 @@
 						</div>
 					</div>
 
-					<!-- Tabel Laporan 70% -->
+					<!-- Tabel Laporan 100% -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">List Laporan 70%</h4>
+							<h4 class="text-blue h4">List Laporan 100%</h4>
 						</div>
 						<div class="pb-20">
 							<table class="data-table table stripe hover nowrap">
@@ -605,21 +612,21 @@
 							</table>
 						</div>
 					</div>
-					<!-- Tabel Laporan 70% End -->
+					<!-- Tabel Laporan 100% End -->
 
-					<!-- Form Penilaian Laporan 70% -->
+					<!-- Form Penilaian Laporan 100% -->
 					<div class="pd-20 card-box mb-30">
 
 						<div class="clearfix">
 							<div class="pull-left">
-								<h4 class="text-blue h4">Penilaian Laporan 70%</h4>
-								<p class="mb-30">Masukan dokumen penilaian Laporan 70% !!</p>
+								<h4 class="text-blue h4">Penilaian Laporan 100%</h4>
+								<p class="mb-30">Masukan dokumen penilaian Laporan 100% !!</p>
 							</div>
 						</div>
 
-						<form id="laporan70Form" enctype="multipart/form-data">
+						<form id="laporan100Form" enctype="multipart/form-data">
 							<div class="form-group">
-								<input type="hidden" name="final_laporan70_id" id="finalLaporan70Id" />
+								<input type="hidden" name="final_laporan100_id" id="finalLaporan100Id" />
 							</div>
 							<div class="form-group">
 								<label>Nama Taruna</label>
@@ -650,7 +657,7 @@
 							<button type="submit" class="btn btn-primary">Submit</button>
 						</form>
 					</div>
-					<!-- Form Laporan 70% End -->
+					<!-- Form Laporan 100% End -->
 
 				</div>
 
@@ -795,7 +802,7 @@
 							}
 							
 							// Setelah dosenID tersedia, panggil fungsi-fungsi yang membutuhkannya
-							loadLaporan70Data();
+							loadLaporan100Data();
 							loadTarunaDropdown();
 						} else {
 							console.warn('Dosen with user_id', userId, 'not found');
@@ -833,8 +840,8 @@
 				}, 5000);
 			}
 
-			// Fungsi untuk memuat data laporan70
-			async function loadLaporan70Data() {
+			// Fungsi untuk memuat data laporan100
+			async function loadLaporan100Data() {
 				try {
 					const dosenId = localStorage.getItem('dosenID'); // Gunakan dosenID yang sudah di-map
 					if (!dosenId) {
@@ -842,8 +849,8 @@
 						return;
 					}
 
-					console.log('Fetching Laporan 70% data for dosen:', dosenId);
-					const response = await fetch(`http://104.43.89.154:8082/seminarlaporan70/dosen?dosen_id=${dosenId}`);
+					console.log('Fetching laporan 100% data for dosen:', dosenId);
+					const response = await fetch(`http://104.43.89.154:8082/seminarlaporan100/dosen?dosen_id=${dosenId}`);
 					const data = await response.json();
 
 					const tbody = document.querySelector('.data-table tbody');
@@ -855,11 +862,11 @@
 					tbody.innerHTML = '';
 
 					if (data.status === 'success' && data.data && data.data.length > 0) {
-						data.data.forEach(laporan70 => {
+						data.data.forEach(laporan100 => {
 							tbody.innerHTML += `
 								<tr>
-									<td>${laporan70.topik_penelitian || '-'}</td>
-									<td>${laporan70.taruna_nama || '-'}</td>
+									<td>${laporan100.topik_penelitian || '-'}</td>
+									<td>${laporan100.taruna_nama || '-'}</td>
 									<td>
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
@@ -867,10 +874,10 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${laporan70.file_path}" target="_blank">
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${laporan100.file_path}" target="_blank">
 													<i class="dw dw-eye"></i> View
 												</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${laporan70.file_path}" download>
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${laporan100.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -880,11 +887,11 @@
 							`;
 						});
 					} else {
-						tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada data laporan 70%</td></tr>';
+						tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada data Laporan 100%</td></tr>';
 					}
 				} catch (error) {
-					console.error('Error loading laporan 70% data:', error);
-					showAlert('Terjadi kesalahan saat memuat data Laporan 70%', 'danger');
+					console.error('Error loading Laporan 100% data:', error);
+					showAlert('Terjadi kesalahan saat memuat data Laporan 100%', 'danger');
 				}
 			}
 
@@ -897,21 +904,21 @@
 						return;
 					}
 
-					const response = await fetch(`http://104.43.89.154:8082/seminarlaporan70/taruna/list?dosen_id=${dosenId}`);
+					const response = await fetch(`http://104.43.89.154:8082/seminarlaporan100/taruna/list?dosen_id=${dosenId}`);
 					const data = await response.json();
 
 					const tarunaSelect = document.getElementById('tarunaSelect');
-					const finalLaporan70IdInput = document.getElementById('finalLaporan70Id');
+					const finalLaporan100IdInput = document.getElementById('finalLaporan100Id');
 					const topikInput = document.querySelector('input[name="topik_penelitian"]');
 
-					if (!tarunaSelect || !finalLaporan70IdInput || !topikInput) {
+					if (!tarunaSelect || !finalLaporan100IdInput || !topikInput) {
 						console.error('Elemen yang dibutuhkan tidak ditemukan');
 						return;
 					}
 
 					tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Nama Taruna</option>';
 
-					const laporan70Map = new Map();
+					const laporan100Map = new Map();
 					const topikMap = new Map();
 
 					if (data.status === 'success' && Array.isArray(data.data)) {
@@ -921,20 +928,20 @@
 							option.textContent = taruna.nama_lengkap;
 							tarunaSelect.appendChild(option);
 
-							laporan70Map.set(String(taruna.user_id), taruna.final_laporan70_id);
+							laporan100Map.set(String(taruna.user_id), taruna.final_laporan100_id);
 							topikMap.set(String(taruna.user_id), taruna.topik_penelitian);
 						});
 
 						tarunaSelect.addEventListener('change', function () {
 							const selectedId = this.value;
 
-							const finalLaporan70Id = laporan70Map.get(selectedId) || '';
+							const finalLaporan100Id = laporan100Map.get(selectedId) || '';
 							const topik = topikMap.get(selectedId) || '';
 
-							finalLaporan70IdInput.value = finalLaporan70Id;
+							finalLaporan100IdInput.value = finalLaporan100Id;
 							topikInput.value = topik;
 
-							console.log('final_laporan70_id:', finalLaporan70Id);
+							console.log('final_laporan100_id:', finalLaporan100Id);
 						});
 					} else {
 						showAlert('Tidak ada taruna yang sedang diuji', 'warning');
@@ -947,7 +954,7 @@
 
 			// Load data saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
-				loadLaporan70Data();
+				loadLaporan100Data();
 				loadTarunaDropdown();
 			});
 
@@ -964,18 +971,18 @@
 			});
 
 			// Handle form submission untuk penilaian laporan100
-			document.getElementById('laporan70Form').addEventListener('submit', async function(e) {
+			document.getElementById('laporan100Form').addEventListener('submit', async function(e) {
 				e.preventDefault();
 
 				// Validasi form
 				const tarunaSelect = document.getElementById('tarunaSelect');
-				const finalLaporan70Id = document.getElementById('finalLaporan70Id').value;
+				const finalLaporan100Id = document.getElementById('finalLaporan100Id').value;
 				const penilaianFile = document.getElementById('penilaianFile').files[0];
 				const beritaAcaraFile = document.getElementById('beritaAcaraFile').files[0];
 				const dosenId = localStorage.getItem('dosenID');
 
 				// Validasi semua field yang diperlukan
-				if (!tarunaSelect.value || !finalLaporan70Id || !penilaianFile || !beritaAcaraFile || !dosenId) {
+				if (!tarunaSelect.value || !finalLaporan100Id || !penilaianFile || !beritaAcaraFile || !dosenId) {
 					showAlert('Semua field harus diisi', 'warning');
 					return;
 				}
@@ -990,7 +997,7 @@
 					
 					// Tambahkan semua field yang diperlukan
 					formData.append('user_id', tarunaSelect.value);
-					formData.append('final_laporan70_id', finalLaporan70Id);
+					formData.append('final_laporan100_id', finalLaporan100Id);
 					formData.append('dosen_id', dosenId);
 					formData.append('penilaian_file', penilaianFile);
 					formData.append('berita_acara_file', beritaAcaraFile);
@@ -1001,7 +1008,7 @@
 						console.log(pair[0] + ':', pair[1]);
 					}
 
-					const response = await fetch('http://104.43.89.154:8082/penilaian/laporan70', {
+					const response = await fetch('http://104.43.89.154:8082/penilaian/laporan100', {
 						method: 'POST',
 						body: formData
 					});
@@ -1017,7 +1024,7 @@
 					}
 
 					if (response.ok && data.status === 'success') {
-						showAlert('Penilaian laporan70 berhasil disimpan', 'success');
+						showAlert('Penilaian Laporan 100% berhasil disimpan', 'success');
 						
 						// Reset form
 						this.reset();
@@ -1026,7 +1033,7 @@
 						});
 						
 						// Reload data
-						loadLaporan70Data();
+						loadLaporan100Data();
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat menyimpan penilaian');
 					}
