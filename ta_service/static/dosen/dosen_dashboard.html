@@ -568,23 +568,23 @@
 							<div class="d-flex justify-content-between align-items-center mb-20">
 								<h4 class="mb-0">ICP yang Ditelaah</h4>
 								<a href="/dosen/review_icp" class="btn btn-primary btn-sm">Lihat Semua</a>
-								</div>
+							</div>
 							<div class="table-responsive">
 								<table class="table table-hover">
-						<thead>
-							<tr>
+									<thead>
+										<tr>
 											<th>Nama Mahasiswa</th>
 											<th>Topik ICP</th>
 											<th>Status</th>
-							</tr>
-						</thead>
+										</tr>
+									</thead>
 									<tbody id="icp-list">
 										<!-- Data will be populated dynamically -->
 									</tbody>
 								</table>
-										</div>
-										</div>
-									</div>
+							</div>
+						</div>
+					</div>
 
 					<!-- Mahasiswa Bimbingan Card -->
 					<div class="col-lg-6 col-md-12 mb-20">
@@ -592,22 +592,22 @@
 							<div class="d-flex justify-content-between align-items-center mb-20">
 								<h4 class="mb-0">Mahasiswa Bimbingan</h4>
 								<a href="/dosen/bimbingan_proposal" class="btn btn-primary btn-sm">Lihat Semua</a>
-									</div>
+							</div>
 							<div class="table-responsive">
 								<table class="table table-hover">
 									<thead>
 										<tr>
 											<th>Nama Mahasiswa</th>
 											<th>Jurusan</th>
-							</tr>
+										</tr>
 									</thead>
 									<tbody id="bimbingan-list">
 										<!-- Data will be populated dynamically -->
 									</tbody>
 								</table>
-										</div>
-										</div>
-									</div>
+							</div>
+						</div>
+					</div>
 
 					<!-- Mahasiswa yang Diuji Card -->
 					<div class="col-lg-6 col-md-12 mb-20">
@@ -615,7 +615,7 @@
 							<div class="d-flex justify-content-between align-items-center mb-20">
 								<h4 class="mb-0">Pengujian Proposal</h4>
 								<a href="/dosen/pengujian_proposal" class="btn btn-primary btn-sm">Lihat Semua</a>
-									</div>
+							</div>
 							<div class="table-responsive">
 								<table class="table table-hover">
 									<thead>
@@ -624,66 +624,67 @@
 											<th>Topik</th>
 											<th>Penguji Ke</th>
 											<th>Status</th>
-							</tr>
+										</tr>
 									</thead>
 									<tbody id="pengujian-list">
 										<!-- Data will be populated dynamically -->
 									</tbody>
 								</table>
-										</div>
-										</div>
-									</div>
+							</div>
+						</div>
+					</div>
 
 					<!-- Laporan 70% Card -->
 					<div class="col-lg-6 col-md-12 mb-20">
 						<div class="card-box height-100-p pd-20">
 							<div class="d-flex justify-content-between align-items-center mb-20">
-								<h4 class="mb-0">Review Laporan 70%</h4>
+								<h4 class="mb-0">Pengujian Laporan 70%</h4>
 								<a href="/dosen/review_ta70" class="btn btn-primary btn-sm">Lihat Semua</a>
-									</div>
+							</div>
 							<div class="table-responsive">
 								<table class="table table-hover">
 									<thead>
 										<tr>
 											<th>Nama Mahasiswa</th>
-											<th>NIM</th>
-											<th>Judul</th>
+											<th>Topik</th>
+											<th>Penguji Ke</th>
 											<th>Status</th>
-							</tr>
+										</tr>
 									</thead>
 									<tbody id="ta70-list">
 										<!-- Data will be populated dynamically -->
 									</tbody>
 								</table>
-										</div>
-										</div>
-									</div>
+							</div>
+						</div>
+					</div>
 
 					<!-- Laporan 100% Card -->
 					<div class="col-lg-6 col-md-12 mb-20">
 						<div class="card-box height-100-p pd-20">
 							<div class="d-flex justify-content-between align-items-center mb-20">
-								<h4 class="mb-0">Review Laporan 100%</h4>
+								<h4 class="mb-0">Pengujian Laporan 100%</h4>
 								<a href="/dosen/review_ta100" class="btn btn-primary btn-sm">Lihat Semua</a>
-									</div>
+							</div>
 							<div class="table-responsive">
 								<table class="table table-hover">
 									<thead>
 										<tr>
 											<th>Nama Mahasiswa</th>
-											<th>NIM</th>
-											<th>Judul</th>
+											<th>Topik</th>
+											<th>Penguji Ke</th>
 											<th>Status</th>
-							</tr>
+										</tr>
 									</thead>
 									<tbody id="ta100-list">
 										<!-- Data will be populated dynamically -->
-						</tbody>
-					</table>
-				</div>
-				</div>
+									</tbody>
+								</table>
 							</div>
-							</div>
+						</div>
+					</div>
+
+				</div>
 			</div>
 		</div>
 
@@ -913,7 +914,7 @@
 			const pengujianListElement = document.getElementById('pengujian-list');
 			pengujianListElement.innerHTML = '';
 
-			fetch(`http://104.43.89.154:8081/dosen/dashboard/pengujian?userId=${userId}`, {
+			fetch(`http://104.43.89.154:8081/dosen/dashboard/pengujianproposal?userId=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
@@ -971,6 +972,70 @@
 				row.appendChild(cell);
 				pengujianListElement.appendChild(row);
 			});
+
+			// Fetch Review Laporan 100%
+			const ta100ListElement = document.getElementById('ta100-list');
+			ta100ListElement.innerHTML = '';
+
+			fetch(`http://104.43.89.154:8081/dosen/dashboard/pengujianlaporan100?userId=${userId}`, {
+				headers: {
+					'Authorization': `Bearer ${token}`
+				}
+			})
+			.then(response => {
+				if (!response.ok) throw new Error('Gagal mengambil data laporan 100%');
+				return response.json();
+			})
+			.then(data => {
+				if (Array.isArray(data) && data.length > 0) {
+					data.forEach(item => {
+						const row = document.createElement('tr');
+
+						const namaCell = document.createElement('td');
+						namaCell.textContent = item.nama_taruna || '-';
+
+						const topikCell = document.createElement('td');
+						topikCell.textContent = item.topik || '-';
+
+						const pengujiKeCell = document.createElement('td');
+						pengujiKeCell.textContent = item.penguji_ke || '-';
+
+						const statusCell = document.createElement('td');
+						statusCell.textContent = item.status || '-';
+
+						if (item.status === 'sudah') {
+							statusCell.classList.add('text-success', 'fw-bold');
+						} else {
+							statusCell.classList.add('text-danger', 'fw-bold');
+						}
+
+						row.appendChild(namaCell);
+						row.appendChild(topikCell);
+						row.appendChild(pengujiKeCell);
+						row.appendChild(statusCell);
+						ta100ListElement.appendChild(row);
+					});
+				} else {
+					const row = document.createElement('tr');
+					const cell = document.createElement('td');
+					cell.colSpan = 4;
+					cell.textContent = 'Tidak ada data laporan 100%';
+					cell.classList.add('text-center');
+					row.appendChild(cell);
+					ta100ListElement.appendChild(row);
+				}
+			})
+			.catch(err => {
+				console.error('Gagal memuat data laporan 100%:', err);
+				const row = document.createElement('tr');
+				const cell = document.createElement('td');
+				cell.colSpan = 4;
+				cell.textContent = 'Gagal memuat data';
+				cell.classList.add('text-center', 'text-danger');
+				row.appendChild(cell);
+				ta100ListElement.appendChild(row);
+			});
+
 		});
 
 		// Event listener untuk tombol logout

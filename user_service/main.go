@@ -36,7 +36,8 @@ func main() {
 	http.HandleFunc("/dosen/dashboard", middleware.AuthMiddleware(handlers.DosenDashboardHandler))
 	http.HandleFunc("/dosen/dashboard/icp", middleware.AuthMiddleware(handlers.ICPDitelaahHandler))
 	http.HandleFunc("/dosen/dashboard/bimbingan", middleware.AuthMiddleware(handlers.GetBimbinganByDosenHandler))
-	http.HandleFunc("/dosen/dashboard/pengujian", middleware.AuthMiddleware(handlers.GetPengujianProposalHandler))
+	http.HandleFunc("/dosen/dashboard/pengujianproposal", middleware.AuthMiddleware(handlers.GetPengujianProposalHandler))
+	http.HandleFunc("/dosen/dashboard/pengujianlaporan70", middleware.AuthMiddleware(handlers.GetPengujianLaporan70Handler))
 
 	http.HandleFunc("/taruna/pengujilaporan70", middleware.AuthMiddleware(handlers.GetTarunaWithPengujiLaporan70))
 	http.HandleFunc("/final_laporan70", middleware.AuthMiddleware(handlers.GetFinalLaporan70ByTarunaIDHandler))
