@@ -894,7 +894,18 @@
 
 						// Laporan 70%
 						const laporan70 = data.laporan_70 || {};
-						document.getElementById('status-ta70').textContent = laporan70.status || 'Belum Submit';
+						const laporan70Status = laporan70.status || 'Belum Submit';
+						const statusTa70Elem = document.getElementById('status-ta70');
+
+						let ta70BadgeClass = 'badge bg-secondary';
+						const statusLower = laporan70Status.toLowerCase();
+						if (statusLower === 'pending') ta70BadgeClass = 'badge bg-warning text-dark';
+						if (statusLower === 'approved') ta70BadgeClass = 'badge bg-success';
+						if (statusLower === 'rejected') ta70BadgeClass = 'badge bg-danger';
+						if (statusLower === 'belum submit') ta70BadgeClass = 'badge bg-secondary';
+
+						statusTa70Elem.innerHTML = `<span class="${ta70BadgeClass}">${laporan70Status}</span>`;
+
 						document.getElementById('penguji-1-laporan70').textContent = laporan70.penguji_1 || '-';
 						document.getElementById('penguji-2-laporan70').textContent = laporan70.penguji_2 || '-';
 
