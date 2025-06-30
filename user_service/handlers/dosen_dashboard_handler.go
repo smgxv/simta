@@ -411,7 +411,7 @@ func GetPengujianLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 			IFNULL(f.nama_lengkap, '-') AS nama_lengkap,
 			IFNULL(f.topik_penelitian, '-') AS topik_penelitian,
 			CASE 
-				WHEN pl.penguji_1_id = ? THEN 'Ketua Penguji'
+				WHEN pl.penguji_1_id = ? THEN 'Penguji 1'
 				WHEN pl.penguji_2_id = ? THEN 'Penguji 2'
 				ELSE 'Tidak Dikenal'
 			END AS penguji_ke,
@@ -459,6 +459,111 @@ func GetPengujianLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 
 	if len(results) == 0 {
 		log.Println("ℹ️ Tidak ada pengujian laporan 70% untuk dosen ID:", dosen.ID)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(results)
+}
+
+func GetPengujianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	userIDStr := r.URL.Query().Get("userId")
+	if userIDStr == "" {
+		http.Error(w, "userId is required", http.StatusBadRequest)
+		return
+	}
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, "Invalid userId", http.StatusBadRequest)
+		return
+	}
+
+	dosenModel, err := models.NewDosenModel()
+	if err != nil {
+		log.Println("MODEL ERROR:", err)
+		http.Error(w, "Model error", http.StatusInternalServerError)
+		return
+	}
+
+	dosen, err := dosenModel.GetDosenByUserID(userID)
+	if err != nil {
+		log.Println("DOSEN NOT FOUND:", err)
+		http.Error(w, "Dosen tidak ditemukan", http.StatusNotFound)
+		return
+	}
+
+	db, err := config.ConnectDB()
+	if err != nil {
+		log.Println("DB ERROR:", err)
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	query := `
+		SELECT 
+			IFNULL(t.nama_lengkap, '-') AS nama_lengkap,
+			IFNULL(f.topik_penelitian, '-') AS topik,
+			CASE 
+				WHEN pl.ketua_penguji_id = ? THEN 'Ketua Penguji'
+				WHEN pl.penguji_1_id = ? THEN 'Penguji 1'
+				WHEN pl.penguji_2_id = ? THEN 'Penguji 2'
+				ELSE 'Tidak Dikenal'
+			END AS penguji_ke,
+			COALESCE(pn.status_pengumpulan, 'belum') AS status_pengumpulan
+		FROM penguji_laporan100 pl
+		JOIN final_icp f ON f.id = pl.final_laporan100_id
+		JOIN users u ON u.id = pl.user_id
+		JOIN taruna t ON t.user_id = u.id
+		LEFT JOIN seminar_laporan100_penilaian pn 
+			ON pn.final_laporan100_id = pl.final_laporan100_id 
+			AND pn.dosen_id = ?
+		WHERE 
+			pl.ketua_penguji_id = ? OR 
+			pl.penguji_1_id = ? OR 
+			pl.penguji_2_id = ?
+	`
+
+	rows, err := db.Query(query, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID, dosen.ID)
+	if err != nil {
+		log.Println("QUERY ERROR:", err)
+		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type PengujianLaporan100 struct {
+		NamaTaruna        string `json:"nama_taruna"`
+		Topik             string `json:"topik"`
+		PengujiKe         string `json:"penguji_ke"`
+		StatusPengumpulan string `json:"status_pengumpulan"`
+	}
+
+	var results []PengujianLaporan100
+	for rows.Next() {
+		var nama, topik, pengujiKe, status string
+		err := rows.Scan(&nama, &topik, &pengujiKe, &status)
+		if err != nil {
+			log.Println("SCAN ERROR:", err)
+			http.Error(w, "Scan error", http.StatusInternalServerError)
+			return
+		}
+
+		results = append(results, PengujianLaporan100{
+			NamaTaruna:        nama,
+			Topik:             topik,
+			PengujiKe:         pengujiKe,
+			StatusPengumpulan: status,
+		})
 	}
 
 	w.WriteHeader(http.StatusOK)
