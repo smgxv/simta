@@ -481,6 +481,7 @@ func GetPengujianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "userId is required", http.StatusBadRequest)
 		return
 	}
+
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
 		http.Error(w, "Invalid userId", http.StatusBadRequest)
@@ -503,7 +504,7 @@ func GetPengujianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 
 	db, err := config.ConnectDB()
 	if err != nil {
-		log.Println("DB ERROR:", err)
+		log.Println("DB CONNECT ERROR:", err)
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -521,7 +522,7 @@ func GetPengujianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 			END AS penguji_ke,
 			COALESCE(pn.status_pengumpulan, 'belum') AS status_pengumpulan
 		FROM penguji_laporan100 pl
-		JOIN final_icp f ON f.id = pl.final_laporan100_id
+		JOIN final_laporan100 f ON f.id = pl.final_laporan100_id
 		JOIN users u ON u.id = pl.user_id
 		JOIN taruna t ON t.user_id = u.id
 		LEFT JOIN seminar_laporan100_penilaian pn 
@@ -541,24 +542,24 @@ func GetPengujianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	type PengujianLaporan100 struct {
+	type PengujianResponse struct {
 		NamaTaruna        string `json:"nama_taruna"`
 		Topik             string `json:"topik"`
 		PengujiKe         string `json:"penguji_ke"`
 		StatusPengumpulan string `json:"status_pengumpulan"`
 	}
 
-	var results []PengujianLaporan100
+	var results []PengujianResponse
 	for rows.Next() {
 		var nama, topik, pengujiKe, status string
 		err := rows.Scan(&nama, &topik, &pengujiKe, &status)
 		if err != nil {
 			log.Println("SCAN ERROR:", err)
-			http.Error(w, "Scan error", http.StatusInternalServerError)
+			http.Error(w, "Scan error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		results = append(results, PengujianLaporan100{
+		results = append(results, PengujianResponse{
 			NamaTaruna:        nama,
 			Topik:             topik,
 			PengujiKe:         pengujiKe,
