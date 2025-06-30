@@ -637,39 +637,55 @@
 						  </div>
 						</div>
 					  </div>
+
+					  <!-- Dosen pembimbing -->
 					  <div class="col-md-4">
 						<div class="card shadow-sm p-3 mb-4">
 						  <h6 class="text-muted">Dosen Pembimbing</h6>
 						  <p class="mb-0 fw-bold" id="dosen-pembimbing">-</p>
 						</div>
 					  </div>
+
+					  <!-- Proposal -->
 					  <div class="col-md-4">
 						<div class="card shadow-sm p-3 mb-4 border-left-info" style="border-left: 5px solid #17a2b8;">
 						  <h6 class="text-muted"><i class="bi bi-journal-check text-primary"></i> Proposal</h6>
 						  <p class="mb-1">
 							Status: <span class="fw-bold" id="status-proposal-badge"><span id="status-proposal">Menunggu</span></span>
 						  </p>
-						  <ul class="list-group list-group-flush" id="list-penguji">
-							<li class="list-group-item p-1">Ketua Penguji: <span id="penguji-ketua">-</span></li>
-							<li class="list-group-item p-1">Penguji 1: <span id="penguji-1">-</span></li>
-							<li class="list-group-item p-1">Penguji 2: <span id="penguji-2">-</span></li>
+						  <ul class="list-group list-group-flush" id="list-penguji-proposal">
+							<li class="list-group-item p-1">Ketua Penguji: <span id="penguji-ketua-proposal">-</span></li>
+							<li class="list-group-item p-1">Penguji 1: <span id="penguji-1-proposal">-</span></li>
+							<li class="list-group-item p-1">Penguji 2: <span id="penguji-2-proposal">-</span></li>
 						  </ul>
 						</div>
 					  </div>
+
+					  <!-- Laporan 70% -->
 					  <div class="col-md-4">
-						<div class="card shadow-sm p-3 mb-4">
+						<div class="card shadow-sm p-3 mb-4 border-left-info" style="border-left: 5px solid #17a2b8;">
 						  <h6 class="text-muted">Laporan 70%</h6>
 						  <p class="mb-1">Status: <span class="fw-bold" id="status-ta70">Belum Submit</span></p>
-						  <p class="mb-0">Penguji: <span id="penguji-ta70">-</span></p>
+						  <ul class="list-group list-group-flush" id="list-penguji">
+							<li class="list-group-item p-1">Penguji 1: <span id="penguji-1-laporan70">-</span></li>
+							<li class="list-group-item p-1">Penguji 2: <span id="penguji-2-laporan70">-</span></li>
+						  </ul>
 						</div>
 					  </div>
+
+					  <!-- Laporan 100% -->
 					  <div class="col-md-4">
-						<div class="card shadow-sm p-3 mb-4">
+						<div class="card shadow-sm p-3 mb-4 border-left-info" style="border-left: 5px solid #17a2b8;">
 						  <h6 class="text-muted">Laporan 100%</h6>
 						  <p class="mb-1">Status: <span class="fw-bold" id="status-ta100">Belum Submit</span></p>
-						  <p class="mb-0">Penguji: <span id="penguji-ta100">-</span></p>
+						  <ul class="list-group list-group-flush" id="list-penguji-proposal">
+							<li class="list-group-item p-1">Ketua Penguji: <span id="penguji-ketua-laporan100">-</span></li>
+							<li class="list-group-item p-1">Penguji 1: <span id="penguji-1-laporan100">-</span></li>
+							<li class="list-group-item p-1">Penguji 2: <span id="penguji-2-laporan100">-</span></li>
+						  </ul>
 						</div>
 					  </div>
+
 					</div>
 					<div class="progress mb-2">
 					  <div class="progress-bar bg-success" role="progressbar" style="width: 70%;" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100">70%</div>
@@ -790,111 +806,130 @@
 		}
 
 		// Modify the existing DOMContentLoaded event listener
-		document.addEventListener('DOMContentLoaded', function() {
-			// Cek token
+		document.addEventListener('DOMContentLoaded', function () {
 			const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 			if (!token) {
 				window.location.replace('/loginusers');
 				return;
 			}
 
-			// Ambil ID user dari localStorage
 			const userId = localStorage.getItem('userId');
 			if (!userId) {
 				window.location.replace('/loginusers');
 				return;
 			}
 
-			// Ambil data user untuk dropdown profile (username)
+			// Ambil data user untuk profile
 			fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
 			})
-			.then(response => response.json())
-			.then(user => {
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = user.username || user.nama_lengkap || 'User';
-				}
-			})
-			.catch(() => {
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = 'User';
-				}
-			});
+				.then(response => response.json())
+				.then(user => {
+					const usernameElement = document.getElementById('username');
+					if (usernameElement) {
+						usernameElement.textContent = user.username || user.nama_lengkap || 'User';
+					}
+				})
+				.catch(() => {
+					const usernameElement = document.getElementById('username');
+					if (usernameElement) {
+						usernameElement.textContent = 'User';
+					}
+				});
 
-			// Ambil data taruna dari API untuk dashboard
+			// Fetch data dashboard taruna
 			fetch(`http://104.43.89.154:8081/taruna/dashboard?user_id=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
 			})
-			.then(response => response.json())
-			.then(result => {
-				if (result.status === 'success' && result.data) {
-					document.getElementById('nama-taruna').textContent = result.data.nama_lengkap || '-';
-					document.getElementById('nama-taruna-header').textContent = result.data.nama_lengkap || 'Taruna';
-					document.getElementById('jurusan').textContent = result.data.jurusan || '-';
-					document.getElementById('kelas').textContent = result.data.kelas || '-';
-					// Tampilkan daftar ICP
-					const icpList = result.data.icp_list || [];
-					const statusIcpElem = document.getElementById('status-icp');
-					if (icpList.length === 0) {
-						statusIcpElem.innerHTML = '<span class="badge bg-secondary">Belum mengumpulkan ICP</span>';
+				.then(response => response.json())
+				.then(result => {
+					if (result.status === 'success' && result.data) {
+						const data = result.data;
+
+						// Identitas taruna
+						document.getElementById('nama-taruna').textContent = data.nama_lengkap || '-';
+						document.getElementById('nama-taruna-header').textContent = data.nama_lengkap || 'Taruna';
+						document.getElementById('jurusan').textContent = data.jurusan || '-';
+						document.getElementById('kelas').textContent = data.kelas || '-';
+
+						// ICP
+						const icpList = data.icp_list || [];
+						const statusIcpElem = document.getElementById('status-icp');
+						if (icpList.length === 0) {
+							statusIcpElem.innerHTML = '<span class="badge bg-secondary">Belum mengumpulkan ICP</span>';
+						} else {
+							let html = '<ul class="icp-list" style="padding-left: 1.2em;">';
+							icpList.forEach(icp => {
+								let badgeClass = 'badge bg-secondary';
+								if (icp.status?.toLowerCase() === 'pending') badgeClass = 'badge bg-warning text-dark';
+								if (icp.status?.toLowerCase() === 'approved') badgeClass = 'badge bg-success';
+								if (icp.status?.toLowerCase() === 'rejected') badgeClass = 'badge bg-danger';
+								html += `<li><b>${icp.topik_penelitian || '-'}</b> &mdash; <span class="${badgeClass}">${icp.status || '-'}</span></li>`;
+							});
+							html += '</ul>';
+							statusIcpElem.innerHTML = html;
+						}
+
+						// Dosen pembimbing
+						const dosenPembimbing = data.dosen_pembimbing;
+						document.getElementById('dosen-pembimbing').textContent =
+							(!dosenPembimbing || dosenPembimbing === '-') ? 'Anda belum memiliki dosen pembimbing' : dosenPembimbing;
+
+						// Proposal
+						const proposal = data.proposal || {};
+						const statusProposal = proposal.status || 'Menunggu';
+						const statusBadge = document.getElementById('status-proposal-badge');
+						let badgeClass = 'badge bg-secondary';
+						if (statusProposal.toLowerCase() === 'pending') badgeClass = 'badge bg-warning text-dark';
+						if (statusProposal.toLowerCase() === 'approved') badgeClass = 'badge bg-success';
+						if (statusProposal.toLowerCase() === 'rejected') badgeClass = 'badge bg-danger';
+						statusBadge.innerHTML = `<span class="${badgeClass}">${statusProposal}</span>`;
+						document.getElementById('penguji-ketua-proposal').textContent = proposal.penguji_ketua || '-';
+						document.getElementById('penguji-1-proposal').textContent = proposal.penguji_1 || '-';
+						document.getElementById('penguji-2-proposal').textContent = proposal.penguji_2 || '-';
+
+						// Laporan 70%
+						const laporan70 = data.laporan_70 || {};
+						document.getElementById('status-ta70').textContent = laporan70.status || 'Belum Submit';
+						document.getElementById('penguji-1-laporan70').textContent = laporan70.penguji_1 || '-';
+						document.getElementById('penguji-2-laporan70').textContent = laporan70.penguji_2 || '-';
+
 					} else {
-						let html = '<ul class="icp-list" style="padding-left: 1.2em;">';
-						icpList.forEach(icp => {
-							let badgeClass = 'badge bg-secondary';
-							if (icp.status && icp.status.toLowerCase() === 'pending') badgeClass = 'badge bg-warning text-dark';
-							if (icp.status && icp.status.toLowerCase() === 'approved') badgeClass = 'badge bg-success';
-							if (icp.status && icp.status.toLowerCase() === 'rejected') badgeClass = 'badge bg-danger';
-							html += `<li><b>${icp.topik_penelitian || '-'}</b> &mdash; <span class="${badgeClass}">${icp.status || '-'}</span></li>`;
-						});
-						html += '</ul>';
-						statusIcpElem.innerHTML = html;
+						// Fallback tampilan kosong
+						document.getElementById('nama-taruna').textContent = '-';
+						document.getElementById('nama-taruna-header').textContent = 'Taruna';
+						document.getElementById('jurusan').textContent = '-';
+						document.getElementById('kelas').textContent = '-';
+						document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
+						document.getElementById('dosen-pembimbing').textContent = 'Anda belum memiliki dosen pembimbing';
+						document.getElementById('status-proposal-badge').innerHTML = '<span class="badge bg-secondary">-</span>';
+						document.getElementById('penguji-ketua-proposal').textContent = '-';
+						document.getElementById('penguji-1-proposal').textContent = '-';
+						document.getElementById('penguji-2-proposal').textContent = '-';
+						document.getElementById('status-ta70').textContent = 'Belum Submit';
+						document.getElementById('penguji-1-laporan70').textContent = '-';
+						document.getElementById('penguji-2-laporan70').textContent = '-';
 					}
-					// Tampilkan dosen pembimbing
-					const dosenPembimbing = result.data.dosen_pembimbing;
-					document.getElementById('dosen-pembimbing').textContent = (!dosenPembimbing || dosenPembimbing === '-') ? 'Anda belum memiliki dosen pembimbing' : dosenPembimbing;
-					// Tampilkan proposal
-					const proposal = result.data.proposal || {};
-					const statusProposal = proposal.status || 'Menunggu';
-					const statusBadge = document.getElementById('status-proposal-badge');
-					let badgeClass = 'badge bg-secondary';
-					if (statusProposal.toLowerCase() === 'pending') badgeClass = 'badge bg-warning text-dark';
-					if (statusProposal.toLowerCase() === 'approved') badgeClass = 'badge bg-success';
-					if (statusProposal.toLowerCase() === 'rejected') badgeClass = 'badge bg-danger';
-					statusBadge.innerHTML = `<span class=\"${badgeClass}\">${statusProposal}</span>`;
-					document.getElementById('penguji-ketua').textContent = proposal.penguji_ketua || '-';
-					document.getElementById('penguji-1').textContent = proposal.penguji_1 || '-';
-					document.getElementById('penguji-2').textContent = proposal.penguji_2 || '-';
-				} else {
+				})
+				.catch(() => {
 					document.getElementById('nama-taruna').textContent = '-';
 					document.getElementById('nama-taruna-header').textContent = 'Taruna';
 					document.getElementById('jurusan').textContent = '-';
 					document.getElementById('kelas').textContent = '-';
 					document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
 					document.getElementById('dosen-pembimbing').textContent = 'Anda belum memiliki dosen pembimbing';
-					document.getElementById('status-proposal').textContent = 'Menunggu';
-					document.getElementById('penguji-ketua').textContent = '-';
-					document.getElementById('penguji-1').textContent = '-';
-					document.getElementById('penguji-2').textContent = '-';
-				}
-			})
-			.catch(() => {
-				document.getElementById('nama-taruna').textContent = '-';
-				document.getElementById('nama-taruna-header').textContent = 'Taruna';
-				document.getElementById('jurusan').textContent = '-';
-				document.getElementById('kelas').textContent = '-';
-				document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
-				document.getElementById('dosen-pembimbing').textContent = 'Anda belum memiliki dosen pembimbing';
-				document.getElementById('status-proposal').textContent = 'Menunggu';
-				document.getElementById('penguji-ketua').textContent = '-';
-				document.getElementById('penguji-1').textContent = '-';
-				document.getElementById('penguji-2').textContent = '-';
-			});
+					document.getElementById('status-proposal-badge').innerHTML = '<span class="badge bg-secondary">-</span>';
+					document.getElementById('penguji-ketua-proposal').textContent = '-';
+					document.getElementById('penguji-1-proposal').textContent = '-';
+					document.getElementById('penguji-2-proposal').textContent = '-';
+					document.getElementById('status-ta70').textContent = 'Belum Submit';
+					document.getElementById('penguji-1-laporan70').textContent = '-';
+					document.getElementById('penguji-2-laporan70').textContent = '-';
+				});
 		});
 
 		// Event listener untuk tombol logout

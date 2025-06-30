@@ -109,6 +109,38 @@ func TarunaDashboardHandler(w http.ResponseWriter, r *http.Request) {
 		"penguji_2":     penguji2,
 	}
 
+	// Ambil status dan ID laporan 70%
+	var laporan70Status string = "Belum Submit"
+	var finalLaporan70ID int
+	err = db.QueryRow("SELECT id, status FROM final_laporan70 WHERE user_id = ? ORDER BY created_at DESC LIMIT 1", userId).Scan(&finalLaporan70ID, &laporan70Status)
+	if err != nil {
+		laporan70Status = "Belum Submit"
+	}
+
+	// Default penguji
+	var laporan70Penguji1, laporan70Penguji2 string
+	laporan70Penguji1, laporan70Penguji2 = "-", "-"
+
+	// Ambil penguji jika ada finalTA70
+	if finalLaporan70ID != 0 {
+		row := db.QueryRow(`SELECT 
+			COALESCE(p1.nama_lengkap, '-') as penguji1,
+			COALESCE(p2.nama_lengkap, '-') as penguji2
+		FROM penguji_ta70 pt
+		LEFT JOIN dosen p1 ON pt.penguji_1_id = p1.id
+		LEFT JOIN dosen p2 ON pt.penguji_2_id = p2.id
+		WHERE pt.final_laporan70_id = ? LIMIT 1`, finalLaporan70ID)
+
+		row.Scan(&laporan70Penguji1, &laporan70Penguji2)
+	}
+
+	// Masukkan ke response data
+	data["laporan_70"] = map[string]interface{}{
+		"status":    laporan70Status,
+		"penguji_1": laporan70Penguji1,
+		"penguji_2": laporan70Penguji2,
+	}
+
 	json.NewEncoder(w).Encode(TarunaDashboardResponse{
 		Status: "success",
 		Data:   data,
