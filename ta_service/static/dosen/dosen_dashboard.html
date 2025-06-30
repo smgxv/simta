@@ -973,6 +973,70 @@
 				pengujianListElement.appendChild(row);
 			});
 
+			// Fetch Pengujian Laporan 70%
+			const ta70ListElement = document.getElementById('ta70-list');
+			ta70ListElement.innerHTML = '';
+
+			fetch(`http://104.43.89.154:8081/dosen/dashboard/pengujianlaporan70?userId=${userId}`, {
+				headers: {
+					'Authorization': `Bearer ${token}`
+				}
+			})
+			.then(response => {
+				if (!response.ok) throw new Error('Gagal mengambil data pengujian laporan 70%');
+				return response.json();
+			})
+			.then(data => {
+				if (Array.isArray(data) && data.length > 0) {
+					data.forEach(item => {
+						const row = document.createElement('tr');
+
+						const namaCell = document.createElement('td');
+						namaCell.textContent = item.nama_taruna || '-';
+
+						const topikCell = document.createElement('td');
+						topikCell.textContent = item.topik || '-';
+
+						const pengujiKeCell = document.createElement('td');
+						pengujiKeCell.textContent = item.penguji_ke || '-';
+
+						const statusCell = document.createElement('td');
+						statusCell.textContent = item.status_pengumpulan || '-';
+
+						if (item.status_pengumpulan === 'sudah') {
+							statusCell.classList.add('text-success', 'fw-bold');
+						} else {
+							statusCell.classList.add('text-danger', 'fw-bold');
+						}
+
+						row.appendChild(namaCell);
+						row.appendChild(topikCell);
+						row.appendChild(pengujiKeCell);
+						row.appendChild(statusCell);
+						ta70ListElement.appendChild(row);
+					});
+				} else {
+					const row = document.createElement('tr');
+					const cell = document.createElement('td');
+					cell.colSpan = 4;
+					cell.textContent = 'Tidak ada data pengujian laporan 70%';
+					cell.classList.add('text-center');
+					row.appendChild(cell);
+					ta70ListElement.appendChild(row);
+				}
+			})
+			.catch(err => {
+				console.error('Gagal memuat data pengujian laporan 70%:', err);
+				const row = document.createElement('tr');
+				const cell = document.createElement('td');
+				cell.colSpan = 4;
+				cell.textContent = 'Gagal memuat data';
+				cell.classList.add('text-center', 'text-danger');
+				row.appendChild(cell);
+				ta70ListElement.appendChild(row);
+			});
+
+
 			// Fetch Review Laporan 100%
 			const ta100ListElement = document.getElementById('ta100-list');
 			ta100ListElement.innerHTML = '';
