@@ -147,6 +147,47 @@ func TarunaDashboardHandler(w http.ResponseWriter, r *http.Request) {
 		"penguji_2": laporan70Penguji2,
 	}
 
+	// Ambil status dan ID laporan 100%
+	var laporan100Status string = "Belum Submit"
+	var finalLaporan100ID int
+	err = db.QueryRow("SELECT id, status FROM final_laporan100 WHERE user_id = ? ORDER BY created_at DESC LIMIT 1", userId).Scan(&finalLaporan100ID, &laporan100Status)
+	if err != nil {
+		laporan100Status = "Belum Submit"
+		finalLaporan100ID = 0
+	}
+
+	// Default penguji
+	var laporan100Ketua, laporan100Penguji1, laporan100Penguji2 string
+	laporan100Ketua, laporan100Penguji1, laporan100Penguji2 = "-", "-", "-"
+
+	// Ambil penguji jika ada
+	if finalLaporan100ID != 0 {
+		row := db.QueryRow(`
+			SELECT 
+				COALESCE(dk.nama_lengkap, '-') AS ketua,
+				COALESCE(d1.nama_lengkap, '-') AS penguji1,
+				COALESCE(d2.nama_lengkap, '-') AS penguji2
+			FROM penguji_laporan100 pl
+			LEFT JOIN dosen dk ON pl.ketua_penguji_id = dk.id
+			LEFT JOIN dosen d1 ON pl.penguji_1_id = d1.id
+			LEFT JOIN dosen d2 ON pl.penguji_2_id = d2.id
+			WHERE pl.final_laporan100_id = ? LIMIT 1
+		`, finalLaporan100ID)
+
+		err = row.Scan(&laporan100Ketua, &laporan100Penguji1, &laporan100Penguji2)
+		if err != nil {
+			laporan100Ketua, laporan100Penguji1, laporan100Penguji2 = "-", "-", "-"
+		}
+	}
+
+	// Masukkan ke dalam response JSON
+	data["laporan_100"] = map[string]interface{}{
+		"status":        laporan100Status,
+		"penguji_ketua": laporan100Ketua,
+		"penguji_1":     laporan100Penguji1,
+		"penguji_2":     laporan100Penguji2,
+	}
+
 	json.NewEncoder(w).Encode(TarunaDashboardResponse{
 		Status: "success",
 		Data:   data,

@@ -674,17 +674,17 @@
 					  </div>
 
 					  <!-- Laporan 100% -->
-					  <div class="col-md-4">
-						<div class="card shadow-sm p-3 mb-4 border-left-info" style="border-left: 5px solid #17a2b8;">
-						  <h6 class="text-muted">Laporan 100%</h6>
-						  <p class="mb-1">Status: <span class="fw-bold" id="status-ta100">Belum Submit</span></p>
-						  <ul class="list-group list-group-flush" id="list-penguji-proposal">
-							<li class="list-group-item p-1">Ketua Penguji: <span id="penguji-ketua-laporan100">-</span></li>
-							<li class="list-group-item p-1">Penguji 1: <span id="penguji-1-laporan100">-</span></li>
-							<li class="list-group-item p-1">Penguji 2: <span id="penguji-2-laporan100">-</span></li>
-						  </ul>
-						</div>
-					  </div>
+					 <div class="col-md-4">
+					 	<div class="card shadow-sm p-3 mb-4 border-left-info" style="border-left: 5px solid #17a2b8;">
+					 	<h6 class="text-muted">Laporan 100%</h6>
+					 	<p class="mb-1">Status: <span id="status-ta100">Belum Submit</span></p>
+					 	<ul class="list-group list-group-flush">
+					 		<li class="list-group-item p-1">Ketua Penguji: <span id="penguji-ketua-laporan100">-</span></li>
+					 		<li class="list-group-item p-1">Penguji 1: <span id="penguji-1-laporan100">-</span></li>
+					 		<li class="list-group-item p-1">Penguji 2: <span id="penguji-2-laporan100">-</span></li>
+					 	</ul>
+					 	</div>
+					 </div>
 
 					</div>
 					<div class="progress mb-2">
@@ -909,6 +909,24 @@
 						document.getElementById('penguji-1-laporan70').textContent = laporan70.penguji_1 || '-';
 						document.getElementById('penguji-2-laporan70').textContent = laporan70.penguji_2 || '-';
 
+						// Laporan 100%
+						const laporan100 = data.laporan_100 || {};
+						const laporan100Status = laporan100.status || 'Belum Submit';
+						const statusTa100Elem = document.getElementById('status-ta100');
+
+						let ta100BadgeClass = 'badge bg-secondary';
+						const status100Lower = laporan100Status.toLowerCase();
+						if (status100Lower === 'pending') ta100BadgeClass = 'badge bg-warning text-dark';
+						if (status100Lower === 'approved') ta100BadgeClass = 'badge bg-success';
+						if (status100Lower === 'rejected') ta100BadgeClass = 'badge bg-danger';
+						if (status100Lower === 'belum submit') ta100BadgeClass = 'badge bg-secondary';
+
+						statusTa100Elem.innerHTML = `<span class="${ta100BadgeClass}">${laporan100Status}</span>`;
+
+						document.getElementById('penguji-ketua-laporan100').textContent = laporan100.penguji_ketua || '-';
+						document.getElementById('penguji-1-laporan100').textContent = laporan100.penguji_1 || '-';
+						document.getElementById('penguji-2-laporan100').textContent = laporan100.penguji_2 || '-';
+
 					} else {
 						// Fallback tampilan kosong
 						document.getElementById('nama-taruna').textContent = '-';
@@ -924,6 +942,10 @@
 						document.getElementById('status-ta70').textContent = 'Belum Submit';
 						document.getElementById('penguji-1-laporan70').textContent = '-';
 						document.getElementById('penguji-2-laporan70').textContent = '-';
+						document.getElementById('status-ta100').textContent = 'Belum Submit';
+						document.getElementById('penguji-ketua-laporan100').textContent = '-';
+						document.getElementById('penguji-1-laporan100').textContent = '-';
+						document.getElementById('penguji-2-laporan100').textContent = '-';
 					}
 				})
 				.catch(() => {
@@ -940,6 +962,10 @@
 					document.getElementById('status-ta70').textContent = 'Belum Submit';
 					document.getElementById('penguji-1-laporan70').textContent = '-';
 					document.getElementById('penguji-2-laporan70').textContent = '-';
+					document.getElementById('status-ta100').textContent = 'Belum Submit';
+					document.getElementById('penguji-ketua-laporan100').textContent = '-';
+					document.getElementById('penguji-1-laporan100').textContent = '-';
+					document.getElementById('penguji-2-laporan100').textContent = '-';
 				});
 		});
 
