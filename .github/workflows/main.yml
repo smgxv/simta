@@ -67,10 +67,6 @@ jobs:
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
-        with:
-          projectBaseDir: .
-          organization: timothy-source
-          projectKey: timothy-source_secure-simta
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
