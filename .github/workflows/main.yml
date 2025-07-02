@@ -74,9 +74,6 @@ sast-analysis:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-
-
-
   # 4. DAST - OWASP ZAP on TA service
   # dast-analysis:
   #   name: DAST with OWASP ZAP
