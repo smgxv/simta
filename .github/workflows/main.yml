@@ -72,7 +72,14 @@ jobs:
       - name: Run SonarCloud Scanner
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./sonar-scanner-*/bin/sonar-scanner
+        run: |
+          ./sonar-scanner-*/bin/sonar-scanner \
+            -Dsonar.login=${SONAR_TOKEN} \
+            -Dsonar.projectKey=timothy-source_secure-simta \
+            -Dsonar.organization=timothy-source \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.sources=ta_service,user_service,document_service \
+            -Dsonar.exclusions=**/tests/**,**/vendor/**
 
   # 4. DAST - OWASP ZAP on TA service
   dast-analysis:
