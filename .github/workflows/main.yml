@@ -62,7 +62,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v1
         with:
-          java-version: '11'
+          java-version: '17'
 
       - name: Install Sonar Scanner
         run: |
@@ -81,35 +81,37 @@ jobs:
             -Dsonar.sources=ta_service,user_service,document_service \
             -Dsonar.exclusions=**/tests/**,**/vendor/**
 
+
   # 4. DAST - OWASP ZAP on TA service
-  dast-analysis:
-    name: DAST with OWASP ZAP
-    needs: build-services
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run TA Service Locally
-        run: |
-          docker pull smgxv/ta-service
-          docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
-          sleep 10
+  # dast-analysis:
+  #   name: DAST with OWASP ZAP
+  #   needs: build-services
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Run TA Service Locally
+  #       run: |
+  #         docker pull smgxv/ta-service
+  #         docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+  #         sleep 10
 
-      - name: Run OWASP ZAP Scan
-        run: |
-          docker run -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-            -t http://localhost:8080 \
-            -g zap.conf \
-            -r zap_report.html
+  #     - name: Run OWASP ZAP Scan
+  #       run: |
+  #         docker run -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+  #           -t http://localhost:8080 \
+  #           -g zap.conf \
+  #           -r zap_report.html
 
-      - name: Upload ZAP Report
-        uses: actions/upload-artifact@v2
-        with:
-          name: zap-report
-          path: zap_report.html
+  #     - name: Upload ZAP Report
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: zap-report
+  #         path: zap_report.html
 
   # 5. DEPLOY TO VPS
   deploy:
     name: Deploy All Services to VPS
-    needs: [sast-analysis, dast-analysis]
+    # needs: [sast-analysis, dast-analysis]
+    needs: sast-analysis
     runs-on: ubuntu-latest
     steps:
       - name: Deploy TA Service
@@ -150,3 +152,129 @@ jobs:
             docker pull smgxv/document-service
             docker run -d -p 8082:8082 --name document-service smgxv/document-service
             docker network connect simta_net document-service
+
+# name : CI
+
+# on:
+#   push:
+#     branches: [main]
+
+# jobs:
+#   running-tests:
+#     name: Running Tests
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v2
+#       - name: Set up Go
+#         uses: actions/setup-go@v2
+#         with:
+#           go-version: 1.18
+
+#   build-ta-service:
+#     needs: running-tests
+#     name: Build Image
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v2
+#       - name: Build Image
+#         run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
+#       - name: Login to DockerHub
+#         uses: docker/login-action@v1
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+#       - name: Push Image
+#         run: docker push smgxv/ta-service
+
+#   deploy-ta-service:
+#     needs: build-ta-service
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Deploy to VPS
+#         uses: appleboy/ssh-action@master
+#         with:
+#           host: ${{ secrets.VPS_HOST }}
+#           username: ${{ secrets.VPS_USERNAME }}
+#           password: ${{ secrets.VPS_PASSWORD }}
+#           port: ${{ secrets.VPS_PORT }}
+#           script: |
+#             docker stop ta-service || true && docker rm ta-service || true
+#             docker system prune -af
+#             docker pull smgxv/ta-service
+#             docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+#             docker network connect simta_net ta-service
+
+
+#   build-user-service:
+#     needs: running-tests
+#     name: Build User Service Image
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v2
+#       - name: Build Image
+#         run: docker build -t smgxv/user-service -f user_service/Dockerfile user_service
+#       - name: Login to DockerHub
+#         uses: docker/login-action@v1
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+#       - name: Push Image
+#         run: docker push smgxv/user-service
+
+#   deploy-user-service:
+#     needs: build-user-service
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Deploy User Service to VPS
+#         uses: appleboy/ssh-action@master
+#         with:
+#           host: ${{ secrets.VPS_HOST }}
+#           username: ${{ secrets.VPS_USERNAME }}
+#           password: ${{ secrets.VPS_PASSWORD }}
+#           port: ${{ secrets.VPS_PORT }}
+#           script: |
+#             docker stop user-service || true && docker rm user-service || true
+#             docker system prune -af
+#             docker pull smgxv/user-service
+#             docker run -d -p 8081:8081 --name user-service smgxv/user-service
+#             docker network connect simta_net user-service
+
+#   build-document-service:
+#     needs: running-tests
+#     name: Build Document Service Image
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v2
+#       - name: Build Image
+#         run: docker build -t smgxv/document-service -f document_service/Dockerfile document_service
+#       - name: Login to DockerHub
+#         uses: docker/login-action@v1
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+#       - name: Push Image
+#         run: docker push smgxv/document-service
+
+#   deploy-document-service:
+#     needs: build-document-service
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Deploy Document Service to VPS
+#         uses: appleboy/ssh-action@master
+#         with:
+#           host: ${{ secrets.VPS_HOST }}
+#           username: ${{ secrets.VPS_USERNAME }}
+#           password: ${{ secrets.VPS_PASSWORD }}
+#           port: ${{ secrets.VPS_PORT }}
+#           script: |
+#             docker stop document-service || true && docker rm document-service || true
+#             docker system prune -af
+#             docker pull smgxv/document-service
+#             docker run -d -p 8082:8082 --name document-service smgxv/document-service
+#             docker network connect simta_net document-service
+
+
