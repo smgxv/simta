@@ -182,12 +182,12 @@ func main() {
 	r.HandleFunc("/catatanperbaikanlaporan100/taruna", handlers.GetCatatanPerbaikanTarunaLaporan100Handler).Methods("GET", "OPTIONS")
 
 	// Revisi Laporan 100% routes
-	r.HandleFunc("/finallaporan100/upload", handlers.UploadRevisiLaporan100Handler).Methods("POST", "OPTIONS")
-	r.HandleFunc("/finallaporan100/list", handlers.GetRevisiLaporan100Handler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/finallaporan100/all", handlers.GetAllRevisiLaporan100WithTarunaHandler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/finallaporan100/status", handlers.UpdateRevisiLaporan100StatusHandler).Methods("POST", "OPTIONS")
-	r.HandleFunc("/finallaporan100/download/{id}", handlers.DownloadRevisiLaporan100Handler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/finallaporan100/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisilaporan100/upload", handlers.UploadRevisiLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/revisilaporan100/list", handlers.GetRevisiLaporan100Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisilaporan100/all", handlers.GetAllRevisiLaporan100WithTarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisilaporan100/status", handlers.UpdateRevisiLaporan100StatusHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/revisilaporan100/download/{id}", handlers.DownloadRevisiLaporan100Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisilaporan100/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{
