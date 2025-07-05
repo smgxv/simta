@@ -91,6 +91,14 @@ func main() {
 	r.HandleFunc("/seminarproposal/detail/{id}", handlers.GetFinalProposalDetailHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/catatanperbaikanproposal/taruna", handlers.GetCatatanPerbaikanTarunaProposalHandler).Methods("GET", "OPTIONS")
 
+	// Final Proposal routes
+	r.HandleFunc("/revisiproposal/upload", handlers.UploadRevisiProposalHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/revisiproposal/list", handlers.GetRevisiProposalHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisiproposal/all", handlers.GetAllRevisiProposalWithTarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisiproposal/status", handlers.UpdateRevisiProposalStatusHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/revisiproposal/download/{id}", handlers.DownloadRevisiProposalHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisiproposal/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
+
 	// Laporan 70%
 	r.HandleFunc("/upload/laporan70", handlers.UploadLaporan70Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/laporan70", handlers.GetLaporan70Handler).Methods("GET", "OPTIONS")
