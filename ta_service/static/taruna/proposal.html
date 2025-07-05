@@ -1442,6 +1442,8 @@
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 				
 				try {
+					// Tunggu sampai jurusan & kelas pasti terisi
+					await isiJurusanDanKelasDariTarunaFinalProposal();
 					const formData = new FormData(this);
 					const userId = localStorage.getItem('userId');
 					const token = localStorage.getItem('token');
