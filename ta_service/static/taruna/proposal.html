@@ -826,20 +826,6 @@
 						</div>
 
 						<form id="revisiProposalForm" enctype="multipart/form-data">
-							<!-- <div class="form-group">
-								<label>Jurusan</label>
-								<select class="custom-select" name="jurusan" id="finalJurusan" required onchange="updateFinalKelas()">
-									<option value="" disabled selected>Pilih Jurusan</option>
-									<option value="Keamanan Siber">Keamanan Siber</option>
-									<option value="Kriptografi">Kriptografi</option>
-								</select>
-							</div>
-							<div class="form-group">
-								<label>Kelas</label>
-								<select class="custom-select" name="kelas" id="finalKelas" required>
-									<option value="" disabled selected>Pilih Kelas</option>
-								</select>
-							</div> -->
 							<input type="hidden" name="jurusan" id="hiddenJurusanRevisi">
 							<input type="hidden" name="kelas" id="hiddenKelasRevisi">
 							<div class="form-group">
@@ -1500,6 +1486,8 @@
 					// Tambahkan user_id dan nama_lengkap ke formData
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
+					formData.append('jurusan', document.getElementById('hiddenJurusan').value);
+					formData.append('kelas', document.getElementById('hiddenKelas').value);
 					
 					const response = await fetch('http://104.43.89.154:8082/finalproposal/upload', {
 						method: 'POST',
@@ -1929,6 +1917,8 @@
 					// Tambahkan user_id dan nama_lengkap ke formData
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
+					formData.append('jurusan', document.getElementById('hiddenJurusanRevisi').value);
+					formData.append('kelas', document.getElementById('hiddenKelasRevisi').value);
 					
 					const response = await fetch('http://104.43.89.154:8082/revisiproposal/upload', {
 						method: 'POST',
