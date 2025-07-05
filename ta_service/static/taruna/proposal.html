@@ -840,8 +840,8 @@
 									<option value="" disabled selected>Pilih Kelas</option>
 								</select>
 							</div> -->
-							<input type="hidden" name="jurusan" id="hiddenJurusan">
-							<input type="hidden" name="kelas" id="hiddenKelas">
+							<input type="hidden" name="jurusan" id="hiddenJurusanRevisi">
+							<input type="hidden" name="kelas" id="hiddenKelasRevisi">
 							<div class="form-group">
 								<label>Topik Penelitian</label>
 								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
@@ -1376,7 +1376,7 @@
 			}
 
 			// Fungsi untuk mengisi jurusan dan kelas dari taruna
-			async function isiJurusanDanKelasDariTaruna() {
+			async function isiJurusanDanKelasDariTarunaFinalProposal() {
 				const userId = localStorage.getItem('userId');
 				const token = localStorage.getItem('token');
 				if (!userId || !token) return;
@@ -1400,9 +1400,35 @@
 				}
 			}
 
+			// Fungsi untuk mengisi jurusan dan kelas dari taruna
+			async function isiJurusanDanKelasDariTarunaRevisiProposal() {
+				const userId = localStorage.getItem('userId');
+				const token = localStorage.getItem('token');
+				if (!userId || !token) return;
+
+				try {
+					const res = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					headers: {
+						'Authorization': `Bearer ${token}`
+					}
+					});
+					const json = await res.json();
+					if (json.status === 'success' && Array.isArray(json.data)) {
+					const taruna = json.data.find(t => t.user_id === parseInt(userId));
+					if (taruna) {
+						document.getElementById('hiddenJurusanRevisi').value = taruna.jurusan || '';
+						document.getElementById('hiddenKelasRevisi').value = taruna.kelas || '';
+					}
+					}
+				} catch (err) {
+					console.error('Gagal ambil data taruna:', err);
+				}
+			}
+
 			// Panggil isiJurusanDanKelasDariTaruna saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
-				isiJurusanDanKelasDariTaruna();
+				isiJurusanDanKelasDariTarunaFinalProposal();
+				isiJurusanDanKelasDariTarunaRevisiProposal();
 			});
 
 			// Update nama file saat file dipilih untuk Final Proposal
