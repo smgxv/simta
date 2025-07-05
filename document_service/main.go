@@ -136,6 +136,14 @@ func main() {
 	r.HandleFunc("/seminarlaporan70/detail/{id}", handlers.GetFinalLaporan70DetailHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/catatanperbaikanlaporan70/taruna", handlers.GetCatatanPerbaikanTarunaLaporan70Handler).Methods("GET", "OPTIONS")
 
+	// Revisi Laporan 70% routes
+	r.HandleFunc("/revisilaporan70/upload", handlers.UploadRevisiLaporan70Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/revisilaporan70/list", handlers.GetRevisiLaporan70Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisilaporan70/all", handlers.GetAllRevisiLaporan70WithTarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisilaporan70/status", handlers.UpdateRevisiLaporan70StatusHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/revisilaporan70/download/{id}", handlers.DownloadRevisiLaporan70Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisilaporan70/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
+
 	// Laporan 100%
 	r.HandleFunc("/upload/laporan100", handlers.UploadLaporan100Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/laporan100", handlers.GetLaporan100Handler).Methods("GET", "OPTIONS")
@@ -172,6 +180,14 @@ func main() {
 	// Detail Berkas Seminar Proposal routes
 	r.HandleFunc("/seminarlaporan100/detail/{id}", handlers.GetFinalLaporan100DetailHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/catatanperbaikanlaporan100/taruna", handlers.GetCatatanPerbaikanTarunaLaporan100Handler).Methods("GET", "OPTIONS")
+
+	// Revisi Laporan 100% routes
+	r.HandleFunc("/finallaporan100/upload", handlers.UploadRevisiLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/finallaporan100/list", handlers.GetRevisiLaporan100Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finallaporan100/all", handlers.GetAllRevisiLaporan100WithTarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finallaporan100/status", handlers.UpdateRevisiLaporan100StatusHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/finallaporan100/download/{id}", handlers.DownloadRevisiLaporan100Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finallaporan100/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{

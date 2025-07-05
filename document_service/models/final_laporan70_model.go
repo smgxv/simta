@@ -5,32 +5,32 @@ import (
 	"document_service/entities"
 )
 
-type FinalLaporan70Model struct {
+type RevisiLaporan70Model struct {
 	db *sql.DB
 }
 
-func NewFinalLaporan70Model(db *sql.DB) *FinalLaporan70Model {
-	return &FinalLaporan70Model{
+func NewRevisiLaporan70Model(db *sql.DB) *RevisiLaporan70Model {
+	return &RevisiLaporan70Model{
 		db: db,
 	}
 }
 
-func (m *FinalLaporan70Model) Create(finalLaporan70 *entities.FinalLaporan70) error {
+func (m *RevisiLaporan70Model) Create(revisiLaporan70 *entities.RevisiLaporan70) error {
 	query := `
-		INSERT INTO final_laporan70 (
+		INSERT INTO revisi_laporan70 (
 			user_id, nama_lengkap, jurusan, 
 			kelas, topik_penelitian, file_path, keterangan, 
 			status
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := m.db.Exec(query,
-		finalLaporan70.UserID,
-		finalLaporan70.NamaLengkap,
-		finalLaporan70.Jurusan,
-		finalLaporan70.Kelas,
-		finalLaporan70.TopikPenelitian,
-		finalLaporan70.FilePath,
-		finalLaporan70.Keterangan,
+		revisiLaporan70.UserID,
+		revisiLaporan70.NamaLengkap,
+		revisiLaporan70.Jurusan,
+		revisiLaporan70.Kelas,
+		revisiLaporan70.TopikPenelitian,
+		revisiLaporan70.FilePath,
+		revisiLaporan70.Keterangan,
 		"pending", // default status
 	)
 
@@ -43,17 +43,17 @@ func (m *FinalLaporan70Model) Create(finalLaporan70 *entities.FinalLaporan70) er
 		return err
 	}
 
-	finalLaporan70.ID = int(id)
+	revisiLaporan70.ID = int(id)
 	return nil
 }
 
-func (m *FinalLaporan70Model) GetByUserID(userID string) ([]entities.FinalLaporan70, error) {
+func (m *RevisiLaporan70Model) GetByUserID(userID string) ([]entities.RevisiLaporan70, error) {
 	query := `
 		SELECT 
 			id, user_id, nama_lengkap, 
 			jurusan, kelas, topik_penelitian, file_path, 
 			keterangan, status, created_at, updated_at
-		FROM final_laporan70 
+		FROM revisi_laporan70 
 		WHERE user_id = ?
 		ORDER BY created_at DESC`
 
@@ -63,27 +63,27 @@ func (m *FinalLaporan70Model) GetByUserID(userID string) ([]entities.FinalLapora
 	}
 	defer rows.Close()
 
-	var finalLaporan70s []entities.FinalLaporan70
+	var revisiLaporan70s []entities.RevisiLaporan70
 	for rows.Next() {
-		var finalLaporan70 entities.FinalLaporan70
+		var revisiLaporan70 entities.RevisiLaporan70
 		err := rows.Scan(
-			&finalLaporan70.ID,
-			&finalLaporan70.UserID,
-			&finalLaporan70.NamaLengkap,
-			&finalLaporan70.Jurusan,
-			&finalLaporan70.Kelas,
-			&finalLaporan70.TopikPenelitian,
-			&finalLaporan70.FilePath,
-			&finalLaporan70.Keterangan,
-			&finalLaporan70.Status,
-			&finalLaporan70.CreatedAt,
-			&finalLaporan70.UpdatedAt,
+			&revisiLaporan70.ID,
+			&revisiLaporan70.UserID,
+			&revisiLaporan70.NamaLengkap,
+			&revisiLaporan70.Jurusan,
+			&revisiLaporan70.Kelas,
+			&revisiLaporan70.TopikPenelitian,
+			&revisiLaporan70.FilePath,
+			&revisiLaporan70.Keterangan,
+			&revisiLaporan70.Status,
+			&revisiLaporan70.CreatedAt,
+			&revisiLaporan70.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
-		finalLaporan70s = append(finalLaporan70s, finalLaporan70)
+		revisiLaporan70s = append(revisiLaporan70s, revisiLaporan70)
 	}
 
-	return finalLaporan70s, nil
+	return revisiLaporan70s, nil
 }
