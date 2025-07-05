@@ -25,7 +25,7 @@ func (d *TarunaModel) CreateTaruna(userID int, namaLengkap, jurusan string) erro
 
 func (d *TarunaModel) GetAllTaruna() ([]map[string]interface{}, error) {
 	rows, err := d.db.Query(`
-        SELECT t.id, t.user_id, t.nama_lengkap, t.jurusan 
+        SELECT t.id, t.user_id, t.nama_lengkap, t.jurusan, t.kelas
         FROM taruna t
         JOIN users u ON t.user_id = u.id
         WHERE u.role = 'Taruna'
@@ -38,9 +38,9 @@ func (d *TarunaModel) GetAllTaruna() ([]map[string]interface{}, error) {
 	var dosens []map[string]interface{}
 	for rows.Next() {
 		var id, userID int
-		var namaLengkap, jurusan string
+		var namaLengkap, jurusan, kelas string
 
-		err := rows.Scan(&id, &userID, &namaLengkap, &jurusan)
+		err := rows.Scan(&id, &userID, &namaLengkap, &jurusan, &kelas)
 		if err != nil {
 			return nil, err
 		}
@@ -50,6 +50,7 @@ func (d *TarunaModel) GetAllTaruna() ([]map[string]interface{}, error) {
 			"user_id":      userID,
 			"nama_lengkap": namaLengkap,
 			"jurusan":      jurusan,
+			"kelas":        kelas,
 		}
 		dosens = append(dosens, dosen)
 	}
