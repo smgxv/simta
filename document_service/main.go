@@ -196,7 +196,7 @@ func main() {
 	r.HandleFunc("/revisilaporan100/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
 	//Repositori
-	r.HandleFunc("/tugaskahir/all", handlers.GetAllRevisiLaporan100WithTarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/tugasakhir/all", handlers.GetAllRevisiLaporan100WithTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/tugasakhir/status", handlers.UpdateRevisiLaporan100StatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/tugasakhir/download/{id}", handlers.DownloadRevisiLaporan100Handler).Methods("GET", "OPTIONS")
 
