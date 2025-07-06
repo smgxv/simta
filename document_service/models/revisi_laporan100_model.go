@@ -15,43 +15,39 @@ func NewRevisiLaporan100Model(db *sql.DB) *RevisiLaporan100Model {
 	}
 }
 
-func (m *RevisiLaporan100Model) Create(revisiLaporan100 *entities.RevisiLaporan100) error {
+func (m *RevisiLaporan100Model) Create(revisi *entities.RevisiLaporan100) error {
 	query := `
 		INSERT INTO revisi_laporan100 (
-			user_id, nama_lengkap, jurusan, 
-			kelas, topik_penelitian, file_path, keterangan, 
-			status
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+			user_id, nama_lengkap, jurusan, kelas, tahun_akademik,
+			topik_penelitian, abstrak_id, abstrak_en, kata_kunci, link_repo,
+			file_path, file_produk_path, file_bap_path,
+			keterangan, status
+		)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := m.db.Exec(query,
-		revisiLaporan100.UserID,
-		revisiLaporan100.NamaLengkap,
-		revisiLaporan100.Jurusan,
-		revisiLaporan100.Kelas,
-		revisiLaporan100.TopikPenelitian,
-		revisiLaporan100.FilePath,
-		revisiLaporan100.Keterangan,
-		"pending", // default status
+		revisi.UserID, revisi.NamaLengkap, revisi.Jurusan, revisi.Kelas, revisi.TahunAkademik,
+		revisi.TopikPenelitian, revisi.AbstrakID, revisi.AbstrakEN, revisi.KataKunci, revisi.LinkRepo,
+		revisi.FilePath, revisi.FileProdukPath, revisi.FileBapPath,
+		revisi.Keterangan, "pending",
 	)
-
 	if err != nil {
 		return err
 	}
-
 	id, err := result.LastInsertId()
 	if err != nil {
 		return err
 	}
-
-	revisiLaporan100.ID = int(id)
+	revisi.ID = int(id)
 	return nil
 }
 
 func (m *RevisiLaporan100Model) GetByUserID(userID string) ([]entities.RevisiLaporan100, error) {
 	query := `
 		SELECT 
-			id, user_id, nama_lengkap, 
-			jurusan, kelas, topik_penelitian, file_path, 
+			id, user_id, nama_lengkap, jurusan, kelas, tahun_akademik,
+			topik_penelitian, abstrak_id, abstrak_en, kata_kunci, link_repo,
+			file_path, file_produk_path, file_bap_path,
 			keterangan, status, created_at, updated_at
 		FROM revisi_laporan100 
 		WHERE user_id = ?
@@ -63,27 +59,19 @@ func (m *RevisiLaporan100Model) GetByUserID(userID string) ([]entities.RevisiLap
 	}
 	defer rows.Close()
 
-	var revisiLaporan100s []entities.RevisiLaporan100
+	var results []entities.RevisiLaporan100
 	for rows.Next() {
-		var revisiLaporan100 entities.RevisiLaporan100
+		var r entities.RevisiLaporan100
 		err := rows.Scan(
-			&revisiLaporan100.ID,
-			&revisiLaporan100.UserID,
-			&revisiLaporan100.NamaLengkap,
-			&revisiLaporan100.Jurusan,
-			&revisiLaporan100.Kelas,
-			&revisiLaporan100.TopikPenelitian,
-			&revisiLaporan100.FilePath,
-			&revisiLaporan100.Keterangan,
-			&revisiLaporan100.Status,
-			&revisiLaporan100.CreatedAt,
-			&revisiLaporan100.UpdatedAt,
+			&r.ID, &r.UserID, &r.NamaLengkap, &r.Jurusan, &r.Kelas, &r.TahunAkademik,
+			&r.TopikPenelitian, &r.AbstrakID, &r.AbstrakEN, &r.KataKunci, &r.LinkRepo,
+			&r.FilePath, &r.FileProdukPath, &r.FileBapPath,
+			&r.Keterangan, &r.Status, &r.CreatedAt, &r.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
-		revisiLaporan100s = append(revisiLaporan100s, revisiLaporan100)
+		results = append(results, r)
 	}
-
-	return revisiLaporan100s, nil
+	return results, nil
 }

@@ -19,7 +19,7 @@ import (
 
 // Handler untuk mengupload final proposal
 func UploadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
+	// CORS setup
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -30,7 +30,7 @@ func UploadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	err := r.ParseMultipartForm(20 << 20) // 20 MB
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -39,108 +39,117 @@ func UploadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get form values
+	// Ambil data form
 	userID := r.FormValue("user_id")
 	namaLengkap := r.FormValue("nama_lengkap")
 	jurusan := r.FormValue("jurusan")
 	kelas := r.FormValue("kelas")
+	tahunAkademik := r.FormValue("tahun_akademik")
 	topikPenelitian := r.FormValue("topik_penelitian")
+	abstrakID := r.FormValue("abstrak_id")
+	abstrakEN := r.FormValue("abstrak_en")
+	kataKunci := r.FormValue("kata_kunci")
+	linkRepo := r.FormValue("link_repo")
 	keterangan := r.FormValue("keterangan")
 
-	// Validate required fields
+	// Validasi sederhana
 	if userID == "" || namaLengkap == "" || topikPenelitian == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
-	// Handle file upload
-	file, handler, err := r.FormFile("file")
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
-		})
-		return
-	}
-	defer file.Close()
-
-	// Create upload directory if not exists
 	uploadDir := "uploads/finallaporan100"
 	if err := os.MkdirAll(uploadDir, 0777); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": "Gagal membuat direktori upload: " + err.Error(),
 		})
 		return
 	}
 
-	// Generate unique filename
-	filename := fmt.Sprintf("FINAL_LAPORAN100_%s_%s_%s",
-		userID,
-		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
-
-	// Create the file
-	dst, err := os.Create(filePath)
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	// Copy the uploaded file to the created file
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
-		})
-		return
+	// ==== UPLOAD FILE UTAMA (PDF) ====
+	var filePath string
+	file, handler, err := r.FormFile("file_laporan")
+	if err == nil {
+		defer file.Close()
+		filename := fmt.Sprintf("FINAL_LAPORAN100_%s_%s_%s", userID, time.Now().Format("20060102150405"), handler.Filename)
+		filePath = filepath.Join(uploadDir, filename)
+		dst, err := os.Create(filePath)
+		if err != nil {
+			json.NewEncoder(w).Encode(map[string]interface{}{"status": "error", "message": "Gagal membuat file: " + err.Error()})
+			return
+		}
+		defer dst.Close()
+		io.Copy(dst, file)
 	}
 
-	// Connect to database
+	// ==== UPLOAD FILE PRODUK TA ====
+	var fileProdukPath string
+	produkFile, produkHandler, err := r.FormFile("file_produk_ta")
+	if err == nil {
+		defer produkFile.Close()
+		produkFilename := fmt.Sprintf("PRODUK_TA_%s_%s", userID, produkHandler.Filename)
+		fileProdukPath = filepath.Join(uploadDir, produkFilename)
+		dst, _ := os.Create(fileProdukPath)
+		defer dst.Close()
+		io.Copy(dst, produkFile)
+	}
+
+	// ==== UPLOAD FILE BAP ====
+	var fileBapPath string
+	bapFile, bapHandler, err := r.FormFile("file_bap")
+	if err == nil {
+		defer bapFile.Close()
+		bapFilename := fmt.Sprintf("BAP_%s_%s", userID, bapHandler.Filename)
+		fileBapPath = filepath.Join(uploadDir, bapFilename)
+		dst, _ := os.Create(fileBapPath)
+		defer dst.Close()
+		io.Copy(dst, bapFile)
+	}
+
+	// Simpan ke database
 	db, err := config.GetDB()
 	if err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error connecting to database: " + err.Error(),
-		})
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "error", "message": "Gagal koneksi database: " + err.Error()})
 		return
 	}
 	defer db.Close()
 
-	// Create Final Proposal record
-	revisiLaporan100Model := models.NewRevisiLaporan100Model(db)
-	revisiLaporan100 := &entities.RevisiLaporan100{
+	revisi := &entities.RevisiLaporan100{
 		UserID:          utils.ParseInt(userID),
 		NamaLengkap:     namaLengkap,
 		Jurusan:         jurusan,
 		Kelas:           kelas,
+		TahunAkademik:   tahunAkademik,
 		TopikPenelitian: topikPenelitian,
+		AbstrakID:       abstrakID,
+		AbstrakEN:       abstrakEN,
+		KataKunci:       kataKunci,
+		LinkRepo:        linkRepo,
 		FilePath:        filePath,
+		FileProdukPath:  fileProdukPath,
+		FileBapPath:     fileBapPath,
 		Keterangan:      keterangan,
 	}
 
-	if err := revisiLaporan100Model.Create(revisiLaporan100); err != nil {
-		os.Remove(filePath)
+	model := models.NewRevisiLaporan100Model(db)
+	if err := model.Create(revisi); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
+			"message": "Gagal menyimpan data ke database: " + err.Error(),
 		})
 		return
 	}
 
+	// Respon sukses
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Final Laporan 70% berhasil diunggah",
+		"message": "Revisi laporan berhasil diunggah",
 		"data": map[string]interface{}{
-			"id":        revisiLaporan100.ID,
-			"file_path": filePath,
+			"id":               revisi.ID,
+			"file_path":        revisi.FilePath,
+			"file_produk_path": revisi.FileProdukPath,
+			"file_bap_path":    revisi.FileBapPath,
 		},
 	})
 }
@@ -312,7 +321,11 @@ func DownloadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	laporan100ID := vars["id"]
+	id := vars["id"]
+	tipe := r.URL.Query().Get("tipe") // "laporan", "produk", "bap"
+	if tipe == "" {
+		tipe = "laporan" // default
+	}
 
 	db, err := config.GetDB()
 	if err != nil {
@@ -322,8 +335,15 @@ func DownloadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	var filePath string
-	query := "SELECT file_path FROM revisi_laporan100 WHERE id = ?"
-	err = db.QueryRow(query, laporan100ID).Scan(&filePath)
+	switch tipe {
+	case "produk":
+		err = db.QueryRow("SELECT file_produk_path FROM revisi_laporan100 WHERE id = ?", id).Scan(&filePath)
+	case "bap":
+		err = db.QueryRow("SELECT file_bap_path FROM revisi_laporan100 WHERE id = ?", id).Scan(&filePath)
+	default:
+		err = db.QueryRow("SELECT file_path FROM revisi_laporan100 WHERE id = ?", id).Scan(&filePath)
+	}
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "File not found", http.StatusNotFound)
@@ -342,7 +362,7 @@ func DownloadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 
 	fileName := filepath.Base(filePath)
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
-	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Type", "application/octet-stream")
 
 	http.ServeFile(w, r, filePath)
 }

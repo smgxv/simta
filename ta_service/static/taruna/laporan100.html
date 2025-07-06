@@ -1881,200 +1881,166 @@
 				loadCatatanPerbaikanTaruna();
 			});
 
-			// Update nama file saat file dipilih untuk Revisi Laporan 100%
-			document.getElementById('revisiLaporan100File').addEventListener('change', function(e) {
-				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
-				var label = this.nextElementSibling;
-				label.textContent = fileName;
-				
-				var selectedFileDiv = document.getElementById('revisiSelectedFileName');
-				if (e.target.files[0]) {
-					selectedFileDiv.textContent = 'File terpilih: ' + fileName;
-					selectedFileDiv.style.display = 'block';
-				} else {
-					selectedFileDiv.style.display = 'none';
-				}
+			// Menampilkan nama file untuk semua input file
+			document.querySelectorAll('input[type="file"]').forEach(input => {
+				input.addEventListener('change', function (e) {
+					const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
+					const label = this.nextElementSibling;
+					label.textContent = fileName;
+
+					const selectedFileDiv = document.getElementById(this.id + 'Selected');
+					if (selectedFileDiv) {
+						if (e.target.files[0]) {
+							selectedFileDiv.textContent = 'File terpilih: ' + fileName;
+							selectedFileDiv.style.display = 'block';
+						} else {
+							selectedFileDiv.style.display = 'none';
+						}
+					}
+				});
 			});
 
-			// Handle form submission untuk Revisi Laporan 100%
-			document.getElementById('revisiLaporan100Form').addEventListener('submit', async function(e) {
+			// Handle form submission
+			document.getElementById('revisiLaporan100Form').addEventListener('submit', async function (e) {
 				e.preventDefault();
-				
-				// Tampilkan loading state
+
 				const submitButton = this.querySelector('button[type="submit"]');
 				submitButton.disabled = true;
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-				
+
 				try {
 					const formData = new FormData(this);
 					const userId = localStorage.getItem('userId');
 					const token = localStorage.getItem('token');
-					
+
 					if (!userId || !token) {
 						throw new Error('User ID atau token tidak ditemukan');
 					}
-					
-					// Ambil data taruna untuk mendapatkan nama lengkap
+
+					// Ambil data taruna
 					const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
 					});
-					
-					if (!tarunaResponse.ok) {
-						throw new Error('Gagal mengambil data taruna');
-					}
-					
+
+					if (!tarunaResponse.ok) throw new Error('Gagal mengambil data taruna');
+
 					const tarunaData = await tarunaResponse.json();
-					console.log('Response taruna data:', tarunaData);
-
-					if (tarunaData.status !== 'success' || !tarunaData.data || !Array.isArray(tarunaData.data)) {
-						console.error('Data taruna tidak valid:', tarunaData);
-						throw new Error('Data taruna tidak ditemukan');
+					if (tarunaData.status !== 'success' || !Array.isArray(tarunaData.data)) {
+						throw new Error('Data taruna tidak valid');
 					}
 
-					// Cari data taruna yang sesuai dengan user_id
 					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
-					console.log('Data taruna yang akan digunakan:', taruna);
-
-					if (!taruna) {
-						console.error('Data taruna tidak ditemukan untuk user_id:', userId);
-						throw new Error('Data taruna tidak ditemukan untuk user ID ini');
-					}
-
-					if (!taruna.nama_lengkap) {
-						console.error('Data taruna tidak memiliki nama lengkap:', taruna);
+					if (!taruna || !taruna.nama_lengkap) {
 						throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
 					}
-					
-					// Tambahkan user_id dan nama_lengkap ke formData
+
+					// Tambah ke formData
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
-					
+					formData.append('jurusan', taruna.jurusan || '');
+					formData.append('kelas', taruna.kelas || '');
+
 					const response = await fetch('http://104.43.89.154:8082/revisilaporan100/upload', {
 						method: 'POST',
 						body: formData
 					});
-					
+
 					const data = await response.json();
-					
+
 					if (response.ok && data.status === 'success') {
-						// Tampilkan pesan sukses
 						showAlert('Revisi Laporan 100% berhasil diunggah', 'success');
-						
-						// Reset form
 						this.reset();
-						document.querySelector('#revisiLaporan100File').nextElementSibling.textContent = 'Choose file';
-						document.getElementById('revisiSelectedFileName').style.display = 'none';
-						
-						// Refresh data
+						document.querySelectorAll('.custom-file-label').forEach(label => label.textContent = 'Choose file');
+						document.querySelectorAll('[id$="Selected"]').forEach(div => div.style.display = 'none');
 						loadRevisiLaporan100Data();
 					} else {
 						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
 				} catch (error) {
-					console.error('Error saat upload Revisi Laporan 100%:', error);
+					console.error('Error saat upload:', error);
 					let errorMessage = 'Terjadi kesalahan pada server';
-					
-					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
-						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
-					} else if (error.message.includes('Data taruna tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
-					} else if (error.message.includes('nama lengkap tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak lengkap: nama lengkap belum diisi. Silakan lengkapi profil Anda terlebih dahulu.';
-					} else if (error.message.includes('Gagal mengambil data taruna')) {
-						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi atau hubungi administrator.';
+					if (error.message.includes('token')) {
+						errorMessage = 'Anda belum login. Silakan login kembali.';
+					} else if (error.message.includes('taruna')) {
+						errorMessage = 'Data taruna tidak ditemukan. Hubungi admin.';
 					}
-					
 					showAlert(errorMessage, 'danger');
 				} finally {
-					// Reset button state
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Upload Revisi Laporan 100%';
 				}
 			});
 
-			// Update fungsi loadRevisiLaporan100Data
+			// Load data revisi laporan (sama seperti sebelumnya)
 			async function loadRevisiLaporan100Data() {
 				const userId = localStorage.getItem('userId');
 				if (!userId) {
-					console.error('User ID not found in localStorage');
 					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
 					return;
 				}
-				
-				try {
-					console.log('Fetching Revisi Laporan 100% data for user:', userId);
-					const response = await fetch(`http://104.43.89.154:8082/revisilaporan100/list?user_id=${userId}`);
-					
-					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
-					}
-					
-					const data = await response.json();
-					console.log('Received Revisi Laporan 100% data:', data);
-					
-					if (data.status === 'success') {
-						const tbody = document.querySelector('#revisiLaporan100Table tbody');
-						if (!tbody) {
-							console.error('Table body element not found');
-							return;
-						}
-						
-						tbody.innerHTML = '';
-						
-						if (data.data && data.data.length > 0) {
-							data.data.forEach(revisiLaporan100 => {
-								const statusClass = {
-									'pending': 'badge badge-warning',
-									'approved': 'badge badge-success',
-									'rejected': 'badge badge-danger',
-									'on review': 'badge badge-info'
-								}[revisiLaporan100.status] || 'badge badge-secondary';
 
-								tbody.innerHTML += `
-									<tr>
-										<td>${revisiLaporan100.topik_penelitian || '-'}</td>
-										<td>${revisiLaporan100.jurusan || '-'}</td>
-										<td>${revisiLaporan100.kelas || '-'}</td>
-										<td><span class="${statusClass}">${revisiLaporan100.status || 'pending'}</span></td>
-										<td>
-											<div class="dropdown">
-												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												   href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
-												</a>
-												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${revisiLaporan100.file_path}" download>
-														<i class="dw dw-download"></i> Download
-													</a>
-												</div>
-											</div>
-										</td>
-									</tr>
-								`;
-							});
-						} else {
-							tbody.innerHTML = `
+				try {
+					const response = await fetch(`http://104.43.89.154:8082/revisilaporan100/list?user_id=${userId}`);
+					if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+					const data = await response.json();
+					const tbody = document.querySelector('#revisiLaporan100Table tbody');
+					tbody.innerHTML = '';
+
+					if (data.status === 'success' && data.data.length > 0) {
+						data.data.forEach(row => {
+							const statusClass = {
+								'pending': 'badge badge-warning',
+								'approved': 'badge badge-success',
+								'rejected': 'badge badge-danger',
+								'on review': 'badge badge-info'
+							}[row.status] || 'badge badge-secondary';
+
+							tbody.innerHTML += `
 								<tr>
-									<td colspan="5" class="text-center">Belum ada Revisi Laporan 100% yang diupload</td>
+									<td>${row.topik_penelitian || '-'}</td>
+									<td>${row.jurusan || '-'}</td>
+									<td>${row.kelas || '-'}</td>
+									<td><span class="${statusClass}">${row.status}</span></td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+											href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${row.file_path}" download>
+													<i class="dw dw-download"></i> Download Laporan
+												</a>
+												${row.file_produk_path ? `
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${row.file_produk_path}" download>
+														<i class="dw dw-download"></i> Download Produk TA
+													</a>` : ''}
+												${row.file_bap_path ? `
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${row.file_bap_path}" download>
+														<i class="dw dw-download"></i> Download BAP
+													</a>` : ''}
+											</div>
+										</div>
+									</td>
 								</tr>
 							`;
-						}
+						});
 					} else {
-						console.error('Failed to load Revisi Laporan 100% data:', data.message);
-						showAlert('Gagal memuat data Revisi Laporan 100%: ' + (data.message || 'Unknown error'), 'danger');
+						tbody.innerHTML = `
+							<tr>
+								<td colspan="5" class="text-center">Belum ada Revisi Laporan 100% yang diupload</td>
+							</tr>`;
 					}
 				} catch (error) {
-					console.error('Error loading Revisi Laporan 100% data:', error);
-					showAlert('Terjadi kesalahan saat memuat data Revisi Laporan 100%: ' + error.message, 'danger');
+					console.error('Error loading data:', error);
+					showAlert('Gagal memuat data: ' + error.message, 'danger');
 				}
 			}
 
-			// Load Final Laporan 100% data saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', () => {
-				loadRevisiLaporan100Data();
-			});
+			document.addEventListener('DOMContentLoaded', loadRevisiLaporan100Data);
 
 		
 		</script>
