@@ -199,6 +199,7 @@ func main() {
 	r.HandleFunc("/tugasakhir/all", handlers.GetAllRevisiLaporan100WithTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/tugasakhir/status", handlers.UpdateRevisiLaporan100StatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/tugasakhir/download/{id}", handlers.DownloadRevisiLaporan100Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/tugasakhir/detail/{id}", handlers.GetFinalLaporan100DetailHandler).Methods("GET", "OPTIONS")
 
 	// Setup CORS
 	c := cors.New(cors.Options{
