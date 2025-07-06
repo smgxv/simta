@@ -949,7 +949,7 @@
 										<i class="dw dw-more"></i>
 									</a>
 									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="viewTugasAkhir(${item.revisi_laporan100_id})">
+										<a class="dropdown-item" href="#" onclick="viewTugasAkhirDetails(${item.revisi_laporan100_id})">
 											<i class="dw dw-eye"></i> View
 										</a>
 										<a class="dropdown-item" href="#" onclick="downloadTugasAkhir(${item.revisi_laporan100_id})">
@@ -989,9 +989,14 @@
 				}
 			}
 
-			// Fungsi untuk melihat detail TugasAkhir
-			function viewTugasAkhir(tugasakhirId) {
-				window.location.href = `/admin/viewtugasakhir?id=${tugasakhirId}`;
+			// Fungsi untuk menampilkan detail penilaian
+			function viewTugasAkhirDetails(tugasAkhirId) {
+				console.log('Viewing details for final laporan100 ID:', tugasAkhirId);
+				if (!tugasAkhirId || tugasAkhirId === 'undefined' || tugasAkhirId === 'null') {
+					showAlert('ID Tugas Akhir tidak valid', 'danger');
+					return;
+				}
+				window.location.href = `/admin/detail_berkas_tugas_akhir?id=${tugasAkhirId}`;
 			}
 
 			// Fungsi untuk redirect ke profile
