@@ -51,6 +51,14 @@ func main() {
 	r.HandleFunc("/hasiltelaah/monitoring", handlers.GetMonitoringTelaahHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/hasiltelaah/detail", handlers.GetDetailTelaahICPHandler).Methods("GET", "OPTIONS")
 
+	// Revisi Laporan 70% routes
+	r.HandleFunc("/revisiicp/upload", handlers.UploadRevisiICPHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/revisiicp/list", handlers.GetRevisiICPHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisiicp/all", handlers.GetAllRevisiICPWithTarunaHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisiicp/status", handlers.UpdateRevisiICPStatusHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/revisiicp/download/{id}", handlers.DownloadRevisiICPHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/revisiicp/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
+
 	// Dosen Proposal routes
 	r.HandleFunc("/dosbingproposal", handlers.GetDosbingByUserID).Methods("GET", "OPTIONS")
 

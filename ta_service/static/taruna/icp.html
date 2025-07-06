@@ -767,6 +767,66 @@
 					</div>
 					<!-- Tabel Hasil Telaah Dosen End -->
 
+					<!-- Form Revisi ICP -->
+					<div class="pd-20 card-box mb-30">
+
+						<div class="clearfix">
+							<div class="pull-left">
+								<h4 class="text-blue h4">Revisi ICP</h4>
+								<p class="mb-30">Sudah memperbaiki ICP sesuai dengan hasil telaah dosen? Segera upload Revisi ICP anda !!</p>
+							</div>
+						</div>
+
+						<form id="revisiICPForm" enctype="multipart/form-data">
+							<input type="hidden" name="jurusan" id="hiddenJurusanRevisi">
+							<input type="hidden" name="kelas" id="hiddenKelasRevisi">
+							<div class="form-group">
+								<label>Topik Penelitian</label>
+								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
+							</div>
+							<div class="form-group">
+								<label>Keterangan</label>
+								<textarea class="form-control" name="keterangan" required></textarea>
+							</div>
+							<div class="form-group">
+								<label>Revisi File ICP (PDF)</label>
+								<div class="custom-file">
+									<input type="file" class="custom-file-input" id="revisiICPFile" name="file" accept=".pdf" required>
+									<label class="custom-file-label" for="revisiICPFile">Choose file</label>
+								</div>
+								<div id="revisiSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
+							</div>
+							<button type="submit" class="btn btn-primary">Upload ICP Proposal</button>
+						</form>
+
+					</div>
+					<!-- Form Revisi ICP End -->
+
+					<!-- Tabel Revisi ICP -->
+					<div class="pd-20 card-box mb-30">
+						<div class="clearfix">
+							<div class="pull-left">
+								<h4 class="text-blue h4">Daftar Revisi ICP</h4>
+							</div>
+						</div>
+						<div class="pb-20">
+							<table class="table stripe hover nowrap" id="revisiICPTable">
+								<thead>
+									<tr>
+										<th>Topik Penelitian</th>
+										<th>Jurusan</th>
+										<th>Kelas</th>
+										<th>Status</th>
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody>
+
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<!-- Tabel Revisi ICP End -->
 				</div>
 
 			</div>
@@ -1255,6 +1315,37 @@
 				}, 5000);
 			}
 
+			// Fungsi untuk mengisi jurusan dan kelas dari taruna
+			async function isiJurusanDanKelasDariTarunaRevisiICP() {
+				const userId = localStorage.getItem('userId');
+				const token = localStorage.getItem('token');
+				if (!userId || !token) return;
+
+				try {
+					const res = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					headers: {
+						'Authorization': `Bearer ${token}`
+					}
+					});
+					const json = await res.json();
+					if (json.status === 'success' && Array.isArray(json.data)) {
+					const taruna = json.data.find(t => t.user_id === parseInt(userId));
+					if (taruna) {
+						document.getElementById('hiddenJurusanRevisi').value = taruna.jurusan || '';
+						document.getElementById('hiddenKelasRevisi').value = taruna.kelas || '';
+					}
+					}
+				} catch (err) {
+					console.error('Gagal ambil data taruna:', err);
+				}
+			}
+
+			// Panggil isiJurusanDanKelasDariTaruna saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', () => {
+				// isiJurusanDanKelasDariTarunaFinalProposal();
+				isiJurusanDanKelasDariTarunaRevisiICP();
+			});
+
 			// Update nama file saat file dipilih untuk Final ICP
 			document.getElementById('finalIcpFile').addEventListener('change', function(e) {
 				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
@@ -1594,6 +1685,207 @@
 			// Panggil fungsi saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
 				loadHasilTelaahData();
+			});
+
+			// Update nama file saat file dipilih untuk Revisi ICP
+			document.getElementById('revisiICPFile').addEventListener('change', function(e) {
+				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
+				var label = this.nextElementSibling;
+				label.textContent = fileName;
+				
+				var selectedFileDiv = document.getElementById('revisiICPFile');
+				if (e.target.files[0]) {
+					selectedFileDiv.textContent = 'File terpilih: ' + fileName;
+					selectedFileDiv.style.display = 'block';
+				} else {
+					selectedFileDiv.style.display = 'none';
+				}
+			});
+
+			// Handle form submission untuk Revisi ICP
+			document.getElementById('revisiICPForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+				
+				// Tampilkan loading state
+				const submitButton = this.querySelector('button[type="submit"]');
+				submitButton.disabled = true;
+				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+				
+				try {
+
+					// Tunggu sampai jurusan & kelas pasti terisi
+					await isiJurusanDanKelasDariTarunaRevisiICP();
+
+					const formData = new FormData(this);
+					const userId = localStorage.getItem('userId');
+					const token = localStorage.getItem('token');
+					
+					if (!userId || !token) {
+						throw new Error('User ID atau token tidak ditemukan');
+					}
+					
+					// Ambil data taruna untuk mendapatkan nama lengkap
+					const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+					
+					if (!tarunaResponse.ok) {
+						throw new Error('Gagal mengambil data taruna');
+					}
+					
+					const tarunaData = await tarunaResponse.json();
+					console.log('Response taruna data:', tarunaData);
+
+					if (tarunaData.status !== 'success' || !tarunaData.data || !Array.isArray(tarunaData.data)) {
+						console.error('Data taruna tidak valid:', tarunaData);
+						throw new Error('Data taruna tidak ditemukan');
+					}
+
+					// Cari data taruna yang sesuai dengan user_id
+					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
+					console.log('Data taruna yang akan digunakan:', taruna);
+
+					if (!taruna) {
+						console.error('Data taruna tidak ditemukan untuk user_id:', userId);
+						throw new Error('Data taruna tidak ditemukan untuk user ID ini');
+					}
+
+					if (!taruna.nama_lengkap) {
+						console.error('Data taruna tidak memiliki nama lengkap:', taruna);
+						throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
+					}
+					
+					// Tambahkan user_id dan nama_lengkap ke formData
+					formData.append('user_id', userId);
+					formData.append('nama_lengkap', taruna.nama_lengkap);
+					formData.append('jurusan', document.getElementById('hiddenJurusanRevisi').value);
+					formData.append('kelas', document.getElementById('hiddenKelasRevisi').value);
+					
+					const response = await fetch('http://104.43.89.154:8082/revisicp/upload', {
+						method: 'POST',
+						body: formData
+					});
+					
+					const data = await response.json();
+					
+					if (response.ok && data.status === 'success') {
+						// Tampilkan pesan sukses
+						showAlert('Revisi ICP berhasil diunggah', 'success');
+						
+						// Reset form
+						this.reset();
+						document.querySelector('#revisiICPFile').nextElementSibling.textContent = 'Choose file';
+						document.getElementById('revisiSelectedFileName').style.display = 'none';
+						
+						// Refresh data
+						loadRevisiICPData();
+					} else {
+						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
+					}
+				} catch (error) {
+					console.error('Error saat upload Revisi ICP:', error);
+					let errorMessage = 'Terjadi kesalahan pada server';
+					
+					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
+						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
+					} else if (error.message.includes('Data taruna tidak ditemukan')) {
+						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
+					} else if (error.message.includes('nama lengkap tidak ditemukan')) {
+						errorMessage = 'Data taruna tidak lengkap: nama lengkap belum diisi. Silakan lengkapi profil Anda terlebih dahulu.';
+					} else if (error.message.includes('Gagal mengambil data taruna')) {
+						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi atau hubungi administrator.';
+					}
+					
+					showAlert(errorMessage, 'danger');
+				} finally {
+					// Reset button state
+					submitButton.disabled = false;
+					submitButton.innerHTML = 'Upload Revisi ICP';
+				}
+			});
+
+			// Update fungsi loadRevisiProposalData
+			async function loadRevisiICPData() {
+				const userId = localStorage.getItem('userId');
+				if (!userId) {
+					console.error('User ID not found in localStorage');
+					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
+					return;
+				}
+				
+				try {
+					console.log('Fetching Final ICP data for user:', userId);
+					const response = await fetch(`http://104.43.89.154:8082/revisiicp/list?user_id=${userId}`);
+					
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					
+					const data = await response.json();
+					console.log('Received Final ICP data:', data);
+					
+					if (data.status === 'success') {
+						const tbody = document.querySelector('#revisiICPTable tbody');
+						if (!tbody) {
+							console.error('Table body element not found');
+							return;
+						}
+						
+						tbody.innerHTML = '';
+						
+						if (data.data && data.data.length > 0) {
+							data.data.forEach(revisiICP => {
+								const statusClass = {
+									'pending': 'badge badge-warning',
+									'approved': 'badge badge-success',
+									'rejected': 'badge badge-danger',
+									'on review': 'badge badge-info'
+								}[revisiICP.status] || 'badge badge-secondary';
+
+								tbody.innerHTML += `
+									<tr>
+										<td>${revisiICP.topik_penelitian || '-'}</td>
+										<td>${revisiICP.jurusan || '-'}</td>
+										<td>${revisiICP.kelas || '-'}</td>
+										<td><span class="${statusClass}">${revisiICP.status || 'pending'}</span></td>
+										<td>
+											<div class="dropdown">
+												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												   href="#" role="button" data-toggle="dropdown">
+													<i class="dw dw-more"></i>
+												</a>
+												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${revisiICP.file_path}" download>
+														<i class="dw dw-download"></i> Download
+													</a>
+												</div>
+											</div>
+										</td>
+									</tr>
+								`;
+							});
+						} else {
+							tbody.innerHTML = `
+								<tr>
+									<td colspan="5" class="text-center">Belum ada Revisi ICP yang diupload</td>
+								</tr>
+							`;
+						}
+					} else {
+						console.error('Failed to load Revisi ICP data:', data.message);
+						showAlert('Gagal memuat data Revisi ICP: ' + (data.message || 'Unknown error'), 'danger');
+					}
+				} catch (error) {
+					console.error('Error loading Revisi ICP data:', error);
+					showAlert('Terjadi kesalahan saat memuat data Revisi ICP: ' + error.message, 'danger');
+				}
+			}
+
+			// Load Revisi ICP data saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', () => {
+				loadRevisiICPData();
 			});
 
 		</script>
