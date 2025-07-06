@@ -943,22 +943,22 @@
 								: '-'}
 						</td>
 						<td>
-							${item.tugas_akhir_id > 0 ? 
+							${item.revisi_laporan100_id > 0 ? 
 								`<div class="dropdown">
 									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
 										<i class="dw dw-more"></i>
 									</a>
 									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="viewTugasAkhir(${item.tugas_akhir_id})">
+										<a class="dropdown-item" href="#" onclick="viewTugasAkhir(${item.revisi_laporan100_id})">
 											<i class="dw dw-eye"></i> View
 										</a>
-										<a class="dropdown-item" href="#" onclick="downloadTugasAkhir(${item.tugas_akhir_id})">
+										<a class="dropdown-item" href="#" onclick="downloadTugasAkhir(${item.revisi_laporan100_id})">
 											<i class="dw dw-download"></i> Download
 										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.tugas_akhir_id}, 'approved')">
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.revisi_laporan100_id}, 'approved')">
 											<i class="dw dw-check"></i> Accept
 										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.tugas_akhir_id}, 'rejected')">
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.revisi_laporan100_id}, 'rejected')">
 											<i class="dw dw-delete-3"></i> Reject
 										</a>
 									</div>
