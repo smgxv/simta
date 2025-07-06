@@ -5,6 +5,8 @@ import (
 	"document_service/config"
 	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
 )
@@ -88,4 +90,64 @@ func nullToDash(s sql.NullString) string {
 		return s.String
 	}
 	return "-"
+}
+
+func DownloadRevisiFileHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+	jenis := vars["jenis"] // bisa: file, produk, bap
+
+	if id == "" || jenis == "" {
+		http.Error(w, "Missing id or jenis", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	var filePath sql.NullString
+	var column string
+
+	switch jenis {
+	case "file":
+		column = "file_path"
+	case "produk":
+		column = "file_produk_path"
+	case "bap":
+		column = "file_bap_path"
+	default:
+		http.Error(w, "Jenis file tidak valid", http.StatusBadRequest)
+		return
+	}
+
+	query := "SELECT " + column + " FROM revisi_laporan100 WHERE id = ? LIMIT 1"
+	err = db.QueryRow(query, id).Scan(&filePath)
+	if err != nil || !filePath.Valid {
+		http.Error(w, "File tidak ditemukan", http.StatusNotFound)
+		return
+	}
+
+	file, err := os.Open(filePath.String)
+	if err != nil {
+		http.Error(w, "Gagal membuka file", http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(filePath.String))
+	w.Header().Set("Content-Type", "application/pdf")
+	http.ServeFile(w, r, filePath.String)
 }
