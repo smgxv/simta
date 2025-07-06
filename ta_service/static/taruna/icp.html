@@ -1763,7 +1763,7 @@
 					formData.append('jurusan', document.getElementById('hiddenJurusanRevisi').value);
 					formData.append('kelas', document.getElementById('hiddenKelasRevisi').value);
 					
-					const response = await fetch('http://104.43.89.154:8082/revisicp/upload', {
+					const response = await fetch('http://104.43.89.154:8082/revisiicp/upload', {
 						method: 'POST',
 						body: formData
 					});
