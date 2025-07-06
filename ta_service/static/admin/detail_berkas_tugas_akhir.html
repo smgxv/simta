@@ -1004,16 +1004,23 @@
 					document.getElementById('kata-kunci').textContent = data.kata_kunci || '-';
 					document.getElementById('link-repo').textContent = data.link_repo || '-';
 					
-					function renderFileLink(filePath, id, type) {
+					function renderDownloadButton(filePath, id, type) {
 						if (!filePath || filePath === "-") return '-';
-						const filename = filePath.split('/').pop();
-						return `<a href="http://104.43.89.154:8082/revisilaporan100/download/${id}/${type}" target="_blank" download>${filename}</a>`;
+
+						return `
+							<a href="http://104.43.89.154:8082/revisilaporan100/download/${id}/${type}" 
+							class="btn btn-sm btn-outline-primary" 
+							target="_blank" 
+							download>
+								Download
+							</a>
+						`;
 					}
 
 					// Contoh pemakaian (dalam loadTugasAkhirDetails):
-					document.getElementById('file-path').innerHTML = renderFileLink(data.file_dokumen, tugasakhirID, "file");
-					document.getElementById('file-produk-path').innerHTML = renderFileLink(data.file_produk, tugasakhirID, "produk");
-					document.getElementById('file-bap-path').innerHTML = renderFileLink(data.file_bap, tugasakhirID, "bap");
+					document.getElementById('file-path').innerHTML = renderDownloadButton(data.file_dokumen, tugasakhirID, "file");
+					document.getElementById('file-produk-path').innerHTML = renderDownloadButton(data.file_produk, tugasakhirID, "produk");
+					document.getElementById('file-bap-path').innerHTML = renderDownloadButton(data.file_bap, tugasakhirID, "bap");
 
 
 				} catch (error) {
