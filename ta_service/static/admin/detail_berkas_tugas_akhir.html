@@ -1003,9 +1003,16 @@
 					document.getElementById('abstrak-en').textContent = data.abstrak_en || '-';
 					document.getElementById('kata-kunci').textContent = data.kata_kunci || '-';
 					document.getElementById('link-repo').textContent = data.link_repo || '-';
-					document.getElementById('file-path').textContent = data.file_path || '-';
-					document.getElementById('file-produk-path').textContent = data.file_produk_path || '-';
-					document.getElementById('file-bap-path').textContent = data.file_bap_path || '-';
+					
+					function renderFileLink(filePath) {
+						if (!filePath || filePath === "-") return '-';
+						const filename = filePath.split('/').pop();
+						return `<a href="http://104.43.89.154:8082/${filePath}" target="_blank" download>${filename}</a>`;
+					}
+
+					document.getElementById('file-path').innerHTML = renderFileLink(data.file_dokumen);
+					document.getElementById('file-produk-path').innerHTML = renderFileLink(data.file_produk);
+					document.getElementById('file-bap-path').innerHTML = renderFileLink(data.file_bap);
 
 				} catch (error) {
 					console.error('Error:', error);
