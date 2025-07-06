@@ -918,60 +918,60 @@
 
 			// Fungsi untuk menampilkan data yang sudah difilter
 			function displayFilteredData() {
-			const filteredData = getFilteredData();
+				const filteredData = getFilteredData();
 
-			const tableBody = document.getElementById('tugasAkhirTableBody');
-			tableBody.innerHTML = '';
+				const tableBody = document.getElementById('tugasAkhirTableBody');
+				tableBody.innerHTML = '';
 
-			filteredData.forEach((item, index) => {
-				const row = document.createElement('tr');
+				filteredData.forEach((item, index) => {
+					const row = document.createElement('tr');
 
-				const badgeClass = getStatusBadgeClass(item.status);
+					const badgeClass = getStatusBadgeClass(item.status);
 
-				row.innerHTML = `
-				<td>${item.nama_lengkap || '-'}</td>
-				<td>${item.jurusan || '-'}</td>
-				<td>${item.kelas || '-'}</td>
-				<td>${item.topik_penelitian || '-'}</td>
-				<td>
-					${item.status ? 
-					`<span class="badge badge-${badgeClass}">${item.status}</span>` 
-					: '<span class="badge badge-secondary">unknown</span>'}
-				</td>
-				<td>
-					${item.tugas_akhir_id > 0 ? 
-					`<div class="dropdown">
-						<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-						href="#" role="button" data-toggle="dropdown">
-						<i class="dw dw-more"></i>
-						</a>
-						<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-						<a class="dropdown-item" href="#" onclick="viewTugasAkhir(${item.tugas_akhir_id})">
-							<i class="dw dw-eye"></i> View
-						</a>
-						<a class="dropdown-item" href="#" onclick="downloadTugasAkhir(${item.tugas_akhir_id})">
-							<i class="dw dw-download"></i> Download
-						</a>
-						<a class="dropdown-item" href="#" onclick="updateStatus(${item.tugas_akhir_id}, 'approved')">
-							<i class="dw dw-check"></i> Approve
-						</a>
-						<a class="dropdown-item" href="#" onclick="updateStatus(${item.tugas_akhir_id}, 'rejected')">
-							<i class="dw dw-delete-3"></i> Reject
-						</a>
-						</div>
-					</div>` : '-'}
-				</td>
-				`;
+					row.innerHTML = `
+					<td>${item.nama_lengkap || '-'}</td>
+					<td>${item.jurusan || '-'}</td>
+					<td>${item.kelas || '-'}</td>
+					<td>${item.topik_penelitian || '-'}</td>
+					<td>
+						${item.status ? 
+						`<span class="badge badge-${badgeClass}">${item.status}</span>` 
+						: '<span class="badge badge-secondary">unknown</span>'}
+					</td>
+					<td>
+						${item.tugas_akhir_id > 0 ? 
+						`<div class="dropdown">
+							<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+							href="#" role="button" data-toggle="dropdown">
+							<i class="dw dw-more"></i>
+							</a>
+							<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+							<a class="dropdown-item" href="#" onclick="viewTugasAkhir(${item.tugas_akhir_id})">
+								<i class="dw dw-eye"></i> View
+							</a>
+							<a class="dropdown-item" href="#" onclick="downloadTugasAkhir(${item.tugas_akhir_id})">
+								<i class="dw dw-download"></i> Download
+							</a>
+							<a class="dropdown-item" href="#" onclick="updateStatus(${item.tugas_akhir_id}, 'approved')">
+								<i class="dw dw-check"></i> Approve
+							</a>
+							<a class="dropdown-item" href="#" onclick="updateStatus(${item.tugas_akhir_id}, 'rejected')">
+								<i class="dw dw-delete-3"></i> Reject
+							</a>
+							</div>
+						</div>` : '-'}
+					</td>
+					`;
 
-				// ✅ Tambahkan tooltip jika ada keterangan
-				if (item.keterangan) {
-				row.title = `Keterangan: ${item.keterangan}`;
-				}
+					// ✅ Tambahkan tooltip jika ada keterangan
+					if (item.keterangan) {
+					row.title = `Keterangan: ${item.keterangan}`;
+					}
 
-				tableBody.appendChild(row);
-			});
+					tableBody.appendChild(row);
+				});
 			}
-			
+
 			// Fungsi untuk menerapkan filter
 			function applyFilters() {
 				displayFilteredData();
