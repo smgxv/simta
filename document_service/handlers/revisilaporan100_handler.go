@@ -154,7 +154,7 @@ func UploadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk mengambil daftar final proposal berdasarkan user_id
+// Handler untuk mengambil daftar revisi proposal berdasarkan user_id
 func GetRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -192,7 +192,7 @@ func GetRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk mengambil data gabungan taruna dan final proposal
+// Handler untuk mengambil data gabungan taruna dan revisi proposal
 func GetAllRevisiLaporan100WithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")

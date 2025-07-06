@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>SIMTA - Laporan 100%</title>
+		<title>SIMTA - Repositori</title>
 
 		<!-- Site favicon -->
 		<link
@@ -618,7 +618,7 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Laporan 100%</h4>
+									<h4>Repositori Tugas Akhir</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
@@ -626,7 +626,7 @@
 											<a href="/admin/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											Laporan 100%
+											Repositori Tugas Akhir
 										</li>
 									</ol>
 								</nav>
@@ -648,10 +648,10 @@
 						</div>
 					</div>
 
-					<!-- List Laporan 100% Taruna -->
+					<!-- List Tugas Akhir Taruna -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">List Laporan 100% Taruna</h4>
+							<h4 class="text-blue h4">List Tugas Akhir Taruna</h4>
 						</div>
 						<div class="pb-20">
 							<table class="data-table table stripe hover nowrap">
@@ -671,35 +671,7 @@
 							</table>
 						</div>
 					</div>
-					<!-- End List Laporan 100% Taruna -->
-
-					
-					<!-- Monitoring Penilaian Laporan 100% -->
-					<div class="card-box mb-30">
-						<div class="pd-20">
-							<h4 class="text-blue h4">Monitoring Penilaian Laporan 100%</h4>
-							<p class="mb-0">Daftar Penilaian Laporan 100% untuk semua taruna</p>
-						</div>
-						<div class="pb-20">
-							<table id="monitoringTable"  class="data-table table stripe hover nowrap">
-								<thead>
-									<tr>
-										<th>Nama Taruna</th>
-										<th>Jurusan</th>
-										<th>Topik Penelitian</th>
-										<th>Ketua Penguji</th>
-										<th>Penguji 1</th>
-										<th>Penguji 2</th>
-										<th>Status Kelengkapan</th>
-										<th>Action</th>
-									</tr>
-								</thead>
-								<tbody>
-								</tbody>
-							</table>
-						</div>
-					</div>
-					<!-- End Monitoring Penilaian Laporan 100% -->
+					<!-- End List Tugas Akhir Taruna -->
 
 				</div>
 
@@ -878,7 +850,7 @@
 				}, 5000);
 			}
 
-			let allLaporan100Data = []; // Menyimpan semua data Laporan100
+			let allTugasAkhirData = []; // Menyimpan semua data TugasAkhir
 			let uniqueJurusan = new Set();
 			let uniqueKelas = new Set();
 
@@ -908,18 +880,18 @@
 				});
 			}
 
-			// Fungsi untuk memuat data Laporan100
-			async function loadLaporan100Data() {
+			// Fungsi untuk memuat data TugasAkhir
+			async function loadTugasAkhirData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finallaporan100/all', {
+					const response = await fetch('http://104.43.89.154:8082/tugasakhir/all', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
 					});
 
 					if (!response.ok) {
-						throw new Error('Failed to fetch Laporan100 data');
+						throw new Error('Failed to fetch Tugas Akhir data');
 					}
 
 					const result = await response.json();
@@ -927,10 +899,10 @@
 						throw new Error(result.message || 'Failed to load data');
 					}
 
-					allLaporan100Data = result.data;
+					allTugasAkhirData = result.data;
 
 					// Collect unique values
-					allLaporan100Data.forEach(item => {
+					allTugasAkhirData.forEach(item => {
 						if (item.jurusan) uniqueJurusan.add(item.jurusan);
 						if (item.kelas) uniqueKelas.add(item.kelas);
 					});
@@ -942,7 +914,7 @@
 					displayFilteredData();
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Failed to load Laporan100 data', 'danger');
+					showAlert('Failed to load Tugas Akhir data', 'danger');
 				}
 			}
 
@@ -951,7 +923,7 @@
 				const jurusanFilter = document.getElementById('jurusanFilter').value;
 				const kelasFilter = document.getElementById('kelasFilter').value;
 
-				const filteredData = allLaporan100Data.filter(item => {
+				const filteredData = allTugasAkhirData.filter(item => {
 					const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
 					const matchKelas = !kelasFilter || item.kelas === kelasFilter;
 					return matchJurusan && matchKelas;
@@ -973,22 +945,22 @@
 								: '-'}
 						</td>
 						<td>
-							${item.final_laporan100_id > 0 ? 
+							${item.tugas_akhir_id > 0 ? 
 								`<div class="dropdown">
 									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
 										<i class="dw dw-more"></i>
 									</a>
 									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="viewLaporan100(${item.final_laporan100_id})">
+										<a class="dropdown-item" href="#" onclick="viewTugasAkhir(${item.tugas_akhir_id})">
 											<i class="dw dw-eye"></i> View
 										</a>
-										<a class="dropdown-item" href="#" onclick="downloadLaporan100(${item.final_laporan100_id})">
+										<a class="dropdown-item" href="#" onclick="downloadTugasAkhir(${item.tugas_akhir_id})">
 											<i class="dw dw-download"></i> Download
 										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan100_id}, 'approved')">
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.tugas_akhir_id}, 'approved')">
 											<i class="dw dw-check"></i> Accept
 										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan100_id}, 'rejected')">
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.tugas_akhir_id}, 'rejected')">
 											<i class="dw dw-delete-3"></i> Reject
 										</a>
 									</div>
@@ -1019,9 +991,9 @@
 				}
 			}
 
-			// Fungsi untuk melihat detail Laporan100
-			function viewLaporan100(laporan100Id) {
-				window.location.href = `/admin/viewlaporan100?id=${laporan100Id}`;
+			// Fungsi untuk melihat detail TugasAkhir
+			function viewTugasAkhir(tugasakhirId) {
+				window.location.href = `/admin/viewtugasakhir?id=${tugasakhirId}`;
 			}
 
 			// Fungsi untuk redirect ke profile
@@ -1029,11 +1001,11 @@
 				window.location.href = '/admin/profile';
 			}
 
-			// Fungsi untuk mengupdate status Laporan100
+			// Fungsi untuk mengupdate status TugasAkhir
 			async function updateStatus(id, status) {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finallaporan100/status', {
+					const response = await fetch('http://104.43.89.154:8082/tugasakhir/status', {
 						method: 'POST',
 						headers: {
 							'Authorization': `Bearer ${token}`,
@@ -1051,8 +1023,8 @@
 
 					const result = await response.json();
 					if (result.status === 'success') {
-						showAlert(`Laporan100 berhasil di${status}`, 'success');
-						loadLaporan100Data(); // Reload data
+						showAlert(`Tugas Akhir berhasil di${status}`, 'success');
+						loadTugasAkhirData(); // Reload data
 					} else {
 						throw new Error(result.message || 'Failed to update status');
 					}
@@ -1062,15 +1034,15 @@
 				}
 			}
 
-			// Fungsi untuk download Laporan100
-			function downloadLaporan100(id) {
+			// Fungsi untuk download TugasAkhir
+			function downloadTugasAkhir(id) {
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				window.open(`http://104.43.89.154:8082/finallaporan100/download/${id}?token=${token}`, '_blank');
+				window.open(`http://104.43.89.154:8082/tugasakhir/download/${id}?token=${token}`, '_blank');
 			}
 
-			// Load data Laporan100 saat halaman dimuat
+			// Load data TugasAkhir saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
-				loadLaporan100Data();
+				loadTugasAkhirData();
 
 				// Set username dari localStorage
 				const username = document.getElementById('username');
@@ -1078,89 +1050,6 @@
 					username.textContent = localStorage.getItem('username') || 'Admin';
 				}
 			});
-
-			// Fungsi untuk memuat data monitoring penilaian laporan100
-			async function loadMonitoringData() {
-				try {
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/monitoring/penilaian_laporan100', {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
-					}
-					const data = await response.json();
-					console.log('Monitoring data response:', data); // Debug log
-
-					const tbody = document.querySelector('#monitoringTable tbody');
-					tbody.innerHTML = '';
-
-					if (data.status === 'success' && Array.isArray(data.data)) {
-						if (data.data.length > 0) {
-							data.data.forEach(item => {
-								const statusClass = item.status_kelengkapan === 'Lengkap' ? 'badge-success' : 'badge-warning';
-
-								tbody.innerHTML += `
-									<tr>
-										<td>${item.nama_taruna || '-'}</td>
-										<td>${item.jurusan || '-'}</td>
-										<td>${item.topik_penelitian || '-'}</td>
-										<td>${item.ketua_penguji || '-'}</td>
-										<td>${item.penguji1 || '-'}</td>
-										<td>${item.penguji2 || '-'}</td>
-										<td>
-											<span class="badge ${statusClass}">
-												${item.status_kelengkapan || 'Belum Lengkap'}
-											</span>
-										</td>
-										<td>
-											<div class="dropdown">
-												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-													href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
-												</a>
-												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.final_laporan100_id}); return false;">
-														<i class="dw dw-eye"></i> View Details
-													</a>
-												</div>
-											</div>
-										</td>
-									</tr>
-								`;
-							});
-						} else {
-							tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada data monitoring</td></tr>';
-						}
-					} else {
-						throw new Error(data.message || 'Invalid response format');
-					}
-				} catch (error) {
-					console.error('Error loading monitoring data:', error);
-					const tbody = document.querySelector('#monitoringTable tbody');
-					tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error: Gagal memuat data monitoring</td></tr>';
-					showAlert('Terjadi kesalahan saat memuat data monitoring: ' + error.message, 'danger');
-				}
-			}
-
-			// Fungsi untuk menampilkan detail penilaian
-			function viewPenilaianDetails(finalLaporan100Id) {
-				console.log('Viewing details for final laporan100 ID:', finalLaporan100Id);
-				if (!finalLaporan100Id || finalLaporan100Id === 'undefined' || finalLaporan100Id === 'null') {
-					showAlert('ID Laporan100 tidak valid', 'danger');
-					return;
-				}
-				window.location.href = `/admin/detail_berkas_seminar_laporan100?id=${finalLaporan100Id}`;
-			}
-
-
-			// Load monitoring data saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', () => {
-				loadMonitoringData();
-			});
-
 		</script>
 
 		<style>

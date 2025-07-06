@@ -574,6 +574,34 @@ func DetailBerkasLaporan100(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/admin/detail_berkas_seminar_laporan100.html")
 }
 
+// Handler untuk halaman Detail Berkas Proposal admin
+func Repositori(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "admin" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the admin Proposal HTML file
+	http.ServeFile(w, r, "static/admin/repositori_admin.html")
+}
+
 // TARUNA WEB SERVICE
 // TarunaDashboard menangani tampilan dashboard untuk taruna
 func TarunaDashboard(w http.ResponseWriter, r *http.Request) {
