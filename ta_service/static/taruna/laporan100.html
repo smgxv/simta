@@ -1588,7 +1588,7 @@
 				}
 			});
 
-			// Update fungsi loadFinalLaporan100Data
+			// Fungsi untuk memuat data Final Laporan 100%
 			async function loadFinalLaporan100Data() {
 				const userId = localStorage.getItem('userId');
 				if (!userId) {
@@ -1596,54 +1596,54 @@
 					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
 					return;
 				}
-				
+
 				try {
 					console.log('Fetching Final Laporan 100% data for user:', userId);
 					const response = await fetch(`http://104.43.89.154:8082/finallaporan100/list?user_id=${userId}`);
-					
+
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
-					
+
 					const data = await response.json();
 					console.log('Received Final Laporan 100% data:', data);
-					
+
 					if (data.status === 'success') {
 						const tbody = document.querySelector('#finalLaporan100Table tbody');
 						if (!tbody) {
 							console.error('Table body element not found');
 							return;
 						}
-						
+
 						tbody.innerHTML = '';
-						
+
 						if (data.data && data.data.length > 0) {
-							data.data.forEach(finalLaporan100 => {
+							data.data.forEach(item => {
 								const statusClass = {
 									'pending': 'badge badge-warning',
 									'approved': 'badge badge-success',
 									'rejected': 'badge badge-danger',
 									'on review': 'badge badge-info'
-								}[finalLaporan100.status] || 'badge badge-secondary';
+								}[item.status] || 'badge badge-secondary';
 
 								tbody.innerHTML += `
 									<tr>
-										<td>${finalLaporan100.topik_penelitian || '-'}</td>
-										<td>${finalLaporan100.jurusan || '-'}</td>
-										<td>${finalLaporan100.kelas || '-'}</td>
-										<td><span class="${statusClass}">${finalLaporan100.status || 'pending'}</span></td>
+										<td>${item.topik_penelitian || '-'}</td>
+										<td>${item.jurusan || '-'}</td>
+										<td>${item.kelas || '-'}</td>
+										<td><span class="${statusClass}">${item.status || 'pending'}</span></td>
 										<td>
 											<div class="dropdown">
 												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												   href="#" role="button" data-toggle="dropdown">
+												href="#" role="button" data-toggle="dropdown">
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan100/download/${finalLaporan100.id}?type=form_bimbingan" download>
+													<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan100/download/${item.id}?type=form_bimbingan" download>
 														<i class="dw dw-download"></i> Download Form Bimbingan
 													</a>
-													<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan100/download/${finalLaporan100.id}?type=laporan100" download>
-														<i class="dw dw-download"></i> Download Final Proposal
+													<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan100/download/${item.id}?type=laporan100" download>
+														<i class="dw dw-download"></i> Download Final Laporan 100
 													</a>
 												</div>
 											</div>
@@ -1667,6 +1667,7 @@
 					showAlert('Terjadi kesalahan saat memuat data Final Laporan 100%: ' + error.message, 'danger');
 				}
 			}
+
 
 			// Load Final Laporan 100% data saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
