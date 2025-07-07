@@ -976,11 +976,11 @@
 										<i class="dw dw-more"></i>
 									</a>
 									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="viewLaporan70(${item.final_laporan70_id})">
-											<i class="dw dw-eye"></i> View
+										<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan70/download/${item.final_laporan70_id}?type=form_bimbingan" download>
+											<i class="dw dw-download"></i> Download Form Bimbingan
 										</a>
-										<a class="dropdown-item" href="#" onclick="downloadLaporan70(${item.final_laporan70_id})">
-											<i class="dw dw-download"></i> Download
+										<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan70/download/${item.final_laporan70_id}?type=laporan70" download>
+											<i class="dw dw-download"></i> Download Final Laporan 70%
 										</a>
 										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan70_id}, 'approved')">
 											<i class="dw dw-check"></i> Accept

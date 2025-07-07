@@ -660,6 +660,7 @@
 										<th class="table-plus datatable-nosort">Kelas</th>
 										<th class="table-plus datatable-nosort">Penguji 1</th>
 										<th class="table-plus datatable-nosort">Penguji 2</th>
+										<th class="table-plus datatable-nosort">Status Pengumpulan</th>
 										<th class="datatable-nosort">Action</th>
 									</tr>
 								</thead>
@@ -901,7 +902,7 @@
 				});
 			}
 
-			// Fungsi untuk memuat data Taruna
+			// Fungsi untuk memuat data Taruna (Laporan 70%)
 			async function loadTarunaData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -935,7 +936,7 @@
 				}
 			}
 
-			// Fungsi untuk menampilkan data yang sudah difilter
+			// Fungsi untuk menampilkan data yang sudah difilter (Laporan 70%)
 			function displayFilteredData() {
 				const jurusanFilter = document.getElementById('jurusanFilter').value;
 				const filteredData = allTarunaData.filter(item => {
@@ -948,13 +949,19 @@
 				if (filteredData.length === 0) {
 					tableBody.innerHTML = `
 						<tr>
-							<td colspan="6" class="text-center">Tidak ada data yang tersedia</td>
+							<td colspan="8" class="text-center">Tidak ada data yang tersedia</td>
 						</tr>
 					`;
 					return;
 				}
 
 				filteredData.forEach(item => {
+					const badge = item.status_pengumpulan
+						? '<span class="badge badge-success">Sudah</span>'
+						: '<span class="badge badge-danger">Belum</span>';
+
+					const disabled = item.status_pengumpulan ? '' : 'disabled';
+
 					const row = document.createElement('tr');
 					row.innerHTML = `
 						<td>${item.nama_lengkap || '-'}</td>
@@ -962,8 +969,9 @@
 						<td>${item.kelas || '-'}</td>
 						<td>${item.penguji_1 || '-'}</td>
 						<td>${item.penguji_2 || '-'}</td>
+						<td>${badge}</td>
 						<td>
-							<button class="btn btn-sm btn-primary" onclick="showPengujiLaporan70Modal(${item.taruna_id})">
+							<button class="btn btn-sm btn-primary" onclick="showPengujiLaporan70Modal(${item.taruna_id})" ${disabled}>
 								Pilih Dosen
 							</button>
 						</td>
