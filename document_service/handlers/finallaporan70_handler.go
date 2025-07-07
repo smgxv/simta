@@ -7,19 +7,15 @@ import (
 	"document_service/models"
 	"document_service/utils"
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/gorilla/mux"
 )
 
-// Handler untuk mengupload final proposal
+// Handler untuk mengupload final laporan 70
 func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -30,7 +26,7 @@ func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -39,7 +35,7 @@ func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get form values
+	// Ambil data form
 	userID := r.FormValue("user_id")
 	namaLengkap := r.FormValue("nama_lengkap")
 	jurusan := r.FormValue("jurusan")
@@ -53,99 +49,74 @@ func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Handle file upload
-	file, handler, err := r.FormFile("file")
+	// === Upload Final Laporan 70 ===
+	finalFilePath, err := utils.HandleFileUpload(r, "final_laporan70_file", userID, "FINAL_LAPORAN70")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
-		})
-		return
-	}
-	defer file.Close()
-
-	// Create upload directory if not exists
-	uploadDir := "uploads/finallaporan70"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": "Gagal upload final laporan: " + err.Error(),
 		})
 		return
 	}
 
-	// Generate unique filename
-	filename := fmt.Sprintf("FINAL_LAPORAN70_%s_%s_%s",
-		userID,
-		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
-
-	// Create the file
-	dst, err := os.Create(filePath)
+	// === Upload Form Bimbingan ===
+	formBimbinganPath, err := utils.HandleFileUpload(r, "form_bimbingan_file", userID, "FORM_BIMBINGAN70")
 	if err != nil {
+		os.Remove(finalFilePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	// Copy the uploaded file to the created file
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
+			"message": "Gagal upload form bimbingan: " + err.Error(),
 		})
 		return
 	}
 
-	// Connect to database
+	// === Simpan ke database ===
 	db, err := config.GetDB()
 	if err != nil {
-		os.Remove(filePath)
+		os.Remove(finalFilePath)
+		os.Remove(formBimbinganPath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error connecting to database: " + err.Error(),
+			"message": "Gagal koneksi database: " + err.Error(),
 		})
 		return
 	}
 	defer db.Close()
 
-	// Create Final Proposal record
 	finalLaporan70Model := models.NewFinalLaporan70Model(db)
 	finalLaporan70 := &entities.FinalLaporan70{
-		UserID:          utils.ParseInt(userID),
-		NamaLengkap:     namaLengkap,
-		Jurusan:         jurusan,
-		Kelas:           kelas,
-		TopikPenelitian: topikPenelitian,
-		FilePath:        filePath,
-		Keterangan:      keterangan,
+		UserID:            utils.ParseInt(userID),
+		NamaLengkap:       namaLengkap,
+		Jurusan:           jurusan,
+		Kelas:             kelas,
+		TopikPenelitian:   topikPenelitian,
+		FilePath:          finalFilePath,
+		FormBimbinganPath: formBimbinganPath,
+		Keterangan:        keterangan,
 	}
 
 	if err := finalLaporan70Model.Create(finalLaporan70); err != nil {
-		os.Remove(filePath)
+		os.Remove(finalFilePath)
+		os.Remove(formBimbinganPath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
+			"message": "Gagal menyimpan ke database: " + err.Error(),
 		})
 		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Final Laporan 70% berhasil diunggah",
+		"message": "Final Laporan 70% dan Form Bimbingan berhasil diunggah",
 		"data": map[string]interface{}{
-			"id":        finalLaporan70.ID,
-			"file_path": filePath,
+			"id":                  finalLaporan70.ID,
+			"file_path":           finalFilePath,
+			"form_bimbingan_path": formBimbinganPath,
 		},
 	})
 }
 
-// Handler untuk mengambil daftar final proposal berdasarkan user_id
+// Handler untuk mengambil daftar final laporan 70 berdasarkan user_id
 func GetFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -183,7 +154,7 @@ func GetFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk mengambil data gabungan taruna dan final proposal
+// Handler untuk mengambil data gabungan taruna dan final laporan 70
 func GetAllFinalLaporan70WithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -300,7 +271,7 @@ func UpdateFinalLaporan70StatusHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk download file Final Proposal
+// Handler untuk download file Final Laporan 70% atau Form Bimbingan
 func DownloadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -311,31 +282,46 @@ func DownloadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Ambil ID dan tipe file dari parameter
 	vars := mux.Vars(r)
-	laporan70ID := vars["id"]
+	laporanID := vars["id"]               // /final_laporan70/download/{id}
+	fileType := r.URL.Query().Get("type") // ?type=laporan70 atau ?type=form_bimbingan
+
+	if laporanID == "" || fileType == "" {
+		http.Error(w, "Parameter 'id' dan 'type' wajib disediakan", http.StatusBadRequest)
+		return
+	}
 
 	db, err := config.GetDB()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
 	var filePath string
-	query := "SELECT file_path FROM final_laporan70 WHERE id = ?"
-	err = db.QueryRow(query, laporan70ID).Scan(&filePath)
+	switch fileType {
+	case "laporan70":
+		err = db.QueryRow("SELECT file_path FROM final_laporan70 WHERE id = ?", laporanID).Scan(&filePath)
+	case "form_bimbingan":
+		err = db.QueryRow("SELECT form_bimbingan_path FROM final_laporan70 WHERE id = ?", laporanID).Scan(&filePath)
+	default:
+		http.Error(w, "Parameter 'type' tidak valid. Gunakan 'laporan70' atau 'form_bimbingan'", http.StatusBadRequest)
+		return
+	}
+
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "File not found", http.StatusNotFound)
+			http.Error(w, "File tidak ditemukan", http.StatusNotFound)
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		http.Error(w, "File not found", http.StatusNotFound)
+		http.Error(w, "Gagal membuka file", http.StatusNotFound)
 		return
 	}
 	defer file.Close()
@@ -343,6 +329,5 @@ func DownloadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	fileName := filepath.Base(filePath)
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
 	w.Header().Set("Content-Type", "application/pdf")
-
 	http.ServeFile(w, r, filePath)
 }

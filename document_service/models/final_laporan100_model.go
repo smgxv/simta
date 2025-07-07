@@ -19,9 +19,9 @@ func (m *FinalLaporan100Model) Create(finalLaporan100 *entities.FinalLaporan100)
 	query := `
 		INSERT INTO final_laporan100 (
 			user_id, nama_lengkap, jurusan, 
-			kelas, topik_penelitian, file_path, keterangan, 
-			status
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+			kelas, topik_penelitian, file_path, 
+			form_bimbingan_path, keterangan, status
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := m.db.Exec(query,
 		finalLaporan100.UserID,
@@ -30,6 +30,7 @@ func (m *FinalLaporan100Model) Create(finalLaporan100 *entities.FinalLaporan100)
 		finalLaporan100.Kelas,
 		finalLaporan100.TopikPenelitian,
 		finalLaporan100.FilePath,
+		finalLaporan100.FormBimbinganPath,
 		finalLaporan100.Keterangan,
 		"pending", // default status
 	)
@@ -52,7 +53,8 @@ func (m *FinalLaporan100Model) GetByUserID(userID string) ([]entities.FinalLapor
 		SELECT 
 			id, user_id, nama_lengkap, 
 			jurusan, kelas, topik_penelitian, file_path, 
-			keterangan, status, created_at, updated_at
+			form_bimbingan_path, keterangan, status, 
+			created_at, updated_at
 		FROM final_laporan100 
 		WHERE user_id = ?
 		ORDER BY created_at DESC`
@@ -74,6 +76,7 @@ func (m *FinalLaporan100Model) GetByUserID(userID string) ([]entities.FinalLapor
 			&finalLaporan100.Kelas,
 			&finalLaporan100.TopikPenelitian,
 			&finalLaporan100.FilePath,
+			&finalLaporan100.FormBimbinganPath,
 			&finalLaporan100.Keterangan,
 			&finalLaporan100.Status,
 			&finalLaporan100.CreatedAt,

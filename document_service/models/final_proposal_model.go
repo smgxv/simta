@@ -30,7 +30,7 @@ func (m *FinalProposalModel) Create(finalProposal *entities.FinalProposal) error
 		finalProposal.Kelas,
 		finalProposal.TopikPenelitian,
 		finalProposal.FilePath,
-		finalProposal.FormBimbinganPath, // kolom baru
+		finalProposal.FormBimbinganPath,
 		finalProposal.Keterangan,
 		"pending", // default status
 	)
@@ -76,7 +76,7 @@ func (m *FinalProposalModel) GetByUserID(userID string) ([]entities.FinalProposa
 			&finalProposal.Kelas,
 			&finalProposal.TopikPenelitian,
 			&finalProposal.FilePath,
-			&finalProposal.FormBimbinganPath, // kolom baru
+			&finalProposal.FormBimbinganPath,
 			&finalProposal.Keterangan,
 			&finalProposal.Status,
 			&finalProposal.CreatedAt,

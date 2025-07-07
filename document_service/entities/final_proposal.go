@@ -8,7 +8,7 @@ type FinalProposal struct {
 	Kelas             string `json:"kelas"`
 	TopikPenelitian   string `json:"topik_penelitian"`
 	FilePath          string `json:"file_path"`
-	FormBimbinganPath string `json:"form_bimbingan_path"` // <--- kolom baru
+	FormBimbinganPath string `json:"form_bimbingan_path"`
 	Keterangan        string `json:"keterangan"`
 	Status            string `json:"status"`
 	CreatedAt         string `json:"created_at"`

@@ -690,9 +690,17 @@
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
+								<label>Form Bimbingan (PDF)</label>
+								<div class="custom-file">
+									<input type="file" class="custom-file-input" id="formBimbinganFile" name="form_bimbingan_file" accept=".pdf" required>
+									<label class="custom-file-label" for="formBimbinganFile">Choose file</label>
+								</div>
+								<div id="formBimbinganSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
+							</div>
+							<div class="form-group">
 								<label>Final File Laporan 70% (PDF)</label>
 								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="finalLaporan70File" name="file" accept=".pdf" required>
+									<input type="file" class="custom-file-input" id="finalLaporan70File" name="final_laporan70_file" accept=".pdf" required>
 									<label class="custom-file-label" for="finalLaporan70File">Choose file</label>
 								</div>
 								<div id="finalSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
@@ -1413,6 +1421,21 @@
 				}
 			});
 
+			// Update nama file saat file dipilih untuk Form Bimbingan
+			document.getElementById('formBimbinganFile').addEventListener('change', function(e) {
+				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
+				var label = this.nextElementSibling;
+				label.textContent = fileName;
+				
+				var selectedFileDiv = document.getElementById('formBimbinganSelectedFileName');
+				if (e.target.files[0]) {
+					selectedFileDiv.textContent = 'File terpilih: ' + fileName;
+					selectedFileDiv.style.display = 'block';
+				} else {
+					selectedFileDiv.style.display = 'none';
+				}
+			});
+
 			// Handle form submission untuk Final Laporan 70%
 			document.getElementById('finalLaporan70Form').addEventListener('submit', async function(e) {
 				e.preventDefault();
@@ -1483,6 +1506,8 @@
 						this.reset();
 						document.querySelector('#finalLaporan70File').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('finalSelectedFileName').style.display = 'none';
+						document.querySelector('#formBimbinganFile').nextElementSibling.textContent = 'Choose file';
+						document.getElementById('formBimbinganSelectedFileName').style.display = 'none';
 						
 						// Refresh data
 						loadFinalLaporan70Data();
@@ -1562,8 +1587,11 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${finalLaporan70.file_path}" download>
-														<i class="dw dw-download"></i> Download
+													<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan70/download/${finalLaporan70.id}?type=form_bimbingan" download>
+														<i class="dw dw-download"></i> Download Form Bimbingan
+													</a>
+													<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan70/download/${finalLaporan70.id}?type=laporan70" download>
+														<i class="dw dw-download"></i> Download Final Laporan 70
 													</a>
 												</div>
 											</div>
