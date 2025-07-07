@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/gorilla/mux"
 )
 
 // Handler untuk mengupload final proposal
@@ -281,8 +283,9 @@ func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Ambil ID dan tipe file dari parameter
-	proposalID := r.URL.Query().Get("id")
-	fileType := r.URL.Query().Get("type") // "proposal" atau "form_bimbingan"
+	vars := mux.Vars(r)
+	proposalID := vars["id"]              // Ambil dari path: /download/{id}
+	fileType := r.URL.Query().Get("type") // Ambil dari query param: ?type=...
 
 	if proposalID == "" || fileType == "" {
 		http.Error(w, "id dan type wajib disediakan", http.StatusBadRequest)
