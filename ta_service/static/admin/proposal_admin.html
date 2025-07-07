@@ -977,12 +977,17 @@
 										<i class="dw dw-more"></i>
 									</a>
 									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="viewProposal(${item.final_proposal_id})">
-											<i class="dw dw-eye"></i> View
-										</a>
 										<a class="dropdown-item" href="#" onclick="downloadProposal(${item.final_proposal_id})">
 											<i class="dw dw-download"></i> Download
 										</a>
+										<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+											<a class="dropdown-item" href="http://104.43.89.154:8082/finalproposal/download/${item.final_proposal_id}?type=form_bimbingan" download>
+												<i class="dw dw-download"></i> Download Form Bimbingan
+											</a>
+											<a class="dropdown-item" href="http://104.43.89.154:8082/finalproposal/download/${item.final_proposal_id}?type=proposal" download>
+												<i class="dw dw-download"></i> Download Final Proposal
+											</a>
+										</div>
 										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_proposal_id}, 'approved')">
 											<i class="dw dw-check"></i> Accept
 										</a>
@@ -1015,11 +1020,6 @@
 					default:
 						return 'warning';
 				}
-			}
-
-			// Fungsi untuk melihat detail Proposal
-			function viewProposal(proposalId) {
-				window.location.href = `/admin/viewproposal?id=${proposalId}`;
 			}
 
 			// Fungsi untuk redirect ke profile
@@ -1152,7 +1152,6 @@
 				}
 				window.location.href = `/admin/detail_berkas_seminar_proposal?id=${finalProposalId}`;
 			}
-
 
 			// Load monitoring data saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {

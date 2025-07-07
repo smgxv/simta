@@ -81,12 +81,18 @@ func GetTarunaWithPengujiProposal(w http.ResponseWriter, r *http.Request) {
 			t.kelas,
 			dk.nama_lengkap AS ketua_penguji,
 			dp1.nama_lengkap AS penguji_1,
-			dp2.nama_lengkap AS penguji_2
+			dp2.nama_lengkap AS penguji_2,
+			CASE 
+				WHEN EXISTS (
+					SELECT 1 FROM final_proposal fp WHERE fp.user_id = t.user_id
+				) THEN 1 ELSE 0
+			END AS sudah_kumpul
 		FROM taruna t
 		LEFT JOIN penguji_proposal pp ON pp.user_id = t.user_id
 		LEFT JOIN dosen dk ON pp.ketua_penguji_id = dk.id
 		LEFT JOIN dosen dp1 ON pp.penguji_1_id = dp1.id
-		LEFT JOIN dosen dp2 ON pp.penguji_2_id = dp2.id;
+		LEFT JOIN dosen dp2 ON pp.penguji_2_id = dp2.id
+		ORDER BY t.nama_lengkap ASC;
 	`
 
 	rows, err := db.Query(query)
@@ -101,20 +107,25 @@ func GetTarunaWithPengujiProposal(w http.ResponseWriter, r *http.Request) {
 		var tarunaID int
 		var namaTaruna, jurusan, kelas sql.NullString
 		var ketua, penguji1, penguji2 sql.NullString
+		var sudahKumpul int
 
-		if err := rows.Scan(&tarunaID, &namaTaruna, &jurusan, &kelas, &ketua, &penguji1, &penguji2); err != nil {
+		if err := rows.Scan(
+			&tarunaID, &namaTaruna, &jurusan, &kelas,
+			&ketua, &penguji1, &penguji2, &sudahKumpul,
+		); err != nil {
 			http.Error(w, "Row scan error", http.StatusInternalServerError)
 			return
 		}
 
 		result = append(result, map[string]interface{}{
-			"taruna_id":     tarunaID,
-			"nama_lengkap":  namaTaruna.String,
-			"jurusan":       jurusan.String,
-			"kelas":         kelas.String,
-			"ketua_penguji": ketua.String,
-			"penguji_1":     penguji1.String,
-			"penguji_2":     penguji2.String,
+			"taruna_id":          tarunaID,
+			"nama_lengkap":       namaTaruna.String,
+			"jurusan":            jurusan.String,
+			"kelas":              kelas.String,
+			"ketua_penguji":      ketua.String,
+			"penguji_1":          penguji1.String,
+			"penguji_2":          penguji2.String,
+			"status_pengumpulan": sudahKumpul == 1, // true jika sudah mengumpulkan
 		})
 	}
 
