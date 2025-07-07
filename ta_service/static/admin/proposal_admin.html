@@ -972,31 +972,25 @@
 						</td>
 						<td>
 							${item.final_proposal_id > 0 ? 
-								`<div class="dropdown">
-									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-										<i class="dw dw-more"></i>
+							`<div class="dropdown">
+								<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+									<i class="dw dw-more"></i>
+								</a>
+								<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+									<a class="dropdown-item" href="http://104.43.89.154:8082/finalproposal/download/${item.final_proposal_id}?type=form_bimbingan" download>
+										<i class="dw dw-download"></i> Download Form Bimbingan
 									</a>
-									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="#" onclick="downloadProposal(${item.final_proposal_id})">
-											<i class="dw dw-download"></i> Download
-										</a>
-										<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-											<a class="dropdown-item" href="http://104.43.89.154:8082/finalproposal/download/${item.final_proposal_id}?type=form_bimbingan" download>
-												<i class="dw dw-download"></i> Download Form Bimbingan
-											</a>
-											<a class="dropdown-item" href="http://104.43.89.154:8082/finalproposal/download/${item.final_proposal_id}?type=proposal" download>
-												<i class="dw dw-download"></i> Download Final Proposal
-											</a>
-										</div>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_proposal_id}, 'approved')">
-											<i class="dw dw-check"></i> Accept
-										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_proposal_id}, 'rejected')">
-											<i class="dw dw-delete-3"></i> Reject
-										</a>
-									</div>
-								</div>`
-								: '-'}
+									<a class="dropdown-item" href="http://104.43.89.154:8082/finalproposal/download/${item.final_proposal_id}?type=proposal" download>
+										<i class="dw dw-download"></i> Download Final Proposal
+									</a>
+									<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_proposal_id}, 'approved')">
+										<i class="dw dw-check"></i> Accept
+									</a>
+									<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_proposal_id}, 'rejected')">
+										<i class="dw dw-delete-3"></i> Reject
+									</a>
+								</div>
+							</div>` : '-'}
 						</td>
 					`;
 					tableBody.appendChild(row);
