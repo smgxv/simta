@@ -7,19 +7,13 @@ import (
 	"document_service/models"
 	"document_service/utils"
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
-
-	"github.com/gorilla/mux"
 )
 
 // Handler untuk mengupload final proposal
 func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -30,7 +24,7 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	err := r.ParseMultipartForm(20 << 20) // 20 MB
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -53,59 +47,32 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Handle file upload
-	file, handler, err := r.FormFile("file")
+	// === Upload Final Proposal File ===
+	finalFilePath, err := utils.HandleFileUpload(r, "final_proposal_file", userID, "FINAL_PROPOSAL")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
-		})
-		return
-	}
-	defer file.Close()
-
-	// Create upload directory if not exists
-	uploadDir := "uploads/finalproposal"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": "Gagal upload Final Proposal: " + err.Error(),
 		})
 		return
 	}
 
-	// Generate unique filename
-	filename := fmt.Sprintf("FINAL_PROPOSAL_%s_%s_%s",
-		userID,
-		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
-
-	// Create the file
-	dst, err := os.Create(filePath)
+	// === Upload Form Bimbingan File ===
+	formFilePath, err := utils.HandleFileUpload(r, "form_bimbingan_file", userID, "FORM_BIMBINGAN")
 	if err != nil {
+		os.Remove(finalFilePath) // hapus file proposal yang sudah sempat di-upload
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	// Copy the uploaded file to the created file
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
+			"message": "Gagal upload Form Bimbingan: " + err.Error(),
 		})
 		return
 	}
 
-	// Connect to database
+	// === Save to DB ===
 	db, err := config.GetDB()
 	if err != nil {
-		os.Remove(filePath)
+		os.Remove(finalFilePath)
+		os.Remove(formFilePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Error connecting to database: " + err.Error(),
@@ -114,20 +81,21 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Create Final Proposal record
 	finalProposalModel := models.NewFinalProposalModel(db)
 	finalProposal := &entities.FinalProposal{
-		UserID:          utils.ParseInt(userID),
-		NamaLengkap:     namaLengkap,
-		Jurusan:         jurusan,
-		Kelas:           kelas,
-		TopikPenelitian: topikPenelitian,
-		FilePath:        filePath,
-		Keterangan:      keterangan,
+		UserID:            utils.ParseInt(userID),
+		NamaLengkap:       namaLengkap,
+		Jurusan:           jurusan,
+		Kelas:             kelas,
+		TopikPenelitian:   topikPenelitian,
+		FilePath:          finalFilePath,
+		FormBimbinganPath: formFilePath,
+		Keterangan:        keterangan,
 	}
 
 	if err := finalProposalModel.Create(finalProposal); err != nil {
-		os.Remove(filePath)
+		os.Remove(finalFilePath)
+		os.Remove(formFilePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Error saving to database: " + err.Error(),
@@ -139,8 +107,9 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 		"status":  "success",
 		"message": "Final Proposal berhasil diunggah",
 		"data": map[string]interface{}{
-			"id":        finalProposal.ID,
-			"file_path": filePath,
+			"id":                  finalProposal.ID,
+			"file_path":           finalFilePath,
+			"form_bimbingan_path": formFilePath,
 		},
 	})
 }
@@ -300,7 +269,7 @@ func UpdateFinalProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk download file Final Proposal
+// Handler untuk download file Final Proposal atau Form Bimbingan
 func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -311,8 +280,14 @@ func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	proposalID := vars["id"]
+	// Ambil ID dan tipe file dari parameter
+	proposalID := r.URL.Query().Get("id")
+	fileType := r.URL.Query().Get("type") // "proposal" atau "form_bimbingan"
+
+	if proposalID == "" || fileType == "" {
+		http.Error(w, "id dan type wajib disediakan", http.StatusBadRequest)
+		return
+	}
 
 	db, err := config.GetDB()
 	if err != nil {
@@ -322,11 +297,19 @@ func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	var filePath string
-	query := "SELECT file_path FROM final_proposal WHERE id = ?"
-	err = db.QueryRow(query, proposalID).Scan(&filePath)
+	switch fileType {
+	case "proposal":
+		err = db.QueryRow("SELECT file_path FROM final_proposal WHERE id = ?", proposalID).Scan(&filePath)
+	case "form_bimbingan":
+		err = db.QueryRow("SELECT form_bimbingan_path FROM final_proposal WHERE id = ?", proposalID).Scan(&filePath)
+	default:
+		http.Error(w, "type tidak valid. Gunakan 'proposal' atau 'form_bimbingan'", http.StatusBadRequest)
+		return
+	}
+
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "File not found", http.StatusNotFound)
+			http.Error(w, "File tidak ditemukan", http.StatusNotFound)
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -335,7 +318,7 @@ func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		http.Error(w, "File not found", http.StatusNotFound)
+		http.Error(w, "Gagal membuka file", http.StatusNotFound)
 		return
 	}
 	defer file.Close()
@@ -343,6 +326,5 @@ func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	fileName := filepath.Base(filePath)
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
 	w.Header().Set("Content-Type", "application/pdf")
-
 	http.ServeFile(w, r, filePath)
 }
