@@ -121,6 +121,7 @@ func main() {
 	adminRouter.HandleFunc("/detail_berkas_seminar_laporan100", controllers.DetailBerkasLaporan100).Methods("GET", "OPTIONS")
 	adminRouter.HandleFunc("/repositori", controllers.Repositori).Methods("GET", "OPTIONS")
 	adminRouter.HandleFunc("/detail_berkas_tugas_akhir", controllers.DetailTugasAkhir).Methods("GET", "OPTIONS")
+	adminRouter.HandleFunc("/notification", controllers.Notification).Methods("GET", "POST")
 
 	// Tambahkan routes untuk taruna
 	tarunaRoutes := router.PathPrefix("/taruna").Subrouter()

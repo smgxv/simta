@@ -630,6 +630,16 @@ func DetailTugasAkhir(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/admin/detail_berkas_tugas_akhir.html")
 }
 
+// Handler untuk menu notification
+func Notification(w http.ResponseWriter, r *http.Request) {
+	temp, err := template.ParseFiles("static/admin/notification.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	temp.Execute(w, nil)
+}
+
 // TARUNA WEB SERVICE
 // TarunaDashboard menangani tampilan dashboard untuk taruna
 func TarunaDashboard(w http.ResponseWriter, r *http.Request) {
