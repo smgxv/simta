@@ -580,32 +580,40 @@
 		<script>
 		// JS untuk menampilkan informasi
 		document.addEventListener("DOMContentLoaded", function () {
-			const id = window.location.pathname.split("/").pop();
+			const urlParams = new URLSearchParams(window.location.search);
+			const id = urlParams.get("id");
 
 			fetch(`http://104.43.89.154:8083/notification/${id}`)
-				.then(res => res.json())
+				.then(res => {
+					if (!res.ok) {
+						throw new Error("Notifikasi tidak ditemukan");
+					}
+					return res.json();
+				})
 				.then(notif => {
-				document.getElementById("judul-notif").textContent = notif.Judul;
-				document.getElementById("tanggal-notif").textContent = new Date(notif.CreatedAt).toLocaleString("id-ID", { dateStyle: 'full', timeStyle: 'short' });
-				document.getElementById("deskripsi-notif").textContent = notif.Deskripsi;
-
-				if (notif.FileURLs && notif.FileURLs !== "") {
-					const files = JSON.parse(notif.FileURLs);
-					const container = document.getElementById("file-links");
-
-					files.forEach(url => {
-					const link = document.createElement("a");
-					link.href = `http://104.43.89.154:8083${url}`;
-					link.textContent = "📎 Unduh Lampiran";
-					link.className = "btn btn-outline-primary d-block mb-2";
-					link.target = "_blank";
-					container.appendChild(link);
+					document.getElementById("judul-notif").textContent = notif.Judul;
+					document.getElementById("tanggal-notif").textContent = new Date(notif.CreatedAt).toLocaleString("id-ID", {
+						dateStyle: 'full', timeStyle: 'short'
 					});
-				}
+					document.getElementById("deskripsi-notif").textContent = notif.Deskripsi;
+
+					if (notif.FileURLs && notif.FileURLs !== "") {
+						const files = JSON.parse(notif.FileURLs);
+						const container = document.getElementById("file-links");
+
+						files.forEach(url => {
+							const link = document.createElement("a");
+							link.href = `http://104.43.89.154:8083${url}`;
+							link.textContent = "📎 Unduh Lampiran";
+							link.className = "btn btn-outline-primary d-block mb-2";
+							link.target = "_blank";
+							container.appendChild(link);
+						});
+					}
 				})
 				.catch(err => {
-				document.getElementById("judul-notif").textContent = "Notifikasi tidak ditemukan.";
-				console.error(err);
+					document.getElementById("judul-notif").textContent = "Notifikasi tidak ditemukan.";
+					console.error(err);
 				});
 		});
 
