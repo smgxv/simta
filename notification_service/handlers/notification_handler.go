@@ -2,15 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"notification_service/config"
+	"notification_service/models"
 	"os"
 	"strings"
 	"time"
-
-	"notification_service/config"
-	"notification_service/models"
 
 	"github.com/google/uuid"
 )
@@ -66,6 +65,11 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Validasi fallback deskripsi
+	if deskripsi == "" {
+		deskripsi = "-"
+	}
+
 	notif := models.Notification{
 		ID:        uuid.New().String(),
 		Judul:     judul,
@@ -81,12 +85,12 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert ke database
-	query := `INSERT INTO notifications (id, judul, deskripsi, target, file_urls, created_at)
-	          VALUES (?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO notifications (id, judul, deskripsi, target, file_urls, created_at) VALUES (?, ?, ?, ?, ?, ?)`
 	_, err = db.Exec(query, notif.ID, notif.Judul, notif.Deskripsi, notif.Target, notif.FileURLs, notif.CreatedAt)
+
 	if err != nil {
-		http.Error(w, "Gagal menyimpan notifikasi", http.StatusInternalServerError)
-		fmt.Println("DB error:", err)
+		log.Printf("❌ INSERT error: %+v", err)
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
