@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -88,22 +87,14 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	notif := models.Notification{
-		ID:        uuid.New().String(),
 		Judul:     judul,
 		Deskripsi: deskripsi,
 		Target:    strings.Join(filteredTargets, ","),
 		CreatedAt: time.Now(),
 	}
 
-	// Handle optional file
-	if len(fileURLs) > 0 {
-		fileJSON, _ := json.Marshal(fileURLs)
-		notif.FileURLs = string(fileJSON)
-	}
-
-	// Insert ke database
-	query := `INSERT INTO notifications (id, judul, deskripsi, target, file_urls, created_at) VALUES (?, ?, ?, ?, ?, ?)`
-	_, err = db.Exec(query, notif.ID, notif.Judul, notif.Deskripsi, notif.Target, notif.FileURLs, notif.CreatedAt)
+	query := `INSERT INTO notifications (judul, deskripsi, target, file_urls, created_at) VALUES (?, ?, ?, ?, ?)`
+	res, err := db.Exec(query, notif.Judul, notif.Deskripsi, notif.Target, notif.FileURLs, notif.CreatedAt)
 
 	if err != nil {
 		log.Printf("❌ INSERT error: %+v", err)
@@ -111,13 +102,17 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Sukses
+	// Ambil ID hasil insert
+	insertedID, _ := res.LastInsertId()
+
+	// Kirim response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Notifikasi berhasil dikirim",
-		"id":      notif.ID,
+		"id":      insertedID,
 	})
+
 }
 
 func GetNotifications(w http.ResponseWriter, r *http.Request) {
