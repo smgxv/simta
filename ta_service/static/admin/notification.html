@@ -681,7 +681,6 @@
 								  name="files"
 								  accept=".pdf,.doc,.docx,.xls,.xlsx"
 								  multiple
-								  required
 								/>
 								<small class="form-text text-muted">
 								  Format: PDF, DOC, XLS. Bisa memilih lebih dari satu file.
@@ -847,8 +846,9 @@
 					if (document.getElementById("targetTaruna").checked) targets.push("Taruna");
 					if (document.getElementById("targetDosen").checked) targets.push("Dosen");
 
-					// Tambahkan ke FormData
-					targets.forEach(t => formData.append("target", t));
+					// Tambahkan target unik ke FormData
+					const uniqueTargets = [...new Set(targets)];
+					uniqueTargets.forEach(t => formData.append("target", t));
 
 					try {
 						const response = await fetch("http://104.43.89.154:8083/broadcast", {

@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"notification_service/config"
 	"notification_service/models"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -44,7 +46,11 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		fileName := uuid.New().String() + "_" + fileHeader.Filename
+		ext := filepath.Ext(fileHeader.Filename)
+		nameOnly := strings.TrimSuffix(fileHeader.Filename, ext)
+		timestamp := time.Now().Format("20060102_150405")
+		fileName := fmt.Sprintf("%s_%s%s", nameOnly, timestamp, ext)
+
 		path := "./uploads/" + fileName
 
 		dst, err := os.Create(path)
