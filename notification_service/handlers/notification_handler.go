@@ -76,11 +76,21 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 		deskripsi = "-"
 	}
 
+	// Hilangkan target duplikat
+	uniqueTargetMap := map[string]bool{}
+	var filteredTargets []string
+	for _, t := range targets {
+		if !uniqueTargetMap[t] {
+			uniqueTargetMap[t] = true
+			filteredTargets = append(filteredTargets, t)
+		}
+	}
+
 	notif := models.Notification{
 		ID:        uuid.New().String(),
 		Judul:     judul,
 		Deskripsi: deskripsi,
-		Target:    strings.Join(targets, ","), // e.g., "Taruna,Dosen"
+		Target:    strings.Join(filteredTargets, ","),
 		CreatedAt: time.Now(),
 	}
 
@@ -107,4 +117,39 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 		"message": "Notifikasi berhasil dikirim",
 		"id":      notif.ID,
 	})
+}
+
+func GetNotifications(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT id, judul, deskripsi, target, file_urls, created_at FROM notifications ORDER BY created_at DESC LIMIT 10")
+	if err != nil {
+		http.Error(w, "Query error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var results []models.Notification
+
+	for rows.Next() {
+		var n models.Notification
+		err := rows.Scan(&n.ID, &n.Judul, &n.Deskripsi, &n.Target, &n.FileURLs, &n.CreatedAt)
+		if err != nil {
+			continue
+		}
+		// Filter hanya untuk target Taruna
+		if strings.Contains(n.Target, "Taruna") {
+			results = append(results, n)
+		}
+	}
+
+	json.NewEncoder(w).Encode(results)
 }
