@@ -676,28 +676,30 @@
 				const ul = document.getElementById("notif-list");
 				ul.innerHTML = ""; // Bersihkan isi lama
 
-				if (data.length === 0) {
+				// FILTER hanya notifikasi untuk Taruna
+				const tarunaNotif = data.filter(n => n.Target && n.Target.includes("Taruna"));
+
+				if (tarunaNotif.length === 0) {
 					ul.innerHTML = "<li><a><p class='text-center'>Tidak ada notifikasi.</p></a></li>";
 					return;
 				}
 
-				data.forEach(item => {
+				tarunaNotif.forEach(item => {
 					const li = document.createElement("li");
 					li.innerHTML = `
 					<a href="#">
 						<img src="vendors/images/logo.png" alt="" />
-						<h3>${item.judul}</h3>
-						<p>${item.deskripsi.length > 50 ? item.deskripsi.substring(0, 50) + "..." : item.deskripsi}</p>
+						<h3>${item.Judul}</h3>
+						<p>${item.Deskripsi.length > 50 ? item.Deskripsi.substring(0, 50) + "..." : item.Deskripsi}</p>
 					</a>`;
 					ul.appendChild(li);
 				});
 
-				// Tampilkan badge merah jika ada notifikasi
 				document.querySelector(".notification-active").style.display = "inline-block";
 				})
 				.catch(err => {
 				console.error("Gagal mengambil notifikasi:", err);
-			});
+				});
 		});
 
 		function redirectToProfile() {
