@@ -22,6 +22,7 @@ func main() {
 	// Register endpoint
 	r.HandleFunc("/broadcast", handlers.BroadcastNotification).Methods("POST", "OPTIONS")
 	r.HandleFunc("/notifications", handlers.GetNotifications).Methods("GET", "OPTIONS")
+	r.HandleFunc("/notification/{id}", handlers.GetNotificationByID).Methods("GET", "OPTIONS")
 
 	// Setup CORS agar frontend (port 8080) bisa akses
 	c := cors.New(cors.Options{

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
@@ -152,4 +153,39 @@ func GetNotifications(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(results)
+}
+
+func GetNotificationByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	var notif models.Notification
+	row := db.QueryRow(`
+		SELECT id, judul, deskripsi, target, file_urls, created_at 
+		FROM notifications 
+		WHERE id = ?`, id)
+
+	err = row.Scan(&notif.ID, &notif.Judul, &notif.Deskripsi, &notif.Target, &notif.FileURLs, &notif.CreatedAt)
+	if err != nil {
+		http.Error(w, "Notifikasi tidak ditemukan", http.StatusNotFound)
+		return
+	}
+
+	// Opsional: Filter agar hanya target Taruna yang bisa lihat
+	if !strings.Contains(notif.Target, "Taruna") {
+		http.Error(w, "Notifikasi tidak untuk pengguna ini", http.StatusForbidden)
+		return
+	}
+
+	json.NewEncoder(w).Encode(notif)
 }
