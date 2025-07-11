@@ -16,7 +16,7 @@ func GetDB() (*sql.DB, error) {
 	password := getEnv("DB_PASSWORD", "password")
 	host := getEnv("DB_HOST", "mysql")
 	port := getEnv("DB_PORT", "3306")
-	dbname := getEnv("DB_NAME", "notification_service")
+	dbname := getEnv("DB_NAME", "go_tugasakhir")
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 		username,
