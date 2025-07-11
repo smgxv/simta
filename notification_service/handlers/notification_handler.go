@@ -93,6 +93,12 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: time.Now(),
 	}
 
+	// Masukkan fileURLs yang telah dikumpulkan
+	if len(fileURLs) > 0 {
+		fileJSON, _ := json.Marshal(fileURLs)
+		notif.FileURLs = string(fileJSON)
+	}
+
 	query := `INSERT INTO notifications (judul, deskripsi, target, file_urls, created_at) VALUES (?, ?, ?, ?, ?)`
 	res, err := db.Exec(query, notif.Judul, notif.Deskripsi, notif.Target, notif.FileURLs, notif.CreatedAt)
 
