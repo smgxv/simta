@@ -168,6 +168,12 @@ func GetNotificationByID(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id := vars["id"]
+	role := r.URL.Query().Get("role") // Ambil role dari query parameter (e.g. "Dosen" atau "Taruna")
+
+	if role != "Taruna" && role != "Dosen" {
+		http.Error(w, "Role tidak valid", http.StatusBadRequest)
+		return
+	}
 
 	db, err := config.GetDB()
 	if err != nil {
@@ -188,9 +194,9 @@ func GetNotificationByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Opsional: Filter agar hanya target Taruna yang bisa lihat
-	if !strings.Contains(notif.Target, "Taruna") {
-		http.Error(w, "Notifikasi tidak untuk pengguna ini", http.StatusForbidden)
+	// Filter berdasarkan target
+	if !strings.Contains(notif.Target, role) {
+		http.Error(w, "Notifikasi tidak ditujukan untuk pengguna ini", http.StatusForbidden)
 		return
 	}
 
