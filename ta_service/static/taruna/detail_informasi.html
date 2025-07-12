@@ -583,7 +583,7 @@
 			const urlParams = new URLSearchParams(window.location.search);
 			const id = urlParams.get("id");
 
-			const role = "Dosen";
+			const role = "Taruna";
 			fetch(`http://104.43.89.154:8083/notification/${id}?role=${role}`)
 				.then(res => {
 					if (!res.ok) {
