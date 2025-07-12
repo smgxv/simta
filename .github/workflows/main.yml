@@ -103,11 +103,11 @@ jobs:
 
       - name: Jalankan OWASP ZAP Scan
         run: |
-          docker run --network="host" \
-            -v ${{ github.workspace }}:/zap/wrk:rw \
+          docker run --rm --network="host" \
+            -v $(pwd):/zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
               -t http://localhost:8080 \
-              -r zap_report.html \
+              -r /zap/wrk/zap_report.html \
               || true
 
       - name: Upload ZAP Report
