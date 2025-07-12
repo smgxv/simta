@@ -1239,7 +1239,7 @@ func DetailInformasiDosen(w http.ResponseWriter, r *http.Request) {
 
 	// Validasi token
 	claims, err := utils.ParseJWT(tokenString)
-	if err != nil || strings.ToLower(claims.Role) != "taruna" {
+	if err != nil || strings.ToLower(claims.Role) != "dosen" {
 		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
 		return
 	}
