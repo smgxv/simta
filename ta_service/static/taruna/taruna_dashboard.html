@@ -605,9 +605,6 @@
 				</div>
 
 				<div class="container mt-4">
-					<!-- <div class="alert alert-primary mb-4" role="alert">
-						Selamat datang, <span id="nama-taruna-header">Taruna</span>! Berikut ringkasan status tugas akhir Anda.
-					</div> -->
 					<div class="row">
 					  <div class="col-md-4">
 						<div class="card shadow-sm p-3 mb-4">
@@ -718,35 +715,32 @@
 		<script>
 		// JS notifikasi
 		document.addEventListener("DOMContentLoaded", function () {
-			fetch("http://104.43.89.154:8083/notifications")
+			fetch("http://104.43.89.154:8083/notifications?role=Dosen")
 				.then(res => res.json())
 				.then(data => {
-				const ul = document.getElementById("notif-list");
-				ul.innerHTML = ""; // Bersihkan isi lama
+					const ul = document.getElementById("notif-list");
+					ul.innerHTML = ""; // Kosongkan
 
-				// FILTER hanya notifikasi untuk Taruna
-				const tarunaNotif = data.filter(n => n.Target && n.Target.includes("Taruna"));
+					if (data.length === 0) {
+						ul.innerHTML = "<li><a><p class='text-center'>Tidak ada notifikasi.</p></a></li>";
+						return;
+					}
 
-				if (tarunaNotif.length === 0) {
-					ul.innerHTML = "<li><a><p class='text-center'>Tidak ada notifikasi.</p></a></li>";
-					return;
-				}
+					data.forEach(item => {
+						const li = document.createElement("li");
+						li.innerHTML = `
+							<a href="/dosen/detailinformasidosen?id=${item.ID}">
+								<img src="vendors/images/logo.png" alt="" />
+								<h3>${item.Judul}</h3>
+								<p>${item.Deskripsi.length > 50 ? item.Deskripsi.substring(0, 50) + "..." : item.Deskripsi}</p>
+							</a>`;
+						ul.appendChild(li);
+					});
 
-				tarunaNotif.forEach(item => {
-					const li = document.createElement("li");
-					li.innerHTML = `
-					<a href="/taruna/detailinformasi?id=${item.ID}">
-						<img src="vendors/images/logo.png" alt="" />
-						<h3>${item.Judul}</h3>
-						<p>${item.Deskripsi.length > 50 ? item.Deskripsi.substring(0, 50) + "..." : item.Deskripsi}</p>
-					</a>`;
-					ul.appendChild(li);
-				});
-
-				document.querySelector(".notification-active").style.display = "inline-block";
+					document.querySelector(".notification-active").style.display = "inline-block";
 				})
 				.catch(err => {
-				console.error("Gagal mengambil notifikasi:", err);
+					console.error("Gagal mengambil notifikasi:", err);
 				});
 		});
 

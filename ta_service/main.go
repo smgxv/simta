@@ -137,7 +137,7 @@ func main() {
 	tarunaRoutes.HandleFunc("/proposal", controllers.Proposal).Methods("GET", "OPTIONS")
 	tarunaRoutes.HandleFunc("/ta70", controllers.Laporan70).Methods("GET", "OPTIONS")
 	tarunaRoutes.HandleFunc("/ta100", controllers.Laporan100).Methods("GET", "OPTIONS")
-	tarunaRoutes.HandleFunc("/detailinformasi", controllers.DetailInformasi).Methods("GET", "OPTIONS")
+	tarunaRoutes.HandleFunc("/detailinformasitaruna", controllers.DetailInformasiTaruna).Methods("GET", "OPTIONS")
 
 	// Tambahkan routes untuk dosen
 	dosenRoutes := router.PathPrefix("/dosen").Subrouter()
@@ -156,6 +156,7 @@ func main() {
 	dosenRoutes.HandleFunc("/pengujian_laporan70", controllers.PengujiLaporan70).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/bimbingan_laporan100", controllers.BimbinganLaporan100).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/pengujian_laporan100", controllers.PengujiLaporan100).Methods("GET", "OPTIONS")
+	dosenRoutes.HandleFunc("/detailinformasidosen", controllers.DetailInformasiDosen).Methods("GET", "OPTIONS")
 
 	// Tambahkan router ke http.Handle
 	http.Handle("/", router) // Tambahkan ini untuk menggunakan router mux

@@ -132,6 +132,12 @@ func GetNotifications(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Ambil role dari query parameter
+	role := r.URL.Query().Get("role")
+	if role == "" {
+		role = "Taruna" // default fallback
+	}
+
 	rows, err := db.Query("SELECT id, judul, deskripsi, target, file_urls, created_at FROM notifications ORDER BY created_at DESC LIMIT 10")
 	if err != nil {
 		http.Error(w, "Query error", http.StatusInternalServerError)
@@ -147,8 +153,8 @@ func GetNotifications(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			continue
 		}
-		// Filter hanya untuk target Taruna
-		if strings.Contains(n.Target, "Taruna") {
+		// Filter sesuai role
+		if strings.Contains(n.Target, role) {
 			results = append(results, n)
 		}
 	}

@@ -484,9 +484,22 @@
 
 		<div class="main-container">
 			<div class="xs-pd-20-10 pd-ltr-20">
-				<div class="alert alert-primary mb-4" role="alert">
-					Selamat datang, <span id="nama-dosen-header">Dosen</span>!
+				<div class="card-box pd-20 height-100-p mb-30">
+					<div class="row align-items-center">
+						<div class="col-md-4">
+							<img src="vendors/images/banner-img.png" alt="" />
+						</div>
+						<div class="col-md-8">
+							<h4 class="font-20 weight-500 mb-10 text-capitalize">
+								Welcome back <span class="weight-600 font-30 text-blue" id="nama-dosen-header">Taruna!</span>
+							</h4>
+							<p class="font-18 max-width-600">
+								Selamat datang kembali! Di bawah ini adalah rangkuman lengkap mengenai perkembangan tugas akhir Anda. Silakan tinjau setiap bagian untuk memastikan semuanya berjalan sesuai rencana.
+							</p>
+						</div>
+					</div>
 				</div>
+
 				<div class="row">
 				  <div class="col-md-4">
 					<div class="card shadow-sm p-3 mb-4">
@@ -655,35 +668,32 @@
 		<script>
 		// JS notifikasi
 		document.addEventListener("DOMContentLoaded", function () {
-			fetch("http://104.43.89.154:8083/notifications")
+			fetch("http://104.43.89.154:8083/notifications?role=Dosen")
 				.then(res => res.json())
 				.then(data => {
-				const ul = document.getElementById("notif-list");
-				ul.innerHTML = ""; // Bersihkan isi lama
+					const ul = document.getElementById("notif-list");
+					ul.innerHTML = ""; // Kosongkan
 
-				// FILTER hanya notifikasi untuk Dosen
-				const dosenNotif = data.filter(n => n.Target && n.Target.includes("Dosen"));
+					if (data.length === 0) {
+						ul.innerHTML = "<li><a><p class='text-center'>Tidak ada notifikasi.</p></a></li>";
+						return;
+					}
 
-				if (dosenNotif.length === 0) {
-					ul.innerHTML = "<li><a><p class='text-center'>Tidak ada notifikasi.</p></a></li>";
-					return;
-				}
+					data.forEach(item => {
+						const li = document.createElement("li");
+						li.innerHTML = `
+							<a href="/dosen/detailinformasidosen?id=${item.ID}">
+								<img src="vendors/images/logo.png" alt="" />
+								<h3>${item.Judul}</h3>
+								<p>${item.Deskripsi.length > 50 ? item.Deskripsi.substring(0, 50) + "..." : item.Deskripsi}</p>
+							</a>`;
+						ul.appendChild(li);
+					});
 
-				dosenNotif.forEach(item => {
-					const li = document.createElement("li");
-					li.innerHTML = `
-					<a href="/dosen/detailinformasi?id=${item.ID}">
-						<img src="vendors/images/logo.png" alt="" />
-						<h3>${item.Judul}</h3>
-						<p>${item.Deskripsi.length > 50 ? item.Deskripsi.substring(0, 50) + "..." : item.Deskripsi}</p>
-					</a>`;
-					ul.appendChild(li);
-				});
-
-				document.querySelector(".notification-active").style.display = "inline-block";
+					document.querySelector(".notification-active").style.display = "inline-block";
 				})
 				.catch(err => {
-				console.error("Gagal mengambil notifikasi:", err);
+					console.error("Gagal mengambil notifikasi:", err);
 				});
 		});
 
