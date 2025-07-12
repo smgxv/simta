@@ -602,10 +602,11 @@
 						const container = document.getElementById("file-links");
 
 						files.forEach(url => {
+							const fileName = url.split("/").pop(); // Ambil nama file dari URL
 							const link = document.createElement("a");
-							link.href = `http://104.43.89.154:8083${url}`;
-							link.textContent = "📎 Unduh Lampiran";
-							link.className = "btn btn-outline-primary d-block mb-2";
+							link.href = `http://104.43.89.154:8083/download/${fileName}`;
+							link.innerHTML = `📎 ${fileName}`;
+							link.className = "btn btn-outline-primary d-block mb-2 text-left";
 							link.target = "_blank";
 							container.appendChild(link);
 						});

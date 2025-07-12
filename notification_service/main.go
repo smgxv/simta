@@ -23,6 +23,7 @@ func main() {
 	r.HandleFunc("/broadcast", handlers.BroadcastNotification).Methods("POST", "OPTIONS")
 	r.HandleFunc("/notifications", handlers.GetNotifications).Methods("GET", "OPTIONS")
 	r.HandleFunc("/notification/{id}", handlers.GetNotificationByID).Methods("GET", "OPTIONS")
+	r.HandleFunc("/download/{filename}", handlers.DownloadFile).Methods("GET", "OPTIONS")
 
 	// Setup CORS agar frontend (port 8080) bisa akses
 	c := cors.New(cors.Options{
