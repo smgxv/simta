@@ -80,7 +80,7 @@ jobs:
 
   # 4. DAST - OWASP ZAP on TA service (local container)
   dast-analysis:
-    name: DAST with OWASP ZAP
+    name: DAST with OWASP ZAP (Local Container)
     needs: build-services
     runs-on: ubuntu-latest
     steps:
@@ -101,11 +101,10 @@ jobs:
             fi
           done
 
-      - name: Jalankan OWASP ZAP Scan
+      - name: Jalankan OWASP ZAP dan simpan output ke file
         run: |
           docker run --rm --network="host" \
-            -v $(pwd):/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            owasp/zap2docker-stable zap-baseline.py \
               -t http://localhost:8080 \
               -r zap_report.html \
               || true
@@ -115,6 +114,7 @@ jobs:
         with:
           name: zap-report
           path: zap_report.html
+
 
   # 5. DEPLOY TO VPS
   deploy:
