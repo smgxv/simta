@@ -84,6 +84,9 @@ jobs:
     needs: build-services
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
       - name: Pull and Run TA Service
         run: |
           docker pull smgxv/ta-service
@@ -103,17 +106,18 @@ jobs:
 
       - name: Jalankan OWASP ZAP dan simpan output ke file
         run: |
+          mkdir -p zap_output
           docker run --rm --network="host" \
+            -v $(pwd)/zap_output:/zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
               -t http://localhost:8080 \
-              -r zap_report.html \
-              || true
+              -r zap_report.html || true
 
       - name: Upload ZAP Report
         uses: actions/upload-artifact@v4
         with:
           name: zap-report
-          path: zap_report.html
+          path: zap_output/zap_report.html
 
 
   # 5. DEPLOY TO VPS
