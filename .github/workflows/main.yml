@@ -91,10 +91,10 @@ jobs:
     needs: deploy-staging
     runs-on: ubuntu-latest
     steps:
-      - name: Persiapkan direktori output
+      - name: Siapkan Direktori Output
         run: mkdir -p zap_output
 
-      - name: Jalankan ZAP pada TA Service
+      - name: Jalankan ZAP terhadap TA Service
         run: |
           docker run --rm \
             -v $(pwd)/zap_output:/zap/wrk \
@@ -102,7 +102,7 @@ jobs:
             -t http://104.43.89.154:8080 \
             -r ta_report.html || true
 
-      - name: Jalankan ZAP pada User Service
+      - name: Jalankan ZAP terhadap User Service
         run: |
           docker run --rm \
             -v $(pwd)/zap_output:/zap/wrk \
@@ -110,7 +110,7 @@ jobs:
             -t http://104.43.89.154:8081 \
             -r user_report.html || true
 
-      - name: Jalankan ZAP pada Document Service
+      - name: Jalankan ZAP terhadap Document Service
         run: |
           docker run --rm \
             -v $(pwd)/zap_output:/zap/wrk \
@@ -118,7 +118,7 @@ jobs:
             -t http://104.43.89.154:8082 \
             -r document_report.html || true
 
-      - name: Jalankan ZAP pada Notification Service
+      - name: Jalankan ZAP terhadap Notification Service
         run: |
           docker run --rm \
             -v $(pwd)/zap_output:/zap/wrk \
