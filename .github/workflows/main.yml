@@ -24,8 +24,7 @@ jobs:
 
   # 2. SAST - CodeQL (Native GitHub)
   sast-codeql:
-    name: SAST dengan CodeQL (GitHub Native)
-    needs: running-tests
+    name: SAST dengan CodeQL (Go + JS)
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -36,13 +35,19 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          languages: javascript
+          go-version: 1.18
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: go,javascript
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
+
 
   # 3. BUILD & PUSH DOCKER IMAGES
   build-services:
@@ -75,11 +80,11 @@ jobs:
 
   # 3. DEPLOY TO VPS (STAGING)
   deploy-staging:
-    name: Deploy All Services to VPS (Staging)
+    name: Deploy Semua Service ke VPS Local(Staging)
     needs: build-services
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy All Services to VPS
+      - name: Deploy Semua Service ke VPS Local(Staging)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -109,7 +114,7 @@ jobs:
 
   # 4. DAST - ZAP TEST TERHADAP VPS
   dast-analysis:
-    name: DAST with OWASP ZAP (Target VPS)
+    name: DAST dengan OWASP ZAP (Target VPS)
     needs: deploy-staging
     runs-on: ubuntu-latest
     steps:
@@ -160,7 +165,7 @@ jobs:
 
   # 5. SAST - SONARCLOUD
   sast-analysis:
-    name: Static Analysis with SonarCloud
+    name: SAST dengan SonarCloud
     needs: deploy-staging
     runs-on: ubuntu-latest
     steps:
