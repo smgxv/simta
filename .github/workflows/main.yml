@@ -6,25 +6,9 @@ on:
 
 jobs:
 
-  # 1. TEST SEDERHANA
-  running-tests:
-    name: Run Basic Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Source
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.18
-
-      - name: Run Dummy Tests
-        run: echo "No tests defined yet. Placeholder."
-
-  # 2. SAST - CodeQL (Native GitHub)
+  # 1. SAST - CodeQL (GitHub Native)
   sast-codeql:
-    name: SAST dengan CodeQL (Go + JS)
+    name: SAST dengan CodeQL (Go + JS + HTML)
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -38,18 +22,17 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.18
+          go-version: 1.23
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: go,javascript
+          languages: go, javascript, html
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
-
-  # 3. BUILD & PUSH DOCKER IMAGES
+  # 2. BUILD & PUSH DOCKER IMAGES
   build-services:
     name: Build Docker Images
     needs: sast-codeql
@@ -187,6 +170,7 @@ jobs:
 
 
 
+
 # name : CI
 
 # on:
@@ -203,7 +187,7 @@ jobs:
 #       - name: Set up Go
 #         uses: actions/setup-go@v2
 #         with:
-#           go-version: 1.18
+#           go-version: 1.23
 
 #   build-ta-service:
 #     needs: running-tests
