@@ -22,10 +22,32 @@ jobs:
       - name: Run Dummy Tests
         run: echo "No tests defined yet. Placeholder."
 
-  # 2. BUILD & PUSH DOCKER IMAGES
+  # 2. SAST - CodeQL (Native GitHub)
+  sast-codeql:
+    name: SAST dengan CodeQL (GitHub Native)
+    needs: running-tests
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  # 3. BUILD & PUSH DOCKER IMAGES
   build-services:
     name: Build Docker Images
-    needs: running-tests
+    needs: sast-codeql
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
