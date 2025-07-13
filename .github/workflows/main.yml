@@ -57,26 +57,26 @@ jobs:
           docker push smgxv/notification-service
 
   # 3. SAST - SONARCLOUD
-  # sast-analysis:
-  #   name: Static Analysis with SonarCloud
-  #   needs: build-services
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout source code
-  #       uses: actions/checkout@v4
+  sast-analysis:
+    name: Static Analysis with SonarCloud
+    needs: build-services
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-  #     - name: Set up Java 17
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: 'temurin'
-  #         java-version: '17'
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-  #     - name: SonarCloud Scan
-  #       uses: SonarSource/sonarcloud-github-action@v2
-  #       with:
-  #         projectBaseDir: .
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: .
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # 4. DAST - OWASP ZAP on TA service (local container)
   dast-analysis:
