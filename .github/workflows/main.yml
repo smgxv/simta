@@ -91,20 +91,50 @@ jobs:
     needs: deploy-staging
     runs-on: ubuntu-latest
     steps:
-      - name: Jalankan OWASP ZAP terhadap TA service di VPS
+      - name: Persiapkan direktori output
+        run: mkdir -p zap_output
+
+      - name: Jalankan ZAP pada TA Service
         run: |
-          mkdir -p zap_output
           docker run --rm \
             -v $(pwd)/zap_output:/zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-              -t http://104.43.89.154:8080 \
-              -r zap_output/zap_report.html || true
+            -t http://104.43.89.154:8080 \
+            -r ta_report.html || true
 
-      - name: Upload ZAP Report
+      - name: Jalankan ZAP pada User Service
+        run: |
+          docker run --rm \
+            -v $(pwd)/zap_output:/zap/wrk \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t http://104.43.89.154:8081 \
+            -r user_report.html || true
+
+      - name: Jalankan ZAP pada Document Service
+        run: |
+          docker run --rm \
+            -v $(pwd)/zap_output:/zap/wrk \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t http://104.43.89.154:8082 \
+            -r document_report.html || true
+
+      - name: Jalankan ZAP pada Notification Service
+        run: |
+          docker run --rm \
+            -v $(pwd)/zap_output:/zap/wrk \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t http://104.43.89.154:8083 \
+            -r notification_report.html || true
+
+      - name: Upload Semua Laporan ZAP
         uses: actions/upload-artifact@v4
         with:
-          name: zap-report
-          path: zap_output/zap_report.html
+          name: zap-dast-reports
+          path: |
+            zap_output/ta_report.html
+            zap_output/user_report.html
+            zap_output/document_report.html
+            zap_output/notification_report.html
 
   # 5. SAST - SONARCLOUD
   sast-analysis:
