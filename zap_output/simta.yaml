@@ -5,13 +5,17 @@ env:
         - http://104.43.89.154:8080
       authentication:
         method: script
-        script: jwt-login.js
         parameters:
+          scriptName: jwt-login.js
+          scriptType: authentication
+          scriptEngine: ECMAScript : Oracle Nashorn
           email: daniel@gmail.com
           password: password
       sessionManagement:
         method: script
-        script: jwt-session.js
+        parameters:
+          script: jwt-session.js
+          scriptEngine: ECMAScript : Oracle Nashorn
       users:
         - name: taruna-test
           credentials:

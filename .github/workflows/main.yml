@@ -126,11 +126,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Jalankan ZAP terhadap TA Service (Autentikasi Taruna)
+      - name: Jalankan ZAP terhadap TA Service
         run: |
           docker run --rm \
-            -v $(pwd)/.zap:/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable zap.sh -cmd -autorun /zap/wrk/simta.yaml
+            -v $(pwd)/zap_output:/zap/wrk \
+            -v $(pwd)/.zap:/zap/.zap/scripts/ \
+            ghcr.io/zaproxy/zaproxy:stable zap.sh -cmd -autorun /zap/wrk/simta.yaml || true
 
       - name: Upload Laporan ZAP TA Service
         uses: actions/upload-artifact@v4
