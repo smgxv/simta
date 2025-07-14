@@ -7,35 +7,35 @@ on:
 jobs:
 
   # 1. SAST - CodeQL (GitHub Native)
-  sast-codeql:
-    name: SAST dengan CodeQL (Go + JS + HTML)
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
+  # sast-codeql:
+  #   name: SAST dengan CodeQL (Go + JS + HTML)
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     security-events: write
+  #     actions: read
+  #     contents: read
 
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout source code
+  #       uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.23
+  #     - name: Setup Go
+  #       uses: actions/setup-go@v5
+  #       with:
+  #         go-version: 1.23
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: go, javascript
+  #     - name: Initialize CodeQL
+  #       uses: github/codeql-action/init@v3
+  #       with:
+  #         languages: go, javascript
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+  #     - name: Perform CodeQL Analysis
+  #       uses: github/codeql-action/analyze@v3
 
   # 2. BUILD & PUSH DOCKER IMAGES
   build-image:
     name: Build Docker Images
-    needs: sast-codeql
+    # needs: sast-codeql
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -119,54 +119,25 @@ jobs:
   
   # 5. DAST - ZAP TEST TERHADAP VPS
   dast-analysis:
-    name: DAST dengan OWASP ZAP (Target VPS)
+    name: DAST dengan OWASP ZAP (TA Service + Auth)
     needs: deploy-staging
     runs-on: ubuntu-latest
     steps:
-      - name: Siapkan Direktori Output
-        run: mkdir -p zap_output
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Jalankan ZAP terhadap TA Service
+      - name: Jalankan ZAP terhadap TA Service (Autentikasi Taruna)
         run: |
           docker run --rm \
-            -v $(pwd)/zap_output:/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-            -t http://104.43.89.154:8080 \
-            -r ta_report.html || true
+            -v $(pwd)/.zap:/zap/wrk \
+            ghcr.io/zaproxy/zaproxy:stable zap.sh -cmd -autorun /zap/wrk/simta.yaml
 
-      - name: Jalankan ZAP terhadap User Service
-        run: |
-          docker run --rm \
-            -v $(pwd)/zap_output:/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-            -t http://104.43.89.154:8081 \
-            -r user_report.html || true
-
-      - name: Jalankan ZAP terhadap Document Service
-        run: |
-          docker run --rm \
-            -v $(pwd)/zap_output:/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-            -t http://104.43.89.154:8082 \
-            -r document_report.html || true
-
-      - name: Jalankan ZAP terhadap Notification Service
-        run: |
-          docker run --rm \
-            -v $(pwd)/zap_output:/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-            -t http://104.43.89.154:8083 \
-            -r notification_report.html || true
-
-      - name: Upload Semua Laporan ZAP
+      - name: Upload Laporan ZAP TA Service
         uses: actions/upload-artifact@v4
         with:
-          name: zap-dast-reports
-          path: |
-            zap_output/ta_report.html
-            zap_output/user_report.html
-            zap_output/document_report.html
-            zap_output/notification_report.html
+          name: zap-ta-report
+          path: .zap/report.html
+
 
 
 

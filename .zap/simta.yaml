@@ -1,0 +1,44 @@
+env:
+  contexts:
+    - name: SIMTA
+      urls:
+        - http://104.43.89.154:8080
+      authentication:
+        method: script
+        script: jwt-login.js
+        parameters:
+          email: daniel@gmail.com
+          password: password
+      sessionManagement:
+        method: script
+        script: jwt-session.js
+      users:
+        - name: taruna-test
+          credentials:
+            email: daniel@gmail.com
+            password: password
+  vars:
+    token: ''
+
+jobs:
+  - type: passiveScan-config
+    parameters:
+      maxAlertsPerRule: 100
+
+  - type: spider
+    parameters:
+      context: SIMTA
+      user: taruna-test
+      maxDuration: 5
+
+  - type: activeScan
+    parameters:
+      context: SIMTA
+      user: taruna-test
+      policy: Default Policy
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: /zap/wrk
+      reportFile: zap_ta_report.html

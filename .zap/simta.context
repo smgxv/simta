@@ -1,0 +1,27 @@
+<context>
+  <name>SIMTA</name>
+  <includeRegex>http://104\.43\.89\.154:8080.*</includeRegex>
+
+  <authentication>
+    <method>scriptBasedAuthentication</method>
+    <parameters>
+      <script>JWT Token Auth</script>
+    </parameters>
+  </authentication>
+
+  <sessionManagement>
+    <method>scriptBasedSession</method>
+    <parameters />
+  </sessionManagement>
+
+  <users>
+    <user>
+      <name>taruna-test</name>
+      <credentials>
+        <email>daniel@gmail.com</email>
+        <password>password</password>
+      </credentials>
+      <enabled>true</enabled>
+    </user>
+  </users>
+</context>
