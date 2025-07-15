@@ -14,7 +14,7 @@ env:
       sessionManagement:
         method: script
         parameters:
-          script: jwt-session.js
+          script: /zap/scripts/jwt-session.js
           scriptEngine: "ECMAScript : Oracle Nashorn"
       users:
         - name: taruna-test
