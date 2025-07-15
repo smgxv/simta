@@ -506,3 +506,74 @@ func GetTarunaTopicsHandler(w http.ResponseWriter, r *http.Request) {
 		"data":   results,
 	})
 }
+
+// GetFinalICPByDosenHandler menangani request untuk mendapatkan data telaah ICP berdasarkan ID dosen
+func GetFinalICPByDosenHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	dosenID := r.URL.Query().Get("dosen_id")
+	if dosenID == "" {
+		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
+		return
+	}
+
+	dosenIDInt, err := strconv.Atoi(dosenID)
+	if err != nil {
+		http.Error(w, "Invalid dosen ID", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	query := `
+		SELECT fl.id, fl.user_id, fl.topik_penelitian, fl.file_path, u.nama_lengkap
+		FROM final_icp fl
+		JOIN users u ON fl.user_id = u.id
+		JOIN penelaah_icp pl ON fl.id = pl.final_icp_id
+		WHERE pl.penelaah_1_id = ? OR pl.penelaah_2_id = ?
+	`
+
+	rows, err := db.Query(query, dosenIDInt, dosenIDInt)
+	if err != nil {
+		http.Error(w, "Error querying database: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type FinalICPData struct {
+		ID              int    `json:"id"`
+		UserID          int    `json:"user_id"`
+		TopikPenelitian string `json:"topik_penelitian"`
+		FilePath        string `json:"file_path"`
+		TarunaNama      string `json:"taruna_nama"`
+	}
+
+	var finalicps []FinalICPData
+	for rows.Next() {
+		var p FinalICPData
+		err := rows.Scan(&p.ID, &p.UserID, &p.TopikPenelitian, &p.FilePath, &p.TarunaNama)
+		if err != nil {
+			http.Error(w, "Error scanning rows: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		finalicps = append(finalicps, p)
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   finalicps,
+	})
+}

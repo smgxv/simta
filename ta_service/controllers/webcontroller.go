@@ -983,7 +983,34 @@ func ReviewICP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serve the review ICP HTML file
-	http.ServeFile(w, r, "static/dosen/reviewicp.html")
+	http.ServeFile(w, r, "static/dosen/bimbingan_icp.html")
+}
+
+// Handler untuk penguji ICP
+func PengujiICP(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Validasi token dan role
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "dosen" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the review icp HTML file
+	http.ServeFile(w, r, "static/dosen/penguji_icp.html")
 }
 
 // Handler untuk profile dosen

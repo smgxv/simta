@@ -144,7 +144,8 @@ func main() {
 	dosenRoutes.Use(middleware.RoleRedirectMiddleware)
 	// Route dashboard dosen
 	dosenRoutes.HandleFunc("/dashboard", controllers.DosenDashboard).Methods("GET", "OPTIONS")
-	dosenRoutes.HandleFunc("/review_icp", controllers.ReviewICP).Methods("GET", "OPTIONS")
+	dosenRoutes.HandleFunc("/bimbingan_icp", controllers.ReviewICP).Methods("GET", "OPTIONS")
+	dosenRoutes.HandleFunc("/pengujian_icp", controllers.PengujiICP).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/profile", controllers.ProfileDosen).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/editprofile", controllers.EditProfileDosen).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/viewicp", controllers.ViewICPDosen).Methods("GET", "OPTIONS")
