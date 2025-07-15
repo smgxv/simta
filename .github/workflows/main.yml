@@ -131,7 +131,8 @@ jobs:
           docker run --rm \
             -v $(pwd)/zap_output:/zap/wrk \
             -v $(pwd)/.zap:/zap/.zap/scripts/ \
-            ghcr.io/zaproxy/zaproxy:stable zap.sh -cmd -autorun /zap/wrk/simta.yaml || true
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap.sh -cmd -autorun /zap/wrk/simta.yaml || true
 
       - name: Upload Laporan ZAP TA Service
         uses: actions/upload-artifact@v4

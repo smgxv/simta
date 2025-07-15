@@ -15,7 +15,7 @@ env:
         method: script
         parameters:
           script: jwt-session.js
-          scriptEngine: ECMAScript : Oracle Nashorn
+          scriptEngine: "ECMAScript : Oracle Nashorn"
       users:
         - name: taruna-test
           credentials:
