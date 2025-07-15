@@ -8,7 +8,7 @@ env:
         parameters:
           scriptName: jwt-login.js
           scriptType: authentication
-          scriptEngine: ECMAScript : Oracle Nashorn
+          scriptEngine: "ECMAScript : Oracle Nashorn"
           email: daniel@gmail.com
           password: password
       sessionManagement:
