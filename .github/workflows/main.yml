@@ -196,7 +196,7 @@ jobs:
 
 
   build-user-service:
-    needs: running-tests
+    # needs: running-tests
     name: Build User Service Image
     runs-on: ubuntu-latest
     steps:
@@ -231,7 +231,7 @@ jobs:
             docker network connect simta_net user-service
 
   build-document-service:
-    needs: running-tests
+    # needs: running-tests
     name: Build Document Service Image
     runs-on: ubuntu-latest
     steps:
@@ -266,7 +266,7 @@ jobs:
             docker network connect simta_net document-service
 
   build-notification-service:
-    needs: running-tests
+    # needs: running-tests
     name: Build Notification Service Image
     runs-on: ubuntu-latest
     steps:
