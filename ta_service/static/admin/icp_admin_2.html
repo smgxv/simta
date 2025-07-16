@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>SIMTA - Laporan 70%</title>
+		<title>SIMTA - ICP</title>
 
 		<!-- Site favicon -->
 		<link
@@ -533,6 +533,17 @@
 							</a>
 						</li>
 
+						<li class="dropdown">
+							<a href="javascript:;" class="dropdown-toggle">
+								<span class="micon bi bi-file-earmark-text"></span
+								><span class="mtext">ICP</span>
+							</a>
+							<ul class="submenu">
+								<li><a href="/admin/penelaah_icp">Penelaah ICP</a></li>
+								<li><a href="/admin/list_icp">List ICP</a></li>
+							</ul>
+						</li>
+
 						<li>
 							<a href="/admin/dosbing_proposal" class="dropdown-toggle no-arrow">
 								<span class="micon bi bi-file-earmark-text"></span
@@ -608,7 +619,7 @@
 						<div class="row">
 							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Laporan 70%</h4>
+									<h4>ICP</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
@@ -616,7 +627,7 @@
 											<a href="/admin/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											Laporan 70%
+											ICP
 										</li>
 									</ol>
 								</nav>
@@ -638,10 +649,10 @@
 						</div>
 					</div>
 
-					<!-- List Laporan 70% Taruna -->
+					<!-- List ICP Taruna -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">List Laporan 70% Taruna</h4>
+							<h4 class="text-blue h4">List ICP Taruna</h4>
 						</div>
 						<div class="pb-20">
 							<table class="data-table table stripe hover nowrap">
@@ -661,14 +672,14 @@
 							</table>
 						</div>
 					</div>
-					<!-- End List Laporan 70% Taruna -->
+					<!-- End List ICP Taruna -->
 
 					
-					<!-- Monitoring Penilaian Laporan 70% -->
+					<!-- Monitoring Penilaian ICP -->
 					<div class="card-box mb-30">
 						<div class="pd-20">
-							<h4 class="text-blue h4">Monitoring Penilaian Laporan 70%</h4>
-							<p class="mb-0">Daftar Penilaian Laporan 70% untuk semua taruna</p>
+							<h4 class="text-blue h4">Monitoring Penilaian ICP</h4>
+							<p class="mb-0">Daftar Penilaian ICP untuk semua taruna</p>
 						</div>
 						<div class="pb-20">
 							<table id="monitoringTable"  class="data-table table stripe hover nowrap">
@@ -688,7 +699,7 @@
 							</table>
 						</div>
 					</div>
-					<!-- End Monitoring Penilaian Laporan 70% -->
+					<!-- End Monitoring Penilaian ICP -->
 
 				</div>
 
@@ -867,7 +878,7 @@
 				}, 5000);
 			}
 
-			let allLaporan70Data = []; // Menyimpan semua data Laporan 70%
+			let allICPData = []; // Menyimpan semua data ICP
 			let uniqueJurusan = new Set();
 			let uniqueKelas = new Set();
 
@@ -897,18 +908,18 @@
 				});
 			}
 
-			// Fungsi untuk memuat data Laporan 70%
-			async function loadLaporan70Data() {
+			// Fungsi untuk memuat data ICP
+			async function loadICPData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finallaporan70/all', {
+					const response = await fetch('http://104.43.89.154:8082/finalicp/all', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
 					});
 
 					if (!response.ok) {
-						throw new Error('Failed to fetch Laporan 70% data');
+						throw new Error('Failed to fetch ICP data');
 					}
 
 					const result = await response.json();
@@ -916,10 +927,10 @@
 						throw new Error(result.message || 'Failed to load data');
 					}
 
-					allLaporan70Data = result.data;
+					allICPData = result.data;
 
 					// Collect unique values
-					allLaporan70Data.forEach(item => {
+					allICPData.forEach(item => {
 						if (item.jurusan) uniqueJurusan.add(item.jurusan);
 						if (item.kelas) uniqueKelas.add(item.kelas);
 					});
@@ -931,7 +942,7 @@
 					displayFilteredData();
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Failed to load Laporan 70% data', 'danger');
+					showAlert('Failed to load ICP data', 'danger');
 				}
 			}
 
@@ -940,7 +951,7 @@
 				const jurusanFilter = document.getElementById('jurusanFilter').value;
 				const kelasFilter = document.getElementById('kelasFilter').value;
 
-				const filteredData = allLaporan70Data.filter(item => {
+				const filteredData = allICPData.filter(item => {
 					const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
 					const matchKelas = !kelasFilter || item.kelas === kelasFilter;
 					return matchJurusan && matchKelas;
@@ -962,19 +973,19 @@
 								: '-'}
 						</td>
 						<td>
-							${item.final_laporan70_id > 0 ? 
+							${item.final_icp_id > 0 ? 
 								`<div class="dropdown">
 									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
 										<i class="dw dw-more"></i>
 									</a>
 									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan70/download/${item.final_laporan70_id}?type=form_bimbingan" download>
+										<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan70/download/${item.final_icp_id}?type=form_bimbingan" download>
 											<i class="dw dw-download"></i> Download Form Bimbingan
 										</a>
-										<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan70/download/${item.final_laporan70_id}?type=laporan70" download>
-											<i class="dw dw-download"></i> Download Final Laporan 70%
+										<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan70/download/${item.final_icp_id}?type=laporan70" download>
+											<i class="dw dw-download"></i> Download Final ICP
 										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan70_id}, 'approved')">
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_icp_id}, 'approved')">
 											<i class="dw dw-check"></i> Accept
 										</a>
 									</div>
@@ -1005,9 +1016,9 @@
 				}
 			}
 
-			// Fungsi untuk melihat detail Laporan70
-			function viewLaporan70(laporan70Id) {
-				window.location.href = `/admin/viewlaporan70?id=${laporan70Id}`;
+			// Fungsi untuk melihat detail telaah icp
+			function viewICP(icpId) {
+				window.location.href = `/admin/viewicp?id=${icpId}`;
 			}
 
 			// Fungsi untuk redirect ke profile
@@ -1019,7 +1030,7 @@
 			async function updateStatus(id, status) {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/finallaporan70/status', {
+					const response = await fetch('http://104.43.89.154:8082/finalicp/status', {
 						method: 'POST',
 						headers: {
 							'Authorization': `Bearer ${token}`,
@@ -1037,8 +1048,8 @@
 
 					const result = await response.json();
 					if (result.status === 'success') {
-						showAlert(`Laporan70 berhasil di${status}`, 'success');
-						loadLaporan70Data(); // Reload data
+						showAlert(`ICP berhasil di${status}`, 'success');
+						loadICPData(); // Reload data
 					} else {
 						throw new Error(result.message || 'Failed to update status');
 					}
@@ -1048,15 +1059,15 @@
 				}
 			}
 
-			// Fungsi untuk download Laporan70
-			function downloadLaporan70(id) {
+			// Fungsi untuk download ICP
+			function downloadICP(id) {
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				window.open(`http://104.43.89.154:8082/finallaporan70/download/${id}?token=${token}`, '_blank');
+				window.open(`http://104.43.89.154:8082/finalicp/download/${id}?token=${token}`, '_blank');
 			}
 
-			// Load data Laporan70 saat halaman dimuat
+			// Load data ICP saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
-				loadLaporan70Data();
+				loadICPData();
 
 				// Set username dari localStorage
 				const username = document.getElementById('username');
@@ -1066,10 +1077,10 @@
 			});
 
 			// Fungsi untuk memuat data monitoring penilaian laporan70
-			async function loadMonitoringData() {
+			async function loadMonitoringTelaahData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('http://104.43.89.154:8082/monitoring/penilaian_laporan70', {
+					const response = await fetch('http://104.43.89.154:8082/hasiltelaah/monitoring', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -1107,7 +1118,7 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.final_laporan70_id}); return false;">
+													<a class="dropdown-item" href="#" onclick="viewPenilaianDetails(${item.final_icp_id}); return false;">
 														<i class="dw dw-eye"></i> View Details
 													</a>
 												</div>
@@ -1143,7 +1154,7 @@
 
 			// Load monitoring data saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', () => {
-				loadMonitoringData();
+				loadMonitoringTelaahData();
 			});
 
 		</script>
