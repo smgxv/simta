@@ -239,7 +239,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler untuk halaman ICP admin
-func ListICP(w http.ResponseWriter, r *http.Request) {
+func ListICP2(w http.ResponseWriter, r *http.Request) {
 	// Set header content type
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
@@ -263,7 +263,7 @@ func ListICP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serve the admin ICP HTML file
-	http.ServeFile(w, r, "static/admin/icp_admin.html")
+	http.ServeFile(w, r, "static/admin/icp_admin_3.html")
 }
 
 // Handler untuk halaman List Penguji Proposal admin
@@ -295,7 +295,7 @@ func ListPenelaahICP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler untuk halaman Proposal admin
-func ListICP2(w http.ResponseWriter, r *http.Request) {
+func ListICP(w http.ResponseWriter, r *http.Request) {
 	// Set header content type
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
@@ -319,7 +319,7 @@ func ListICP2(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serve the admin Proposal HTML file
-	http.ServeFile(w, r, "static/admin/icp_admin_2.html")
+	http.ServeFile(w, r, "static/admin/icp_admin.html")
 }
 
 // Handler untuk halaman Detail Telaah ICP admin
