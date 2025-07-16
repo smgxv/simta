@@ -109,7 +109,7 @@ func main() {
 	adminRouter.HandleFunc("/listdosen", controllers.ListDosen).Methods("GET")
 	adminRouter.HandleFunc("/listicp", controllers.ListICP).Methods("GET", "OPTIONS") // Tambahkan route untuk ICP admin
 	adminRouter.HandleFunc("/penelaah_icp", controllers.ListPenelaahICP).Methods("GET", "OPTIONS")
-	adminRouter.HandleFunc("/list_icp", controllers.ListICP2).Methods("GET", "OPTIONS")
+	adminRouter.HandleFunc("/list_icp", controllers.ListICP).Methods("GET", "OPTIONS")
 	adminRouter.HandleFunc("/listproposal", controllers.ListProposal).Methods("GET", "OPTIONS")                           // Tambahkan route untuk Proposal admin
 	adminRouter.HandleFunc("/detail_berkas_seminar_proposal", controllers.DetailBerkasProposal).Methods("GET", "OPTIONS") // Tambahkan route untuk Detail Berkas Proposal admin
 	adminRouter.HandleFunc("/detail_telaah_icp", controllers.DetailTelaahICP).Methods("GET", "OPTIONS")                   // Tambahkan route untuk Detail Telaah ICP admin
