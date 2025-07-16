@@ -286,46 +286,64 @@ func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := db.Query(query)
 	if err != nil {
-		log.Printf("Error querying database: %v", err)
+		log.Printf("Query error: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error querying database",
+			"message": "Query error",
 		})
 		return
 	}
 	defer rows.Close()
 
 	type MonitoringData struct {
-		FinalICPID        int    `json:"final_laporan70_id"`
+		FinalICPId        int    `json:"final_icp_id"`
 		NamaTaruna        string `json:"nama_taruna"`
 		Jurusan           string `json:"jurusan"`
+		Kelas             string `json:"kelas"`
 		TopikPenelitian   string `json:"topik_penelitian"`
-		Penelaah1         string `json:"penelaah1"`
-		Penelaah2         string `json:"penelaah2"`
+		Penelaah1         string `json:"penelaah_1"`
+		Penelaah2         string `json:"penelaah_2"`
 		StatusKelengkapan string `json:"status_kelengkapan"`
+		StatusICP         string `json:"status_icp"`
 	}
 
 	var result []MonitoringData
+
 	for rows.Next() {
 		var m MonitoringData
+		var jumlahTelaah int
+
 		err := rows.Scan(
-			&m.FinalICPID,
+			&m.FinalICPId,
 			&m.NamaTaruna,
 			&m.Jurusan,
+			&m.Kelas,
 			&m.TopikPenelitian,
 			&m.Penelaah1,
 			&m.Penelaah2,
-			&m.StatusKelengkapan,
+			&jumlahTelaah,
+			&m.StatusICP,
 		)
 		if err != nil {
-			log.Printf("Error scanning row: %v", err)
+			log.Printf("Scan error: %v", err)
 			continue
 		}
+
+		// Logika status kelengkapan
+		switch jumlahTelaah {
+		case 2:
+			m.StatusKelengkapan = "✅ Lengkap"
+		case 1:
+			m.StatusKelengkapan = "⚠️ Kurang 1 Telaah"
+		default:
+			m.StatusKelengkapan = "❌ Belum Ditelaah"
+		}
+
 		result = append(result, m)
 	}
 
 	if err = rows.Err(); err != nil {
-		log.Printf("Error iterating rows: %v", err)
+		log.Printf("Row iteration error: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Error reading data",
