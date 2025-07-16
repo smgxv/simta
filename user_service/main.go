@@ -41,9 +41,9 @@ func main() {
 	http.HandleFunc("/taruna/dashboard/icp", middleware.AuthMiddleware(handlers.TarunaDashboardHandler))
 	http.HandleFunc("/taruna/dashboard/dosen", middleware.AuthMiddleware(handlers.TarunaDashboardHandler))
 
-	http.HandleFunc("/taruna/penelaahicp", middleware.AuthMiddleware(handlers.GetTarunaWithPengujiLaporan70))
-	http.HandleFunc("/final_icp", middleware.AuthMiddleware(handlers.GetFinalLaporan70ByTarunaIDHandler))
-	http.HandleFunc("/penelaah_icp", middleware.AuthMiddleware(handlers.AssignPengujiLaporan70))
+	http.HandleFunc("/taruna/penelaahicp", middleware.AuthMiddleware(handlers.GetTarunaWithPenelaahICP))
+	http.HandleFunc("/final_icp", middleware.AuthMiddleware(handlers.GetFinalICPByTarunaIDHandler))
+	http.HandleFunc("/penelaah_icp", middleware.AuthMiddleware(handlers.AssignPenelaahICP))
 
 	http.HandleFunc("/taruna/pengujilaporan70", middleware.AuthMiddleware(handlers.GetTarunaWithPengujiLaporan70))
 	http.HandleFunc("/final_laporan70", middleware.AuthMiddleware(handlers.GetFinalLaporan70ByTarunaIDHandler))
