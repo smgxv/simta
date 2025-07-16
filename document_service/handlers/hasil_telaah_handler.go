@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -155,8 +156,7 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080") // disamakan
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
@@ -166,76 +166,77 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get user_id from query parameter
-	userID := r.URL.Query().Get("user_id")
-	fmt.Printf("[Debug] Received request for user_id: %s\n", userID)
-
-	if userID == "" {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "User ID is required",
-		})
-		return
-	}
-
-	// Get database connection
 	db, err := config.GetDB()
 	if err != nil {
-		fmt.Printf("[Error] Database connection error: %v\n", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Database error: " + err.Error(),
-		})
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
-	fmt.Printf("[Debug] Found user_id: %d for user_id: %s\n", userID, userID)
-
-	// Query untuk mengambil data hasil telaah menggunakan taruna_id yang benar
 	query := `
-		SELECT ht.id, d.nama_lengkap, ht.topik_penelitian, ht.file_path, ht.tanggal_telaah
+		SELECT 
+			ht.id, 
+			u.nama_lengkap AS nama_taruna,
+			d.nama_lengkap AS nama_dosen, 
+			ht.topik_penelitian, 
+			ht.file_path, 
+			ht.tanggal_telaah
 		FROM hasil_telaah_icp ht
-		JOIN dosen d ON ht.dosen_id = d.id
-		WHERE ht.user_id = ?
-		ORDER BY ht.tanggal_telaah DESC`
+		JOIN users u ON u.id = ht.user_id
+		JOIN dosen d ON d.id = ht.dosen_id
+		ORDER BY ht.tanggal_telaah DESC
+	`
 
-	fmt.Printf("[Debug] Executing query with user_id: %d\n", userID)
-	rows, err := db.Query(query, userID)
+	rows, err := db.Query(query)
 	if err != nil {
-		fmt.Printf("[Error] Query execution error: %v\n", err)
+		log.Printf("Error querying database: %v", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Query error: " + err.Error(),
+			"message": "Error querying database",
 		})
 		return
 	}
 	defer rows.Close()
 
-	var results []HasilTelaahResponse
-	for rows.Next() {
-		var result HasilTelaahResponse
-		err := rows.Scan(
-			&result.ID,
-			&result.NamaDosen,
-			&result.TopikPenelitian,
-			&result.FilePath,
-			&result.TanggalTelaah,
-		)
-		if err != nil {
-			fmt.Printf("[Error] Row scan error: %v\n", err)
-			continue
-		}
-		results = append(results, result)
-		fmt.Printf("[Debug] Found hasil telaah: ID=%d, Dosen=%s, Topik=%s\n",
-			result.ID, result.NamaDosen, result.TopikPenelitian)
+	type HasilTelaahData struct {
+		ID              int    `json:"id"`
+		NamaTaruna      string `json:"nama_taruna"`
+		NamaDosen       string `json:"nama_dosen"`
+		TopikPenelitian string `json:"topik_penelitian"`
+		FilePath        string `json:"file_path"`
+		TanggalTelaah   string `json:"tanggal_telaah"`
 	}
 
-	fmt.Printf("[Debug] Found %d hasil telaah records\n", len(results))
+	var result []HasilTelaahData
+	for rows.Next() {
+		var h HasilTelaahData
+		err := rows.Scan(
+			&h.ID,
+			&h.NamaTaruna,
+			&h.NamaDosen,
+			&h.TopikPenelitian,
+			&h.FilePath,
+			&h.TanggalTelaah,
+		)
+		if err != nil {
+			log.Printf("Error scanning row: %v", err)
+			continue
+		}
+		result = append(result, h)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error iterating rows: %v", err)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error reading data",
+		})
+		return
+	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   results,
+		"data":   result,
 	})
 }
 
@@ -253,17 +254,28 @@ func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	// Query utama untuk menghitung jumlah hasil telaah per ICP dengan informasi lengkap
 	query := `
 		SELECT 
-			fi.id as final_icp_id,
-			u.nama_lengkap as nama_taruna,
+			fi.id AS final_icp_id,
+			u.nama_lengkap AS nama_taruna,
 			fi.jurusan,
 			fi.kelas,
 			fi.topik_penelitian,
-			COUNT(ht.id) AS jumlah_telaah,
-			fi.status as status_icp
+
+			d1.nama_lengkap AS penelaah_1,
+			d2.nama_lengkap AS penelaah_2,
+
+			CASE
+				WHEN COUNT(CASE WHEN ht.id IS NOT NULL THEN 1 END) = 2 THEN 'Lengkap'
+				ELSE 'Belum Lengkap'
+			END AS status_kelengkapan
+
 		FROM final_icp fi
 		JOIN users u ON u.id = fi.user_id
+		JOIN penelaah_icp pi ON pi.final_icp_id = fi.id
+		LEFT JOIN dosen d1 ON d1.id = pi.penelaah_1_id
+		LEFT JOIN dosen d2 ON d2.id = pi.penelaah_2_id
 		LEFT JOIN hasil_telaah_icp ht ON ht.icp_id = fi.id
-		GROUP BY fi.id, u.nama_lengkap, fi.jurusan, fi.kelas, fi.topik_penelitian, fi.status
+
+		GROUP BY fi.id, u.nama_lengkap, fi.jurusan, fi.kelas, fi.topik_penelitian, d1.nama_lengkap, d2.nama_lengkap
 		ORDER BY u.nama_lengkap ASC;
 	`
 
