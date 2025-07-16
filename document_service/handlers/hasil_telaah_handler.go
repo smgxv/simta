@@ -156,7 +156,92 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080") // disamakan
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Get user_id from query parameter
+	userID := r.URL.Query().Get("user_id")
+	fmt.Printf("[Debug] Received request for user_id: %s\n", userID)
+
+	if userID == "" {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "User ID is required",
+		})
+		return
+	}
+
+	// Get database connection
+	db, err := config.GetDB()
+	if err != nil {
+		fmt.Printf("[Error] Database connection error: %v\n", err)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Database error: " + err.Error(),
+		})
+		return
+	}
+	defer db.Close()
+
+	fmt.Printf("[Debug] Found user_id: %d for user_id: %s\n", userID, userID)
+
+	// Query untuk mengambil data hasil telaah menggunakan taruna_id yang benar
+	query := `
+		SELECT ht.id, d.nama_lengkap, ht.topik_penelitian, ht.file_path, ht.tanggal_telaah
+		FROM hasil_telaah_icp ht
+		JOIN dosen d ON ht.dosen_id = d.id
+		WHERE ht.user_id = ?
+		ORDER BY ht.tanggal_telaah DESC`
+
+	fmt.Printf("[Debug] Executing query with user_id: %d\n", userID)
+	rows, err := db.Query(query, userID)
+	if err != nil {
+		fmt.Printf("[Error] Query execution error: %v\n", err)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Query error: " + err.Error(),
+		})
+		return
+	}
+	defer rows.Close()
+
+	var results []HasilTelaahResponse
+	for rows.Next() {
+		var result HasilTelaahResponse
+		err := rows.Scan(
+			&result.ID,
+			&result.NamaDosen,
+			&result.TopikPenelitian,
+			&result.FilePath,
+			&result.TanggalTelaah,
+		)
+		if err != nil {
+			fmt.Printf("[Error] Row scan error: %v\n", err)
+			continue
+		}
+		results = append(results, result)
+		fmt.Printf("[Debug] Found hasil telaah: ID=%d, Dosen=%s, Topik=%s\n",
+			result.ID, result.NamaDosen, result.TopikPenelitian)
+	}
+
+	fmt.Printf("[Debug] Found %d hasil telaah records\n", len(results))
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   results,
+	})
+}
+
+func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
@@ -175,16 +260,28 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 
 	query := `
 		SELECT 
-			ht.id, 
+			fi.id AS final_icp_id,
 			u.nama_lengkap AS nama_taruna,
-			d.nama_lengkap AS nama_dosen, 
-			ht.topik_penelitian, 
-			ht.file_path, 
-			ht.tanggal_telaah
-		FROM hasil_telaah_icp ht
-		JOIN users u ON u.id = ht.user_id
-		JOIN dosen d ON d.id = ht.dosen_id
-		ORDER BY ht.tanggal_telaah DESC
+			fi.jurusan,
+			fi.kelas,
+			fi.topik_penelitian,
+
+			d1.nama_lengkap AS penelaah_1,
+			d2.nama_lengkap AS penelaah_2,
+
+			COUNT(ht.id) AS jumlah_telaah,
+			fi.status AS status_icp
+
+		FROM final_icp fi
+		JOIN users u ON u.id = fi.user_id
+		JOIN penelaah_icp pi ON pi.final_icp_id = fi.id
+		LEFT JOIN dosen d1 ON d1.id = pi.penelaah_1_id
+		LEFT JOIN dosen d2 ON d2.id = pi.penelaah_2_id
+		LEFT JOIN hasil_telaah_icp ht ON ht.icp_id = fi.id
+
+		GROUP BY fi.id, u.nama_lengkap, fi.jurusan, fi.kelas, fi.topik_penelitian,
+		         d1.nama_lengkap, d2.nama_lengkap, fi.status
+		ORDER BY u.nama_lengkap ASC
 	`
 
 	rows, err := db.Query(query)
@@ -198,31 +295,33 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	type HasilTelaahData struct {
-		ID              int    `json:"id"`
-		NamaTaruna      string `json:"nama_taruna"`
-		NamaDosen       string `json:"nama_dosen"`
-		TopikPenelitian string `json:"topik_penelitian"`
-		FilePath        string `json:"file_path"`
-		TanggalTelaah   string `json:"tanggal_telaah"`
+	type MonitoringData struct {
+		FinalICPID        int    `json:"final_laporan70_id"`
+		NamaTaruna        string `json:"nama_taruna"`
+		Jurusan           string `json:"jurusan"`
+		TopikPenelitian   string `json:"topik_penelitian"`
+		Penelaah1         string `json:"penelaah1"`
+		Penelaah2         string `json:"penelaah2"`
+		StatusKelengkapan string `json:"status_kelengkapan"`
 	}
 
-	var result []HasilTelaahData
+	var result []MonitoringData
 	for rows.Next() {
-		var h HasilTelaahData
+		var m MonitoringData
 		err := rows.Scan(
-			&h.ID,
-			&h.NamaTaruna,
-			&h.NamaDosen,
-			&h.TopikPenelitian,
-			&h.FilePath,
-			&h.TanggalTelaah,
+			&m.FinalICPID,
+			&m.NamaTaruna,
+			&m.Jurusan,
+			&m.TopikPenelitian,
+			&m.Penelaah1,
+			&m.Penelaah2,
+			&m.StatusKelengkapan,
 		)
 		if err != nil {
 			log.Printf("Error scanning row: %v", err)
 			continue
 		}
-		result = append(result, h)
+		result = append(result, m)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -237,103 +336,6 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   result,
-	})
-}
-
-func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
-
-	db, err := config.GetDB()
-	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
-	// Query utama untuk menghitung jumlah hasil telaah per ICP dengan informasi lengkap
-	query := `
-		SELECT 
-			fi.id AS final_icp_id,
-			u.nama_lengkap AS nama_taruna,
-			fi.jurusan,
-			fi.kelas,
-			fi.topik_penelitian,
-
-			d1.nama_lengkap AS penelaah_1,
-			d2.nama_lengkap AS penelaah_2,
-
-			CASE
-				WHEN COUNT(CASE WHEN ht.id IS NOT NULL THEN 1 END) = 2 THEN 'Lengkap'
-				ELSE 'Belum Lengkap'
-			END AS status_kelengkapan
-
-		FROM final_icp fi
-		JOIN users u ON u.id = fi.user_id
-		JOIN penelaah_icp pi ON pi.final_icp_id = fi.id
-		LEFT JOIN dosen d1 ON d1.id = pi.penelaah_1_id
-		LEFT JOIN dosen d2 ON d2.id = pi.penelaah_2_id
-		LEFT JOIN hasil_telaah_icp ht ON ht.icp_id = fi.id
-
-		GROUP BY fi.id, u.nama_lengkap, fi.jurusan, fi.kelas, fi.topik_penelitian, d1.nama_lengkap, d2.nama_lengkap
-		ORDER BY u.nama_lengkap ASC;
-	`
-
-	rows, err := db.Query(query)
-	if err != nil {
-		fmt.Printf("[Error] Query error: %v\n", err)
-		http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
-	type MonitoringResponse struct {
-		FinalICPId      int    `json:"final_icp_id"`
-		NamaTaruna      string `json:"nama_taruna"`
-		Jurusan         string `json:"jurusan"`
-		Kelas           string `json:"kelas"`
-		TopikPenelitian string `json:"topik_penelitian"`
-		JumlahTelaah    int    `json:"jumlah_telaah"`
-		StatusTelaah    string `json:"status_telaah"`
-		StatusICP       string `json:"status_icp"`
-	}
-
-	var results []MonitoringResponse
-
-	for rows.Next() {
-		var res MonitoringResponse
-		var statusICP string
-		err := rows.Scan(
-			&res.FinalICPId,
-			&res.NamaTaruna,
-			&res.Jurusan,
-			&res.Kelas,
-			&res.TopikPenelitian,
-			&res.JumlahTelaah,
-			&statusICP,
-		)
-		if err != nil {
-			fmt.Printf("[Error] Scan error: %v\n", err)
-			continue
-		}
-
-		// Set status telaah berdasarkan jumlah telaah
-		switch res.JumlahTelaah {
-		case 2:
-			res.StatusTelaah = "✅ Lengkap"
-		case 1:
-			res.StatusTelaah = "⚠️ Kurang 1 Telaah"
-		default:
-			res.StatusTelaah = "❌ Belum Ditelaah"
-		}
-
-		res.StatusICP = statusICP
-		results = append(results, res)
-	}
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "success",
-		"data":   results,
 	})
 }
 
