@@ -589,7 +589,7 @@
 							<h4 class="text-blue h4">List ICP</h4>
 						</div>
 						<div class="pb-20">
-							<table class="data-table table stripe hover nowrap">
+							<table id="icpTable" class="data-table table stripe hover nowrap">
 								<thead>
 									<tr>
 										<th class="table-plus datatable-nosort">Topik</th>
@@ -708,7 +708,7 @@
 					const data = await response.json();
 					
 					if (data.status === 'success') {
-						const tbody = document.querySelector('.data-table tbody');
+						const tbody = document.querySelector('#icpTable tbody');
 						tbody.innerHTML = '';
 						
 						// First, display all ICPs immediately
