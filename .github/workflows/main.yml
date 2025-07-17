@@ -300,6 +300,37 @@
 #             docker run -d -p 8083:8083 --name notification-service -v /home/youruser/uploads:/app/uploads smgxv/notification-service
 #             docker network connect simta_net notification-service
 
+# name: ZAP API Scan
+
+# permissions:
+#   contents: read
+#   issues: write
+  
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   zap_scan:
+#     runs-on: ubuntu-latest
+#     # env:
+#     #   ZAP_AUTH_HEADER: 'Authorization'
+#     #   ZAP_AUTH_HEADER_VALUE: 'Bearer ${{ secrets.API_TOKEN }}'
+#     #   ZAP_AUTH_HEADER_SITE: 'http://104.43.89.154:8080'
+
+#     steps:
+#       - name: Checkout repo
+#         uses: actions/checkout@v4
+
+#       - name: Jalankan ZAP API Scan
+#         uses: zaproxy/action-api-scan@v0.9.0
+#         with:
+#           token: ${{ secrets.GITHUB_TOKEN }}
+#           target: 'http://104.43.89.154/openapi.yaml'
+#           format: openapi
+#           cmd_options: '-a'
+
 name: ZAP API Scan
 
 permissions:
@@ -314,10 +345,10 @@ on:
 jobs:
   zap_scan:
     runs-on: ubuntu-latest
-    # env:
-    #   ZAP_AUTH_HEADER: 'Authorization'
-    #   ZAP_AUTH_HEADER_VALUE: 'Bearer ${{ secrets.API_TOKEN }}'
-    #   ZAP_AUTH_HEADER_SITE: 'http://104.43.89.154:8080'
+    env:
+      ZAP_AUTH_HEADER: 'Authorization'
+      ZAP_AUTH_HEADER_VALUE: 'Bearer ${{ secrets.API_TOKEN }}'
+      ZAP_AUTH_HEADER_SITE: 'http://104.43.89.154:8081'
 
     steps:
       - name: Checkout repo
@@ -327,8 +358,7 @@ jobs:
         uses: zaproxy/action-api-scan@v0.9.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          target: 'http://104.43.89.154/openapi.yaml'
+          target: 'http://104.43.89.154/user-openapi.json'
           format: openapi
           cmd_options: '-a'
-
 
