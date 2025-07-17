@@ -310,10 +310,10 @@ on:
 jobs:
   zap_scan:
     runs-on: ubuntu-latest
-    env:
-      # ZAP_AUTH_HEADER: 'Authorization'
-      # ZAP_AUTH_HEADER_VALUE: 'Bearer ${{ secrets.API_TOKEN }}'
-      # ZAP_AUTH_HEADER_SITE: 'http://104.43.89.154:8080'
+    # env:
+    #   ZAP_AUTH_HEADER: 'Authorization'
+    #   ZAP_AUTH_HEADER_VALUE: 'Bearer ${{ secrets.API_TOKEN }}'
+    #   ZAP_AUTH_HEADER_SITE: 'http://104.43.89.154:8080'
 
     steps:
       - name: Checkout repo
