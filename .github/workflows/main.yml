@@ -302,6 +302,10 @@
 
 name: ZAP API Scan
 
+permissions:
+  contents: read
+  issues: write
+  
 on:
   push:
     branches:
