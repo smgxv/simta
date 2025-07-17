@@ -99,41 +99,17 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil data users
-	client := &http.Client{}
-	apiURL := getEnv("API_SERVICE_URL", "http://104.43.89.154:8081")
-	reqAPI, err := http.NewRequest("GET", apiURL+"/users", nil)
-	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
-		return
-	}
-	reqAPI.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := client.Do(reqAPI)
-	if err != nil {
-		http.Error(w, "Error fetching users", http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	var users []entities.User
-	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
-		http.Error(w, "Error decoding users data", http.StatusInternalServerError)
-		return
-	}
-
 	var dosenID int64 = 0
 	if user.Role == "dosen" {
 		dosenID, _ = userModel.GetDosenIDByUserID(user.ID)
 	}
 
-	// Kirim response
+	// Kirim response (tanpa data users)
 	response := LoginResponse{
 		Email:       user.Email,
 		ID:          user.ID,
 		DosenID:     dosenID,
 		Token:       token,
-		Users:       users,
 		Role:        user.Role,
 		Success:     true,
 		RedirectURL: getDashboardURL(user.Role),
