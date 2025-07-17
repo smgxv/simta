@@ -331,7 +331,39 @@
 #           format: openapi
 #           cmd_options: '-a'
 
-name: ZAP API Scan
+# name: ZAP API Scan
+
+# permissions:
+#   contents: read
+#   issues: write
+  
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   zap_scan:
+#     runs-on: ubuntu-latest
+#     env:
+#       ZAP_AUTH_HEADER: 'Authorization'
+#       ZAP_AUTH_HEADER_VALUE: 'Bearer ${{ secrets.API_TOKEN }}'
+#       ZAP_AUTH_HEADER_SITE: 'http://104.43.89.154:8081'
+
+#     steps:
+#       - name: Checkout repo
+#         uses: actions/checkout@v4
+
+#       - name: Jalankan ZAP API Scan
+#         uses: zaproxy/action-api-scan@v0.9.0
+#         with:
+#           token: ${{ secrets.GITHUB_TOKEN }}
+#           target: 'http://104.43.89.154/openapi_users.yaml'
+#           format: openapi
+#           cmd_options: '-a'
+
+
+name: ZAP Full Scan for Taruna Dashboard
 
 permissions:
   contents: read
@@ -345,22 +377,32 @@ on:
 jobs:
   zap_scan:
     runs-on: ubuntu-latest
-    env:
-      ZAP_AUTH_HEADER: 'Authorization'
-      ZAP_AUTH_HEADER_VALUE: 'Bearer ${{ secrets.API_TOKEN }}'
-      ZAP_AUTH_HEADER_SITE: 'http://104.43.89.154:8081'
+
+    services:
+      ta-service:
+        image: smgxv/ta-service
+        ports:
+          - 8080:8080
+        options: >-
+          --health-cmd "curl --fail http://localhost:8080/taruna/dashboard || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Jalankan ZAP API Scan
-        uses: zaproxy/action-api-scan@v0.9.0
+      - name: ZAP Full Scan
+        uses: zaproxy/action-full-scan@v0.12.0
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          target: 'http://104.43.89.154/openapi_users.yaml'
-          format: openapi
-          cmd_options: '-a'
+          target: 'http://localhost:8080/taruna/dashboard'
+          cmd_options: '-a -j'
+        env:
+          ZAP_AUTH_HEADER: "Authorization"
+          ZAP_AUTH_HEADER_VALUE: "Bearer ${{ secrets.TARUNA_TOKEN }}"
+          ZAP_AUTH_HEADER_SITE: "http://localhost:8080"
+
 
           
 
