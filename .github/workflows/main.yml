@@ -363,48 +363,114 @@
 #           cmd_options: '-a'
 
 
-name: ZAP Full Scan for Taruna Dashboard
+# name: ZAP Full Scan for Taruna Dashboard
 
-permissions:
-  contents: read
-  issues: write
+# permissions:
+#   contents: read
+#   issues: write
   
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   zap_scan:
+#     runs-on: ubuntu-latest
+
+#     services:
+#       ta-service:
+#         image: smgxv/ta-service
+#         ports:
+#           - 8080:8080
+#         options: >-
+#           --health-cmd "curl --fail http://localhost:8080/loginusers || exit 1"
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 10
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Docker Hub Login
+#         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+#       - name: ZAP Full Scan
+#         uses: zaproxy/action-full-scan@v0.12.0
+#         with:
+#           target: 'http://localhost:8080/taruna/dashboard'
+#           cmd_options: '-a -j'
+#         env:
+#           ZAP_AUTH_HEADER: "Authorization"
+#           ZAP_AUTH_HEADER_VALUE: "Bearer ${{ secrets.TARUNA_TOKEN }}"
+#           ZAP_AUTH_HEADER_SITE: "http://localhost:8080"
+
+# .github/workflows/zap-analysis.yml
+
+name: DAST - ZAP TEST TERHADAP VPS
+
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
 
 jobs:
-  zap_scan:
+  dast-analysis:
+    name: DAST dengan OWASP ZAP (Target VPS)
+    needs: deploy-staging
     runs-on: ubuntu-latest
 
-    services:
-      ta-service:
-        image: smgxv/ta-service
-        ports:
-          - 8080:8080
-        options: >-
-          --health-cmd "curl --fail http://localhost:8080/loginusers || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Docker Hub Login
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Siapkan Direktori Output
+        run: mkdir -p zap_output
 
-      - name: ZAP Full Scan
-        uses: zaproxy/action-full-scan@v0.12.0
+      - name: Jalankan ZAP terhadap TA Service
+        run: |
+          docker run --rm \
+          -v $(pwd)/zap_output:/zap/wrk \
+          ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+          -t http://104.43.89.154:8080 \
+          -r ta_report.html || true
+
+      - name: Jalankan ZAP terhadap User Service
+        run: |
+          docker run --rm \
+          -v $(pwd)/zap_output:/zap/wrk \
+          ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+          -t http://104.43.89.154:8081 \
+          -r user_report.html || true
+
+      - name: Jalankan ZAP terhadap Document Service
+        run: |
+          docker run --rm \
+          -v $(pwd)/zap_output:/zap/wrk \
+          ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+          -t http://104.43.89.154:8082 \
+          -r document_report.html || true
+
+      - name: Jalankan ZAP terhadap Notification Service
+        run: |
+          docker run --rm \
+          -v $(pwd)/zap_output:/zap/wrk \
+          ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+          -t http://104.43.89.154:8083 \
+          -r notification_report.html || true
+
+      - name: Upload Semua Laporan ZAP
+        uses: actions/upload-artifact@v4
         with:
-          target: 'http://localhost:8080/taruna/dashboard'
-          cmd_options: '-a -j'
-        env:
-          ZAP_AUTH_HEADER: "Authorization"
-          ZAP_AUTH_HEADER_VALUE: "Bearer ${{ secrets.TARUNA_TOKEN }}"
-          ZAP_AUTH_HEADER_SITE: "http://localhost:8080"
+          name: zap-dast-reports
+          path: |
+            zap_output/ta_report.html
+            zap_output/user_report.html
+            zap_output/document_report.html
+            zap_output/notification_report.html
+
 
 
           
