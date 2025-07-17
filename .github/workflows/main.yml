@@ -358,7 +358,9 @@ jobs:
         uses: zaproxy/action-api-scan@v0.9.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          target: 'http://104.43.89.154/user-openapi.json'
+          target: 'http://104.43.89.154/openapi_users.yaml'
           format: openapi
           cmd_options: '-a'
+
+          
 
