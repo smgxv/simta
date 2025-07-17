@@ -419,7 +419,7 @@ on:
 jobs:
   dast-analysis:
     name: DAST dengan OWASP ZAP (Target VPS)
-    needs: deploy-staging
+    # needs: deploy-staging
     runs-on: ubuntu-latest
 
     steps:
