@@ -2,12 +2,14 @@ package main
 
 import (
 	"crypto/tls"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"ta_service/controllers"
 	"ta_service/handlers"
 	"ta_service/middleware"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -15,6 +17,8 @@ import (
 // Tambahkan middleware CORS
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Incoming request: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
+
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -26,6 +30,20 @@ func corsMiddleware(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		log.Printf(
+			"%s %s from %s - took %v",
+			r.Method,
+			r.URL.Path,
+			r.RemoteAddr,
+			time.Since(start),
+		)
 	})
 }
 
@@ -165,6 +183,15 @@ func setupRoutes() *mux.Router {
 }
 
 func main() {
+	// Print startup information
+	log.Printf("Starting server with SSL certificates in: %s", "cert/")
+	if _, err := os.Stat("cert/server.crt"); err != nil {
+		log.Printf("Warning: SSL certificate not found: %v", err)
+	}
+	if _, err := os.Stat("cert/server.key"); err != nil {
+		log.Printf("Warning: SSL key not found: %v", err)
+	}
+
 	router := setupRoutes()
 
 	// Create cert directory if it doesn't exist
@@ -172,24 +199,30 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Redirect HTTP to HTTPS
-	go func() {
-		log.Println("HTTP Service running on port 8080 (redirecting to HTTPS)")
-		err := http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			target := "https://" + r.Host + r.URL.Path
+	// HTTP Server (for redirect)
+	httpServer := &http.Server{
+		Addr: ":8080",
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("HTTP request received: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
+			target := fmt.Sprintf("https://%s:8443%s", r.Host, r.URL.Path)
 			if len(r.URL.RawQuery) > 0 {
 				target += "?" + r.URL.RawQuery
 			}
+			log.Printf("Redirecting to: %s", target)
 			http.Redirect(w, r, target, http.StatusMovedPermanently)
-		}))
-		if err != nil {
-			log.Fatal("HTTP Server Error: ", err)
+		}),
+	}
+
+	// Start HTTP server (for redirect)
+	go func() {
+		log.Println("HTTP Service running on port 8080 (redirecting to HTTPS)")
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("HTTP Server Error: %v\n", err)
 		}
 	}()
 
-	// Start HTTPS server
-	log.Println("HTTPS Service running on port 8443")
-	server := &http.Server{
+	// HTTPS Server
+	httpsServer := &http.Server{
 		Addr:    ":8443",
 		Handler: router,
 		TLSConfig: &tls.Config{
@@ -200,9 +233,16 @@ func main() {
 				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			},
+			InsecureSkipVerify: true, // Only for development
 		},
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
-	log.Fatal(server.ListenAndServeTLS("cert/server.crt", "cert/server.key"))
+
+	// Start HTTPS server
+	log.Println("HTTPS Service running on port 8443")
+	log.Fatal(httpsServer.ListenAndServeTLS("cert/server.crt", "cert/server.key"))
 }
 
 func copyFile(src, dst string) error {

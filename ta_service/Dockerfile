@@ -36,15 +36,27 @@ RUN mkdir -p cert && \
     chmod 755 /app/cert
 
 # Add debugging utilities
-RUN apk add --no-cache curl tzdata ca-certificates
+RUN apk add --no-cache curl tzdata ca-certificates openssl netcat-openbsd
 
-# Verify files and directories
-RUN ls -la /app && \
-    ls -la /app/static && \
-    ls -la /app/cert
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD nc -zv localhost 8443 || exit 1
 
-# Expose both HTTP and HTTPS ports
+# Expose ports
 EXPOSE 8080 8443
 
-# Command to run the application with more logging
-CMD ["sh", "-c", "ls -la /app/cert && echo 'Starting server...' && ./main"]
+# Start script
+COPY <<'EOF' /app/start.sh
+#!/bin/sh
+echo "Checking SSL certificates..."
+ls -la /app/cert
+echo "Testing ports..."
+nc -zv localhost 8443 || echo "Warning: Port 8443 not responding"
+echo "Starting server..."
+./main
+EOF
+
+RUN chmod +x /app/start.sh
+
+# Command to run the application
+CMD ["/app/start.sh"]

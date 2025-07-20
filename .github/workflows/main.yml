@@ -223,16 +223,22 @@ jobs:
               -v /ssl/simta:/app/cert:ro \
               --network simta_net \
               smgxv/ta-service
-            
+
             # Wait for container to start
-            sleep 5
-            
+            sleep 10
+
             # Check container status and logs
             docker ps | grep ta-service
             docker logs ta-service
+
+            # Test HTTPS connection
+            curl -k https://localhost:8443/loginusers || true
             
             # Check if ports are listening using ss command
             ss -tulpn | grep -E '8080|8443' || true
+            
+            # Check firewall status
+            sudo ufw status | grep -E '8080|8443' || true
 
   build-user-service:
     # needs: running-tests
