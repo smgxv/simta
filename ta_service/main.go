@@ -2,10 +2,10 @@ package main
 
 import (
 	"crypto/tls"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"ta_service/controllers"
 	"ta_service/handlers"
 	"ta_service/middleware"
@@ -17,7 +17,7 @@ import (
 // Tambahkan middleware CORS
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Incoming request: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
+		log.Printf("CORS: Processing request from %s", r.RemoteAddr)
 
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -25,6 +25,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 		if r.Method == "OPTIONS" {
+			log.Printf("CORS: Handling preflight request from %s", r.RemoteAddr)
 			w.WriteHeader(http.StatusOK)
 			return
 		}
@@ -36,73 +37,39 @@ func corsMiddleware(next http.Handler) http.Handler {
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		log.Printf("Request started: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
+
 		next.ServeHTTP(w, r)
-		log.Printf(
-			"%s %s from %s - took %v",
-			r.Method,
-			r.URL.Path,
-			r.RemoteAddr,
-			time.Since(start),
-		)
+
+		log.Printf("Request completed: %s %s - took %v", r.Method, r.URL.Path, time.Since(start))
 	})
 }
 
 func setupRoutes() *mux.Router {
 	r := mux.NewRouter()
 
-	// Tambahkan middleware CORS ke router
+	// Add logging middleware
+	r.Use(loggingMiddleware)
 	r.Use(corsMiddleware)
 
 	// Menyajikan file statis dari direktori style
-	r.PathPrefix("/style/images/").Handler(http.StripPrefix("/style/images/", http.FileServer(http.Dir("static/style/images"))))
-	r.PathPrefix("/style/css/").Handler(http.StripPrefix("/style/css/", http.FileServer(http.Dir("static/style/css"))))
-	r.PathPrefix("/style/fonts/").Handler(http.StripPrefix("/style/fonts/", http.FileServer(http.Dir("static/style/fonts"))))
-	r.PathPrefix("/style/js/").Handler(http.StripPrefix("/style/js/", http.FileServer(http.Dir("static/style/js"))))
-	r.PathPrefix("/style/includes/").Handler(http.StripPrefix("/style/includes/", http.FileServer(http.Dir("static/style/includes"))))
-	r.PathPrefix("/style/vendor/").Handler(http.StripPrefix("/style/vendor/", http.FileServer(http.Dir("static/style/vendor"))))
-
-	// Menyajikan file statis dari direktori admin/src
-	r.PathPrefix("/admin/src/fonts/").Handler(http.StripPrefix("/admin/src/fonts/", http.FileServer(http.Dir("static/admin/src/fonts"))))
-	r.PathPrefix("/admin/src/images/").Handler(http.StripPrefix("/admin/src/images/", http.FileServer(http.Dir("static/admin/src/images"))))
-	r.PathPrefix("/admin/src/plugins/").Handler(http.StripPrefix("/admin/src/plugins/", http.FileServer(http.Dir("static/admin/src/plugins"))))
-	r.PathPrefix("/admin/src/scripts/").Handler(http.StripPrefix("/admin/src/scripts/", http.FileServer(http.Dir("static/admin/src/scripts"))))
-	r.PathPrefix("/admin/src/styles/").Handler(http.StripPrefix("/admin/src/styles/", http.FileServer(http.Dir("static/admin/src/styles"))))
-
-	// Menyajikan file statis dari direktori admin/vendors
-	r.PathPrefix("/admin/vendors/fonts/").Handler(http.StripPrefix("/admin/vendors/fonts/", http.FileServer(http.Dir("static/admin/vendors/fonts"))))
-	r.PathPrefix("/admin/vendors/images/").Handler(http.StripPrefix("/admin/vendors/images/", http.FileServer(http.Dir("static/admin/vendors/images"))))
-	r.PathPrefix("/admin/vendors/scripts/").Handler(http.StripPrefix("/admin/vendors/scripts/", http.FileServer(http.Dir("static/admin/vendors/scripts"))))
-	r.PathPrefix("/admin/vendors/styles/").Handler(http.StripPrefix("/admin/vendors/styles/", http.FileServer(http.Dir("static/admin/vendors/styles"))))
-
-	// Menyajikan file statis dari direktori taruna/src
-	r.PathPrefix("/taruna/src/fonts/").Handler(http.StripPrefix("/taruna/src/fonts/", http.FileServer(http.Dir("static/taruna/src/fonts"))))
-	r.PathPrefix("/taruna/src/images/").Handler(http.StripPrefix("/taruna/src/images/", http.FileServer(http.Dir("static/taruna/src/images"))))
-	r.PathPrefix("/taruna/src/plugins/").Handler(http.StripPrefix("/taruna/src/plugins/", http.FileServer(http.Dir("static/taruna/src/plugins"))))
-	r.PathPrefix("/taruna/src/scripts/").Handler(http.StripPrefix("/taruna/src/scripts/", http.FileServer(http.Dir("static/taruna/src/scripts"))))
-	r.PathPrefix("/taruna/src/styles/").Handler(http.StripPrefix("/taruna/src/styles/", http.FileServer(http.Dir("static/taruna/src/styles"))))
-
-	// Menyajikan file statis dari direktori taruna/vendors
-	r.PathPrefix("/taruna/vendors/fonts/").Handler(http.StripPrefix("/taruna/vendors/fonts/", http.FileServer(http.Dir("static/taruna/vendors/fonts"))))
-	r.PathPrefix("/taruna/vendors/images/").Handler(http.StripPrefix("/taruna/vendors/images/", http.FileServer(http.Dir("static/taruna/vendors/images"))))
-	r.PathPrefix("/taruna/vendors/scripts/").Handler(http.StripPrefix("/taruna/vendors/scripts/", http.FileServer(http.Dir("static/taruna/vendors/scripts"))))
-	r.PathPrefix("/taruna/vendors/styles/").Handler(http.StripPrefix("/taruna/vendors/styles/", http.FileServer(http.Dir("static/taruna/vendors/styles"))))
-
-	// Menyajikan file statis dari direktori dosen/src
-	r.PathPrefix("/dosen/src/fonts/").Handler(http.StripPrefix("/dosen/src/fonts/", http.FileServer(http.Dir("static/dosen/src/fonts"))))
-	r.PathPrefix("/dosen/src/images/").Handler(http.StripPrefix("/dosen/src/images/", http.FileServer(http.Dir("static/dosen/src/images"))))
-	r.PathPrefix("/dosen/src/plugins/").Handler(http.StripPrefix("/dosen/src/plugins/", http.FileServer(http.Dir("static/dosen/src/plugins"))))
-	r.PathPrefix("/dosen/src/scripts/").Handler(http.StripPrefix("/dosen/src/scripts/", http.FileServer(http.Dir("static/dosen/src/scripts"))))
-	r.PathPrefix("/dosen/src/styles/").Handler(http.StripPrefix("/dosen/src/styles/", http.FileServer(http.Dir("static/dosen/src/styles"))))
-
-	// Menyajikan file statis dari direktori dosen/vendors
-	r.PathPrefix("/dosen/vendors/fonts/").Handler(http.StripPrefix("/dosen/vendors/fonts/", http.FileServer(http.Dir("static/dosen/vendors/fonts"))))
-	r.PathPrefix("/dosen/vendors/images/").Handler(http.StripPrefix("/dosen/vendors/images/", http.FileServer(http.Dir("static/dosen/vendors/images"))))
-	r.PathPrefix("/dosen/vendors/scripts/").Handler(http.StripPrefix("/dosen/vendors/scripts/", http.FileServer(http.Dir("static/dosen/vendors/scripts"))))
-	r.PathPrefix("/dosen/vendors/styles/").Handler(http.StripPrefix("/dosen/vendors/styles/", http.FileServer(http.Dir("static/dosen/vendors/styles"))))
+	r.PathPrefix("/style/").Handler(http.StripPrefix("/style/", http.FileServer(http.Dir("static/style"))))
+	r.PathPrefix("/admin/src/").Handler(http.StripPrefix("/admin/src/", http.FileServer(http.Dir("static/admin/src"))))
+	r.PathPrefix("/admin/vendors/").Handler(http.StripPrefix("/admin/vendors/", http.FileServer(http.Dir("static/admin/vendors"))))
+	r.PathPrefix("/taruna/src/").Handler(http.StripPrefix("/taruna/src/", http.FileServer(http.Dir("static/taruna/src"))))
+	r.PathPrefix("/taruna/vendors/").Handler(http.StripPrefix("/taruna/vendors/", http.FileServer(http.Dir("static/taruna/vendors"))))
+	r.PathPrefix("/dosen/src/").Handler(http.StripPrefix("/dosen/src/", http.FileServer(http.Dir("static/dosen/src"))))
+	r.PathPrefix("/dosen/vendors/").Handler(http.StripPrefix("/dosen/vendors/", http.FileServer(http.Dir("static/dosen/vendors"))))
 
 	// Public routes (tanpa middleware)
-	r.HandleFunc("/loginusers", controllers.LoginUsers).Methods("GET")
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/login.html")
+	}).Methods("GET")
+
 	r.HandleFunc("/login", handlers.LoginHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/loginusers", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/login.html")
+	}).Methods("GET")
 	r.HandleFunc("/logout", handlers.LogoutHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/dashboard", controllers.Index).Methods("GET")
 
@@ -183,66 +150,73 @@ func setupRoutes() *mux.Router {
 }
 
 func main() {
-	// Print startup information
-	log.Printf("Starting server with SSL certificates in: %s", "cert/")
-	if _, err := os.Stat("cert/server.crt"); err != nil {
-		log.Printf("Warning: SSL certificate not found: %v", err)
-	}
-	if _, err := os.Stat("cert/server.key"); err != nil {
-		log.Printf("Warning: SSL key not found: %v", err)
+	// Initialize router
+	r := setupRoutes()
+
+	// Configure TLS
+	tlsConfig := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+		PreferServerCipherSuites: true,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		},
 	}
 
-	router := setupRoutes()
-
-	// Create cert directory if it doesn't exist
-	if err := os.MkdirAll("cert", os.ModePerm); err != nil {
-		log.Fatal(err)
+	// Create HTTPS server
+	httpsServer := &http.Server{
+		Addr:         ":8443",
+		Handler:      r,
+		TLSConfig:    tlsConfig,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
-	// HTTP Server (for redirect)
+	// Create HTTP server (for redirect)
 	httpServer := &http.Server{
 		Addr: ":8080",
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Printf("HTTP request received: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
-			target := fmt.Sprintf("https://%s:8443%s", r.Host, r.URL.Path)
+			host := strings.Split(r.Host, ":")[0]
+			target := "https://" + host + ":8443" + r.URL.Path
 			if len(r.URL.RawQuery) > 0 {
 				target += "?" + r.URL.RawQuery
 			}
+			log.Printf("HTTP request received: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
 			log.Printf("Redirecting to: %s", target)
 			http.Redirect(w, r, target, http.StatusMovedPermanently)
 		}),
 	}
 
+	// Check SSL certificates
+	log.Println("Checking SSL certificates...")
+	certFile := "cert/server.crt"
+	keyFile := "cert/server.key"
+
+	if _, err := os.Stat(certFile); os.IsNotExist(err) {
+		log.Fatalf("Certificate file not found: %s", certFile)
+	}
+	if _, err := os.Stat(keyFile); os.IsNotExist(err) {
+		log.Fatalf("Key file not found: %s", keyFile)
+	}
+
 	// Start HTTP server (for redirect)
 	go func() {
-		log.Println("HTTP Service running on port 8080 (redirecting to HTTPS)")
+		log.Printf("HTTP Service running on port 8080 (redirecting to HTTPS)")
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf("HTTP Server Error: %v\n", err)
+			log.Fatalf("HTTP server error: %v", err)
 		}
 	}()
 
-	// HTTPS Server
-	httpsServer := &http.Server{
-		Addr:    ":8443",
-		Handler: router,
-		TLSConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			},
-			InsecureSkipVerify: true, // Only for development
-		},
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
-
 	// Start HTTPS server
-	log.Println("HTTPS Service running on port 8443")
-	log.Fatal(httpsServer.ListenAndServeTLS("cert/server.crt", "cert/server.key"))
+	log.Printf("Starting server with SSL certificates in: cert/")
+	log.Printf("HTTPS Service running on port 8443")
+	if err := httpsServer.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("HTTPS server error: %v", err)
+	}
 }
 
 func copyFile(src, dst string) error {
