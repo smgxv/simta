@@ -188,16 +188,26 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-            # Create SSL directory if not exists
-            mkdir -p /ssl/simta
+            # Create directories if not exist
+            sudo mkdir -p /ssl/simta
+            sudo mkdir -p /app/static
             
             # Generate self-signed certificate if not exists
             if [ ! -f /ssl/simta/server.crt ]; then
-              openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+              sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
                 -keyout /ssl/simta/server.key \
                 -out /ssl/simta/server.crt \
-                -subj "/CN=localhost"
+                -subj "/CN=localhost" \
+                -addext "subjectAltName=DNS:localhost,IP:104.43.89.154"
+              
+              # Set proper permissions
+              sudo chmod 600 /ssl/simta/server.key
+              sudo chmod 644 /ssl/simta/server.crt
+              sudo chown -R 1000:1000 /ssl/simta
             fi
+            
+            # Create Docker network if not exists
+            docker network create simta_net || true
             
             # Stop and remove existing container
             docker stop ta-service || true && docker rm ta-service || true
@@ -206,13 +216,25 @@ jobs:
             # Pull and run new container with SSL
             docker pull smgxv/ta-service
             docker run -d \
+              --name ta-service \
               -p 8080:8080 \
               -p 8443:8443 \
-              -v /ssl/simta:/app/cert \
-              --name ta-service \
+              -v /ssl/simta:/app/cert:ro \
+              --network simta_net \
               smgxv/ta-service
             
-            docker network connect simta_net ta-service
+            # Wait for container to start
+            sleep 5
+            
+            # Check container status and logs
+            docker ps | grep ta-service
+            docker logs ta-service
+            
+            # Check mounted files in container
+            docker exec ta-service ls -la /app/cert
+            
+            # Check if ports are listening
+            netstat -tulpn | grep -E '8080|8443'
 
   build-user-service:
     # needs: running-tests

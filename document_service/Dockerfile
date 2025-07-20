@@ -1,13 +1,16 @@
 # Build stage
-FROM golang:1.20-alpine AS builder
+FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache gcc musl-dev
 
 # Copy go mod and sum files
 COPY go.mod go.sum ./
 
 # Download dependencies
-RUN go mod download
+RUN go mod download && go mod tidy
 
 # Copy the source code
 COPY . .
@@ -24,7 +27,12 @@ WORKDIR /app
 COPY --from=builder /app/main .
 
 # Create necessary directories
-RUN mkdir -p uploads/icp cert
+RUN mkdir -p uploads/icp cert && \
+    chmod -R 755 /app && \
+    chmod -R 777 /app/uploads
+
+# Add debugging utilities
+RUN apk add --no-cache curl tzdata ca-certificates
 
 # Expose both HTTP and HTTPS ports
 EXPOSE 8082 8445

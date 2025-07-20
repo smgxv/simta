@@ -29,11 +29,22 @@ COPY --from=builder /app/main .
 # Copy static files
 COPY static/ static/
 
-# Create cert directory
-RUN mkdir -p cert
+# Create necessary directories and set permissions
+RUN mkdir -p cert && \
+    chmod 755 /app && \
+    chmod 755 /app/static && \
+    chmod 755 /app/cert
+
+# Add debugging utilities
+RUN apk add --no-cache curl tzdata ca-certificates
+
+# Verify files and directories
+RUN ls -la /app && \
+    ls -la /app/static && \
+    ls -la /app/cert
 
 # Expose both HTTP and HTTPS ports
 EXPOSE 8080 8443
 
-# Command to run the application
-CMD ["./main"]
+# Command to run the application with more logging
+CMD ["sh", "-c", "ls -la /app/cert && echo 'Starting server...' && ./main"]
