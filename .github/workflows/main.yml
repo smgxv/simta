@@ -197,8 +197,9 @@ jobs:
               sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
                 -keyout /ssl/simta/server.key \
                 -out /ssl/simta/server.crt \
-                -subj "/CN=localhost" \
-                -addext "subjectAltName=DNS:localhost,IP:104.43.89.154"
+                -subj "/CN=104.43.89.154" \
+                -addext "subjectAltName=DNS:localhost,IP:104.43.89.154" \
+                -addext "extendedKeyUsage=serverAuth"
               
               # Set proper permissions
               sudo chmod 600 /ssl/simta/server.key

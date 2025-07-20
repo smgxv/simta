@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"log"
 	"net/http"
 	"os"
@@ -171,23 +172,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Copy certificates from ta_service if they don't exist
-	if _, err := os.Stat("cert/server.crt"); os.IsNotExist(err) {
-		if err := copyFile("../ta_service/cert/server.crt", "cert/server.crt"); err != nil {
-			log.Fatal(err)
-		}
-	}
-	if _, err := os.Stat("cert/server.key"); os.IsNotExist(err) {
-		if err := copyFile("../ta_service/cert/server.key", "cert/server.key"); err != nil {
-			log.Fatal(err)
-		}
-	}
-
 	// Redirect HTTP to HTTPS
 	go func() {
 		log.Println("HTTP Service running on port 8080 (redirecting to HTTPS)")
 		err := http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, "https://"+r.Host+r.RequestURI, http.StatusMovedPermanently)
+			target := "https://" + r.Host + r.URL.Path
+			if len(r.URL.RawQuery) > 0 {
+				target += "?" + r.URL.RawQuery
+			}
+			http.Redirect(w, r, target, http.StatusMovedPermanently)
 		}))
 		if err != nil {
 			log.Fatal("HTTP Server Error: ", err)
@@ -196,7 +189,20 @@ func main() {
 
 	// Start HTTPS server
 	log.Println("HTTPS Service running on port 8443")
-	log.Fatal(http.ListenAndServeTLS(":8443", "cert/server.crt", "cert/server.key", router))
+	server := &http.Server{
+		Addr:    ":8443",
+		Handler: router,
+		TLSConfig: &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			},
+		},
+	}
+	log.Fatal(server.ListenAndServeTLS("cert/server.crt", "cert/server.key"))
 }
 
 func copyFile(src, dst string) error {
