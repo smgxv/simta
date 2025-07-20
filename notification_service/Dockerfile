@@ -1,28 +1,33 @@
-FROM golang:1.23.4-alpine
+# Build stage
+FROM golang:1.20-alpine AS builder
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apk add --no-cache gcc musl-dev
-
-# Copy go.mod dan go.sum
+# Copy go mod and sum files
 COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
 
-# Salin semua source code
+# Copy the source code
 COPY . .
 
-# Build aplikasi
-RUN go build -o main .
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
-# Buat folder uploads agar bisa digunakan menyimpan file notifikasi
-RUN mkdir -p /app/uploads && \
-    chmod -R 777 /app/uploads
+# Final stage
+FROM alpine:latest
 
-# Expose port untuk container
-EXPOSE 8083
+WORKDIR /app
 
-# Jalankan binary
+# Copy the binary from builder
+COPY --from=builder /app/main .
+
+# Create necessary directories
+RUN mkdir -p uploads cert
+
+# Expose both HTTP and HTTPS ports
+EXPOSE 8083 8446
+
+# Command to run the application
 CMD ["./main"]

@@ -214,7 +214,43 @@ func main() {
 	// Wrap router dengan CORS middleware
 	handler := c.Handler(r)
 
-	// Start server
-	log.Println("Server started on :8082")
-	log.Fatal(http.ListenAndServe(":8082", handler))
+	// Create cert directory if it doesn't exist
+	if err := os.MkdirAll("cert", os.ModePerm); err != nil {
+		log.Fatal(err)
+	}
+
+	// Copy certificates from ta_service if they don't exist
+	if _, err := os.Stat("cert/server.crt"); os.IsNotExist(err) {
+		if err := copyFile("../ta_service/cert/server.crt", "cert/server.crt"); err != nil {
+			log.Fatal(err)
+		}
+	}
+	if _, err := os.Stat("cert/server.key"); os.IsNotExist(err) {
+		if err := copyFile("../ta_service/cert/server.key", "cert/server.key"); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// Redirect HTTP to HTTPS
+	go func() {
+		log.Println("HTTP Service running on port 8082 (redirecting to HTTPS)")
+		err := http.ListenAndServe(":8082", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "https://"+r.Host+r.RequestURI, http.StatusMovedPermanently)
+		}))
+		if err != nil {
+			log.Fatal("HTTP Server Error: ", err)
+		}
+	}()
+
+	// Start HTTPS server
+	log.Println("HTTPS Server started on :8445")
+	log.Fatal(http.ListenAndServeTLS(":8445", "cert/server.crt", "cert/server.key", handler))
+}
+
+func copyFile(src, dst string) error {
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(dst, data, 0600)
 }

@@ -161,15 +161,15 @@ jobs:
 
   build-ta-service:
     # needs: running-tests
-    name: Build Image
+    name: Build TA Service Image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Build Image
         run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -188,12 +188,31 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT }}
           script: |
+            # Create SSL directory if not exists
+            mkdir -p /ssl/simta
+            
+            # Generate self-signed certificate if not exists
+            if [ ! -f /ssl/simta/server.crt ]; then
+              openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+                -keyout /ssl/simta/server.key \
+                -out /ssl/simta/server.crt \
+                -subj "/CN=localhost"
+            fi
+            
+            # Stop and remove existing container
             docker stop ta-service || true && docker rm ta-service || true
             docker system prune -af
+            
+            # Pull and run new container with SSL
             docker pull smgxv/ta-service
-            docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+            docker run -d \
+              -p 8080:8080 \
+              -p 8443:8443 \
+              -v /ssl/simta:/app/cert \
+              --name ta-service \
+              smgxv/ta-service
+            
             docker network connect simta_net ta-service
-
 
   build-user-service:
     # needs: running-tests
@@ -201,11 +220,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Build Image
         run: docker build -t smgxv/user-service -f user_service/Dockerfile user_service
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -224,10 +243,19 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT }}
           script: |
+            # Stop and remove existing container
             docker stop user-service || true && docker rm user-service || true
             docker system prune -af
+            
+            # Pull and run new container with SSL
             docker pull smgxv/user-service
-            docker run -d -p 8081:8081 --name user-service smgxv/user-service
+            docker run -d \
+              -p 8081:8081 \
+              -p 8444:8444 \
+              -v /ssl/simta:/app/cert \
+              --name user-service \
+              smgxv/user-service
+            
             docker network connect simta_net user-service
 
   build-document-service:
@@ -236,11 +264,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Build Image
         run: docker build -t smgxv/document-service -f document_service/Dockerfile document_service
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -259,10 +287,19 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT }}
           script: |
+            # Stop and remove existing container
             docker stop document-service || true && docker rm document-service || true
             docker system prune -af
+            
+            # Pull and run new container with SSL
             docker pull smgxv/document-service
-            docker run -d -p 8082:8082 --name document-service smgxv/document-service
+            docker run -d \
+              -p 8082:8082 \
+              -p 8445:8445 \
+              -v /ssl/simta:/app/cert \
+              --name document-service \
+              smgxv/document-service
+            
             docker network connect simta_net document-service
 
   build-notification-service:
@@ -271,11 +308,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Build Image
         run: docker build -t smgxv/notification-service -f notification_service/Dockerfile notification_service
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -294,10 +331,19 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT }}
           script: |
+            # Stop and remove existing container
             docker stop notification-service || true && docker rm notification-service || true
             docker system prune -af
+            
+            # Pull and run new container with SSL
             docker pull smgxv/notification-service
-            docker run -d -p 8083:8083 --name notification-service -v /home/youruser/uploads:/app/uploads smgxv/notification-service
+            docker run -d \
+              -p 8083:8083 \
+              -p 8446:8446 \
+              -v /ssl/simta:/app/cert \
+              --name notification-service \
+              smgxv/notification-service
+            
             docker network connect simta_net notification-service
 
 # name: ZAP API Scan

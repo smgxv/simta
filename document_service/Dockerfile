@@ -1,30 +1,33 @@
-FROM golang:1.23.4-alpine
-# FROM golang:1.21-alpine
+# Build stage
+FROM golang:1.20-alpine AS builder
 
 WORKDIR /app
-
-# Install required system packages
-RUN apk add --no-cache gcc musl-dev
-
 
 # Copy go mod and sum files
 COPY go.mod go.sum ./
 
-# Download all dependencies
+# Download dependencies
 RUN go mod download
 
 # Copy the source code
 COPY . .
 
 # Build the application
-RUN go build -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
-# Create uploads directory with proper permissions
-RUN mkdir -p /app/uploads/proposal && \
-    chmod -R 777 /app/uploads
+# Final stage
+FROM alpine:latest
 
-# Expose port 8082
-EXPOSE 8082
+WORKDIR /app
+
+# Copy the binary from builder
+COPY --from=builder /app/main .
+
+# Create necessary directories
+RUN mkdir -p uploads/icp cert
+
+# Expose both HTTP and HTTPS ports
+EXPOSE 8082 8445
 
 # Command to run the application
 CMD ["./main"]

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"ta_service/controllers"
 	"ta_service/handlers"
 	"ta_service/middleware"
@@ -26,80 +27,71 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func main() {
-	// Menyajikan file statis dari direktori style
-	http.Handle("/style/images/", http.StripPrefix("/style/images/", http.FileServer(http.Dir("static/style/images"))))
-	http.Handle("/style/css/", http.StripPrefix("/style/css/", http.FileServer(http.Dir("static/style/css"))))
-	http.Handle("/style/fonts/", http.StripPrefix("/style/fonts/", http.FileServer(http.Dir("static/style/fonts"))))
-	http.Handle("/style/js/", http.StripPrefix("/style/js/", http.FileServer(http.Dir("static/style/js"))))
-	http.Handle("/style/includes/", http.StripPrefix("/style/includes/", http.FileServer(http.Dir("static/style/includes"))))
-	http.Handle("/style/vendor/", http.StripPrefix("/style/vendor/", http.FileServer(http.Dir("static/style/vendor"))))
-
-	// Menyajikan file statis dari direktori admin/src
-	http.Handle("/admin/src/fonts/", http.StripPrefix("/admin/src/fonts/", http.FileServer(http.Dir("static/admin/src/fonts"))))
-	http.Handle("/admin/src/images/", http.StripPrefix("/admin/src/images/", http.FileServer(http.Dir("static/admin/src/images"))))
-	http.Handle("/admin/src/plugins/", http.StripPrefix("/admin/src/plugins/", http.FileServer(http.Dir("static/admin/src/plugins"))))
-	http.Handle("/admin/src/scripts/", http.StripPrefix("/admin/src/scripts/", http.FileServer(http.Dir("static/admin/src/scripts"))))
-	http.Handle("/admin/src/styles/", http.StripPrefix("/admin/src/styles/", http.FileServer(http.Dir("static/admin/src/styles"))))
-
-	// Menyajikan file statis dari direktori admin/vendors
-	http.Handle("/admin/vendors/fonts/", http.StripPrefix("/admin/vendors/fonts/", http.FileServer(http.Dir("static/admin/vendors/fonts"))))
-	http.Handle("/admin/vendors/images/", http.StripPrefix("/admin/vendors/images/", http.FileServer(http.Dir("static/admin/vendors/images"))))
-	http.Handle("/admin/vendors/scripts/", http.StripPrefix("/admin/vendors/scripts/", http.FileServer(http.Dir("static/admin/vendors/scripts"))))
-	http.Handle("/admin/vendors/styles/", http.StripPrefix("/admin/vendors/styles/", http.FileServer(http.Dir("static/admin/vendors/styles"))))
-
-	// Menyajikan file statis dari direktori taruna/src
-	http.Handle("/taruna/src/fonts/", http.StripPrefix("/taruna/src/fonts/", http.FileServer(http.Dir("static/taruna/src/fonts"))))
-	http.Handle("/taruna/src/images/", http.StripPrefix("/taruna/src/images/", http.FileServer(http.Dir("static/taruna/src/images"))))
-	http.Handle("/taruna/src/plugins/", http.StripPrefix("/taruna/src/plugins/", http.FileServer(http.Dir("static/taruna/src/plugins"))))
-	http.Handle("/taruna/src/scripts/", http.StripPrefix("/taruna/src/scripts/", http.FileServer(http.Dir("static/taruna/src/scripts"))))
-	http.Handle("/taruna/src/styles/", http.StripPrefix("/taruna/src/styles/", http.FileServer(http.Dir("static/taruna/src/styles"))))
-
-	// Menyajikan file statis dari direktori taruna/vendors
-	http.Handle("/taruna/vendors/fonts/", http.StripPrefix("/taruna/vendors/fonts/", http.FileServer(http.Dir("static/taruna/vendors/fonts"))))
-	http.Handle("/taruna/vendors/images/", http.StripPrefix("/taruna/vendors/images/", http.FileServer(http.Dir("static/taruna/vendors/images"))))
-	http.Handle("/taruna/vendors/scripts/", http.StripPrefix("/taruna/vendors/scripts/", http.FileServer(http.Dir("static/taruna/vendors/scripts"))))
-	http.Handle("/taruna/vendors/styles/", http.StripPrefix("/taruna/vendors/styles/", http.FileServer(http.Dir("static/taruna/vendors/styles"))))
-
-	// Menyajikan file statis dari direktori dosen/src
-	http.Handle("/dosen/src/fonts/", http.StripPrefix("/dosen/src/fonts/", http.FileServer(http.Dir("static/dosen/src/fonts"))))
-	http.Handle("/dosen/src/images/", http.StripPrefix("/dosen/src/images/", http.FileServer(http.Dir("static/dosen/src/images"))))
-	http.Handle("/dosen/src/plugins/", http.StripPrefix("/dosen/src/plugins/", http.FileServer(http.Dir("static/dosen/src/plugins"))))
-	http.Handle("/dosen/src/scripts/", http.StripPrefix("/dosen/src/scripts/", http.FileServer(http.Dir("static/dosen/src/scripts"))))
-	http.Handle("/dosen/src/styles/", http.StripPrefix("/dosen/src/styles/", http.FileServer(http.Dir("static/dosen/src/styles"))))
-
-	// Menyajikan file statis dari direktori dosen/vendors
-	http.Handle("/dosen/vendors/fonts/", http.StripPrefix("/dosen/vendors/fonts/", http.FileServer(http.Dir("static/dosen/vendors/fonts"))))
-	http.Handle("/dosen/vendors/images/", http.StripPrefix("/dosen/vendors/images/", http.FileServer(http.Dir("static/dosen/vendors/images"))))
-	http.Handle("/dosen/vendors/scripts/", http.StripPrefix("/dosen/vendors/scripts/", http.FileServer(http.Dir("static/dosen/vendors/scripts"))))
-	http.Handle("/dosen/vendors/styles/", http.StripPrefix("/dosen/vendors/styles/", http.FileServer(http.Dir("static/dosen/vendors/styles"))))
-
-	// Membuat router baru
-	router := mux.NewRouter()
+func setupRoutes() *mux.Router {
+	r := mux.NewRouter()
 
 	// Tambahkan middleware CORS ke router
-	router.Use(corsMiddleware)
+	r.Use(corsMiddleware)
 
-	// // API endpoints
-	// http.HandleFunc("/login", handlers.LoginHandler)
-	// http.HandleFunc("/refresh-token", handlers.RefreshTokenHandler)
-	// router.HandleFunc("/logout", handlers.LogoutHandler).Methods("GET", "POST", "OPTIONS")
+	// Menyajikan file statis dari direktori style
+	r.PathPrefix("/style/images/").Handler(http.StripPrefix("/style/images/", http.FileServer(http.Dir("static/style/images"))))
+	r.PathPrefix("/style/css/").Handler(http.StripPrefix("/style/css/", http.FileServer(http.Dir("static/style/css"))))
+	r.PathPrefix("/style/fonts/").Handler(http.StripPrefix("/style/fonts/", http.FileServer(http.Dir("static/style/fonts"))))
+	r.PathPrefix("/style/js/").Handler(http.StripPrefix("/style/js/", http.FileServer(http.Dir("static/style/js"))))
+	r.PathPrefix("/style/includes/").Handler(http.StripPrefix("/style/includes/", http.FileServer(http.Dir("static/style/includes"))))
+	r.PathPrefix("/style/vendor/").Handler(http.StripPrefix("/style/vendor/", http.FileServer(http.Dir("static/style/vendor"))))
+
+	// Menyajikan file statis dari direktori admin/src
+	r.PathPrefix("/admin/src/fonts/").Handler(http.StripPrefix("/admin/src/fonts/", http.FileServer(http.Dir("static/admin/src/fonts"))))
+	r.PathPrefix("/admin/src/images/").Handler(http.StripPrefix("/admin/src/images/", http.FileServer(http.Dir("static/admin/src/images"))))
+	r.PathPrefix("/admin/src/plugins/").Handler(http.StripPrefix("/admin/src/plugins/", http.FileServer(http.Dir("static/admin/src/plugins"))))
+	r.PathPrefix("/admin/src/scripts/").Handler(http.StripPrefix("/admin/src/scripts/", http.FileServer(http.Dir("static/admin/src/scripts"))))
+	r.PathPrefix("/admin/src/styles/").Handler(http.StripPrefix("/admin/src/styles/", http.FileServer(http.Dir("static/admin/src/styles"))))
+
+	// Menyajikan file statis dari direktori admin/vendors
+	r.PathPrefix("/admin/vendors/fonts/").Handler(http.StripPrefix("/admin/vendors/fonts/", http.FileServer(http.Dir("static/admin/vendors/fonts"))))
+	r.PathPrefix("/admin/vendors/images/").Handler(http.StripPrefix("/admin/vendors/images/", http.FileServer(http.Dir("static/admin/vendors/images"))))
+	r.PathPrefix("/admin/vendors/scripts/").Handler(http.StripPrefix("/admin/vendors/scripts/", http.FileServer(http.Dir("static/admin/vendors/scripts"))))
+	r.PathPrefix("/admin/vendors/styles/").Handler(http.StripPrefix("/admin/vendors/styles/", http.FileServer(http.Dir("static/admin/vendors/styles"))))
+
+	// Menyajikan file statis dari direktori taruna/src
+	r.PathPrefix("/taruna/src/fonts/").Handler(http.StripPrefix("/taruna/src/fonts/", http.FileServer(http.Dir("static/taruna/src/fonts"))))
+	r.PathPrefix("/taruna/src/images/").Handler(http.StripPrefix("/taruna/src/images/", http.FileServer(http.Dir("static/taruna/src/images"))))
+	r.PathPrefix("/taruna/src/plugins/").Handler(http.StripPrefix("/taruna/src/plugins/", http.FileServer(http.Dir("static/taruna/src/plugins"))))
+	r.PathPrefix("/taruna/src/scripts/").Handler(http.StripPrefix("/taruna/src/scripts/", http.FileServer(http.Dir("static/taruna/src/scripts"))))
+	r.PathPrefix("/taruna/src/styles/").Handler(http.StripPrefix("/taruna/src/styles/", http.FileServer(http.Dir("static/taruna/src/styles"))))
+
+	// Menyajikan file statis dari direktori taruna/vendors
+	r.PathPrefix("/taruna/vendors/fonts/").Handler(http.StripPrefix("/taruna/vendors/fonts/", http.FileServer(http.Dir("static/taruna/vendors/fonts"))))
+	r.PathPrefix("/taruna/vendors/images/").Handler(http.StripPrefix("/taruna/vendors/images/", http.FileServer(http.Dir("static/taruna/vendors/images"))))
+	r.PathPrefix("/taruna/vendors/scripts/").Handler(http.StripPrefix("/taruna/vendors/scripts/", http.FileServer(http.Dir("static/taruna/vendors/scripts"))))
+	r.PathPrefix("/taruna/vendors/styles/").Handler(http.StripPrefix("/taruna/vendors/styles/", http.FileServer(http.Dir("static/taruna/vendors/styles"))))
+
+	// Menyajikan file statis dari direktori dosen/src
+	r.PathPrefix("/dosen/src/fonts/").Handler(http.StripPrefix("/dosen/src/fonts/", http.FileServer(http.Dir("static/dosen/src/fonts"))))
+	r.PathPrefix("/dosen/src/images/").Handler(http.StripPrefix("/dosen/src/images/", http.FileServer(http.Dir("static/dosen/src/images"))))
+	r.PathPrefix("/dosen/src/plugins/").Handler(http.StripPrefix("/dosen/src/plugins/", http.FileServer(http.Dir("static/dosen/src/plugins"))))
+	r.PathPrefix("/dosen/src/scripts/").Handler(http.StripPrefix("/dosen/src/scripts/", http.FileServer(http.Dir("static/dosen/src/scripts"))))
+	r.PathPrefix("/dosen/src/styles/").Handler(http.StripPrefix("/dosen/src/styles/", http.FileServer(http.Dir("static/dosen/src/styles"))))
+
+	// Menyajikan file statis dari direktori dosen/vendors
+	r.PathPrefix("/dosen/vendors/fonts/").Handler(http.StripPrefix("/dosen/vendors/fonts/", http.FileServer(http.Dir("static/dosen/vendors/fonts"))))
+	r.PathPrefix("/dosen/vendors/images/").Handler(http.StripPrefix("/dosen/vendors/images/", http.FileServer(http.Dir("static/dosen/vendors/images"))))
+	r.PathPrefix("/dosen/vendors/scripts/").Handler(http.StripPrefix("/dosen/vendors/scripts/", http.FileServer(http.Dir("static/dosen/vendors/scripts"))))
+	r.PathPrefix("/dosen/vendors/styles/").Handler(http.StripPrefix("/dosen/vendors/styles/", http.FileServer(http.Dir("static/dosen/vendors/styles"))))
 
 	// Public routes (tanpa middleware)
-	router.HandleFunc("/loginusers", controllers.LoginUsers).Methods("GET")
-	router.HandleFunc("/login", handlers.LoginHandler).Methods("POST", "OPTIONS")
-	router.HandleFunc("/logout", handlers.LogoutHandler).Methods("POST", "OPTIONS")
-
-	// Web endpoints
-	http.HandleFunc("/dashboard", controllers.Index)
-	// http.HandleFunc("/loginusers", controllers.LoginUsers)
+	r.HandleFunc("/loginusers", controllers.LoginUsers).Methods("GET")
+	r.HandleFunc("/login", handlers.LoginHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/logout", handlers.LogoutHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/dashboard", controllers.Index).Methods("GET")
 
 	// Routes dengan middleware
-	adminRouter := router.PathPrefix("/admin").Subrouter()
+	adminRouter := r.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(middleware.RoleRedirectMiddleware)
 
 	// Perbaiki routing untuk admin dashboard
-	adminRouter.HandleFunc("/dashboard", controllers.AdminDashboard).Methods("GET", "OPTIONS") // Perhatikan path berubah dari /admin/dashboard menjadi /dashboard
+	adminRouter.HandleFunc("/dashboard", controllers.AdminDashboard).Methods("GET", "OPTIONS")
 	adminRouter.HandleFunc("/calendar", controllers.Calendar).Methods("GET")
 	adminRouter.HandleFunc("/listuser", controllers.ListUser).Methods("GET")
 	adminRouter.HandleFunc("/adduser", controllers.AddUser).Methods("GET", "POST")
@@ -107,14 +99,14 @@ func main() {
 	adminRouter.HandleFunc("/edituser", controllers.EditUser).Methods("GET")
 	adminRouter.HandleFunc("/deleteuser", controllers.DeleteUser).Methods("GET", "POST")
 	adminRouter.HandleFunc("/listdosen", controllers.ListDosen).Methods("GET")
-	adminRouter.HandleFunc("/listicp", controllers.ListICP).Methods("GET", "OPTIONS") // Tambahkan route untuk ICP admin
+	adminRouter.HandleFunc("/listicp", controllers.ListICP).Methods("GET", "OPTIONS")
 	adminRouter.HandleFunc("/penelaah_icp", controllers.ListPenelaahICP).Methods("GET", "OPTIONS")
 	adminRouter.HandleFunc("/list_icp", controllers.ListICP).Methods("GET", "OPTIONS")
-	adminRouter.HandleFunc("/listproposal", controllers.ListProposal).Methods("GET", "OPTIONS")                           // Tambahkan route untuk Proposal admin
-	adminRouter.HandleFunc("/detail_berkas_seminar_proposal", controllers.DetailBerkasProposal).Methods("GET", "OPTIONS") // Tambahkan route untuk Detail Berkas Proposal admin
-	adminRouter.HandleFunc("/detail_telaah_icp", controllers.DetailTelaahICP).Methods("GET", "OPTIONS")                   // Tambahkan route untuk Detail Telaah ICP admin
-	adminRouter.HandleFunc("/dosbing_proposal", controllers.ListPembimbingProposal).Methods("GET", "OPTIONS")             // Tambahkan route untuk List Pembimbing Proposal admin
-	adminRouter.HandleFunc("/penguji_proposal", controllers.ListPengujiProposal).Methods("GET", "OPTIONS")                // Tambahkan route untuk List Penguji Proposal admin
+	adminRouter.HandleFunc("/listproposal", controllers.ListProposal).Methods("GET", "OPTIONS")
+	adminRouter.HandleFunc("/detail_berkas_seminar_proposal", controllers.DetailBerkasProposal).Methods("GET", "OPTIONS")
+	adminRouter.HandleFunc("/detail_telaah_icp", controllers.DetailTelaahICP).Methods("GET", "OPTIONS")
+	adminRouter.HandleFunc("/dosbing_proposal", controllers.ListPembimbingProposal).Methods("GET", "OPTIONS")
+	adminRouter.HandleFunc("/penguji_proposal", controllers.ListPengujiProposal).Methods("GET", "OPTIONS")
 	adminRouter.HandleFunc("/penguji_laporan70", controllers.ListPengujiLaporan70).Methods("GET", "OPTIONS")
 	adminRouter.HandleFunc("/listlaporan70", controllers.ListLaporan70).Methods("GET", "OPTIONS")
 	adminRouter.HandleFunc("/detail_berkas_seminar_laporan70", controllers.DetailBerkasLaporan70).Methods("GET", "OPTIONS")
@@ -126,7 +118,7 @@ func main() {
 	adminRouter.HandleFunc("/notification", controllers.Notification).Methods("GET", "POST")
 
 	// Tambahkan routes untuk taruna
-	tarunaRoutes := router.PathPrefix("/taruna").Subrouter()
+	tarunaRoutes := r.PathPrefix("/taruna").Subrouter()
 	tarunaRoutes.Use(middleware.RoleRedirectMiddleware)
 
 	// Route dashboard taruna
@@ -142,8 +134,9 @@ func main() {
 	tarunaRoutes.HandleFunc("/detailinformasitaruna", controllers.DetailInformasiTaruna).Methods("GET", "OPTIONS")
 
 	// Tambahkan routes untuk dosen
-	dosenRoutes := router.PathPrefix("/dosen").Subrouter()
+	dosenRoutes := r.PathPrefix("/dosen").Subrouter()
 	dosenRoutes.Use(middleware.RoleRedirectMiddleware)
+
 	// Route dashboard dosen
 	dosenRoutes.HandleFunc("/dashboard", controllers.DosenDashboard).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/bimbingan_icp", controllers.ReviewICP).Methods("GET", "OPTIONS")
@@ -161,20 +154,54 @@ func main() {
 	dosenRoutes.HandleFunc("/pengujian_laporan100", controllers.PengujiLaporan100).Methods("GET", "OPTIONS")
 	dosenRoutes.HandleFunc("/detailinformasidosen", controllers.DetailInformasiDosen).Methods("GET", "OPTIONS")
 
-	// Tambahkan router ke http.Handle
-	http.Handle("/", router) // Tambahkan ini untuk menggunakan router mux
-
-	// Tambahkan route untuk userlist
-	// http.HandleFunc("/userlist", func(w http.ResponseWriter, r *http.Request) {
-	// 	log.Println("Mengakses halaman userlist")
-	// 	http.ServeFile(w, r, "static/userlist.html")
-	// })
-
 	// Default redirect ke login
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
 	}).Methods("GET")
 
-	log.Println("Auth Service running on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	return r
+}
+
+func main() {
+	router := setupRoutes()
+
+	// Create cert directory if it doesn't exist
+	if err := os.MkdirAll("cert", os.ModePerm); err != nil {
+		log.Fatal(err)
+	}
+
+	// Copy certificates from ta_service if they don't exist
+	if _, err := os.Stat("cert/server.crt"); os.IsNotExist(err) {
+		if err := copyFile("../ta_service/cert/server.crt", "cert/server.crt"); err != nil {
+			log.Fatal(err)
+		}
+	}
+	if _, err := os.Stat("cert/server.key"); os.IsNotExist(err) {
+		if err := copyFile("../ta_service/cert/server.key", "cert/server.key"); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// Redirect HTTP to HTTPS
+	go func() {
+		log.Println("HTTP Service running on port 8080 (redirecting to HTTPS)")
+		err := http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "https://"+r.Host+r.RequestURI, http.StatusMovedPermanently)
+		}))
+		if err != nil {
+			log.Fatal("HTTP Server Error: ", err)
+		}
+	}()
+
+	// Start HTTPS server
+	log.Println("HTTPS Service running on port 8443")
+	log.Fatal(http.ListenAndServeTLS(":8443", "cert/server.crt", "cert/server.key", router))
+}
+
+func copyFile(src, dst string) error {
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(dst, data, 0600)
 }

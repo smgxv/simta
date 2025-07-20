@@ -1,20 +1,33 @@
-# Gunakan versi golang yang lebih stabil
-FROM golang:1.23.4-alpine
+# Build stage
+FROM golang:1.20-alpine AS builder
 
 WORKDIR /app
 
-# Copy go.mod dan go.sum terlebih dahulu
+# Copy go mod and sum files
 COPY go.mod go.sum ./
 
 # Download dependencies
-RUN go mod download && go mod verify
+RUN go mod download
 
-# Copy seluruh source code
+# Copy the source code
 COPY . .
 
-# Build aplikasi
+# Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
-EXPOSE 8081
+# Final stage
+FROM alpine:latest
 
+WORKDIR /app
+
+# Copy the binary from builder
+COPY --from=builder /app/main .
+
+# Create cert directory
+RUN mkdir -p cert
+
+# Expose both HTTP and HTTPS ports
+EXPOSE 8081 8444
+
+# Command to run the application
 CMD ["./main"]
