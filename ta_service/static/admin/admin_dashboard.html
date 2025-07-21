@@ -756,7 +756,7 @@
 			const userId = localStorage.getItem('userId');
 
 			// Ambil data user dari API
-			fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
+			fetch(`/api/user/users?id=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
