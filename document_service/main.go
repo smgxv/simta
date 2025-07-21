@@ -45,6 +45,8 @@ func main() {
 	r.HandleFunc("/finalicp/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finalicp/penelaah", handlers.SetPenelaahICPHandler).Methods("POST", "OPTIONS")
 
+	r.HandleFunc("/telaah/dosen", handlers.GetFinalICPByDosenHandler).Methods("GET", "OPTIONS")
+
 	// Hasil Telaah ICP routes
 	r.HandleFunc("/hasiltelaah/upload", handlers.UploadHasilTelaahHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/hasiltelaah/taruna", handlers.GetHasilTelaahTarunaHandler).Methods("GET", "OPTIONS")
