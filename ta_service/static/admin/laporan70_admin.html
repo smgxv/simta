@@ -616,7 +616,7 @@
 											<a href="/admin/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											Laporan 70%
+											Proposal
 										</li>
 									</ol>
 								</nav>
@@ -677,8 +677,8 @@
 										<th>Nama Taruna</th>
 										<th>Jurusan</th>
 										<th>Topik Penelitian</th>
-										<th>Penelaah 1</th>
-										<th>Penelaah 2</th>
+										<th>Penguji 1</th>
+										<th>Penguji 2</th>
 										<th>Status Kelengkapan</th>
 										<th>Action</th>
 									</tr>
@@ -976,6 +976,9 @@
 										</a>
 										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan70_id}, 'approved')">
 											<i class="dw dw-check"></i> Accept
+										</a>
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan70_id}, 'rejected')">
+											<i class="dw dw-delete-3"></i> Reject
 										</a>
 									</div>
 								</div>`
