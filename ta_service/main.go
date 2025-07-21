@@ -72,6 +72,8 @@ func main() {
 	admin.HandleFunc("/deleteuser", controllers.DeleteUser).Methods("GET", "POST")
 	admin.HandleFunc("/listdosen", controllers.ListDosen).Methods("GET")
 	admin.HandleFunc("/listicp", controllers.ListICP).Methods("GET", "OPTIONS")
+	admin.HandleFunc("/penelaah_icp", controllers.ListPenelaahICP).Methods("GET", "OPTIONS")
+	admin.HandleFunc("/list_icp", controllers.ListICP).Methods("GET", "OPTIONS")
 	admin.HandleFunc("/listproposal", controllers.ListProposal).Methods("GET", "OPTIONS")
 	admin.HandleFunc("/detail_berkas_seminar_proposal", controllers.DetailBerkasProposal).Methods("GET", "OPTIONS")
 	admin.HandleFunc("/detail_telaah_icp", controllers.DetailTelaahICP).Methods("GET", "OPTIONS")
@@ -107,7 +109,8 @@ func main() {
 	dosen.Use(middleware.RoleRedirectMiddleware)
 
 	dosen.HandleFunc("/dashboard", controllers.DosenDashboard).Methods("GET", "OPTIONS")
-	dosen.HandleFunc("/review_icp", controllers.ReviewICP).Methods("GET", "OPTIONS")
+	dosen.HandleFunc("/bimbingan_icp", controllers.ReviewICP).Methods("GET", "OPTIONS")
+	dosen.HandleFunc("/pengujian_icp", controllers.PengujiICP).Methods("GET", "OPTIONS")
 	dosen.HandleFunc("/profile", controllers.ProfileDosen).Methods("GET", "OPTIONS")
 	dosen.HandleFunc("/editprofile", controllers.EditProfileDosen).Methods("GET", "OPTIONS")
 	dosen.HandleFunc("/viewicp", controllers.ViewICPDosen).Methods("GET", "OPTIONS")

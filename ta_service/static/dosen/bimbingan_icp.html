@@ -502,11 +502,15 @@
 							</a>
 						</li>
 
-						<li>
-							<a href="/dosen/review_icp" class="dropdown-toggle no-arrow">
+						<li class="dropdown">
+							<a href="javascript:;" class="dropdown-toggle">
 								<span class="micon bi bi-file-earmark-text"></span
 								><span class="mtext">ICP</span>
 							</a>
+							<ul class="submenu">
+								<li><a href="/dosen/bimbingan_icp">Bimbingan ICP</a></li>
+								<li><a href="/dosen/pengujian_icp">Pengujian ICP</a></li>
+							</ul>
 						</li>
 
 						<li class="dropdown">
@@ -625,41 +629,6 @@
 							</div>
 					</div>
 					<!-- Simple Datatable End -->
-
-					 <!-- Form Hasil Telaah Dosen -->
-					 <div class="pd-20 card-box mb-30">
-
-						<div class="clearfix">
-							<div class="pull-left">
-								<h4 class="text-blue h4">Hasil Telaah Dosen</h4>
-							</div>
-						</div>
-
-						<form id="icpForm" enctype="multipart/form-data">
-							<div class="form-group">
-								<label>Nama Taruna</label>
-								<select class="form-control" id="tarunaSelect" name="user_id">
-									<option value="" disabled selected>Pilih Nama Taruna</option>
-								</select>
-							</div>
-							<div class="form-group">
-								<label>Topik Penelitian</label>
-								<select class="form-control" id="topikSelect" name="topik_penelitian">
-									<option value="" disabled selected>Pilih Topik Penelitian</option>
-								</select>
-							</div>
-							<div class="form-group">
-								<label>File Hasil Telaah Dosen (PDF)</label>
-								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="icpFile" name="file" accept=".pdf" required>
-									<label class="custom-file-label" for="icpFile">Choose file</label>
-								</div>
-								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
-							</div>
-							<button type="submit" class="btn btn-primary">Upload</button>
-						</form>
-					</div>
-					<!-- End Form Hasil Telaah Dosen -->
 
 				</div>
 
