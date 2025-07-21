@@ -49,6 +49,10 @@ func main() {
 	http.HandleFunc("/final_laporan100", middleware.AuthMiddleware(handlers.GetFinalLaporan100ByTarunaIDHandler))
 	http.HandleFunc("/penguji_laporan100", middleware.AuthMiddleware(handlers.AssignPengujiLaporan100))
 
+	http.HandleFunc("/taruna/penelaahicp", middleware.AuthMiddleware(handlers.GetTarunaWithPenelaahICP))
+	http.HandleFunc("/penelaah_icp", middleware.AuthMiddleware(handlers.AssignPenelaahICP))
+	http.HandleFunc("/final_icp", middleware.AuthMiddleware(handlers.GetFinalICPByTarunaIDHandler))
+
 	fmt.Println("API Server running on port 8081...")
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }

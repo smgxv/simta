@@ -680,7 +680,7 @@
 					}
 
 					console.log('Fetching ICP data for dosen:', dosenId);
-					const response = await fetch(`http://104.43.89.154:8082/telaah/dosen?dosen_id=${dosenId}`);
+					const response = await fetch(`/api/document/telaah/dosen?dosen_id=${dosenId}`);
 					const data = await response.json();
 
 					const tbody = document.querySelector('.data-table tbody');
@@ -704,10 +704,10 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" target="_blank">
+												<a class="dropdown-item" href="/api/document/download?path=${icp.file_path}" target="_blank">
 													<i class="dw dw-eye"></i> View
 												</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
+												<a class="dropdown-item" href="/api/document/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -889,7 +889,7 @@
 					}
 
 					console.log('Fetching taruna topics for dosenID:', dosenID);
-					const response = await fetch(`http://104.43.89.154:8082/finalicp/taruna-topics?dosen_id=${dosenID}`);
+					const response = await fetch(`/api/document/finalicp/taruna-topics?dosen_id=${dosenID}`);
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
@@ -1003,7 +1003,7 @@
 						file: fileInput.files[0].name
 					});
 
-					const response = await fetch('http://104.43.89.154:8082/hasiltelaah/upload', {
+					const response = await fetch('/api/document/hasiltelaah/upload', {
 						method: 'POST',
 						body: formData
 					});
