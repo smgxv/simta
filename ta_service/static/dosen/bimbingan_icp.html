@@ -868,7 +868,7 @@
 							if (dosen) {
 							localStorage.setItem('dosenID', dosen.id);
 							localStorage.setItem('dosenName', dosen.nama_lengkap);
-							fetchTarunaTopics(dosen.id);
+							// fetchTarunaTopics(dosen.id);
 							console.log('DosenID set:', dosen.id); // Debug log
 							
 							// Update nama dosen di header
@@ -878,7 +878,7 @@
 							}
 							
 							// Setelah dosenID tersedia, panggil fungsi-fungsi yang membutuhkannya
-							fetchTarunaTopics(dosen.id);
+							// fetchTarunaTopics(dosen.id);
 							loadICPData();
 							loadICPReviewData();
 						} else {
@@ -990,28 +990,38 @@
 					console.log('Fetching from URL:', url);
 					
 					const response = await fetch(url);
-					const data = await response.json();
-					console.log('Review data received:', data);
+					const result = await response.json();
+					console.log('Review data received:', result);
 					
-					if (data.status === 'success') {
-						const tbody = document.querySelector('#revisiTable tbody');
-						console.log('Found tbody:', tbody);
-						
-						if (!tbody) {
-							console.error('Table body not found');
-							return;
-						}
-						tbody.innerHTML = '';
-						
-						if (data.data && data.data.length > 0) {
-							console.log('Processing', data.data.length, 'reviews');
-							data.data.forEach(review => {
+					const tbody = document.querySelector('#revisiTable tbody');
+					console.log('Found tbody:', tbody);
+					
+					if (!tbody) {
+						console.error('Table body not found');
+						return;
+					}
+					tbody.innerHTML = '';
+					
+					if (result.status === 'success') {
+						if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+							console.log('Processing', result.data.length, 'reviews');
+							result.data.forEach(review => {
+								// Pastikan semua properti yang digunakan ada dan memiliki nilai default jika tidak ada
+								const topikPenelitian = review.topik_penelitian || '-';
+								const tarunaNama = review.taruna_nama || '-';
+								const cycleNumber = review.cycle_number || 1;
+								const keterangan = review.keterangan || '-';
+								const filePath = review.file_path || '';
+								const icpId = review.icp_id || 0;
+								const tarunaId = review.taruna_id || 0;
+								const reviewId = review.id || 0;
+
 								tbody.innerHTML += `
 									<tr>
-										<td>${review.topik_penelitian || '-'}</td>
-										<td>${review.taruna_nama || '-'}</td>
-										<td>${review.cycle_number || 1}</td>
-										<td>${review.keterangan || '-'}</td>
+										<td>${topikPenelitian}</td>
+										<td>${tarunaNama}</td>
+										<td>${cycleNumber}</td>
+										<td>${keterangan}</td>
 										<td>
 											<div class="dropdown">
 												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
@@ -1019,19 +1029,21 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${review.id}, ${review.icp_id})">
-														<i class="dw dw-eye"></i> View Revisi
-													</a>
-													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" download>
-														<i class="dw dw-download"></i> Download Revisi
-													</a>
-													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.icp_id}, ${review.cycle_number || 0})">
+													${filePath ? `
+														<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${reviewId}, ${icpId})">
+															<i class="dw dw-eye"></i> View Revisi
+														</a>
+														<a class="dropdown-item" href="/api/document/download?path=${filePath}" download>
+															<i class="dw dw-download"></i> Download Revisi
+														</a>
+													` : ''}
+													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${topikPenelitian}', ${tarunaId}, ${icpId}, ${cycleNumber})">
 														<i class="dw dw-upload"></i> Upload Review Baru
 													</a>
-													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'approved')">
+													<a class="dropdown-item" href="#" onclick="updateICPStatus(${icpId}, 'approved')">
 														<i class="dw dw-check"></i> Approve ICP
 													</a>
-													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'rejected')">
+													<a class="dropdown-item" href="#" onclick="updateICPStatus(${icpId}, 'rejected')">
 														<i class="dw dw-cancel"></i> Reject ICP
 													</a>
 												</div>
@@ -1050,11 +1062,23 @@
 							`;
 						}
 					} else {
-						showAlert('Gagal memuat data revisi: ' + (data.message || 'Unknown error'), 'danger');
+						console.log('Failed to load review data:', result.message);
+						tbody.innerHTML = `
+							<tr>
+								<td colspan="5" class="text-center">Tidak ada data revisi</td>
+							</tr>
+						`;
 					}
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Gagal memuat data revisi', 'danger');
+					const tbody = document.querySelector('#revisiTable tbody');
+					if (tbody) {
+						tbody.innerHTML = `
+							<tr>
+								<td colspan="5" class="text-center">Tidak ada data revisi</td>
+							</tr>
+						`;
+					}
 				}
 			}
 
