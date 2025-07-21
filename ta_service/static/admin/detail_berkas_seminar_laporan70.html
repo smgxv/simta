@@ -795,7 +795,7 @@
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					
-					const response = await fetch('http://104.43.89.154:8080/logout', {
+					const response = await fetch('https://securesimta.my.id/logout', {
 						method: 'POST',
 						headers: {
 							'Authorization': token ? `Bearer ${token}` : '',
@@ -877,7 +877,7 @@
 				const userId = localStorage.getItem('userId');
 
 				// Ambil data user dari API
-				fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
+				fetch(`/api/user/users?id=${userId}`, {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -904,7 +904,7 @@
 				});
 
 				// Validasi token dengan server
-				fetch('http://104.43.89.154:8080/taruna/dashboard', { // Ubah ke endpoint taruna
+				fetch('https://securesimta.my.id/taruna/dashboard', { // Ubah ke endpoint taruna
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -977,7 +977,7 @@
 			async function loadLaporan70Details(laporan70Id) {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch(`http://104.43.89.154:8082/seminarlaporan70/detail/${laporan70Id}`, {
+					const response = await fetch(`/api/document/seminarlaporan70/detail/${laporan70Id}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -1045,7 +1045,7 @@
 						penilaianStatus.innerHTML = '<span class="badge-exists">Ada</span>';
 						if (penilaianDownload) {
 							penilaianDownload.style.display = 'inline-block';
-							penilaianDownload.href = `http://104.43.89.154:8082/download?path=${data.file_penilaian_path}`;
+							penilaianDownload.href = `/api/document/download?path=${data.file_penilaian_path}`;
 						}
 					} else {
 						penilaianStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
@@ -1060,7 +1060,7 @@
 						beritaAcaraStatus.innerHTML = '<span class="badge-exists">Ada</span>';
 						if (beritaAcaraDownload) {
 							beritaAcaraDownload.style.display = 'inline-block';
-							beritaAcaraDownload.href = `http://104.43.89.154:8082/download?path=${data.file_berita_acara_path}`;
+							beritaAcaraDownload.href = `/api/document/download?path=${data.file_berita_acara_path}`;
 						}
 					} else {
 						beritaAcaraStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';

@@ -965,7 +965,7 @@
 			async function loadLaporan100Data() {
 				const userId = localStorage.getItem('userId');
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/laporan100?user_id=${userId}`);
+					const response = await fetch(`/api/document/laporan100?user_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -996,7 +996,7 @@
 												</a>
 												<a class="dropdown-item" href="/taruna/editlaporan100?id=${laporan100.id}"><i class="dw dw-edit2"></i> Edit</a>
 												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${laporan100.file_path}" download>
+												<a class="dropdown-item" href="/api/document/download?path=${laporan100.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -1021,7 +1021,7 @@
 				
 				try {
 					console.log('Fetching review data for user:', userId);
-					const response = await fetch(`http://104.43.89.154:8082/reviewlaporan100/dosen/list?taruna_id=${userId}`);
+					const response = await fetch(`/api/document/reviewlaporan100/dosen/list?taruna_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -1059,10 +1059,10 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" target="_blank">
+													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" target="_blank">
 														<i class="dw dw-eye"></i> View Review
 													</a>
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
+													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Review
 													</a>
 													<a class="dropdown-item" href="#" onclick="openUploadRevisionModal(${review.dosen_id}, '${review.topik_penelitian}')">
@@ -1096,7 +1096,7 @@
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					
-					const response = await fetch('http://104.43.89.154:8080/logout', {
+					const response = await fetch('https://securesimta.my.id/logout', {
 						method: 'POST',
 						headers: {
 							'Authorization': token ? `Bearer ${token}` : '',
@@ -1178,7 +1178,7 @@
 				const userId = localStorage.getItem('userId');
 
 				// Ambil data user dari API
-				fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
+				fetch(`/api/user/users?id=${userId}`, {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -1205,7 +1205,7 @@
 				});
 
 				// Validasi token dengan server
-				fetch('http://104.43.89.154:8080/taruna/dashboard', { // Ubah ke endpoint taruna
+				fetch('https://securesimta.my.id/taruna/dashboard', { // Ubah ke endpoint taruna
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -1246,7 +1246,7 @@
 				if (!userId) return;
 
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/dosbingproposal?user_id=${userId}`);
+					const response = await fetch(`/api/document/dosbingproposal?user_id=${userId}`);
 					const result = await response.json();
 
 					const dosbingInfo = document.getElementById('dosbingInfo');
@@ -1293,7 +1293,7 @@
 						console.log(pair[0] + ': ' + pair[1]);
 					}
 					
-					const response = await fetch('http://104.43.89.154:8082/upload/laporan100', {
+					const response = await fetch('/api/document/upload/laporan100', {
 						method: 'POST',
 						body: formData
 					});
@@ -1351,7 +1351,7 @@
 					// Tambahkan user_id sebagai taruna_id
 					formData.append('taruna_id', userId);
 					
-						const response = await fetch('http://104.43.89.154:8082/upload/revisilaporan100/taruna', {
+						const response = await fetch('/api/document/upload/revisilaporan100/taruna', {
 						method: 'POST',
 						body: formData
 					});
@@ -1395,7 +1395,7 @@
 				if (!userId || !token) return;
 
 				try {
-					const res = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					const res = await fetch(`/api/user/taruna?user_id=${userId}`, {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -1420,7 +1420,7 @@
 				if (!userId || !token) return;
 
 				try {
-					const res = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					const res = await fetch(`/api/user/taruna?user_id=${userId}`, {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -1493,7 +1493,7 @@
 					}
 					
 					// Ambil data taruna untuk mendapatkan nama lengkap
-					const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -1529,7 +1529,7 @@
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
 					
-					const response = await fetch('http://104.43.89.154:8082/finallaporan100/upload', {
+					const response = await fetch('/api/document/finallaporan100/upload', {
 						method: 'POST',
 						body: formData
 					});
@@ -1585,7 +1585,7 @@
 
 				try {
 					console.log('Fetching Final Laporan 100% data for user:', userId);
-					const response = await fetch(`http://104.43.89.154:8082/finallaporan100/list?user_id=${userId}`);
+					const response = await fetch(`/api/document/finallaporan100/list?user_id=${userId}`);
 
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
@@ -1625,10 +1625,10 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan100/download/${item.id}?type=form_bimbingan" download>
+													<a class="dropdown-item" href="/api/document/finallaporan100/download/${item.id}?type=form_bimbingan" download>
 														<i class="dw dw-download"></i> Download Form Bimbingan
 													</a>
-													<a class="dropdown-item" href="http://104.43.89.154:8082/finallaporan100/download/${item.id}?type=laporan100" download>
+													<a class="dropdown-item" href="/api/document/finallaporan100/download/${item.id}?type=laporan100" download>
 														<i class="dw dw-download"></i> Download Final Laporan 100
 													</a>
 												</div>
@@ -1679,7 +1679,7 @@
 			// 		}
 
 			// 		console.log('Fetching dosen data...');
-			// 		const response = await fetch('http://104.43.89.154:8081/dosen', {
+			// 		const response = await fetch('/api/user/dosen', {
 			// 			method: 'GET',
 			// 			headers: {
 			// 				'Authorization': `Bearer ${token}`,
@@ -1781,7 +1781,7 @@
 			// 			console.log(pair[0] + ': ' + pair[1]);
 			// 		}
 					
-			// 		const response = await fetch('http://104.43.89.154:8082/upload/seminarproposal', {
+			// 		const response = await fetch('/api/document/upload/seminarproposal', {
 			// 			method: 'POST',
 			// 			body: formData
 			// 		});
@@ -1827,7 +1827,7 @@
 				}
 
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/catatanperbaikanlaporan100/taruna?user_id=${userId}`);
+					const response = await fetch(`/api/document/catatanperbaikanlaporan100/taruna?user_id=${userId}`);
 					const data = await response.json();
 
 					const tableBody = document.querySelector('#catatanPerbaikanTable tbody');
@@ -1857,10 +1857,10 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${item.file_path}" target="_blank">
+												<a class="dropdown-item" href="/api/document/download?path=${item.file_path}" target="_blank">
 													<i class="dw dw-eye"></i> Lihat Catatan
 												</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${item.file_path}" download>
+												<a class="dropdown-item" href="/api/document/download?path=${item.file_path}" download>
 													<i class="dw dw-download"></i> Unduh Catatan
 												</a>
 											</div>
@@ -1931,7 +1931,7 @@
 					}
 
 					// Ambil data taruna
-					const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -1955,7 +1955,7 @@
 					formData.append('jurusan', taruna.jurusan || '');
 					formData.append('kelas', taruna.kelas || '');
 
-					const response = await fetch('http://104.43.89.154:8082/revisilaporan100/upload', {
+					const response = await fetch('/api/document/revisilaporan100/upload', {
 						method: 'POST',
 						body: formData
 					});
@@ -1995,7 +1995,7 @@
 				}
 
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/revisilaporan100/list?user_id=${userId}`);
+					const response = await fetch(`/api/document/revisilaporan100/list?user_id=${userId}`);
 					if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
 					const data = await response.json();
@@ -2024,15 +2024,15 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${row.file_path}" download>
+												<a class="dropdown-item" href="/api/document/download?path=${row.file_path}" download>
 													<i class="dw dw-download"></i> Download Laporan
 												</a>
 												${row.file_produk_path ? `
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${row.file_produk_path}" download>
+													<a class="dropdown-item" href="/api/document/download?path=${row.file_produk_path}" download>
 														<i class="dw dw-download"></i> Download Produk TA
 													</a>` : ''}
 												${row.file_bap_path ? `
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${row.file_bap_path}" download>
+													<a class="dropdown-item" href="/api/document/download?path=${row.file_bap_path}" download>
 														<i class="dw dw-download"></i> Download BAP
 													</a>` : ''}
 											</div>

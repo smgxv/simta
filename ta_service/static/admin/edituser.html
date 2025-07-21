@@ -326,7 +326,7 @@
         }
     
         // Fetch data user yang akan diedit
-        fetch(`http://104.43.89.154:8081/users/edit?id=${userId}`, {
+        fetch(`/api/user/users/edit?id=${userId}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -389,7 +389,7 @@
 
             console.log('Sending data:', userData);
 
-            fetch(`http://104.43.89.154:8081/users/edit`, {
+            fetch(`/api/user/users/edit`, {
                 method: 'PUT',
                 headers: {
                     'Accept': 'application/json',

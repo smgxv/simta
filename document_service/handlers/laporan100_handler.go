@@ -21,7 +21,7 @@ import (
 // UploadLaporan100Handler digunakan untuk mengunggah laporan 70%
 func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
@@ -130,7 +130,7 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 
 // GetLaporan100Handler digunakan untuk mengambil Laporan 70% berdasarkan user_id
 func GetLaporan100Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Content-Type", "application/json")
 
 	userID := r.URL.Query().Get("user_id")
@@ -161,7 +161,7 @@ func GetLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 
 // DownloadFileLaporan100Handler digunakan untuk mengunduh file proposal
 func DownloadFileLaporan100Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
 	filePath := r.URL.Query().Get("path")
 	if filePath == "" {
@@ -190,7 +190,7 @@ func DownloadFileLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetLaporan100ByIDHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Content-Type", "application/json")
 
 	// Get either dosen_id or taruna_id from query parameter
@@ -314,7 +314,7 @@ func GetLaporan100ByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 // EditLaporan100Handler digunakan untuk mengedit proposal
 func EditLaporan100Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "PUT, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 

@@ -875,7 +875,7 @@
 			async function loadICPData() {
 				const userId = localStorage.getItem('userId');
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/icp?user_id=${userId}`);
+					const response = await fetch(`/api/document/icp?user_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -906,7 +906,7 @@
 												</a>
 												<a class="dropdown-item" href="/taruna/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
 												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
+												<a class="dropdown-item" href="/api/document/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -931,7 +931,7 @@
 				
 				try {
 					console.log('Fetching review data for user:', userId);
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp/dosen/list?taruna_id=${userId}`);
+					const response = await fetch(`/api/document/reviewicp/dosen/list?taruna_id=${userId}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -969,10 +969,10 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" target="_blank">
+													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" target="_blank">
 														<i class="dw dw-eye"></i> View Review
 													</a>
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
+													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Review
 													</a>
 													<a class="dropdown-item" href="#" onclick="openUploadRevisionModal(${review.dosen_id}, '${review.topik_penelitian}')">
@@ -1006,7 +1006,7 @@
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					
-					const response = await fetch('http://104.43.89.154:8080/logout', {
+					const response = await fetch('https://securesimta.my.id/logout', {
 						method: 'POST',
 						headers: {
 							'Authorization': token ? `Bearer ${token}` : '',
@@ -1081,7 +1081,7 @@
 				
 				console.log('Fetching dosen data...');
 				
-				fetch('http://104.43.89.154:8081/dosen', {
+				fetch('/api/user/dosen', {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -1117,7 +1117,7 @@
 				const userId = localStorage.getItem('userId');
 
 				// Ambil data user dari API
-				fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
+				fetch(`/api/user/users?id=${userId}`, {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -1144,7 +1144,7 @@
 				});
 
 				// Validasi token dengan server
-				fetch('http://104.43.89.154:8080/taruna/dashboard', { // Ubah ke endpoint taruna
+				fetch('https://securesimta.my.id/taruna/dashboard', { // Ubah ke endpoint taruna
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -1206,7 +1206,7 @@
 						console.log(pair[0] + ': ' + pair[1]);
 					}
 					
-					const response = await fetch('http://104.43.89.154:8082/upload/icp', {
+					const response = await fetch('/api/document/upload/icp', {
 						method: 'POST',
 						body: formData
 					});
@@ -1264,7 +1264,7 @@
 					// Tambahkan user_id sebagai taruna_id
 					formData.append('taruna_id', userId);
 					
-					const response = await fetch('http://104.43.89.154:8082/upload/revisiicp/taruna', {
+					const response = await fetch('/api/document/upload/revisiicp/taruna', {
 						method: 'POST',
 						body: formData
 					});
@@ -1308,7 +1308,7 @@
 				if (!userId || !token) return;
 
 				try {
-					const res = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					const res = await fetch(`/api/user/taruna?user_id=${userId}`, {
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
@@ -1366,7 +1366,7 @@
 					}
 					
 					// Ambil data taruna untuk mendapatkan nama lengkap
-					const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -1402,7 +1402,7 @@
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
 					
-					const response = await fetch('http://104.43.89.154:8082/finalicp/upload', {
+					const response = await fetch('/api/document/finalicp/upload', {
 						method: 'POST',
 						body: formData
 					});
@@ -1456,7 +1456,7 @@
 				
 				try {
 					console.log('Fetching Final ICP data for user:', userId);
-					const response = await fetch(`http://104.43.89.154:8082/finalicp/list?user_id=${userId}`);
+					const response = await fetch(`/api/document/finalicp/list?user_id=${userId}`);
 					
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
@@ -1496,7 +1496,7 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${finalIcp.file_path}" download>
+													<a class="dropdown-item" href="/api/document/download?path=${finalIcp.file_path}" download>
 														<i class="dw dw-download"></i> Download
 													</a>
 												</div>
@@ -1574,7 +1574,7 @@
 				}
 
 				try {
-					const response = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					const response = await fetch(`/api/user/taruna?user_id=${userId}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -1618,7 +1618,7 @@
 						return;
 					}
 
-					const response = await fetch(`http://104.43.89.154:8082/hasiltelaah/taruna?user_id=${userId}`);
+					const response = await fetch(`/api/document/hasiltelaah/taruna?user_id=${userId}`);
 					const data = await response.json();
 
 					console.log('Hasil telaah data:', data); // Debug log
@@ -1646,7 +1646,7 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${telaah.file_path}" download>
+												<a class="dropdown-item" href="/api/document/download?path=${telaah.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -1711,7 +1711,7 @@
 					}
 					
 					// Ambil data taruna untuk mendapatkan nama lengkap
-					const tarunaResponse = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -1749,7 +1749,7 @@
 					formData.append('jurusan', document.getElementById('hiddenJurusanRevisi').value);
 					formData.append('kelas', document.getElementById('hiddenKelasRevisi').value);
 					
-					const response = await fetch('http://104.43.89.154:8082/revisiicp/upload', {
+					const response = await fetch('/api/document/revisiicp/upload', {
 						method: 'POST',
 						body: formData
 					});
@@ -1803,7 +1803,7 @@
 				
 				try {
 					console.log('Fetching Final ICP data for user:', userId);
-					const response = await fetch(`http://104.43.89.154:8082/revisiicp/list?user_id=${userId}`);
+					const response = await fetch(`/api/document/revisiicp/list?user_id=${userId}`);
 					
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
@@ -1843,7 +1843,7 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${revisiICP.file_path}" download>
+													<a class="dropdown-item" href="/api/document/download?path=${revisiICP.file_path}" download>
 														<i class="dw dw-download"></i> Download
 													</a>
 												</div>

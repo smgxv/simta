@@ -21,7 +21,7 @@ import (
 // UploadProposalHandler digunakan untuk mengunggah proposal
 func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
@@ -130,7 +130,7 @@ func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetProposalHandler digunakan untuk mengambil proposal berdasarkan user_id
 func GetProposalHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Content-Type", "application/json")
 
 	userID := r.URL.Query().Get("user_id")
@@ -161,7 +161,7 @@ func GetProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 // DownloadFileProposalHandler digunakan untuk mengunduh file proposal
 func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
 	filePath := r.URL.Query().Get("path")
 	if filePath == "" {
@@ -190,7 +190,7 @@ func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetProposalByIDHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Content-Type", "application/json")
 
 	// Get either dosen_id or taruna_id from query parameter
@@ -314,7 +314,7 @@ func GetProposalByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 // EditProposalHandler digunakan untuk mengedit proposal
 func EditProposalHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "PUT, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 

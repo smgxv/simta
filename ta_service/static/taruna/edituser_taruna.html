@@ -287,7 +287,7 @@
         }
     
         // Fetch data user yang akan diedit
-        fetch(`http://104.43.89.154:8081/taruna/edituser?id=${userId}`, {
+        fetch(`/api/user/taruna/edituser?id=${userId}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -368,7 +368,7 @@
 
             console.log('Sending data:', userData);
 
-            fetch(`http://104.43.89.154:8081/taruna/edituser`, {
+            fetch(`/api/user/taruna/edituser`, {
                 method: 'PUT',
                 headers: {
                     'Accept': 'application/json',

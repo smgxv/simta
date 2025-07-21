@@ -181,7 +181,7 @@
             const userId = document.querySelector('input[name="user_id"]').value;
         
             if (confirm("Apakah Anda yakin ingin menghapus user ini?")) {
-                fetch(`http://104.43.89.154:8081/users/delete?id=${userId}`, {
+                fetch(`/api/user/users/delete?id=${userId}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${token}`

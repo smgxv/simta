@@ -582,7 +582,7 @@
 			const id = urlParams.get("id");
 
 			const role = "Dosen";
-			fetch(`http://104.43.89.154:8083/notification/${id}?role=${role}`)
+			fetch(`/api/notification/notification/${id}?role=${role}`)
 				.then(res => {
 					if (!res.ok) {
 						throw new Error("Notifikasi tidak ditemukan");
@@ -603,7 +603,7 @@
 						files.forEach(url => {
 							const fileName = url.split("/").pop(); // Ambil nama file dari URL
 							const link = document.createElement("a");
-							link.href = `http://104.43.89.154:8083/download/${fileName}`;
+							link.href = `/api/notification/download/${fileName}`;
 							link.innerHTML = `📎 ${fileName}`;
 							link.className = "btn btn-outline-primary d-block mb-2 text-left";
 							link.target = "_blank";
@@ -626,7 +626,7 @@
 			try {
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 				
-				const response = await fetch('http://104.43.89.154:8080/logout', {
+				const response = await fetch('https://securesimta.my.id/logout', {
 					method: 'POST',
 					headers: {
 						'Authorization': token ? `Bearer ${token}` : '',
@@ -706,7 +706,7 @@
 			}
 
 			// Fetch data dashboard utama (nama, jurusan, icp)
-			fetch(`http://104.43.89.154:8081/dosen/dashboard?userId=${userId}`, {
+			fetch(`/api/user/dosen/dashboard?userId=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
@@ -772,7 +772,7 @@
 			const bimbinganListElement = document.getElementById('bimbingan-list');
 			bimbinganListElement.innerHTML = '';
 
-			fetch(`http://104.43.89.154:8081/dosen/dashboard/bimbingan?userId=${userId}`, {
+			fetch(`/api/user/dosen/dashboard/bimbingan?userId=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
@@ -820,7 +820,7 @@
 			const pengujianListElement = document.getElementById('pengujian-list');
 			pengujianListElement.innerHTML = '';
 
-			fetch(`http://104.43.89.154:8081/dosen/dashboard/pengujianproposal?userId=${userId}`, {
+			fetch(`/api/user/dosen/dashboard/pengujianproposal?userId=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
@@ -883,7 +883,7 @@
 			const ta70ListElement = document.getElementById('ta70-list');
 			ta70ListElement.innerHTML = '';
 
-			fetch(`http://104.43.89.154:8081/dosen/dashboard/pengujianlaporan70?userId=${userId}`, {
+			fetch(`/api/user/dosen/dashboard/pengujianlaporan70?userId=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
@@ -947,7 +947,7 @@
 			const ta100ListElement = document.getElementById('ta100-list');
 			ta100ListElement.innerHTML = '';
 
-			fetch(`http://104.43.89.154:8081/dosen/dashboard/pengujianlaporan100?userId=${userId}`, {
+			fetch(`/api/user/dosen/dashboard/pengujianlaporan100?userId=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}

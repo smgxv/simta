@@ -698,7 +698,7 @@
 				console.log('Memuat Laporan70 untuk dosenID:', dosenID); // Debug
 				if (!dosenID) return;
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/reviewlaporan70?dosen_id=${dosenID}`);
+					const response = await fetch(`/api/document/reviewlaporan70?dosen_id=${dosenID}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -741,7 +741,7 @@
 												<a class="dropdown-item reject-laporan70-btn" href="#" data-id="${laporan70.id}">
 													<i class="dw dw-delete-3"></i> Reject
 												</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${laporan70.file_path}" download>
+												<a class="dropdown-item" href="/api/document/download?path=${laporan70.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -765,7 +765,7 @@
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					
-					const response = await fetch('http://104.43.89.154:8080/logout', {
+					const response = await fetch('https://securesimta.my.id/logout', {
 						method: 'POST',
 						headers: {
 							'Authorization': token ? `Bearer ${token}` : '',
@@ -850,7 +850,7 @@
 				console.log('UserID:', userId); // Debug log
 
 				// Ambil data dosen dan set dosenID
-					fetch('http://104.43.89.154:8081/dosen', {
+					fetch('/api/user/dosen', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -897,7 +897,7 @@
 					if (!confirm('Yakin ingin meng-approve Laporan 70% ini?')) return;
 
 					try {
-						const response = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${laporan70Id}&status=approved`, {
+						const response = await fetch(`/api/document/updatelaporan70status?id=${laporan70Id}&status=approved`, {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' }
 						});
@@ -923,7 +923,7 @@
 					if (!confirm('Yakin ingin menolak Laporan 70% ini?')) return;
 
 					try {
-						const response = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${laporan70Id}&status=rejected`, {
+						const response = await fetch(`/api/document/updatelaporan70status?id=${laporan70Id}&status=rejected`, {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' }
 						});
@@ -978,7 +978,7 @@
 				}
 				
 				try {
-					const url = `http://104.43.89.154:8082/reviewlaporan70/taruna/list?dosen_id=${dosenID}`;
+					const url = `/api/document/reviewlaporan70/taruna/list?dosen_id=${dosenID}`;
 					console.log('Fetching from URL:', url);
 					
 					const response = await fetch(url);
@@ -1014,7 +1014,7 @@
 													<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${review.id}, ${review.laporan70_id})">
 														<i class="dw dw-eye"></i> View Revisi
 													</a>
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
+													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Revisi
 													</a>
 													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.laporan70_id}, ${review.cycle_number || 0})">
@@ -1077,7 +1077,7 @@
 					}
 
 					// Get taruna_id from user_id
-					const response = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					const response = await fetch(`/api/user/taruna?user_id=${userId}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`,
 							'Content-Type': 'application/json'
@@ -1108,7 +1108,7 @@
 			// Function to update Laporan 70% status (approve/reject)
 			async function updateLaporan70Status(laporan70Id, status) {
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${laporan70Id}&status=${status}`, {
+					const response = await fetch(`/api/document/updatelaporan70status?id=${laporan70Id}&status=${status}`, {
 						method: 'POST'
 					});
 					
@@ -1153,7 +1153,7 @@
 					formData.append('user_id', formData.get('user_id'));
 					
 					// Update status Laporan 70% menjadi "on review"
-					const statusResponse = await fetch(`http://104.43.89.154:8082/updatelaporan70status?id=${formData.get('laporan70_id')}&status=on review`, {
+					const statusResponse = await fetch(`/api/document/updatelaporan70status?id=${formData.get('laporan70_id')}&status=on review`, {
 						method: 'POST'
 					});
 
@@ -1162,7 +1162,7 @@
 					}
 
 					// Kirim request untuk upload review
-					const response = await fetch('http://104.43.89.154:8082/upload/reviewlaporan70/dosen', {
+					const response = await fetch('/api/document/upload/reviewlaporan70/dosen', {
 						method: 'POST',
 						body: formData
 					});

@@ -735,7 +735,7 @@
 				console.log('Memuat ICP untuk dosenID:', dosenID); // Debug
 				if (!dosenID) return;
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/reviewicp?dosen_id=${dosenID}`);
+					const response = await fetch(`/api/document/reviewicp?dosen_id=${dosenID}`);
 					const data = await response.json();
 					
 					if (data.status === 'success') {
@@ -778,7 +778,7 @@
 												<a class="dropdown-item reject-icp-btn" href="#" data-id="${icp.id}">
 													<i class="dw dw-delete-3"></i> Reject
 												</a>
-												<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${icp.file_path}" download>
+												<a class="dropdown-item" href="/api/document/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -802,7 +802,7 @@
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					
-					const response = await fetch('http://104.43.89.154:8080/logout', {
+					const response = await fetch('https://securesimta.my.id/logout', {
 						method: 'POST',
 						headers: {
 							'Authorization': token ? `Bearer ${token}` : '',
@@ -887,7 +887,7 @@
 				console.log('UserID:', userId); // Debug log
 
 				// Ambil data dosen dan set dosenID
-					fetch('http://104.43.89.154:8081/dosen', {
+					fetch('/api/user/dosen', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
@@ -936,7 +936,7 @@
 					if (!confirm('Yakin ingin meng-approve ICP ini?')) return;
 
 					try {
-						const response = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=approved`, {
+						const response = await fetch(`/api/document/updateicpstatus?id=${icpId}&status=approved`, {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' }
 						});
@@ -962,7 +962,7 @@
 					if (!confirm('Yakin ingin menolak ICP ini?')) return;
 
 					try {
-						const response = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=rejected`, {
+						const response = await fetch(`/api/document/updateicpstatus?id=${icpId}&status=rejected`, {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' }
 						});
@@ -1017,7 +1017,7 @@
 				}
 				
 				try {
-					const url = `http://104.43.89.154:8082/reviewicp/taruna/list?dosen_id=${dosenID}`;
+					const url = `/api/document/reviewicp/taruna/list?dosen_id=${dosenID}`;
 					console.log('Fetching from URL:', url);
 					
 					const response = await fetch(url);
@@ -1053,7 +1053,7 @@
 													<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${review.id}, ${review.icp_id})">
 														<i class="dw dw-eye"></i> View Revisi
 													</a>
-													<a class="dropdown-item" href="http://104.43.89.154:8082/download?path=${review.file_path}" download>
+													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Revisi
 													</a>
 													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.icp_id}, ${review.cycle_number || 0})">
@@ -1116,7 +1116,7 @@
 					}
 
 					// Get taruna_id from user_id
-					const response = await fetch(`http://104.43.89.154:8081/taruna?user_id=${userId}`, {
+					const response = await fetch(`/api/user/taruna?user_id=${userId}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`,
 							'Content-Type': 'application/json'
@@ -1147,7 +1147,7 @@
 			// Function to update ICP status (approve/reject)
 			async function updateICPStatus(icpId, status) {
 				try {
-					const response = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${icpId}&status=${status}`, {
+					const response = await fetch(`/api/document/updateicpstatus?id=${icpId}&status=${status}`, {
 						method: 'POST'
 					});
 					
@@ -1192,7 +1192,7 @@
 					formData.append('user_id', formData.get('user_id'));
 					
 					// Update status ICP menjadi "on review"
-					const statusResponse = await fetch(`http://104.43.89.154:8082/updateicpstatus?id=${formData.get('icp_id')}&status=on review`, {
+					const statusResponse = await fetch(`/api/document/updateicpstatus?id=${formData.get('icp_id')}&status=on review`, {
 						method: 'POST'
 					});
 
@@ -1201,7 +1201,7 @@
 					}
 
 					// Kirim request untuk upload review
-					const response = await fetch('http://104.43.89.154:8082/upload/reviewicp/dosen', {
+					const response = await fetch('/api/document/upload/reviewicp/dosen', {
 						method: 'POST',
 						body: formData
 					});
@@ -1250,7 +1250,7 @@
 					}
 
 					console.log('Fetching taruna topics for dosenID:', dosenID);
-					const response = await fetch(`http://104.43.89.154:8082/finalicp/taruna-topics?dosen_id=${dosenID}`);
+					const response = await fetch(`/api/document/finalicp/taruna-topics?dosen_id=${dosenID}`);
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
@@ -1364,7 +1364,7 @@
 						file: fileInput.files[0].name
 					});
 
-					const response = await fetch('http://104.43.89.154:8082/hasiltelaah/upload', {
+					const response = await fetch('/api/document/hasiltelaah/upload', {
 						method: 'POST',
 						body: formData
 					});

@@ -241,7 +241,7 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMonitoringTelaahHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
@@ -541,7 +541,7 @@ func GetTarunaTopicsHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetFinalICPByDosenHandler menangani request untuk mendapatkan data telaah ICP berdasarkan ID dosen
 func GetFinalICPByDosenHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")

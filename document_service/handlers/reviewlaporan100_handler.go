@@ -18,7 +18,7 @@ import (
 
 // Handler untuk mengambil daftar ICP dari table icp
 func GetLaporan100ByDosenIDHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Content-Type", "application/json")
 
 	dosenID := r.URL.Query().Get("dosen_id")
@@ -99,7 +99,7 @@ func UpdateLaporan100StatusHandler(w http.ResponseWriter, r *http.Request) {
 // Handler untuk mengupload review ICP oleh dosen ke table review_icp
 func UploadReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
@@ -268,7 +268,7 @@ func UploadReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 // Handler untuk upload review laporan 70% oleh dosen ke table review_laporan100_dosen
 func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
@@ -466,7 +466,7 @@ func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) 
 
 // Handler untuk mengambil daftar review ICP dosen dari table review_icp_dosen
 func GetReviewLaporan100DosenHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Content-Type", "application/json")
 
 	dosenID := r.URL.Query().Get("dosen_id")
@@ -507,7 +507,7 @@ func GetReviewLaporan100DosenHandler(w http.ResponseWriter, r *http.Request) {
 // Handler untuk upload revisi laporan 70% oleh taruna ke table review_laporan100_taruna
 func UploadTarunaRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
@@ -695,7 +695,7 @@ func UploadTarunaRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request)
 
 // Handler untuk mengambil daftar revisi ICP taruna dari table review_icp_taruna
 func GetRevisiLaporan100TarunaHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Content-Type", "application/json")
 
 	userID := r.URL.Query().Get("taruna_id") // We receive user_id as taruna_id from frontend
@@ -824,7 +824,7 @@ func GetRevisiLaporan100TarunaHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler untuk mengambil detail review ICP dosen berdasarkan ID
 func GetReviewLaporan100DetailHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Content-Type", "application/json")
 
 	// Get review ID from query parameter
@@ -893,7 +893,7 @@ func GetReviewLaporan100DetailHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler untuk mengambil detail review ICP dosen berdasarkan ID
 func GetReviewLaporan100DosenDetailHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Content-Type", "application/json")
 
 	// Get review ID from query parameter

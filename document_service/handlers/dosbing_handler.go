@@ -9,7 +9,7 @@ import (
 
 // GetProposalByDosenIDHandler digunakan untuk mengambil proposal berdasarkan dosen_id
 func GetDosbingByUserID(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Content-Type", "application/json")
 
 	userID := r.URL.Query().Get("user_id")
