@@ -13,7 +13,7 @@ import (
 
 func GetAllDosen(w http.ResponseWriter, r *http.Request) {
 	// Set header CORS
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -50,7 +50,7 @@ func GetAllDosen(w http.ResponseWriter, r *http.Request) {
 // Edit user dosen
 func EditUserDosen(w http.ResponseWriter, r *http.Request) {
 	// Header CORS
-	w.Header().Set("Access-Control-Allow-Origin", "http://104.43.89.154:8080")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, PUT, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin, Accept")
