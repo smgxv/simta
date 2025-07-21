@@ -896,10 +896,6 @@
 					const result = await response.json();
 					console.log('Server response:', result);
 
-					if (result.status !== 'success' || !Array.isArray(result.data)) {
-						throw new Error('Invalid data format received from server');
-					}
-
 					const tarunaSelect = document.getElementById('tarunaSelect');
 					const topikSelect = document.getElementById('topikSelect');
 
@@ -907,43 +903,65 @@
 						throw new Error('Select elements not found in DOM');
 					}
 
+					// Reset select elements
 					tarunaSelect.innerHTML = '<option value="" disabled selected>Pilih Nama Taruna</option>';
 					topikSelect.innerHTML = '<option value="" disabled selected>Pilih Topik Penelitian</option>';
 
-					result.data.forEach(item => {
-						if (item.nama_lengkap) {
+					// Handle null or empty data gracefully
+					if (result.status === 'success') {
+						if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+							result.data.forEach(item => {
+								if (item.nama_lengkap) {
+									const option = document.createElement('option');
+									option.value = item.user_id;
+									option.textContent = item.nama_lengkap;
+									tarunaSelect.appendChild(option);
+								}
+							});
+
+							// Remove any existing event listeners
+							const newTarunaSelect = tarunaSelect.cloneNode(true);
+							tarunaSelect.parentNode.replaceChild(newTarunaSelect, tarunaSelect);
+
+							newTarunaSelect.addEventListener('change', function () {
+								const selectedTaruna = result.data.find(item => item.user_id == this.value);
+								topikSelect.innerHTML = '<option value="" disabled selected>Pilih Topik Penelitian</option>';
+
+								if (selectedTaruna && selectedTaruna.topik_penelitian) {
+									const option = document.createElement('option');
+									option.value = selectedTaruna.topik_penelitian;
+									option.textContent = selectedTaruna.topik_penelitian;
+									topikSelect.appendChild(option);
+									topikSelect.value = selectedTaruna.topik_penelitian;
+								}
+							});
+						} else {
+							// Jika data null atau array kosong, tambahkan opsi default
 							const option = document.createElement('option');
-							option.value = item.user_id;
-							option.textContent = item.nama_lengkap;
+							option.value = "";
+							option.textContent = "Tidak ada taruna yang tersedia";
+							option.disabled = true;
 							tarunaSelect.appendChild(option);
+							
+							const topikOption = document.createElement('option');
+							topikOption.value = "";
+							topikOption.textContent = "Tidak ada topik yang tersedia";
+							topikOption.disabled = true;
+							topikSelect.appendChild(topikOption);
 						}
-					});
-
-					// Remove any existing event listeners
-					const newTarunaSelect = tarunaSelect.cloneNode(true);
-					tarunaSelect.parentNode.replaceChild(newTarunaSelect, tarunaSelect);
-
-					newTarunaSelect.addEventListener('change', function () {
-						const selectedTaruna = result.data.find(item => item.user_id == this.value);
-						topikSelect.innerHTML = '<option value="" disabled selected>Pilih Topik Penelitian</option>';
-
-						if (selectedTaruna && selectedTaruna.topik_penelitian) {
-							const option = document.createElement('option');
-							option.value = selectedTaruna.topik_penelitian;
-							option.textContent = selectedTaruna.topik_penelitian;
-							topikSelect.appendChild(option);
-							topikSelect.value = selectedTaruna.topik_penelitian;
-						}
-					});
-
-					console.log("Taruna berhasil dimuat:", result.data);
-					if (result.data.length === 0) {
-						showAlert("Tidak ada data taruna yang tersedia", "warning");
 					}
 
 				} catch (error) {
-					console.error("Gagal mengambil data taruna:", error);
-					showAlert("Terjadi kesalahan saat mengambil data taruna: " + error.message, "danger");
+					console.error("Error:", error);
+					// Tidak perlu menampilkan alert error ke user
+					// Cukup set opsi default untuk menunjukkan tidak ada data
+					const tarunaSelect = document.getElementById('tarunaSelect');
+					const topikSelect = document.getElementById('topikSelect');
+					
+					if (tarunaSelect && topikSelect) {
+						tarunaSelect.innerHTML = '<option value="" disabled selected>Tidak ada taruna yang tersedia</option>';
+						topikSelect.innerHTML = '<option value="" disabled selected>Tidak ada topik yang tersedia</option>';
+					}
 				}
 			}
 
