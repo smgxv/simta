@@ -717,7 +717,7 @@
 							`;
 						});
 					} else {
-						tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada data ICP</td></tr>';
+						tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada ICP yang ditelaah</td></tr>';
 					}
 				} catch (error) {
 					console.error('Error loading ICP data:', error);
@@ -838,7 +838,7 @@
 							
 							// Setelah dosenID tersedia, panggil fungsi-fungsi yang membutuhkannya
 							fetchTarunaTopics(dosen.id);
-							loadICPData();
+							loadTelaahICPData();
 						} else {
 							console.warn('Dosen with user_id', userId, 'not found');
 						}
@@ -849,7 +849,7 @@
 				});
 			});
 
-			// Panggil loadICPData saat halaman dimuat
+			// Panggil loadTelaahICPData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', loadTelaahICPData);
 
 			// Pastikan event listener untuk tombol logout terpasang dengan benar
