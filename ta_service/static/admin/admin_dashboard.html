@@ -1469,7 +1469,7 @@
 			const userId = localStorage.getItem('userId');
 
 			// Ambil data user dari API
-			fetch(`https://securesimta.my.id/users?id=${userId}`, {
+			fetch(`http://104.43.89.154:8081/users?id=${userId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
