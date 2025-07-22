@@ -723,53 +723,6 @@
 					</div>
 					<!-- Tabel Final Proposal End -->
 
-					<!-- Form Seminar Proposal -->
-					<!-- <div class="pd-20 card-box mb-30">
-
-						<div class="clearfix">
-							<div class="pull-left">
-								<h4 class="text-blue h4">Seminar Proposal</h4>
-								<p class="mb-30">Pilih Penguji Seminar Proposal Anda !!</p>
-							</div>
-						</div>
-
-						<form id="seminarProposalForm" enctype="multipart/form-data">
-							<div class="form-group">
-								<label>Ketua Penguji</label>
-								<select class="custom-select" name="ketua_penguji" id="seminarKetuaPenguji" required>
-									<option value="" disabled selected>Pilih Ketua Penguji</option>
-								</select>
-							</div>
-							<div class="form-group">
-								<label>Penguji 1</label>
-								<select class="custom-select" name="penguji1" id="seminarPenguji1" required>
-									<option value="" disabled selected>Pilih Penguji 1</option>
-								</select>
-							</div>
-							<div class="form-group">
-								<label>Penguji 2</label>
-								<select class="custom-select" name="penguji2" id="seminarPenguji2" required>
-									<option value="" disabled selected>Pilih Penguji 2</option>
-								</select>
-							</div>
-							<div class="form-group">
-								<label>Topik Penelitian</label>
-								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
-							</div>
-							<div class="form-group">
-								<label>File Proposal (PDF)</label>
-								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="seminarProposalFile" name="file" accept=".pdf" required>
-									<label class="custom-file-label" for="seminarProposalFile">Choose file</label>
-								</div>
-								<div id="seminarSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
-							</div>
-							<button type="submit" class="btn btn-primary">Upload File Seminar Proposal</button>
-						</form>
-
-					</div> -->
-					<!-- Form Seminar Proposal End -->
-
 					<!-- Tabel Catatan Perbaikan Dosen -->
 					<div class="pd-20 card-box mb-30">
 						<div class="clearfix">
@@ -1229,53 +1182,50 @@
 			document.getElementById('proposalForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 				
-				// Tampilkan loading state
 				const submitButton = this.querySelector('button[type="submit"]');
+				const formData = new FormData(this);
+				formData.append('user_id', localStorage.getItem('userId'));
+
+				// Set loading state
 				submitButton.disabled = true;
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-				
+
 				try {
-					const formData = new FormData(this);
-					
-					// Tambahkan user_id dari localStorage
-					const userId = localStorage.getItem('userId');
-					formData.append('user_id', userId);
-					
-					// Log FormData untuk debugging
-					for (let pair of formData.entries()) {
-						console.log(pair[0] + ': ' + pair[1]);
-					}
-					
 					const response = await fetch('/api/document/upload/proposal', {
 						method: 'POST',
 						body: formData
 					});
-					
-					const data = await response.json();
-					
-					if (response.ok) {
-						// Tampilkan pesan sukses
-						showAlert('Proposal berhasil diunggah', 'success');
-						
-						// Reset form
+
+					let data;
+					try {
+						data = await response.json();
+					} catch (err) {
+						// Jika response bukan JSON, ambil teksnya
+						const text = await response.text();
+						showAlert(text || 'Terjadi kesalahan pada server', 'danger');
+						return;
+					}
+
+					// Tampilkan pesan berdasarkan status
+					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
+
+					// Reset form jika sukses
+					if (data.status === 'success') {
 						this.reset();
 						document.querySelector('.custom-file-label').textContent = 'Choose file';
 						document.getElementById('selectedFileName').style.display = 'none';
-						
-						// Refresh tabel jika ada
+
 						if (typeof refreshTable === 'function') {
 							refreshTable();
 						}
 
-						loadProposalData(); // Refresh tabel
-					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
+						loadProposalData();
 					}
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
+					showAlert('Terjadi kesalahan pada server. Mohon coba lagi.', 'danger');
 				} finally {
-					// Reset button state
+					// Reset tombol
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Tambah Proposal';
 				}
@@ -1331,9 +1281,21 @@
 				const alertContainer = document.getElementById('alertContainer');
 				const alertMessage = document.getElementById('alertMessage');
 				
+				// Pastikan container dan message element ada
+				if (!alertContainer || !alertMessage) {
+					console.error('Alert elements not found');
+					return;
+				}
+
+				// Set class dan pesan
 				alertMessage.className = `alert alert-${type}`;
 				alertMessage.textContent = message;
+				
+				// Tampilkan alert
 				alertContainer.style.display = 'block';
+				
+				// Scroll ke atas agar alert terlihat
+				window.scrollTo({ top: 0, behavior: 'smooth' });
 				
 				// Sembunyikan alert setelah 5 detik
 				setTimeout(() => {
@@ -1427,105 +1389,78 @@
 				}
 			});
 
-			// Handle form submission untuk Final Proposal
 			document.getElementById('finalProposalForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
-				
-				// Tampilkan loading state
+
 				const submitButton = this.querySelector('button[type="submit"]');
 				submitButton.disabled = true;
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-				
+
 				try {
-					// Tunggu sampai jurusan & kelas pasti terisi
 					await isiJurusanDanKelasDariTarunaFinalProposal();
 					const formData = new FormData(this);
 					const userId = localStorage.getItem('userId');
 					const token = localStorage.getItem('token');
-					
-					if (!userId || !token) {
-						throw new Error('User ID atau token tidak ditemukan');
-					}
-					
-					// Ambil data taruna untuk mendapatkan nama lengkap
-					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-					
-					if (!tarunaResponse.ok) {
-						throw new Error('Gagal mengambil data taruna');
-					}
-					
-					const tarunaData = await tarunaResponse.json();
-					console.log('Response taruna data:', tarunaData);
 
-					if (tarunaData.status !== 'success' || !tarunaData.data || !Array.isArray(tarunaData.data)) {
-						console.error('Data taruna tidak valid:', tarunaData);
+					if (!userId || !token) throw new Error('User ID atau token tidak ditemukan');
+
+					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
+						headers: { 'Authorization': `Bearer ${token}` }
+					});
+					if (!tarunaResponse.ok) throw new Error('Gagal mengambil data taruna');
+
+					const tarunaData = await tarunaResponse.json();
+					if (tarunaData.status !== 'success' || !Array.isArray(tarunaData.data)) {
 						throw new Error('Data taruna tidak ditemukan');
 					}
 
-					// Cari data taruna yang sesuai dengan user_id
 					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
-					console.log('Data taruna yang akan digunakan:', taruna);
+					if (!taruna) throw new Error('Data taruna tidak ditemukan untuk user ID ini');
+					if (!taruna.nama_lengkap) throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
 
-					if (!taruna) {
-						console.error('Data taruna tidak ditemukan untuk user_id:', userId);
-						throw new Error('Data taruna tidak ditemukan untuk user ID ini');
-					}
-
-					if (!taruna.nama_lengkap) {
-						console.error('Data taruna tidak memiliki nama lengkap:', taruna);
-						throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
-					}
-					
-					// Tambahkan user_id dan nama_lengkap ke formData
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
 					formData.append('jurusan', document.getElementById('hiddenJurusan').value);
 					formData.append('kelas', document.getElementById('hiddenKelas').value);
-					
+
 					const response = await fetch('/api/document/finalproposal/upload', {
 						method: 'POST',
 						body: formData
 					});
-					
-					const data = await response.json();
-					
-					if (response.ok && data.status === 'success') {
-						// Tampilkan pesan sukses
-						showAlert('Final Proposal berhasil diunggah', 'success');
-						
-						// Reset form
+
+					let data;
+					try {
+						data = await response.json();
+					} catch (err) {
+						const text = await response.text();
+						showAlert(text || 'Terjadi kesalahan pada server', 'danger');
+						return;
+					}
+
+					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
+
+					if (data.status === 'success') {
 						this.reset();
 						document.querySelector('#finalProposalFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('finalSelectedFileName').style.display = 'none';
 						document.querySelector('#formBimbinganFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('formBimbinganSelectedFileName').style.display = 'none';
-						
-						// Refresh data
 						loadFinalProposalData();
-					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
+
 				} catch (error) {
-					console.error('Error saat upload final Proposal:', error);
 					let errorMessage = 'Terjadi kesalahan pada server';
-					
-					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
+					if (error.message.includes('user ID')) {
 						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
-					} else if (error.message.includes('Data taruna tidak ditemukan')) {
+					} else if (error.message.includes('data taruna tidak ditemukan')) {
 						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
-					} else if (error.message.includes('nama lengkap tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak lengkap: nama lengkap belum diisi. Silakan lengkapi profil Anda terlebih dahulu.';
-					} else if (error.message.includes('Gagal mengambil data taruna')) {
-						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi atau hubungi administrator.';
+					} else if (error.message.includes('nama lengkap')) {
+						errorMessage = 'Profil taruna belum lengkap. Silakan lengkapi nama lengkap Anda.';
+					} else if (error.message.includes('Gagal mengambil')) {
+						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi.';
 					}
-					
 					showAlert(errorMessage, 'danger');
 				} finally {
-					// Reset button state
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Upload Final Proposal';
 				}
@@ -1715,105 +1650,77 @@
 				}
 			});
 
-			// Handle form submission untuk Revisi Proposal
+			// Handle form submission untuk mengunggah Revisi Proposal
 			document.getElementById('revisiProposalForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
-				
-				// Tampilkan loading state
+
 				const submitButton = this.querySelector('button[type="submit"]');
 				submitButton.disabled = true;
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-				
+
 				try {
-
-					// Tunggu sampai jurusan & kelas pasti terisi
 					await isiJurusanDanKelasDariTarunaRevisiProposal();
-
 					const formData = new FormData(this);
 					const userId = localStorage.getItem('userId');
 					const token = localStorage.getItem('token');
-					
-					if (!userId || !token) {
-						throw new Error('User ID atau token tidak ditemukan');
-					}
-					
-					// Ambil data taruna untuk mendapatkan nama lengkap
-					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-					
-					if (!tarunaResponse.ok) {
-						throw new Error('Gagal mengambil data taruna');
-					}
-					
-					const tarunaData = await tarunaResponse.json();
-					console.log('Response taruna data:', tarunaData);
 
-					if (tarunaData.status !== 'success' || !tarunaData.data || !Array.isArray(tarunaData.data)) {
-						console.error('Data taruna tidak valid:', tarunaData);
+					if (!userId || !token) throw new Error('User ID atau token tidak ditemukan');
+
+					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
+						headers: { 'Authorization': `Bearer ${token}` }
+					});
+					if (!tarunaResponse.ok) throw new Error('Gagal mengambil data taruna');
+
+					const tarunaData = await tarunaResponse.json();
+					if (tarunaData.status !== 'success' || !Array.isArray(tarunaData.data)) {
 						throw new Error('Data taruna tidak ditemukan');
 					}
 
-					// Cari data taruna yang sesuai dengan user_id
 					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
-					console.log('Data taruna yang akan digunakan:', taruna);
+					if (!taruna) throw new Error('Data taruna tidak ditemukan untuk user ID ini');
+					if (!taruna.nama_lengkap) throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
 
-					if (!taruna) {
-						console.error('Data taruna tidak ditemukan untuk user_id:', userId);
-						throw new Error('Data taruna tidak ditemukan untuk user ID ini');
-					}
-
-					if (!taruna.nama_lengkap) {
-						console.error('Data taruna tidak memiliki nama lengkap:', taruna);
-						throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
-					}
-					
-					// Tambahkan user_id dan nama_lengkap ke formData
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
 					formData.append('jurusan', document.getElementById('hiddenJurusanRevisi').value);
 					formData.append('kelas', document.getElementById('hiddenKelasRevisi').value);
-					
+
 					const response = await fetch('/api/document/revisiproposal/upload', {
 						method: 'POST',
 						body: formData
 					});
-					
-					const data = await response.json();
-					
-					if (response.ok && data.status === 'success') {
-						// Tampilkan pesan sukses
-						showAlert('Revisi Proposal berhasil diunggah', 'success');
-						
-						// Reset form
+
+					let data;
+					try {
+						data = await response.json();
+					} catch (err) {
+						const text = await response.text();
+						showAlert(text || 'Terjadi kesalahan pada server', 'danger');
+						return;
+					}
+
+					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
+
+					if (data.status === 'success') {
 						this.reset();
 						document.querySelector('#revisiProposalFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('revisiSelectedFileName').style.display = 'none';
-						
-						// Refresh data
 						loadRevisiProposalData();
-					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
+
 				} catch (error) {
-					console.error('Error saat upload Revisi Proposal:', error);
 					let errorMessage = 'Terjadi kesalahan pada server';
-					
-					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
+					if (error.message.includes('user ID')) {
 						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
-					} else if (error.message.includes('Data taruna tidak ditemukan')) {
+					} else if (error.message.includes('data taruna tidak ditemukan')) {
 						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
-					} else if (error.message.includes('nama lengkap tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak lengkap: nama lengkap belum diisi. Silakan lengkapi profil Anda terlebih dahulu.';
-					} else if (error.message.includes('Gagal mengambil data taruna')) {
-						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi atau hubungi administrator.';
+					} else if (error.message.includes('nama lengkap')) {
+						errorMessage = 'Profil taruna belum lengkap. Silakan lengkapi nama lengkap Anda.';
+					} else if (error.message.includes('Gagal mengambil')) {
+						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi.';
 					}
-					
 					showAlert(errorMessage, 'danger');
 				} finally {
-					// Reset button state
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Upload Revisi Proposal';
 				}

@@ -5,13 +5,11 @@ import (
 	"document_service/config"
 	"document_service/entities"
 	"document_service/models"
+	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -96,175 +94,6 @@ func UpdateProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk mengupload review ICP oleh dosen ke table review_icp
-func UploadReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
-		})
-		return
-	}
-
-	dosenID := r.FormValue("dosen_id")
-	tarunaID := r.FormValue("taruna_id")
-	topikPenelitian := r.FormValue("topik_penelitian")
-	keterangan := r.FormValue("keterangan")
-
-	if dosenID == "" || tarunaID == "" || topikPenelitian == "" {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Missing required fields",
-		})
-		return
-	}
-
-	file, handler, err := r.FormFile("file")
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
-		})
-		return
-	}
-	defer file.Close()
-
-	uploadDir := "uploads/reviewproposal"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
-		})
-		return
-	}
-
-	// Determine if this is a dosen review or taruna revision based on the request origin
-	isDosenReview := r.Header.Get("X-User-Role") == "dosen"
-	filePrefix := "REVIEW_PROPOSAL"
-	if !isDosenReview {
-		filePrefix = "REVISI_PROPOSAL"
-	}
-
-	filename := fmt.Sprintf("%s_%s_%s_%s",
-		filePrefix,
-		dosenID,
-		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
-
-	dst, err := os.Create(filePath)
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
-		})
-		return
-	}
-
-	db, err := config.GetDB()
-	if err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Database error: " + err.Error(),
-		})
-		return
-	}
-	defer db.Close()
-
-	tx, err := db.Begin()
-	if err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Failed to start transaction: " + err.Error(),
-		})
-		return
-	}
-
-	// Update status PROPOSAL dalam transaksi
-	// Status selalu "on review" baik untuk review dosen maupun revisi taruna
-	// Status hanya berubah ketika dosen melakukan approve/reject
-	_, err = tx.Exec("UPDATE proposal SET status = ? WHERE user_id = ? AND topik_penelitian = ?",
-		"on review", tarunaID, topikPenelitian)
-	if err != nil {
-		tx.Rollback()
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Failed to update ICP status: " + err.Error(),
-		})
-		return
-	}
-
-	// Insert review ICP dalam transaksi
-	dosenIDInt, _ := strconv.Atoi(dosenID)
-	tarunaIDInt, _ := strconv.Atoi(tarunaID)
-
-	now := time.Now().Format("2006-01-02 15:04:05")
-	_, err = tx.Exec(`
-		INSERT INTO review_proposal (
-			dosen_id, taruna_id, topik_penelitian, 
-			keterangan, file_path, status, 
-			created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		dosenIDInt, tarunaIDInt, topikPenelitian,
-		keterangan, filePath, "on review",
-		now, now,
-	)
-
-	if err != nil {
-		tx.Rollback()
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
-		})
-		return
-	}
-
-	// Commit transaksi
-	if err := tx.Commit(); err != nil {
-		tx.Rollback()
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Failed to commit transaction: " + err.Error(),
-		})
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  "success",
-		"message": "Review ICP berhasil diunggah dan status diperbarui",
-		"data": map[string]interface{}{
-			"file_path": filePath,
-		},
-	})
-}
-
 // Handler untuk upload review proposal oleh dosen ke table review_proposal_dosen
 func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
@@ -278,11 +107,19 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if r.ContentLength > filemanager.MaxFileSize {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+		})
+		return
+	}
+
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
 		})
 		return
 	}
@@ -291,12 +128,6 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	tarunaID := r.FormValue("taruna_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
-
-	log.Println("=== DATA DITERIMA FRONTEND ===")
-	log.Println("dosen_id:", dosenID)
-	log.Println("taruna_id:", tarunaID)
-	log.Println("topik_penelitian:", topikPenelitian)
-	log.Println("keterangan:", keterangan)
 
 	if dosenID == "" || tarunaID == "" || topikPenelitian == "" {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -316,7 +147,6 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Ambil user_id dari taruna_id
 	var userID int
 	err = db.QueryRow("SELECT user_id FROM taruna WHERE id = ?", tarunaID).Scan(&userID)
 	if err != nil {
@@ -326,9 +156,7 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	log.Println("user_id hasil lookup:", userID)
 
-	// Ambil ID proposal berdasarkan user_id dan topik_penelitian
 	var proposalID int
 	err = db.QueryRow(`
 		SELECT id 
@@ -343,7 +171,6 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil file
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -354,36 +181,27 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	uploadDir := "uploads/reviewproposal/dosen"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Gagal membuat direktori upload: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
+	file.Seek(0, 0)
 
+	safeFilename := filemanager.ValidateFileName(handler.Filename)
 	filename := fmt.Sprintf("REVIEW_PROPOSAL_DOSEN_%s_%s_%s",
 		dosenID,
 		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
+		safeFilename)
+	uploadDir := "uploads/reviewproposal/dosen"
 
-	dst, err := os.Create(filePath)
+	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Gagal membuat file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Gagal menyimpan file: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
@@ -398,7 +216,6 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update status proposal
 	_, err = tx.Exec("UPDATE proposal SET status = ? WHERE id = ?", "on review", proposalID)
 	if err != nil {
 		tx.Rollback()
@@ -410,7 +227,6 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil nomor siklus
 	var cycleNumber int
 	err = tx.QueryRow(`
 		SELECT COALESCE(MAX(cycle_number), 0) + 1 
@@ -423,7 +239,6 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
-	// Simpan review dosen
 	_, err = tx.Exec(`
 		INSERT INTO review_proposal_dosen (
 			proposal_id, taruna_id, dosen_id, cycle_number,
@@ -433,7 +248,6 @@ func UploadDosenReviewProposalHandler(w http.ResponseWriter, r *http.Request) {
 		proposalID, tarunaIDInt, dosenIDInt, cycleNumber,
 		topikPenelitian, filePath, keterangan,
 	)
-
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
@@ -505,7 +319,7 @@ func GetReviewProposalDosenHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler untuk upload revisi proposal oleh taruna ke table review_proposal_taruna
 func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
+	// CORS
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -516,29 +330,38 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
-	if err != nil {
+	if r.ContentLength > filemanager.MaxFileSize {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
 		})
 		return
 	}
 
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+		})
+		return
+	}
+
+	// Form values
 	dosenID := r.FormValue("dosen_id")
-	userID := r.FormValue("taruna_id") // This is actually the user_id from the frontend
+	userID := r.FormValue("taruna_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
 	if dosenID == "" || userID == "" || topikPenelitian == "" {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Missing required fields",
+			"message": "Field wajib tidak boleh kosong",
 		})
 		return
 	}
 
-	// Get ICP ID based on user_id and topik_penelitian
+	// DB
 	db, err := config.GetDB()
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -549,109 +372,101 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// First get the taruna_id from taruna table
+	// Get taruna_id
 	var tarunaID int
 	err = db.QueryRow("SELECT id FROM taruna WHERE user_id = ?", userID).Scan(&tarunaID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Taruna not found: " + err.Error(),
+			"message": "Taruna tidak ditemukan untuk user_id tersebut",
 		})
 		return
 	}
 
-	// Then get the Proposal ID using the user_id
+	// Get proposal_id
 	var proposalID int
 	err = db.QueryRow("SELECT id FROM proposal WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&proposalID)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Proposal not found for the given taruna and topic",
+			"message": "Proposal tidak ditemukan berdasarkan topik dan user",
 		})
 		return
 	}
 
+	// Ambil file
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
+			"message": "Gagal mengambil file: " + err.Error(),
 		})
 		return
 	}
 	defer file.Close()
 
-	uploadDir := "uploads/reviewproposal/taruna"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
+	file.Seek(0, 0)
 
+	// Simpan file
+	safeFilename := filemanager.ValidateFileName(handler.Filename)
 	filename := fmt.Sprintf("REVISI_PROPOSAL_TARUNA_%s_%s_%s",
 		dosenID,
 		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
+		safeFilename)
+	uploadDir := "uploads/reviewproposal/taruna"
 
-	dst, err := os.Create(filePath)
+	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
 
+	// Mulai transaksi
 	tx, err := db.Begin()
 	if err != nil {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Failed to start transaction: " + err.Error(),
+			"message": "Gagal memulai transaksi: " + err.Error(),
 		})
 		return
 	}
 
-	// Update status ICP dalam transaksi
-	_, err = tx.Exec("UPDATE proposal SET status = ? WHERE id = ?",
-		"on review", proposalID)
+	// Update status proposal
+	_, err = tx.Exec("UPDATE proposal SET status = ? WHERE id = ?", "on review", proposalID)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Failed to update ICP status: " + err.Error(),
+			"message": "Gagal update status proposal: " + err.Error(),
 		})
 		return
 	}
 
-	// Get current cycle number
-	var cycleNumber int = 1
+	// Ambil siklus ke-
+	var cycleNumber int
 	err = tx.QueryRow(`
 		SELECT COALESCE(MAX(cycle_number), 0) + 1 
 		FROM review_proposal_taruna 
 		WHERE proposal_id = ?`, proposalID).Scan(&cycleNumber)
 	if err != nil {
-		// If error, default to 1
 		cycleNumber = 1
 	}
 
-	// Insert review ICP taruna dalam transaksi
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 
+	// Simpan ke review_proposal_taruna
 	_, err = tx.Exec(`
 		INSERT INTO review_proposal_taruna (
 			proposal_id, taruna_id, dosen_id, cycle_number,
@@ -661,31 +476,29 @@ func UploadTarunaRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 		proposalID, tarunaID, dosenIDInt, cycleNumber,
 		topikPenelitian, filePath, keterangan,
 	)
-
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
+			"message": "Gagal menyimpan revisi: " + err.Error(),
 		})
 		return
 	}
 
-	// Commit transaksi
 	if err := tx.Commit(); err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Failed to commit transaction: " + err.Error(),
+			"message": "Gagal commit revisi: " + err.Error(),
 		})
 		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Revisi ICP taruna berhasil diunggah dan status diperbarui",
+		"message": "Revisi proposal taruna berhasil diunggah dan status diperbarui",
 		"data": map[string]interface{}{
 			"file_path": filePath,
 		},

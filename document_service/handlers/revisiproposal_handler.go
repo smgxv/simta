@@ -6,9 +6,9 @@ import (
 	"document_service/entities"
 	"document_service/models"
 	"document_service/utils"
+	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,7 +19,6 @@ import (
 
 // Handler untuk mengupload final proposal
 func UploadRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -30,107 +29,89 @@ func UploadRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
-	if err != nil {
+	if err := r.ParseMultipartForm(filemanager.MaxFileSize); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
+			"message": "Gagal parsing form: " + err.Error(),
 		})
 		return
 	}
 
-	// Get form values
+	// === Form Values ===
 	userID := r.FormValue("user_id")
 	namaLengkap := r.FormValue("nama_lengkap")
 	jurusan := r.FormValue("jurusan")
 	kelas := r.FormValue("kelas")
-	topikPenelitian := r.FormValue("topik_penelitian")
+	topik := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	// Validate required fields
-	if userID == "" || namaLengkap == "" || topikPenelitian == "" {
+	if userID == "" || namaLengkap == "" || topik == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
-	// Handle file upload
+	// === Upload File ===
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
+			"message": "Gagal mengambil file: " + err.Error(),
 		})
 		return
 	}
 	defer file.Close()
 
-	// Create upload directory if not exists
-	uploadDir := "uploads/revisiproposal"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
+	file.Seek(0, 0) // Reset reader
 
-	// Generate unique filename
 	filename := fmt.Sprintf("FINAL_PROPOSAL_%s_%s_%s",
 		userID,
 		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
+		filemanager.ValidateFileName(handler.Filename))
 
-	// Create the file
-	dst, err := os.Create(filePath)
+	uploadPath, err := filemanager.SaveUploadedFile(file, handler, "uploads/revisiproposal", filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	// Copy the uploaded file to the created file
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
+			"message": "Gagal menyimpan file: " + err.Error(),
 		})
 		return
 	}
 
-	// Connect to database
+	// === Simpan ke Database ===
 	db, err := config.GetDB()
 	if err != nil {
-		os.Remove(filePath)
+		os.Remove(uploadPath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error connecting to database: " + err.Error(),
+			"message": "Gagal koneksi ke database: " + err.Error(),
 		})
 		return
 	}
 	defer db.Close()
 
-	// Create Final Proposal record
 	revisiProposalModel := models.NewRevisiProposalModel(db)
 	revisiProposal := &entities.RevisiProposal{
 		UserID:          utils.ParseInt(userID),
 		NamaLengkap:     namaLengkap,
 		Jurusan:         jurusan,
 		Kelas:           kelas,
-		TopikPenelitian: topikPenelitian,
-		FilePath:        filePath,
+		TopikPenelitian: topik,
+		FilePath:        uploadPath,
 		Keterangan:      keterangan,
 	}
 
 	if err := revisiProposalModel.Create(revisiProposal); err != nil {
-		os.Remove(filePath)
+		os.Remove(uploadPath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
+			"message": "Gagal simpan ke database: " + err.Error(),
 		})
 		return
 	}
@@ -140,14 +121,14 @@ func UploadRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "Final Proposal berhasil diunggah",
 		"data": map[string]interface{}{
 			"id":        revisiProposal.ID,
-			"file_path": filePath,
+			"file_path": uploadPath,
 		},
 	})
 }
 
 // Handler untuk mengambil daftar final proposal berdasarkan user_id
 func GetRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
@@ -185,7 +166,7 @@ func GetRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler untuk mengambil data gabungan taruna dan final proposal
 func GetAllRevisiProposalWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
@@ -260,7 +241,7 @@ func GetAllRevisiProposalWithTarunaHandler(w http.ResponseWriter, r *http.Reques
 
 // Handler untuk update status Final Proposal
 func UpdateRevisiProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
@@ -302,7 +283,7 @@ func UpdateRevisiProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler untuk download file Final Proposal
 func DownloadRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 

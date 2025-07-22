@@ -6,10 +6,13 @@ import (
 	"document_service/entities"
 	"document_service/models"
 	"document_service/utils"
+	"document_service/utils/filemanager"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -26,16 +29,23 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(20 << 20) // 20 MB
-	if err != nil {
+	if r.ContentLength > filemanager.MaxFileSize {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
 		})
 		return
 	}
 
-	// Get form values
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Form terlalu besar atau rusak: " + err.Error(),
+		})
+		return
+	}
+
 	userID := r.FormValue("user_id")
 	namaLengkap := r.FormValue("nama_lengkap")
 	jurusan := r.FormValue("jurusan")
@@ -43,41 +53,88 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	// Validate required fields
 	if userID == "" || namaLengkap == "" || topikPenelitian == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
 	// === Upload Final Proposal File ===
-	finalFilePath, err := utils.HandleFileUpload(r, "final_proposal_file", userID, "FINAL_PROPOSAL")
+	finalFile, finalHeader, err := r.FormFile("final_proposal_file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Gagal upload Final Proposal: " + err.Error(),
+			"message": "Gagal mengambil file Final Proposal: " + err.Error(),
+		})
+		return
+	}
+	defer finalFile.Close()
+
+	if err := filemanager.ValidateFileType(finalFile, finalHeader.Filename); err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
+		})
+		return
+	}
+	finalFile.Seek(0, 0)
+
+	finalFilename := fmt.Sprintf("FINAL_PROPOSAL_%s_%s_%s",
+		userID,
+		time.Now().Format("20060102150405"),
+		filemanager.ValidateFileName(finalHeader.Filename))
+	finalFilePath, err := filemanager.SaveUploadedFile(finalFile, finalHeader, "uploads/finalproposal", finalFilename)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
 		})
 		return
 	}
 
 	// === Upload Form Bimbingan File ===
-	formFilePath, err := utils.HandleFileUpload(r, "form_bimbingan_file", userID, "FORM_BIMBINGAN")
+	formFile, formHeader, err := r.FormFile("form_bimbingan_file")
 	if err != nil {
-		os.Remove(finalFilePath) // hapus file proposal yang sudah sempat di-upload
+		os.Remove(finalFilePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Gagal upload Form Bimbingan: " + err.Error(),
+			"message": "Gagal mengambil file Form Bimbingan: " + err.Error(),
+		})
+		return
+	}
+	defer formFile.Close()
+
+	if err := filemanager.ValidateFileType(formFile, formHeader.Filename); err != nil {
+		os.Remove(finalFilePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
+		})
+		return
+	}
+	formFile.Seek(0, 0)
+
+	formFilename := fmt.Sprintf("FORM_BIMBINGAN_%s_%s_%s",
+		userID,
+		time.Now().Format("20060102150405"),
+		filemanager.ValidateFileName(formHeader.Filename))
+	formFilePath, err := filemanager.SaveUploadedFile(formFile, formHeader, "uploads/finalproposal", formFilename)
+	if err != nil {
+		os.Remove(finalFilePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
 		})
 		return
 	}
 
-	// === Save to DB ===
+	// === Simpan ke Database ===
 	db, err := config.GetDB()
 	if err != nil {
 		os.Remove(finalFilePath)
 		os.Remove(formFilePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error connecting to database: " + err.Error(),
+			"message": "Gagal koneksi database: " + err.Error(),
 		})
 		return
 	}
@@ -100,7 +157,7 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 		os.Remove(formFilePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
+			"message": "Gagal menyimpan ke database: " + err.Error(),
 		})
 		return
 	}
