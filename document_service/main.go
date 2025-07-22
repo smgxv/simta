@@ -2,24 +2,24 @@ package main
 
 import (
 	"document_service/handlers"
+	"document_service/utils/filemanager"
 	"log"
 	"net/http"
-	"os"
+	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/rs/cors"
 )
 
 func main() {
 	r := mux.NewRouter()
 
 	// Buat direktori uploads jika belum ada
-	if err := os.MkdirAll("uploads/icp", os.ModePerm); err != nil {
+	if err := filemanager.EnsureUploadDir(); err != nil {
 		log.Fatal(err)
 	}
 
-	// Register all routes
-	r.HandleFunc("/upload/icp", handlers.UploadICPHandler).Methods("POST", "OPTIONS")
+	// Set up routes
+	r.HandleFunc("/api/document/upload/icp", handlers.UploadICPHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/icp", handlers.GetICPHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/download", handlers.DownloadFileHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/icp/{id}", handlers.GetICPByIDHandler).Methods("GET", "OPTIONS")
@@ -204,18 +204,15 @@ func main() {
 	r.HandleFunc("/tugasakhir/detail/{id}", handlers.GetTugasAkhirDetailHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/revisilaporan100/download/{id}/{jenis}", handlers.DownloadRevisiFileHandler).Methods("GET", "OPTIONS")
 
-	// Setup CORS
-	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization"},
-		AllowCredentials: true,
-	})
+	// Create custom server with increased limits
+	srv := &http.Server{
+		Handler:      r,
+		Addr:         ":8082",
+		WriteTimeout: 30 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		// Set maximum request size to match our file size limit
+		MaxHeaderBytes: 1 << 20, // 1MB for headers
+	}
 
-	// Wrap router dengan CORS middleware
-	handler := c.Handler(r)
-
-	// Start server
-	log.Println("Server started on :8082")
-	log.Fatal(http.ListenAndServe(":8082", handler))
+	log.Fatal(srv.ListenAndServe())
 }

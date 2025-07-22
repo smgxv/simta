@@ -96,6 +96,23 @@ func SanitizeFilePath(baseDir, filename string) (string, error) {
 	return fullPath, nil
 }
 
+// EnsureUploadDir creates required upload directories if they don't exist
+func EnsureUploadDir() error {
+	dirs := []string{
+		"uploads/icp",
+		"uploads/proposal",
+		"uploads/laporan70",
+		"uploads/laporan100",
+	}
+
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0750); err != nil {
+			return fmt.Errorf("error creating directory %s: %v", dir, err)
+		}
+	}
+	return nil
+}
+
 // SaveUploadedFile handles the complete process of saving an uploaded file securely
 func SaveUploadedFile(file io.Reader, handler *multipart.FileHeader, uploadDir, filename string) (string, error) {
 	// Create directory if it doesn't exist

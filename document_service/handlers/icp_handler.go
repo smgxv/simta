@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -30,15 +31,21 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit the request size
+	// Set maximum request size
 	r.Body = http.MaxBytesReader(w, r.Body, filemanager.MaxFileSize)
 
 	// Parse multipart form with size limit
-	err := r.ParseMultipartForm(filemanager.MaxFileSize)
-	if err != nil {
+	if err := r.ParseMultipartForm(filemanager.MaxFileSize); err != nil {
+		if strings.Contains(err.Error(), "request body too large") {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "error",
+				"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+			})
+			return
+		}
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+			"message": "Error saat memproses form: " + err.Error(),
 		})
 		return
 	}
