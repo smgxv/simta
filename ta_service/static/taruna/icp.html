@@ -1191,43 +1191,27 @@
 				
 				const submitButton = this.querySelector('button[type="submit"]');
 				const formData = new FormData(this);
+				formData.append('user_id', localStorage.getItem('userId'));
+				
+				// Set loading state
+				submitButton.disabled = true;
+				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 				
 				try {
-					// Set loading state
-					submitButton.disabled = true;
-					submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-					
-					// Tambahkan user_id
-					formData.append('user_id', localStorage.getItem('userId'));
-					
 					const response = await fetch('/api/document/upload/icp', {
 						method: 'POST',
 						body: formData
 					});
 
-					// Handle specific error cases
-					if (response.status === 413) {
-						throw new Error('Ukuran file terlalu besar. Maksimal ukuran file adalah 15MB');
+					const data = await response.json();
+					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
+					
+					if (data.status === 'success') {
+						this.reset();
+						document.querySelector('.custom-file-label').textContent = 'Choose file';
+						document.getElementById('selectedFileName').style.display = 'none';
+						loadICPData();
 					}
-
-					const data = await response.json().catch(() => {
-						throw new Error('Terjadi kesalahan pada server. Mohon coba lagi.');
-					});
-
-					if (!response.ok) {
-						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
-					}
-
-					// Success case
-					showAlert('ICP berhasil diunggah', 'success');
-					this.reset();
-					document.querySelector('.custom-file-label').textContent = 'Choose file';
-					document.getElementById('selectedFileName').style.display = 'none';
-					loadICPData();
-
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert(error.message, 'danger');
 				} finally {
 					// Reset button state
 					submitButton.disabled = false;
