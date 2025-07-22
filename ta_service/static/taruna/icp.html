@@ -1390,96 +1390,77 @@
 			// Handle form submission untuk Final ICP
 			document.getElementById('finalIcpForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
-				
-				// Tampilkan loading state
+
 				const submitButton = this.querySelector('button[type="submit"]');
 				submitButton.disabled = true;
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-				
+
 				try {
 					const formData = new FormData(this);
 					const userId = localStorage.getItem('userId');
 					const token = localStorage.getItem('token');
-					
+
 					if (!userId || !token) {
 						throw new Error('User ID atau token tidak ditemukan');
 					}
-					
-					// Ambil data taruna untuk mendapatkan nama lengkap
+
+					// Ambil data taruna
 					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
 					});
-					
+
 					if (!tarunaResponse.ok) {
 						throw new Error('Gagal mengambil data taruna');
 					}
-					
+
 					const tarunaData = await tarunaResponse.json();
-					console.log('Response taruna data:', tarunaData);
+					const taruna = tarunaData.data?.find(t => t.user_id === parseInt(userId));
 
-					if (tarunaData.status !== 'success' || !tarunaData.data || !Array.isArray(tarunaData.data)) {
-						console.error('Data taruna tidak valid:', tarunaData);
-						throw new Error('Data taruna tidak ditemukan');
+					if (!taruna || !taruna.nama_lengkap) {
+						throw new Error('Data taruna tidak lengkap atau tidak ditemukan');
 					}
 
-					// Cari data taruna yang sesuai dengan user_id
-					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
-					console.log('Data taruna yang akan digunakan:', taruna);
-
-					if (!taruna) {
-						console.error('Data taruna tidak ditemukan untuk user_id:', userId);
-						throw new Error('Data taruna tidak ditemukan untuk user ID ini');
-					}
-
-					if (!taruna.nama_lengkap) {
-						console.error('Data taruna tidak memiliki nama lengkap:', taruna);
-						throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
-					}
-					
 					// Tambahkan user_id dan nama_lengkap ke formData
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
-					
+
 					const response = await fetch('/api/document/finalicp/upload', {
 						method: 'POST',
 						body: formData
 					});
-					
-					const data = await response.json();
-					
-					if (response.ok && data.status === 'success') {
-						// Tampilkan pesan sukses
-						showAlert('Final ICP berhasil diunggah', 'success');
-						
-						// Reset form
+
+					let data;
+					try {
+						data = await response.json();
+					} catch (err) {
+						const rawText = await response.text();
+						showAlert(rawText || 'Terjadi kesalahan pada server', 'danger');
+						return;
+					}
+
+					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
+
+					if (data.status === 'success') {
 						this.reset();
 						document.querySelector('#finalIcpFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('finalSelectedFileName').style.display = 'none';
-						
-						// Refresh data
 						loadFinalICPData();
-					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
+
 				} catch (error) {
 					console.error('Error saat upload final ICP:', error);
-					let errorMessage = 'Terjadi kesalahan pada server';
-					
-					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
-						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
-					} else if (error.message.includes('Data taruna tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
-					} else if (error.message.includes('nama lengkap tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak lengkap: nama lengkap belum diisi. Silakan lengkapi profil Anda terlebih dahulu.';
-					} else if (error.message.includes('Gagal mengambil data taruna')) {
-						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi atau hubungi administrator.';
+					let errorMessage = 'Terjadi kesalahan saat mengunggah Final ICP';
+
+					if (error.message.includes('token')) {
+						errorMessage = 'User ID atau token tidak ditemukan. Silakan login kembali.';
+					} else if (error.message.includes('data taruna')) {
+						errorMessage = 'Data taruna tidak lengkap atau tidak ditemukan. Silakan hubungi administrator.';
 					}
-					
+
 					showAlert(errorMessage, 'danger');
 				} finally {
-					// Reset button state
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Upload Final ICP';
 				}
@@ -1731,102 +1712,79 @@
 			// Handle form submission untuk Revisi ICP
 			document.getElementById('revisiICPForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
-				
-				// Tampilkan loading state
+
 				const submitButton = this.querySelector('button[type="submit"]');
 				submitButton.disabled = true;
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-				
-				try {
 
-					// Tunggu sampai jurusan & kelas pasti terisi
+				try {
 					await isiJurusanDanKelasDariTarunaRevisiICP();
 
 					const formData = new FormData(this);
 					const userId = localStorage.getItem('userId');
 					const token = localStorage.getItem('token');
-					
+
 					if (!userId || !token) {
 						throw new Error('User ID atau token tidak ditemukan');
 					}
-					
-					// Ambil data taruna untuk mendapatkan nama lengkap
+
 					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
 					});
-					
+
 					if (!tarunaResponse.ok) {
 						throw new Error('Gagal mengambil data taruna');
 					}
-					
+
 					const tarunaData = await tarunaResponse.json();
-					console.log('Response taruna data:', tarunaData);
+					const taruna = tarunaData.data?.find(t => t.user_id === parseInt(userId));
 
-					if (tarunaData.status !== 'success' || !tarunaData.data || !Array.isArray(tarunaData.data)) {
-						console.error('Data taruna tidak valid:', tarunaData);
-						throw new Error('Data taruna tidak ditemukan');
+					if (!taruna || !taruna.nama_lengkap) {
+						throw new Error('Data taruna tidak lengkap atau tidak ditemukan');
 					}
 
-					// Cari data taruna yang sesuai dengan user_id
-					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
-					console.log('Data taruna yang akan digunakan:', taruna);
-
-					if (!taruna) {
-						console.error('Data taruna tidak ditemukan untuk user_id:', userId);
-						throw new Error('Data taruna tidak ditemukan untuk user ID ini');
-					}
-
-					if (!taruna.nama_lengkap) {
-						console.error('Data taruna tidak memiliki nama lengkap:', taruna);
-						throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
-					}
-					
-					// Tambahkan user_id dan nama_lengkap ke formData
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
 					formData.append('jurusan', document.getElementById('hiddenJurusanRevisi').value);
 					formData.append('kelas', document.getElementById('hiddenKelasRevisi').value);
-					
+
 					const response = await fetch('/api/document/revisiicp/upload', {
 						method: 'POST',
 						body: formData
 					});
-					
-					const data = await response.json();
-					
-					if (response.ok && data.status === 'success') {
-						// Tampilkan pesan sukses
-						showAlert('Revisi ICP berhasil diunggah', 'success');
-						
-						// Reset form
+
+					let data;
+					try {
+						data = await response.json();
+					} catch (err) {
+						const rawText = await response.text();
+						showAlert(rawText || 'Terjadi kesalahan pada server', 'danger');
+						return;
+					}
+
+					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
+
+					if (data.status === 'success') {
 						this.reset();
 						document.querySelector('#revisiICPFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('revisiSelectedFileName').style.display = 'none';
-						
-						// Refresh data
 						loadRevisiICPData();
-					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
 					}
+
 				} catch (error) {
 					console.error('Error saat upload Revisi ICP:', error);
-					let errorMessage = 'Terjadi kesalahan pada server';
-					
-					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
-						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
-					} else if (error.message.includes('Data taruna tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
-					} else if (error.message.includes('nama lengkap tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak lengkap: nama lengkap belum diisi. Silakan lengkapi profil Anda terlebih dahulu.';
-					} else if (error.message.includes('Gagal mengambil data taruna')) {
-						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi atau hubungi administrator.';
+					let errorMessage = 'Terjadi kesalahan saat mengunggah Revisi ICP';
+
+					if (error.message.includes('token')) {
+						errorMessage = 'User ID atau token tidak ditemukan. Silakan login kembali.';
+					} else if (error.message.includes('data taruna')) {
+						errorMessage = 'Data taruna tidak lengkap atau tidak ditemukan. Silakan hubungi administrator.';
 					}
-					
+
 					showAlert(errorMessage, 'danger');
 				} finally {
-					// Reset button state
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Upload Revisi ICP';
 				}
