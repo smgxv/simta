@@ -23,6 +23,7 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
@@ -35,7 +36,10 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse multipart form with size limit
 	err := r.ParseMultipartForm(filemanager.MaxFileSize)
 	if err != nil {
-		http.Error(w, "File too large. Maximum size is 15MB", http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+		})
 		return
 	}
 
@@ -48,24 +52,36 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the file from form
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, "Error retrieving file: "+err.Error(), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error mengambil file: " + err.Error(),
+		})
 		return
 	}
 	defer file.Close()
 
 	// Validate file size
 	if handler.Size > filemanager.MaxFileSize {
-		http.Error(w, "File too large. Maximum size is 15MB", http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+		})
 		return
 	}
 	if handler.Size < filemanager.MinFileSize {
-		http.Error(w, "File too small. Minimum size is 1KB", http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu kecil. Minimal ukuran file adalah 1KB",
+		})
 		return
 	}
 
 	// Validate file type
 	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
+		})
 		return
 	}
 
@@ -82,7 +98,10 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 	uploadDir := "uploads/icp"
 	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
+		})
 		return
 	}
 
@@ -91,7 +110,10 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// If database connection fails, delete the uploaded file
 		os.Remove(filePath)
-		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error koneksi database: " + err.Error(),
+		})
 		return
 	}
 	defer db.Close()
@@ -100,14 +122,20 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
 		os.Remove(filePath)
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "User ID tidak valid",
+		})
 		return
 	}
 
 	dosenIDInt, err := strconv.Atoi(dosenID)
 	if err != nil {
 		os.Remove(filePath)
-		http.Error(w, "Invalid dosen ID", http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Dosen ID tidak valid",
+		})
 		return
 	}
 
@@ -124,12 +152,14 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 	if err := icpModel.Create(icp); err != nil {
 		// If database insert fails, delete the uploaded file
 		os.Remove(filePath)
-		http.Error(w, "Error saving to database: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error menyimpan ke database: " + err.Error(),
+		})
 		return
 	}
 
 	// Send success response
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": "ICP berhasil diunggah",
