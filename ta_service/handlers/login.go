@@ -22,14 +22,13 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Email       string          `json:"email"`
-	ID          int64           `json:"id"`
-	DosenID     int64           `json:"dosen_id"`
-	Token       string          `json:"token"`
-	Users       []entities.User `json:"users"`
-	Role        string          `json:"role"`
-	Success     bool            `json:"success"`
-	RedirectURL string          `json:"redirect_url"`
+	Email       string `json:"email"`
+	ID          int64  `json:"id"`
+	DosenID     int64  `json:"dosen_id"`
+	Token       string `json:"token"`
+	Role        string `json:"role"`
+	Success     bool   `json:"success"`
+	RedirectURL string `json:"redirect_url"`
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,41 +98,17 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil data users
-	client := &http.Client{}
-	apiURL := getEnv("API_SERVICE_URL", "/api/user")
-	reqAPI, err := http.NewRequest("GET", apiURL+"/users", nil)
-	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
-		return
-	}
-	reqAPI.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := client.Do(reqAPI)
-	if err != nil {
-		http.Error(w, "Error fetching users", http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	var users []entities.User
-	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
-		http.Error(w, "Error decoding users data", http.StatusInternalServerError)
-		return
-	}
-
 	var dosenID int64 = 0
 	if user.Role == "dosen" {
 		dosenID, _ = userModel.GetDosenIDByUserID(user.ID)
 	}
 
-	// Kirim response
+	// Kirim response (tanpa users)
 	response := LoginResponse{
 		Email:       user.Email,
 		ID:          user.ID,
 		DosenID:     dosenID,
 		Token:       token,
-		Users:       users,
 		Role:        user.Role,
 		Success:     true,
 		RedirectURL: getDashboardURL(user.Role),
