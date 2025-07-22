@@ -19,7 +19,7 @@ func main() {
 	}
 
 	// Set up routes
-	r.HandleFunc("/api/document/upload/icp", handlers.UploadICPHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/upload/icp", handlers.UploadICPHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/icp", handlers.GetICPHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/download", handlers.DownloadFileHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/icp/{id}", handlers.GetICPByIDHandler).Methods("GET", "OPTIONS")
