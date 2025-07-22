@@ -5,10 +5,10 @@ import (
 	"document_service/config"
 	"document_service/entities"
 	"document_service/models"
+	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -29,10 +29,13 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse multipart form
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	// Limit the request size
+	r.Body = http.MaxBytesReader(w, r.Body, filemanager.MaxFileSize)
+
+	// Parse multipart form with size limit
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
 	if err != nil {
-		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "File too large. Maximum size is 15MB", http.StatusBadRequest)
 		return
 	}
 
@@ -50,49 +53,63 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Create uploads directory if it doesn't exist
-	uploadDir := "uploads/icp"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil { // Ubah permission ke 0777
-		http.Error(w, "Error creating upload directory: "+err.Error(), http.StatusInternalServerError)
+	// Validate file size
+	if handler.Size > filemanager.MaxFileSize {
+		http.Error(w, "File too large. Maximum size is 15MB", http.StatusBadRequest)
+		return
+	}
+	if handler.Size < filemanager.MinFileSize {
+		http.Error(w, "File too small. Minimum size is 1KB", http.StatusBadRequest)
 		return
 	}
 
-	// Simpan file dengan nama asli
+	// Validate file type
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Reset file pointer after reading header
+	file.Seek(0, 0)
+
+	// Sanitize filename and create final filename
+	safeFilename := filemanager.ValidateFileName(handler.Filename)
 	filename := fmt.Sprintf("ICP_%s_%s_%s",
 		userID,
 		time.Now().Format("20060102150405"),
-		handler.Filename) // Gunakan nama asli file
+		safeFilename)
 
-	filePath := filepath.Join(uploadDir, filename)
-
-	// Log untuk debugging
-	log.Printf("Saving file to: %s", filePath)
-
-	// Create the file
-	dst, err := os.Create(filePath)
+	uploadDir := "uploads/icp"
+	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
-		http.Error(w, "Error creating file: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer dst.Close()
-
-	// Copy the uploaded file
-	if _, err := io.Copy(dst, file); err != nil {
-		http.Error(w, "Error saving file: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// Save to database
 	db, err := config.GetDB()
 	if err != nil {
+		// If database connection fails, delete the uploaded file
+		os.Remove(filePath)
 		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
-	// Konversi string ke int
-	userIDInt, _ := strconv.Atoi(userID)
-	dosenIDInt, _ := strconv.Atoi(dosenID)
+	// Convert string to int
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		os.Remove(filePath)
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	dosenIDInt, err := strconv.Atoi(dosenID)
+	if err != nil {
+		os.Remove(filePath)
+		http.Error(w, "Invalid dosen ID", http.StatusBadRequest)
+		return
+	}
 
 	// Create ICP record
 	icp := &entities.ICP{
