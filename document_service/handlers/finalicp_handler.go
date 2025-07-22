@@ -5,12 +5,13 @@ import (
 	"document_service/config"
 	"document_service/entities"
 	"document_service/models"
+	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -29,11 +30,20 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	// Check Content-Length
+	if r.ContentLength > filemanager.MaxFileSize {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+		})
+		return
+	}
+
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
 		})
 		return
 	}
@@ -55,7 +65,7 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Handle file upload
+	// Get the file from form
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -66,40 +76,30 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Create upload directory if not exists
-	uploadDir := "uploads/finalicp"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+	// Validate file type
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
+	file.Seek(0, 0)
 
-	// Generate unique filename
+	// Sanitize filename and build final filename
+	safeFilename := filemanager.ValidateFileName(handler.Filename)
 	filename := fmt.Sprintf("FINAL_ICP_%s_%s_%s",
 		userID,
 		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
+		safeFilename)
+	uploadDir := "uploads/finalicp"
 
-	// Create the file
-	dst, err := os.Create(filePath)
+	// Save securely
+	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	// Copy the uploaded file to the created file
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
@@ -116,10 +116,21 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Parse user_id to int
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "User ID tidak valid",
+		})
+		return
+	}
+
 	// Create Final ICP record
 	finalICPModel := models.NewFinalICPModel(db)
 	finalICP := &entities.FinalICP{
-		UserID:          parseInt(userID),
+		UserID:          userIDInt,
 		NamaLengkap:     namaLengkap,
 		Jurusan:         jurusan,
 		Kelas:           kelas,

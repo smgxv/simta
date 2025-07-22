@@ -34,7 +34,6 @@ func main() {
 	r.HandleFunc("/updateicpstatus", handlers.UpdateICPStatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload/reviewicp/dosen", handlers.UploadDosenReviewICPHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload/revisiicp/taruna", handlers.UploadTarunaRevisiICPHandler).Methods("POST", "OPTIONS")
-	r.HandleFunc("/upload/reviewicp", handlers.UploadReviewICPHandler).Methods("POST", "OPTIONS")
 
 	// Final ICP routes
 	r.HandleFunc("/finalicp/upload", handlers.UploadFinalICPHandler)
@@ -53,7 +52,7 @@ func main() {
 	r.HandleFunc("/hasiltelaah/monitoring", handlers.GetMonitoringTelaahHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/hasiltelaah/detail", handlers.GetDetailTelaahICPHandler).Methods("GET", "OPTIONS")
 
-	// Revisi Laporan 70% routes
+	// Revisi ICP routes
 	r.HandleFunc("/revisiicp/upload", handlers.UploadRevisiICPHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/revisiicp/list", handlers.GetRevisiICPHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/revisiicp/all", handlers.GetAllRevisiICPWithTarunaHandler).Methods("GET", "OPTIONS")

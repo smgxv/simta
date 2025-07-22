@@ -3,13 +3,12 @@ package handlers
 import (
 	"database/sql"
 	"document_service/config"
+	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -37,12 +36,21 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check Content-Length
+	if r.ContentLength > filemanager.MaxFileSize {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+		})
+		return
+	}
+
 	// Parse multipart form
-	err := r.ParseMultipartForm(10 << 20) // 10 MB max
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
 		})
 		return
 	}
@@ -52,8 +60,13 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	dosenID := r.FormValue("dosen_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 
-	// Debug log
-	fmt.Printf("Received values - userID: %s, dosenID: %s, topik: %s\n", userID, dosenID, topikPenelitian)
+	if userID == "" || dosenID == "" || topikPenelitian == "" {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Missing required fields",
+		})
+		return
+	}
 
 	// Connect to database for getting icp_id
 	db, err := config.GetDB()
@@ -72,7 +85,7 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error getting ICP ID: " + err.Error(),
+			"message": "ICP tidak ditemukan: " + err.Error(),
 		})
 		return
 	}
@@ -82,69 +95,58 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
+			"message": "Gagal mengambil file: " + err.Error(),
 		})
 		return
 	}
 	defer file.Close()
 
-	// Create upload directory if not exists
-	uploadDir := "uploads/hasil_telaah_icp"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+	// Validate file type
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
+	file.Seek(0, 0)
 
-	// Generate unique filename
+	// Sanitize filename and generate final name
+	safeFilename := filemanager.ValidateFileName(handler.Filename)
 	filename := fmt.Sprintf("HASIL_TELAAH_ICP_%s_%s_%s_%s",
 		userID,
 		dosenID,
 		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
+		safeFilename)
+	uploadDir := "uploads/hasil_telaah_icp"
 
-	// Create the file
-	dst, err := os.Create(filePath)
+	// Save securely
+	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	// Copy the uploaded file
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
 
 	// Insert into database
 	query := `INSERT INTO hasil_telaah_icp (icp_id, dosen_id, user_id, topik_penelitian, file_path, tanggal_telaah) 
-			 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+			  VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
 
 	result, err := db.Exec(query, icpID, dosenID, userID, topikPenelitian, filePath)
 	if err != nil {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
+			"message": "Gagal menyimpan ke database: " + err.Error(),
 		})
 		return
 	}
 
-	// Get the inserted ID
+	// Get inserted ID
 	id, _ := result.LastInsertId()
 
-	// Return success response
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": "Hasil telaah berhasil diunggah",

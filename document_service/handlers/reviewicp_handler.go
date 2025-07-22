@@ -5,13 +5,12 @@ import (
 	"document_service/config"
 	"document_service/entities"
 	"document_service/models"
+	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -90,175 +89,6 @@ func UpdateICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk mengupload review ICP oleh dosen ke table review_icp
-func UploadReviewICPHandler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
-		})
-		return
-	}
-
-	dosenID := r.FormValue("dosen_id")
-	tarunaID := r.FormValue("taruna_id")
-	topikPenelitian := r.FormValue("topik_penelitian")
-	keterangan := r.FormValue("keterangan")
-
-	if dosenID == "" || tarunaID == "" || topikPenelitian == "" {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Missing required fields",
-		})
-		return
-	}
-
-	file, handler, err := r.FormFile("file")
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
-		})
-		return
-	}
-	defer file.Close()
-
-	uploadDir := "uploads/reviewicp"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
-		})
-		return
-	}
-
-	// Determine if this is a dosen review or taruna revision based on the request origin
-	isDosenReview := r.Header.Get("X-User-Role") == "dosen"
-	filePrefix := "REVIEW_ICP"
-	if !isDosenReview {
-		filePrefix = "REVISI_ICP"
-	}
-
-	filename := fmt.Sprintf("%s_%s_%s_%s",
-		filePrefix,
-		dosenID,
-		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
-
-	dst, err := os.Create(filePath)
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
-		})
-		return
-	}
-
-	db, err := config.GetDB()
-	if err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Database error: " + err.Error(),
-		})
-		return
-	}
-	defer db.Close()
-
-	tx, err := db.Begin()
-	if err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Failed to start transaction: " + err.Error(),
-		})
-		return
-	}
-
-	// Update status ICP dalam transaksi
-	// Status selalu "on review" baik untuk review dosen maupun revisi taruna
-	// Status hanya berubah ketika dosen melakukan approve/reject
-	_, err = tx.Exec("UPDATE icp SET status = ? WHERE user_id = ? AND topik_penelitian = ?",
-		"on review", tarunaID, topikPenelitian)
-	if err != nil {
-		tx.Rollback()
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Failed to update ICP status: " + err.Error(),
-		})
-		return
-	}
-
-	// Insert review ICP dalam transaksi
-	dosenIDInt, _ := strconv.Atoi(dosenID)
-	tarunaIDInt, _ := strconv.Atoi(tarunaID)
-
-	now := time.Now().Format("2006-01-02 15:04:05")
-	_, err = tx.Exec(`
-		INSERT INTO review_icp (
-			dosen_id, taruna_id, topik_penelitian, 
-			keterangan, file_path, status, 
-			created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		dosenIDInt, tarunaIDInt, topikPenelitian,
-		keterangan, filePath, "on review",
-		now, now,
-	)
-
-	if err != nil {
-		tx.Rollback()
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
-		})
-		return
-	}
-
-	// Commit transaksi
-	if err := tx.Commit(); err != nil {
-		tx.Rollback()
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Failed to commit transaction: " + err.Error(),
-		})
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  "success",
-		"message": "Review ICP berhasil diunggah dan status diperbarui",
-		"data": map[string]interface{}{
-			"file_path": filePath,
-		},
-	})
-}
-
 // Handler untuk mengambil daftar review ICP dari table review_icp
 func GetReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
@@ -312,11 +142,20 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	// Cek Content-Length
+	if r.ContentLength > filemanager.MaxFileSize {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+		})
+		return
+	}
+
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
 		})
 		return
 	}
@@ -350,7 +189,6 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Ambil user_id berdasarkan taruna_id
 	var userID int
 	err = db.QueryRow("SELECT user_id FROM taruna WHERE id = ?", tarunaID).Scan(&userID)
 	if err != nil {
@@ -362,7 +200,6 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("user_id hasil lookup:", userID)
 
-	// Ambil id ICP berdasarkan user_id dan topik_penelitian
 	var icpID int
 	err = db.QueryRow(`
 		SELECT id 
@@ -387,36 +224,28 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	uploadDir := "uploads/reviewicp/dosen"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+	// Validasi file
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Gagal membuat direktori upload: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
+	file.Seek(0, 0)
 
+	safeFilename := filemanager.ValidateFileName(handler.Filename)
 	filename := fmt.Sprintf("REVIEW_ICP_DOSEN_%s_%s_%s",
 		dosenID,
 		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
+		safeFilename)
+	uploadDir := "uploads/reviewicp/dosen"
 
-	dst, err := os.Create(filePath)
+	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Gagal membuat file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Gagal menyimpan file: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
@@ -431,9 +260,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update status ICP
-	_, err = tx.Exec("UPDATE icp SET status = ? WHERE id = ?",
-		"on review", icpID)
+	_, err = tx.Exec("UPDATE icp SET status = ? WHERE id = ?", "on review", icpID)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
@@ -444,7 +271,6 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil cycle number
 	var cycleNumber int
 	err = tx.QueryRow(`
 		SELECT COALESCE(MAX(cycle_number), 0) + 1 
@@ -457,7 +283,6 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 	tarunaIDInt, _ := strconv.Atoi(tarunaID)
 
-	// Insert ke review_icp_dosen
 	_, err = tx.Exec(`
 		INSERT INTO review_icp_dosen (
 			icp_id, taruna_id, dosen_id, cycle_number,
@@ -537,7 +362,6 @@ func GetReviewICPDosenHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk upload revisi ICP oleh taruna ke table review_icp_taruna
 func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
@@ -550,17 +374,26 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	// Check Content-Length
+	if r.ContentLength > filemanager.MaxFileSize {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+		})
+		return
+	}
+
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
 		})
 		return
 	}
 
 	dosenID := r.FormValue("dosen_id")
-	userID := r.FormValue("taruna_id") // This is actually the user_id from the frontend
+	userID := r.FormValue("taruna_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
@@ -583,7 +416,6 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// First get the taruna_id from taruna table
 	var tarunaID int
 	err = db.QueryRow("SELECT id FROM taruna WHERE user_id = ?", userID).Scan(&tarunaID)
 	if err != nil {
@@ -594,7 +426,6 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Then get the ICP ID using the user_id
 	var icpID int
 	err = db.QueryRow("SELECT id FROM icp WHERE user_id = ? AND topik_penelitian = ?", userID, topikPenelitian).Scan(&icpID)
 	if err != nil {
@@ -605,6 +436,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get file
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -615,36 +447,30 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	uploadDir := "uploads/reviewicp/taruna"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+	// Validate file type
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
+	file.Seek(0, 0) // Reset file pointer
 
+	// Sanitize and build filename
+	safeFilename := filemanager.ValidateFileName(handler.Filename)
 	filename := fmt.Sprintf("REVISI_ICP_TARUNA_%s_%s_%s",
 		dosenID,
 		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
+		safeFilename)
+	uploadDir := "uploads/reviewicp/taruna"
 
-	dst, err := os.Create(filePath)
+	// Save file securely
+	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
@@ -659,9 +485,7 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update status ICP dalam transaksi
-	_, err = tx.Exec("UPDATE icp SET status = ? WHERE id = ?",
-		"on review", icpID)
+	_, err = tx.Exec("UPDATE icp SET status = ? WHERE id = ?", "on review", icpID)
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
@@ -672,20 +496,13 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get current cycle number
 	var cycleNumber int = 1
-	err = tx.QueryRow(`
-		SELECT COALESCE(MAX(cycle_number), 0) + 1 
-		FROM review_icp_taruna 
-		WHERE icp_id = ?`, icpID).Scan(&cycleNumber)
+	err = tx.QueryRow(`SELECT COALESCE(MAX(cycle_number), 0) + 1 FROM review_icp_taruna WHERE icp_id = ?`, icpID).Scan(&cycleNumber)
 	if err != nil {
-		// If error, default to 1
 		cycleNumber = 1
 	}
 
-	// Insert review ICP taruna dalam transaksi
 	dosenIDInt, _ := strconv.Atoi(dosenID)
-
 	_, err = tx.Exec(`
 		INSERT INTO review_icp_taruna (
 			icp_id, taruna_id, dosen_id, cycle_number,
@@ -695,7 +512,6 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		icpID, tarunaID, dosenIDInt, cycleNumber,
 		topikPenelitian, filePath, keterangan,
 	)
-
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
@@ -706,7 +522,6 @@ func UploadTarunaRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Commit transaksi
 	if err := tx.Commit(); err != nil {
 		tx.Rollback()
 		os.Remove(filePath)

@@ -6,9 +6,9 @@ import (
 	"document_service/entities"
 	"document_service/models"
 	"document_service/utils"
+	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -30,11 +30,20 @@ func UploadRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	// Cek Content-Length
+	if r.ContentLength > filemanager.MaxFileSize {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+		})
+		return
+	}
+
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
 		})
 		return
 	}
@@ -47,7 +56,6 @@ func UploadRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	// Validate required fields
 	if userID == "" || namaLengkap == "" || topikPenelitian == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
@@ -58,63 +66,53 @@ func UploadRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
+			"message": "Gagal mengambil file: " + err.Error(),
 		})
 		return
 	}
 	defer file.Close()
 
-	// Create upload directory if not exists
-	uploadDir := "uploads/revisiproposal"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+	// Validasi tipe file
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
+	file.Seek(0, 0)
 
-	// Generate unique filename
+	// Generate safe filename
+	safeFilename := filemanager.ValidateFileName(handler.Filename)
 	filename := fmt.Sprintf("FINAL_PROPOSAL_%s_%s_%s",
 		userID,
 		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
+		safeFilename)
+	uploadDir := "uploads/revisiproposal"
 
-	// Create the file
-	dst, err := os.Create(filePath)
+	// Simpan file dengan aman
+	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	// Copy the uploaded file to the created file
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
 
-	// Connect to database
+	// Connect to DB
 	db, err := config.GetDB()
 	if err != nil {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error connecting to database: " + err.Error(),
+			"message": "Gagal koneksi ke database: " + err.Error(),
 		})
 		return
 	}
 	defer db.Close()
 
-	// Create Final Proposal record
+	// Buat entri baru
 	revisiICPModel := models.NewRevisiICPModel(db)
 	revisiICP := &entities.RevisiICP{
 		UserID:          utils.ParseInt(userID),
@@ -130,11 +128,12 @@ func UploadRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
+			"message": "Gagal menyimpan ke database: " + err.Error(),
 		})
 		return
 	}
 
+	// Respon sukses
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": "Final Proposal berhasil diunggah",
