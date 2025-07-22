@@ -208,14 +208,10 @@ func main() {
 	srv := &http.Server{
 		Handler:      r,
 		Addr:         ":8082",
-		WriteTimeout: 30 * time.Second,
-		ReadTimeout:  30 * time.Second,
-		// Set maximum request size to match our file size limit (15MB)
-		MaxHeaderBytes: 1 << 20, // 1MB for headers
+		WriteTimeout: 60 * time.Second, // Increase timeout for large files
+		ReadTimeout:  60 * time.Second, // Increase timeout for large files
+		// No need to limit MaxHeaderBytes as we handle file size in the handler
 	}
-
-	// Add middleware for handling large file uploads
-	r.Use(filemanager.LargeFileUploadMiddleware)
 
 	log.Fatal(srv.ListenAndServe())
 }

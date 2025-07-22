@@ -1,7 +1,6 @@
 package filemanager
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -97,25 +96,16 @@ func SanitizeFilePath(baseDir, filename string) (string, error) {
 	return fullPath, nil
 }
 
-// EnsureUploadDir creates required upload directories if they don't exist
-func EnsureUploadDir() error {
-	dirs := []string{
-		"uploads/icp",
-		"uploads/proposal",
-		"uploads/laporan70",
-		"uploads/laporan100",
-	}
-
-	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0750); err != nil {
-			return fmt.Errorf("error creating directory %s: %v", dir, err)
-		}
-	}
-	return nil
-}
-
 // SaveUploadedFile handles the complete process of saving an uploaded file securely
 func SaveUploadedFile(file io.Reader, handler *multipart.FileHeader, uploadDir, filename string) (string, error) {
+	// Validate file size first
+	if handler.Size > MaxFileSize {
+		return "", fmt.Errorf("file terlalu besar. Maksimal ukuran file adalah 15MB")
+	}
+	if handler.Size < MinFileSize {
+		return "", fmt.Errorf("file terlalu kecil. Minimal ukuran file adalah 1KB")
+	}
+
 	// Create directory if it doesn't exist
 	if err := os.MkdirAll(uploadDir, 0750); err != nil {
 		return "", fmt.Errorf("error creating upload directory: %v", err)
@@ -134,40 +124,35 @@ func SaveUploadedFile(file io.Reader, handler *multipart.FileHeader, uploadDir, 
 	}
 	defer dst.Close()
 
-	// Copy the uploaded file with additional validation
+	// Use LimitReader to ensure we don't exceed MaxFileSize during copy
 	written, err := io.Copy(dst, io.LimitReader(file, MaxFileSize))
 	if err != nil {
 		os.Remove(filePath) // Clean up on error
 		return "", fmt.Errorf("error saving file: %v", err)
 	}
+
+	// Double check the written size
 	if written > MaxFileSize {
 		os.Remove(filePath) // Clean up on error
-		return "", fmt.Errorf("file too large")
+		return "", fmt.Errorf("file terlalu besar. Maksimal ukuran file adalah 15MB")
 	}
 
 	return filePath, nil
 }
 
-// LargeFileUploadMiddleware handles large file uploads
-func LargeFileUploadMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Only apply to upload endpoints
-		if strings.Contains(r.URL.Path, "/upload/") {
-			// Set response headers
-			w.Header().Set("Content-Type", "application/json")
+// EnsureUploadDir creates all required upload directories
+func EnsureUploadDir() error {
+	dirs := []string{
+		"uploads/icp",
+		"uploads/proposal",
+		"uploads/laporan70",
+		"uploads/laporan100",
+	}
 
-			// Set max body size to 15MB
-			r.Body = http.MaxBytesReader(w, r.Body, MaxFileSize)
-
-			// Check content length if provided
-			if r.ContentLength > MaxFileSize {
-				json.NewEncoder(w).Encode(map[string]interface{}{
-					"status":  "error",
-					"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
-				})
-				return
-			}
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0750); err != nil {
+			return fmt.Errorf("error creating directory %s: %v", dir, err)
 		}
-		next.ServeHTTP(w, r)
-	})
+	}
+	return nil
 }
