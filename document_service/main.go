@@ -210,9 +210,12 @@ func main() {
 		Addr:         ":8082",
 		WriteTimeout: 30 * time.Second,
 		ReadTimeout:  30 * time.Second,
-		// Set maximum request size to match our file size limit
+		// Set maximum request size to match our file size limit (15MB)
 		MaxHeaderBytes: 1 << 20, // 1MB for headers
 	}
+
+	// Add middleware for handling large file uploads
+	r.Use(filemanager.LargeFileUploadMiddleware)
 
 	log.Fatal(srv.ListenAndServe())
 }

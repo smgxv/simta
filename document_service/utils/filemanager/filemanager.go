@@ -1,6 +1,7 @@
 package filemanager
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -145,4 +146,28 @@ func SaveUploadedFile(file io.Reader, handler *multipart.FileHeader, uploadDir, 
 	}
 
 	return filePath, nil
+}
+
+// LargeFileUploadMiddleware handles large file uploads
+func LargeFileUploadMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Only apply to upload endpoints
+		if strings.Contains(r.URL.Path, "/upload/") {
+			// Set response headers
+			w.Header().Set("Content-Type", "application/json")
+
+			// Set max body size to 15MB
+			r.Body = http.MaxBytesReader(w, r.Body, MaxFileSize)
+
+			// Check content length if provided
+			if r.ContentLength > MaxFileSize {
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"status":  "error",
+					"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+				})
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
