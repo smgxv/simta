@@ -1189,53 +1189,42 @@
 			document.getElementById('icpForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 				
-				// Validasi tipe file terlebih dahulu
-				const fileInput = document.querySelector('input[name="file"]');
-				const file = fileInput.files[0];
-				
-				if (file && !file.type.includes('pdf')) {
-					showAlert('Hanya file PDF yang diizinkan, mohon upload file dengan tipe PDF', 'danger');
-					return;
-				}
-				
-				// Tampilkan loading state
 				const submitButton = this.querySelector('button[type="submit"]');
-				submitButton.disabled = true;
-				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+				const formData = new FormData(this);
 				
 				try {
-					const formData = new FormData(this);
+					// Set loading state
+					submitButton.disabled = true;
+					submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 					
-					// Tambahkan user_id dari localStorage
-					const userId = localStorage.getItem('userId');
-					formData.append('user_id', userId);
+					// Tambahkan user_id
+					formData.append('user_id', localStorage.getItem('userId'));
 					
 					const response = await fetch('/api/document/upload/icp', {
 						method: 'POST',
 						body: formData
 					});
-					
-					const data = await response.json();
-					
-					if (response.ok) {
-						// Tampilkan pesan sukses
-						showAlert('ICP berhasil diunggah', 'success');
-						
-						// Reset form
-						this.reset();
-						document.querySelector('.custom-file-label').textContent = 'Choose file';
-						document.getElementById('selectedFileName').style.display = 'none';
-						
-						// Refresh tabel
-						loadICPData();
-					} else {
-						// Handle specific error messages
-						let errorMessage = data.message || 'Terjadi kesalahan saat mengunggah file';
-						if (errorMessage.includes('hanya file PDF yang diizinkan')) {
-							errorMessage = 'Hanya file PDF yang diizinkan. Silakan pilih file dengan format PDF.';
-						}
-						throw new Error(errorMessage);
+
+					// Handle specific error cases
+					if (response.status === 413) {
+						throw new Error('Ukuran file terlalu besar. Maksimal ukuran file adalah 15MB');
 					}
+
+					const data = await response.json().catch(() => {
+						throw new Error('Terjadi kesalahan pada server. Mohon coba lagi.');
+					});
+
+					if (!response.ok) {
+						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
+					}
+
+					// Success case
+					showAlert('ICP berhasil diunggah', 'success');
+					this.reset();
+					document.querySelector('.custom-file-label').textContent = 'Choose file';
+					document.getElementById('selectedFileName').style.display = 'none';
+					loadICPData();
+
 				} catch (error) {
 					console.error('Error:', error);
 					showAlert(error.message, 'danger');
@@ -1246,7 +1235,7 @@
 				}
 			});
 
-			// Update event listener untuk file input untuk validasi real-time
+			// Update nama file saat file dipilih
 			document.querySelector('input[name="file"]').addEventListener('change', function(e) {
 				const file = e.target.files[0];
 				const fileName = file ? file.name : 'Choose file';
@@ -1254,16 +1243,6 @@
 				label.textContent = fileName;
 				
 				const selectedFileDiv = document.getElementById('selectedFileName');
-				
-				// Validasi tipe file
-				if (file && !file.type.includes('pdf')) {
-					showAlert('Hanya file PDF yang diizinkan, mohon upload file dengan tipe PDF', 'danger');
-					this.value = ''; // Reset file input
-					label.textContent = 'Choose file';
-					selectedFileDiv.style.display = 'none';
-					return;
-				}
-				
 				if (file) {
 					selectedFileDiv.textContent = 'File terpilih: ' + fileName;
 					selectedFileDiv.style.display = 'block';
