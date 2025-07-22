@@ -1189,6 +1189,15 @@
 			document.getElementById('icpForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 				
+				// Validasi tipe file terlebih dahulu
+				const fileInput = document.querySelector('input[name="file"]');
+				const file = fileInput.files[0];
+				
+				if (file && !file.type.includes('pdf')) {
+					showAlert('Hanya file PDF yang diizinkan, mohon upload file dengan tipe PDF', 'danger');
+					return;
+				}
+				
 				// Tampilkan loading state
 				const submitButton = this.querySelector('button[type="submit"]');
 				submitButton.disabled = true;
@@ -1200,11 +1209,6 @@
 					// Tambahkan user_id dari localStorage
 					const userId = localStorage.getItem('userId');
 					formData.append('user_id', userId);
-					
-					// Log FormData untuk debugging
-					for (let pair of formData.entries()) {
-						console.log(pair[0] + ': ' + pair[1]);
-					}
 					
 					const response = await fetch('/api/document/upload/icp', {
 						method: 'POST',
@@ -1222,22 +1226,49 @@
 						document.querySelector('.custom-file-label').textContent = 'Choose file';
 						document.getElementById('selectedFileName').style.display = 'none';
 						
-						// Refresh tabel jika ada
-						if (typeof refreshTable === 'function') {
-							refreshTable();
-						}
-
-						loadICPData(); // Refresh tabel
+						// Refresh tabel
+						loadICPData();
 					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
+						// Handle specific error messages
+						let errorMessage = data.message || 'Terjadi kesalahan saat mengunggah file';
+						if (errorMessage.includes('hanya file PDF yang diizinkan')) {
+							errorMessage = 'Hanya file PDF yang diizinkan. Silakan pilih file dengan format PDF.';
+						}
+						throw new Error(errorMessage);
 					}
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
+					showAlert(error.message, 'danger');
 				} finally {
 					// Reset button state
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Tambah ICP';
+				}
+			});
+
+			// Update event listener untuk file input untuk validasi real-time
+			document.querySelector('input[name="file"]').addEventListener('change', function(e) {
+				const file = e.target.files[0];
+				const fileName = file ? file.name : 'Choose file';
+				const label = document.querySelector('.custom-file-label');
+				label.textContent = fileName;
+				
+				const selectedFileDiv = document.getElementById('selectedFileName');
+				
+				// Validasi tipe file
+				if (file && !file.type.includes('pdf')) {
+					showAlert('Hanya file PDF yang diizinkan, mohon upload file dengan tipe PDF', 'danger');
+					this.value = ''; // Reset file input
+					label.textContent = 'Choose file';
+					selectedFileDiv.style.display = 'none';
+					return;
+				}
+				
+				if (file) {
+					selectedFileDiv.textContent = 'File terpilih: ' + fileName;
+					selectedFileDiv.style.display = 'block';
+				} else {
+					selectedFileDiv.style.display = 'none';
 				}
 			});
 
@@ -1291,15 +1322,50 @@
 				const alertContainer = document.getElementById('alertContainer');
 				const alertMessage = document.getElementById('alertMessage');
 				
+				// Pastikan container dan message element ada
+				if (!alertContainer || !alertMessage) {
+					console.error('Alert elements not found');
+					return;
+				}
+
+				// Set class dan pesan
 				alertMessage.className = `alert alert-${type}`;
 				alertMessage.textContent = message;
+				
+				// Tampilkan alert
 				alertContainer.style.display = 'block';
+				
+				// Scroll ke atas agar alert terlihat
+				window.scrollTo({ top: 0, behavior: 'smooth' });
 				
 				// Sembunyikan alert setelah 5 detik
 				setTimeout(() => {
 					alertContainer.style.display = 'none';
 				}, 5000);
 			}
+
+			// Pastikan container alert ada di bagian atas halaman
+			document.addEventListener('DOMContentLoaded', function() {
+				// Cek apakah container alert sudah ada
+				let alertContainer = document.getElementById('alertContainer');
+				if (!alertContainer) {
+					// Jika belum ada, buat container baru
+					alertContainer = document.createElement('div');
+					alertContainer.id = 'alertContainer';
+					alertContainer.className = 'alert-wrapper';
+					alertContainer.style.display = 'none';
+					
+					const alertMessage = document.createElement('div');
+					alertMessage.id = 'alertMessage';
+					alertMessage.className = 'alert';
+					alertMessage.setAttribute('role', 'alert');
+					
+					alertContainer.appendChild(alertMessage);
+					
+					// Tambahkan ke awal body
+					document.body.insertBefore(alertContainer, document.body.firstChild);
+				}
+			});
 
 			// Fungsi untuk mengisi jurusan dan kelas dari taruna
 			async function isiJurusanDanKelasDariTarunaRevisiICP() {
