@@ -1203,7 +1203,16 @@
 						body: formData
 					});
 
-					const data = await response.json();
+					let data;
+					try {
+						data = await response.json();
+					} catch (error) {
+						// Jika response bukan JSON, ambil text responsenya
+						const textResponse = await response.text();
+						showAlert(textResponse || 'Terjadi kesalahan pada server', 'danger');
+						return;
+					}
+
 					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
 					
 					if (data.status === 'success') {
@@ -1212,6 +1221,8 @@
 						document.getElementById('selectedFileName').style.display = 'none';
 						loadICPData();
 					}
+				} catch (error) {
+					showAlert('Terjadi kesalahan pada server. Mohon coba lagi.', 'danger');
 				} finally {
 					// Reset button state
 					submitButton.disabled = false;
