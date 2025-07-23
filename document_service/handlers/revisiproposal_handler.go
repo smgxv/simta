@@ -70,7 +70,7 @@ func UploadRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	file.Seek(0, 0) // Reset reader
 
-	filename := fmt.Sprintf("FINAL_PROPOSAL_%s_%s_%s",
+	filename := fmt.Sprintf("REVISI_FINAL_PROPOSAL_%s_%s_%s",
 		userID,
 		time.Now().Format("20060102150405"),
 		filemanager.ValidateFileName(handler.Filename))

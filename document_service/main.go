@@ -119,7 +119,6 @@ func main() {
 	r.HandleFunc("/upload/reviewlaporan70/dosen", handlers.UploadDosenReviewLaporan70Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/updatelaporan70status", handlers.UpdateLaporan70StatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload/revisilaporan70/taruna", handlers.UploadTarunaRevisiLaporan70Handler).Methods("POST", "OPTIONS")
-	r.HandleFunc("/upload/reviewlaporan70", handlers.UploadReviewLaporan70Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/reviewlaporan70/taruna/list", handlers.GetRevisiLaporan70TarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewlaporan70/dosen/list", handlers.GetReviewLaporan70DosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewlaporan70/dosen/detail", handlers.GetReviewLaporan70DosenDetailHandler).Methods("GET", "OPTIONS")
@@ -133,7 +132,6 @@ func main() {
 	r.HandleFunc("/finallaporan70/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
 	// Register seminar proposal routes
-	r.HandleFunc("/upload/seminarlaporan70", handlers.UploadSeminarLaporan70Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/seminarlaporan70/dosen", handlers.GetSeminarLaporan70ByDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/seminarlaporan70/taruna/list", handlers.GetSeminarLaporan70TarunaListForDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/penilaian/laporan70", handlers.PenilaianLaporan70Handler).Methods("POST", "OPTIONS")

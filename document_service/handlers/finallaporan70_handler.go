@@ -6,10 +6,13 @@ import (
 	"document_service/entities"
 	"document_service/models"
 	"document_service/utils"
+	"document_service/utils/filemanager"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -26,16 +29,25 @@ func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20)
-	if err != nil {
+	// Cek ukuran total upload
+	if r.ContentLength > (2 * filemanager.MaxFileSize) {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
+			"message": "Ukuran total file terlalu besar. Maksimal 30MB",
 		})
 		return
 	}
 
-	// Ambil data form
+	err := r.ParseMultipartForm(2 * filemanager.MaxFileSize)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Gagal parsing form: " + err.Error(),
+		})
+		return
+	}
+
+	// Ambil field dari form
 	userID := r.FormValue("user_id")
 	namaLengkap := r.FormValue("nama_lengkap")
 	jurusan := r.FormValue("jurusan")
@@ -43,29 +55,75 @@ func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	// Validate required fields
 	if userID == "" || namaLengkap == "" || topikPenelitian == "" {
-		http.Error(w, "Missing required fields", http.StatusBadRequest)
-		return
-	}
-
-	// === Upload Final Laporan 70 ===
-	finalFilePath, err := utils.HandleFileUpload(r, "final_laporan70_file", userID, "FINAL_LAPORAN70")
-	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Gagal upload final laporan: " + err.Error(),
+			"message": "Field wajib tidak boleh kosong",
 		})
 		return
 	}
 
-	// === Upload Form Bimbingan ===
-	formBimbinganPath, err := utils.HandleFileUpload(r, "form_bimbingan_file", userID, "FORM_BIMBINGAN70")
+	// === Final Laporan 70 ===
+	file1, handler1, err := r.FormFile("final_laporan70_file")
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Gagal membaca file final laporan: " + err.Error(),
+		})
+		return
+	}
+	defer file1.Close()
+
+	if err := filemanager.ValidateFileType(file1, handler1.Filename); err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
+		})
+		return
+	}
+	file1.Seek(0, 0)
+
+	safeName1 := filemanager.ValidateFileName(handler1.Filename)
+	finalFilename := fmt.Sprintf("FINAL_LAPORAN70_%s_%s_%s", userID, time.Now().Format("20060102150405"), safeName1)
+	finalFilePath, err := filemanager.SaveUploadedFile(file1, handler1, "uploads/final_laporan70", finalFilename)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	// === Form Bimbingan ===
+	file2, handler2, err := r.FormFile("form_bimbingan_file")
 	if err != nil {
 		os.Remove(finalFilePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Gagal upload form bimbingan: " + err.Error(),
+			"message": "Gagal membaca file form bimbingan: " + err.Error(),
+		})
+		return
+	}
+	defer file2.Close()
+
+	if err := filemanager.ValidateFileType(file2, handler2.Filename); err != nil {
+		os.Remove(finalFilePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
+		})
+		return
+	}
+	file2.Seek(0, 0)
+
+	safeName2 := filemanager.ValidateFileName(handler2.Filename)
+	formBimbinganFilename := fmt.Sprintf("FORM_BIMBINGAN70_%s_%s_%s", userID, time.Now().Format("20060102150405"), safeName2)
+	formBimbinganPath, err := filemanager.SaveUploadedFile(file2, handler2, "uploads/form_bimbingan70", formBimbinganFilename)
+	if err != nil {
+		os.Remove(finalFilePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
 		})
 		return
 	}
@@ -83,8 +141,8 @@ func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	finalLaporan70Model := models.NewFinalLaporan70Model(db)
-	finalLaporan70 := &entities.FinalLaporan70{
+	finalLaporanModel := models.NewFinalLaporan70Model(db)
+	final := &entities.FinalLaporan70{
 		UserID:            utils.ParseInt(userID),
 		NamaLengkap:       namaLengkap,
 		Jurusan:           jurusan,
@@ -95,7 +153,7 @@ func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		Keterangan:        keterangan,
 	}
 
-	if err := finalLaporan70Model.Create(finalLaporan70); err != nil {
+	if err := finalLaporanModel.Create(final); err != nil {
 		os.Remove(finalFilePath)
 		os.Remove(formBimbinganPath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -109,7 +167,7 @@ func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		"status":  "success",
 		"message": "Final Laporan 70% dan Form Bimbingan berhasil diunggah",
 		"data": map[string]interface{}{
-			"id":                  finalLaporan70.ID,
+			"id":                  final.ID,
 			"file_path":           finalFilePath,
 			"form_bimbingan_path": formBimbinganPath,
 		},

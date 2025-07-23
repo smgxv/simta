@@ -6,9 +6,9 @@ import (
 	"document_service/entities"
 	"document_service/models"
 	"document_service/utils"
+	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,7 +19,6 @@ import (
 
 // Handler untuk mengupload final proposal
 func UploadRevisiLaporan70Handler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -30,16 +29,17 @@ func UploadRevisiLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
-		})
+	if r.ContentLength > filemanager.MaxFileSize {
+		http.Error(w, "Ukuran file terlalu besar. Maksimal 15MB", http.StatusRequestEntityTooLarge)
 		return
 	}
 
-	// Get form values
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
+	if err != nil {
+		http.Error(w, "Gagal parsing form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	userID := r.FormValue("user_id")
 	namaLengkap := r.FormValue("nama_lengkap")
 	jurusan := r.FormValue("jurusan")
@@ -47,74 +47,44 @@ func UploadRevisiLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	// Validate required fields
 	if userID == "" || namaLengkap == "" || topikPenelitian == "" {
-		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		http.Error(w, "Field user_id, nama_lengkap, dan topik_penelitian wajib diisi", http.StatusBadRequest)
 		return
 	}
 
-	// Handle file upload
+	// === Upload File Revisi Laporan 70 ===
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
-		})
+		http.Error(w, "Gagal membaca file: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
-	// Create upload directory if not exists
-	uploadDir := "uploads/finallaporan70"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error creating upload directory: " + err.Error(),
-		})
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	file.Seek(0, 0)
 
-	// Generate unique filename
-	filename := fmt.Sprintf("FINAL_LAPORAN70_%s_%s_%s",
-		userID,
-		time.Now().Format("20060102150405"),
-		handler.Filename)
-	filePath := filepath.Join(uploadDir, filename)
+	safeName := filemanager.ValidateFileName(handler.Filename)
+	filename := fmt.Sprintf("FINAL_LAPORAN70_%s_%s_%s", userID, time.Now().Format("20060102150405"), safeName)
 
-	// Create the file
-	dst, err := os.Create(filePath)
+	uploadDir := "uploads/revisifinallaporan70"
+	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error creating file: " + err.Error(),
-		})
-		return
-	}
-	defer dst.Close()
-
-	// Copy the uploaded file to the created file
-	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving file: " + err.Error(),
-		})
+		http.Error(w, "Gagal menyimpan file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Connect to database
+	// === Simpan ke database ===
 	db, err := config.GetDB()
 	if err != nil {
 		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error connecting to database: " + err.Error(),
-		})
+		http.Error(w, "Gagal koneksi ke database: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
-	// Create Final Proposal record
 	revisiLaporan70Model := models.NewRevisiLaporan70Model(db)
 	revisiLaporan70 := &entities.RevisiLaporan70{
 		UserID:          utils.ParseInt(userID),
@@ -128,10 +98,7 @@ func UploadRevisiLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 
 	if err := revisiLaporan70Model.Create(revisiLaporan70); err != nil {
 		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error saving to database: " + err.Error(),
-		})
+		http.Error(w, "Gagal menyimpan ke database: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
