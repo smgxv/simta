@@ -73,15 +73,6 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Validasi ukuran file
-	if handler.Size > filemanager.MaxFileSize {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Ukuran file melebihi batas maksimum 15MB",
-		})
-		return
-	}
-
 	// Validasi dan simpan file
 	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{

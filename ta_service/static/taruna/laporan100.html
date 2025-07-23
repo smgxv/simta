@@ -1232,56 +1232,44 @@
 			});
 
 			// Handle form submission untuk mengunggah Laporan100
-			document.getElementById('laporan100Form').addEventListener('submit', async function(e) {
+			document.getElementById('laporan100Form').addEventListener('submit', async function (e) {
 				e.preventDefault();
-				
-				// Tampilkan loading state
+
 				const submitButton = this.querySelector('button[type="submit"]');
 				submitButton.disabled = true;
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-				
+
 				try {
 					const formData = new FormData(this);
-					
-					// Tambahkan user_id dari localStorage
 					const userId = localStorage.getItem('userId');
 					formData.append('user_id', userId);
-					
-					// Log FormData untuk debugging
-					for (let pair of formData.entries()) {
-						console.log(pair[0] + ': ' + pair[1]);
-					}
-					
+
 					const response = await fetch('/api/document/upload/laporan100', {
 						method: 'POST',
 						body: formData
 					});
-					
-					const data = await response.json();
-					
-					if (response.ok) {
-						// Tampilkan pesan sukses
-						showAlert('Laporan 100% berhasil diunggah', 'success');
-						
-						// Reset form
+
+					let data;
+					try {
+						data = await response.json();
+					} catch {
+						const text = await response.text();
+						showAlert(text || 'Terjadi kesalahan pada server', 'danger');
+						return;
+					}
+
+					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
+
+					if (data.status === 'success') {
 						this.reset();
 						document.querySelector('.custom-file-label').textContent = 'Choose file';
 						document.getElementById('selectedFileName').style.display = 'none';
-						
-						// Refresh tabel jika ada
-						if (typeof refreshTable === 'function') {
-							refreshTable();
-						}
-
-						loadLaporan100Data(); // Refresh tabel
-					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
+						if (typeof loadLaporan100Data === 'function') loadLaporan100Data();
 					}
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
+				} catch (err) {
+					console.error(err);
+					showAlert('Terjadi kesalahan saat mengirim data', 'danger');
 				} finally {
-					// Reset button state
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Tambah Laporan 100%';
 				}
@@ -1446,104 +1434,63 @@
 			});
 
 			// Handle form submission untuk Final Laporan 100%
-			document.getElementById('finalLaporan100Form').addEventListener('submit', async function(e) {
-				e.preventDefault();
-				
-				// Tampilkan loading state
-				const submitButton = this.querySelector('button[type="submit"]');
-				submitButton.disabled = true;
-				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-				
-				try {
-					const formData = new FormData(this);
-					const userId = localStorage.getItem('userId');
-					const token = localStorage.getItem('token');
-					
-					if (!userId || !token) {
-						throw new Error('User ID atau token tidak ditemukan');
-					}
-					
-					// Ambil data taruna untuk mendapatkan nama lengkap
-					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-					
-					if (!tarunaResponse.ok) {
-						throw new Error('Gagal mengambil data taruna');
-					}
-					
-					const tarunaData = await tarunaResponse.json();
-					console.log('Response taruna data:', tarunaData);
+			document.getElementById('finalLaporan100Form').addEventListener('submit', async function (e) {
+	e.preventDefault();
 
-					if (tarunaData.status !== 'success' || !tarunaData.data || !Array.isArray(tarunaData.data)) {
-						console.error('Data taruna tidak valid:', tarunaData);
-						throw new Error('Data taruna tidak ditemukan');
-					}
+	const submitButton = this.querySelector('button[type="submit"]');
+	submitButton.disabled = true;
+	submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 
-					// Cari data taruna yang sesuai dengan user_id
-					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
-					console.log('Data taruna yang akan digunakan:', taruna);
+	try {
+		const formData = new FormData(this);
+		const userId = localStorage.getItem('userId');
+		const token = localStorage.getItem('token');
 
-					if (!taruna) {
-						console.error('Data taruna tidak ditemukan untuk user_id:', userId);
-						throw new Error('Data taruna tidak ditemukan untuk user ID ini');
-					}
+		if (!userId || !token) throw new Error('User ID atau token tidak ditemukan');
 
-					if (!taruna.nama_lengkap) {
-						console.error('Data taruna tidak memiliki nama lengkap:', taruna);
-						throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
-					}
-					
-					// Tambahkan user_id dan nama_lengkap ke formData
-					formData.append('user_id', userId);
-					formData.append('nama_lengkap', taruna.nama_lengkap);
-					
-					const response = await fetch('/api/document/finallaporan100/upload', {
-						method: 'POST',
-						body: formData
-					});
-					
-					const data = await response.json();
-					
-					if (response.ok && data.status === 'success') {
-						// Tampilkan pesan sukses
-						showAlert('Final Laporan 100% berhasil diunggah', 'success');
-						
-						// Reset form
-						this.reset();
-						document.querySelector('#finalLaporan100File').nextElementSibling.textContent = 'Choose file';
-						document.getElementById('finalSelectedFileName').style.display = 'none';
-						document.querySelector('#formBimbinganFile').nextElementSibling.textContent = 'Choose file';
-						document.getElementById('formBimbinganSelectedFileName').style.display = 'none';
-						
-						// Refresh data
-						loadFinalLaporan100Data();
-					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
-					}
-				} catch (error) {
-					console.error('Error saat upload final Laporan 100%:', error);
-					let errorMessage = 'Terjadi kesalahan pada server';
-					
-					if (error.message.includes('Data taruna tidak ditemukan untuk user ID ini')) {
-						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
-					} else if (error.message.includes('Data taruna tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
-					} else if (error.message.includes('nama lengkap tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak lengkap: nama lengkap belum diisi. Silakan lengkapi profil Anda terlebih dahulu.';
-					} else if (error.message.includes('Gagal mengambil data taruna')) {
-						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi atau hubungi administrator.';
-					}
-					
-					showAlert(errorMessage, 'danger');
-				} finally {
-					// Reset button state
-					submitButton.disabled = false;
-					submitButton.innerHTML = 'Upload Final Laporan 100%';
-				}
-			});
+		const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
+			headers: { 'Authorization': `Bearer ${token}` }
+		});
+		const tarunaData = await tarunaResponse.json();
+		const taruna = tarunaData.data?.find(t => t.user_id === parseInt(userId));
+
+		if (!taruna?.nama_lengkap) throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
+
+		formData.append('user_id', userId);
+		formData.append('nama_lengkap', taruna.nama_lengkap);
+
+		const response = await fetch('/api/document/finallaporan100/upload', {
+			method: 'POST',
+			body: formData
+		});
+
+		let data;
+		try {
+			data = await response.json();
+		} catch {
+			const text = await response.text();
+			showAlert(text || 'Terjadi kesalahan pada server', 'danger');
+			return;
+		}
+
+		showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
+
+		if (data.status === 'success') {
+			this.reset();
+			document.querySelector('#finalLaporan100File').nextElementSibling.textContent = 'Choose file';
+			document.getElementById('finalSelectedFileName').style.display = 'none';
+			document.querySelector('#formBimbinganFile').nextElementSibling.textContent = 'Choose file';
+			document.getElementById('formBimbinganSelectedFileName').style.display = 'none';
+			if (typeof loadFinalLaporan100Data === 'function') loadFinalLaporan100Data();
+		}
+	} catch (error) {
+		console.error(error);
+		showAlert(error.message || 'Terjadi kesalahan saat upload', 'danger');
+	} finally {
+		submitButton.disabled = false;
+		submitButton.innerHTML = 'Upload Final Laporan 100%';
+	}
+});
 
 			// Fungsi untuk memuat data Final Laporan 100%
 			async function loadFinalLaporan100Data() {
@@ -1733,7 +1680,7 @@
 				});
 			});
 
-			// Handle form submission
+			// Handle form submission untuk revisi laporan 100% 
 			document.getElementById('revisiLaporan100Form').addEventListener('submit', async function (e) {
 				e.preventDefault();
 
@@ -1746,77 +1693,46 @@
 					const userId = localStorage.getItem('userId');
 					const token = localStorage.getItem('token');
 
-					if (!userId || !token) {
-						throw new Error('User ID atau token tidak ditemukan');
-					}
+					if (!userId || !token) throw new Error('User ID atau token tidak ditemukan');
 
-					// Ambil data taruna
 					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
+						headers: { 'Authorization': `Bearer ${token}` }
 					});
-
-					if (!tarunaResponse.ok) {
-						throw new Error('Gagal mengambil data taruna');
-					}
-
 					const tarunaData = await tarunaResponse.json();
-					if (tarunaData.status !== 'success' || !Array.isArray(tarunaData.data)) {
-						throw new Error('Data taruna tidak valid');
-					}
+					const taruna = tarunaData.data?.find(t => t.user_id === parseInt(userId));
 
-					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
-					if (!taruna || !taruna.nama_lengkap) {
-						throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
-					}
+					if (!taruna?.nama_lengkap) throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
 
-					// Tambah ke formData
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
 					formData.append('jurusan', taruna.jurusan || '');
 					formData.append('kelas', taruna.kelas || '');
 
-					// Kirim request upload
 					const response = await fetch('/api/document/revisilaporan100/upload', {
 						method: 'POST',
 						body: formData
 					});
 
-					const data = await response.json();
+					let data;
+					try {
+						data = await response.json();
+					} catch {
+						const text = await response.text();
+						showAlert(text || 'Terjadi kesalahan saat upload', 'danger');
+						return;
+					}
 
-					if (response.ok && data.status === 'success') {
-						showAlert(data.message || 'Revisi Laporan 100% berhasil diunggah', 'success');
+					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
+
+					if (data.status === 'success') {
 						this.reset();
-
-						// Reset UI file label
 						document.querySelectorAll('.custom-file-label').forEach(label => label.textContent = 'Choose file');
 						document.querySelectorAll('[id$="Selected"]').forEach(div => div.style.display = 'none');
-
-						// Refresh data tabel
-						if (typeof loadRevisiLaporan100Data === 'function') {
-							loadRevisiLaporan100Data();
-						}
-					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat mengunggah file');
+						if (typeof loadRevisiLaporan100Data === 'function') loadRevisiLaporan100Data();
 					}
 				} catch (error) {
-					console.error('Error saat upload:', error);
-					let errorMessage = 'Terjadi kesalahan pada server';
-
-					if (error.message.includes('token')) {
-						errorMessage = 'Anda belum login. Silakan login kembali.';
-					} else if (error.message.includes('taruna tidak ditemukan untuk akun Anda')) {
-						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
-					} else if (error.message.includes('taruna tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
-					} else if (error.message.includes('nama lengkap tidak ditemukan')) {
-						errorMessage = 'Nama lengkap belum tersedia. Lengkapi profil Anda terlebih dahulu.';
-					} else if (error.message.includes('taruna tidak lengkap')) {
-						errorMessage = 'Profil taruna belum lengkap. Harap lengkapi terlebih dahulu.';
-					}
-
-					showAlert(errorMessage, 'danger');
+					console.error(error);
+					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
 				} finally {
 					submitButton.disabled = false;
 					submitButton.innerHTML = 'Upload Revisi Laporan 100%';
