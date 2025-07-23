@@ -18,7 +18,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// UploadLaporan100Handler digunakan untuk mengunggah laporan 70%
+// UploadLaporan100Handler digunakan untuk mengunggah laporan 100%
 func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
@@ -72,6 +72,15 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
+
+	// Validasi ukuran file
+	if handler.Size > filemanager.MaxFileSize {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Ukuran file melebihi batas maksimum 15MB",
+		})
+		return
+	}
 
 	// Validasi dan simpan file
 	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
@@ -142,7 +151,7 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetLaporan100Handler digunakan untuk mengambil Laporan 70% berdasarkan user_id
+// GetLaporan100Handler digunakan untuk mengambil Laporan 100% berdasarkan user_id
 func GetLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Content-Type", "application/json")
@@ -220,7 +229,7 @@ func GetLaporan100ByIDHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	laporan100ID := vars["id"]
 	if laporan100ID == "" {
-		http.Error(w, "Laporan 70% ID is required", http.StatusBadRequest)
+		http.Error(w, "Laporan 100% ID is required", http.StatusBadRequest)
 		return
 	}
 
@@ -252,7 +261,7 @@ func GetLaporan100ByIDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !authorized {
-		http.Error(w, "Unauthorized: You don't have access to this Laporan 70%", http.StatusForbidden)
+		http.Error(w, "Unauthorized: You don't have access to this Laporan 100%", http.StatusForbidden)
 		return
 	}
 

@@ -193,7 +193,6 @@ func main() {
 	//Repositori
 	r.HandleFunc("/tugasakhir/all", handlers.GetAllRevisiLaporan100WithTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/tugasakhir/status", handlers.UpdateRevisiLaporan100StatusHandler).Methods("POST", "OPTIONS")
-	// r.HandleFunc("/tugasakhir/download/{id}", handlers.DownloadRevisiLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/tugasakhir/detail/{id}", handlers.GetTugasAkhirDetailHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/revisilaporan100/download/{id}/{jenis}", handlers.DownloadRevisiFileHandler).Methods("GET", "OPTIONS")
 
