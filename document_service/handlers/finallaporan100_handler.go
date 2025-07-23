@@ -6,10 +6,13 @@ import (
 	"document_service/entities"
 	"document_service/models"
 	"document_service/utils"
+	"document_service/utils/filemanager"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -26,7 +29,15 @@ func UploadFinalLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if r.ContentLength > filemanager.MaxFileSize {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar. Maksimal 15MB",
+		})
+		return
+	}
+
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -35,7 +46,6 @@ func UploadFinalLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil data form
 	userID := r.FormValue("user_id")
 	namaLengkap := r.FormValue("nama_lengkap")
 	jurusan := r.FormValue("jurusan")
@@ -43,38 +53,78 @@ func UploadFinalLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	// Validasi
 	if userID == "" || namaLengkap == "" || topikPenelitian == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
 	// === Upload Final Laporan 100 ===
-	finalFilePath, err := utils.HandleFileUpload(r, "final_laporan100_file", userID, "FINAL_LAPORAN100")
+	finalFile, finalHeader, err := r.FormFile("final_laporan100_file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Gagal upload final laporan: " + err.Error(),
+			"message": "File final laporan tidak ditemukan: " + err.Error(),
+		})
+		return
+	}
+	defer finalFile.Close()
+
+	if err := filemanager.ValidateFileType(finalFile, finalHeader.Filename); err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
+		})
+		return
+	}
+	finalFile.Seek(0, 0)
+
+	finalName := fmt.Sprintf("FINAL_LAPORAN100_%s_%s_%s", userID, time.Now().Format("20060102150405"), filemanager.ValidateFileName(finalHeader.Filename))
+	finalPath, err := filemanager.SaveUploadedFile(finalFile, finalHeader, "uploads/finallaporan100", finalName)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Gagal menyimpan file final laporan: " + err.Error(),
 		})
 		return
 	}
 
 	// === Upload Form Bimbingan ===
-	formBimbinganPath, err := utils.HandleFileUpload(r, "form_bimbingan_file", userID, "FORM_BIMBINGAN100")
+	formFile, formHeader, err := r.FormFile("form_bimbingan_file")
 	if err != nil {
-		os.Remove(finalFilePath)
+		os.Remove(finalPath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Gagal upload form bimbingan: " + err.Error(),
+			"message": "File form bimbingan tidak ditemukan: " + err.Error(),
+		})
+		return
+	}
+	defer formFile.Close()
+
+	if err := filemanager.ValidateFileType(formFile, formHeader.Filename); err != nil {
+		os.Remove(finalPath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
+		})
+		return
+	}
+	formFile.Seek(0, 0)
+
+	formName := fmt.Sprintf("FORM_BIMBINGAN100_%s_%s_%s", userID, time.Now().Format("20060102150405"), filemanager.ValidateFileName(formHeader.Filename))
+	formPath, err := filemanager.SaveUploadedFile(formFile, formHeader, "uploads/finallaporan100", formName)
+	if err != nil {
+		os.Remove(finalPath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Gagal menyimpan file form bimbingan: " + err.Error(),
 		})
 		return
 	}
 
-	// === Simpan ke database ===
 	db, err := config.GetDB()
 	if err != nil {
-		os.Remove(finalFilePath)
-		os.Remove(formBimbinganPath)
+		os.Remove(finalPath)
+		os.Remove(formPath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Gagal koneksi database: " + err.Error(),
@@ -84,20 +134,20 @@ func UploadFinalLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	finalLaporan100Model := models.NewFinalLaporan100Model(db)
-	finalLaporan100 := &entities.FinalLaporan100{
+	finalLaporan := &entities.FinalLaporan100{
 		UserID:            utils.ParseInt(userID),
 		NamaLengkap:       namaLengkap,
 		Jurusan:           jurusan,
 		Kelas:             kelas,
 		TopikPenelitian:   topikPenelitian,
-		FilePath:          finalFilePath,
-		FormBimbinganPath: formBimbinganPath,
+		FilePath:          finalPath,
+		FormBimbinganPath: formPath,
 		Keterangan:        keterangan,
 	}
 
-	if err := finalLaporan100Model.Create(finalLaporan100); err != nil {
-		os.Remove(finalFilePath)
-		os.Remove(formBimbinganPath)
+	if err := finalLaporan100Model.Create(finalLaporan); err != nil {
+		os.Remove(finalPath)
+		os.Remove(formPath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Gagal menyimpan ke database: " + err.Error(),
@@ -109,9 +159,9 @@ func UploadFinalLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		"status":  "success",
 		"message": "Final Laporan 100% dan Form Bimbingan berhasil diunggah",
 		"data": map[string]interface{}{
-			"id":                  finalLaporan100.ID,
-			"file_path":           finalFilePath,
-			"form_bimbingan_path": formBimbinganPath,
+			"id":                  finalLaporan.ID,
+			"file_path":           finalPath,
+			"form_bimbingan_path": formPath,
 		},
 	})
 }

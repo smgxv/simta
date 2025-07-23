@@ -992,7 +992,14 @@
 					document.getElementById('abstrak-id').textContent = data.abstrak_id || '-';
 					document.getElementById('abstrak-en').textContent = data.abstrak_en || '-';
 					document.getElementById('kata-kunci').textContent = data.kata_kunci || '-';
-					document.getElementById('link-repo').textContent = data.link_repo || '-';
+					const linkRepoEl = document.getElementById('link-repo');
+					const repo = data.link_repo;
+
+					if (repo && repo.startsWith('http' || 'https')) {
+						linkRepoEl.innerHTML = `<a href="${repo}" target="_blank" rel="noopener noreferrer">${repo}</a>`;
+					} else {
+						linkRepoEl.textContent = '-';
+					}
 					
 					function renderDownloadButton(filePath, id, type) {
 						if (!filePath || filePath === "-") return '-';

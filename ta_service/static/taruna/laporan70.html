@@ -1272,9 +1272,21 @@
 				const alertContainer = document.getElementById('alertContainer');
 				const alertMessage = document.getElementById('alertMessage');
 				
+				// Pastikan container dan message element ada
+				if (!alertContainer || !alertMessage) {
+					console.error('Alert elements not found');
+					return;
+				}
+
+				// Set class dan pesan
 				alertMessage.className = `alert alert-${type}`;
 				alertMessage.textContent = message;
+				
+				// Tampilkan alert
 				alertContainer.style.display = 'block';
+				
+				// Scroll ke atas agar alert terlihat
+				window.scrollTo({ top: 0, behavior: 'smooth' });
 				
 				// Sembunyikan alert setelah 5 detik
 				setTimeout(() => {

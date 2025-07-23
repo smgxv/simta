@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// GetTugasAkhirDetailHandler digunakan untuk mengambil detail tugas akhir (untuk repositori admin)
 func GetTugasAkhirDetailHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")

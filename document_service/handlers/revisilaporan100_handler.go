@@ -6,9 +6,10 @@ import (
 	"document_service/entities"
 	"document_service/models"
 	"document_service/utils"
+	"document_service/utils/filemanager"
+	"document_service/utils/produkmanager"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -30,11 +31,11 @@ func UploadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(20 << 20) // 20 MB
+	err := r.ParseMultipartForm(produkmanager.MaxProdukSize)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error parsing form: " + err.Error(),
+			"message": "Form tidak valid atau file terlalu besar: " + err.Error(),
 		})
 		return
 	}
@@ -52,14 +53,13 @@ func UploadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	linkRepo := r.FormValue("link_repo")
 	keterangan := r.FormValue("keterangan")
 
-	// Validasi sederhana
 	if userID == "" || namaLengkap == "" || topikPenelitian == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
 	uploadDir := "uploads/finallaporan100"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil {
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "Gagal membuat direktori upload: " + err.Error(),
@@ -67,50 +67,100 @@ func UploadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ==== UPLOAD FILE UTAMA (PDF) ====
+	timestamp := time.Now().Format("20060102150405")
+
+	// === UPLOAD FILE UTAMA (PDF) ===
 	var filePath string
 	file, handler, err := r.FormFile("file_laporan")
 	if err == nil {
 		defer file.Close()
-		filename := fmt.Sprintf("FINAL_LAPORAN100_%s_%s_%s", userID, time.Now().Format("20060102150405"), handler.Filename)
-		filePath = filepath.Join(uploadDir, filename)
-		dst, err := os.Create(filePath)
-		if err != nil {
-			json.NewEncoder(w).Encode(map[string]interface{}{"status": "error", "message": "Gagal membuat file: " + err.Error()})
+
+		// Validasi file PDF
+		if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "error",
+				"message": err.Error(),
+			})
 			return
 		}
-		defer dst.Close()
-		io.Copy(dst, file)
+		file.Seek(0, 0)
+
+		safeName := filemanager.ValidateFileName(handler.Filename)
+		filename := fmt.Sprintf("FINAL_LAPORAN100_%s_%s_%s", userID, timestamp, safeName)
+
+		filePath, err = filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
+		if err != nil {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
 	}
 
-	// ==== UPLOAD FILE PRODUK TA ====
+	// === UPLOAD FILE PRODUK TA ===
 	var fileProdukPath string
 	produkFile, produkHandler, err := r.FormFile("file_produk_ta")
 	if err == nil {
 		defer produkFile.Close()
-		produkFilename := fmt.Sprintf("PRODUK_TA_%s_%s", userID, produkHandler.Filename)
-		fileProdukPath = filepath.Join(uploadDir, produkFilename)
-		dst, _ := os.Create(fileProdukPath)
-		defer dst.Close()
-		io.Copy(dst, produkFile)
+
+		if err := produkmanager.ValidateProdukFileType(produkHandler.Filename); err != nil {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
+		produkFile.Seek(0, 0)
+
+		safeName := filemanager.ValidateFileName(produkHandler.Filename)
+		produkFilename := fmt.Sprintf("PRODUK_TA_%s_%s_%s", userID, timestamp, safeName)
+
+		fileProdukPath, err = produkmanager.SaveProdukFile(produkFile, produkHandler, uploadDir, produkFilename)
+		if err != nil {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
 	}
 
-	// ==== UPLOAD FILE BAP ====
+	// === UPLOAD FILE BAP ===
 	var fileBapPath string
 	bapFile, bapHandler, err := r.FormFile("file_bap")
 	if err == nil {
 		defer bapFile.Close()
-		bapFilename := fmt.Sprintf("BAP_%s_%s", userID, bapHandler.Filename)
-		fileBapPath = filepath.Join(uploadDir, bapFilename)
-		dst, _ := os.Create(fileBapPath)
-		defer dst.Close()
-		io.Copy(dst, bapFile)
+
+		if err := filemanager.ValidateFileType(bapFile, bapHandler.Filename); err != nil {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
+		bapFile.Seek(0, 0)
+
+		safeName := filemanager.ValidateFileName(bapHandler.Filename)
+		bapFilename := fmt.Sprintf("BAP_%s_%s_%s", userID, timestamp, safeName)
+
+		fileBapPath, err = filemanager.SaveUploadedFile(bapFile, bapHandler, uploadDir, bapFilename)
+		if err != nil {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
 	}
 
-	// Simpan ke database
+	// === Simpan ke Database ===
 	db, err := config.GetDB()
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{"status": "error", "message": "Gagal koneksi database: " + err.Error()})
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Gagal koneksi database: " + err.Error(),
+		})
 		return
 	}
 	defer db.Close()
@@ -136,12 +186,11 @@ func UploadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	if err := model.Create(revisi); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Gagal menyimpan data ke database: " + err.Error(),
+			"message": "Gagal menyimpan ke database: " + err.Error(),
 		})
 		return
 	}
 
-	// Respon sukses
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": "Revisi laporan berhasil diunggah",

@@ -18,6 +18,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// UploadProposalHandler digunakan untuk mengunggah proposal
 func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")

@@ -5,10 +5,10 @@ import (
 	"document_service/config"
 	"document_service/entities"
 	"document_service/models"
+	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,84 +23,97 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	// Parse multipart form
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
-	if err != nil {
-		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+	// Validasi ukuran file total
+	if r.ContentLength > filemanager.MaxFileSize {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+		})
 		return
 	}
 
-	// Get form values
+	err := r.ParseMultipartForm(filemanager.MaxFileSize)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File terlalu besar atau format tidak sesuai: " + err.Error(),
+		})
+		return
+	}
+
+	// Ambil data dari form
 	userID := r.FormValue("user_id")
 	dosenID := r.FormValue("dosen_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
 	if dosenID == "" || dosenID == "0" {
-		http.Error(w, "Dosen pembimbing belum ditentukan", http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Dosen pembimbing belum ditentukan",
+		})
 		return
 	}
 
-	// Get the file from form
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, "Error retrieving file: "+err.Error(), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Gagal mengambil file: " + err.Error(),
+		})
 		return
 	}
 	defer file.Close()
 
-	// Create uploads directory if it doesn't exist
-	uploadDir := "uploads/laporan100"
-	if err := os.MkdirAll(uploadDir, 0777); err != nil { // Ubah permission ke 0777
-		http.Error(w, "Error creating upload directory: "+err.Error(), http.StatusInternalServerError)
+	// Validasi dan simpan file
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": err.Error(),
+		})
 		return
 	}
+	file.Seek(0, 0)
 
-	// Simpan file dengan nama asli
+	safeFilename := filemanager.ValidateFileName(handler.Filename)
 	filename := fmt.Sprintf("Laporan100_%s_%s_%s",
 		userID,
 		time.Now().Format("20060102150405"),
-		handler.Filename) // Gunakan nama asli file
+		safeFilename)
 
-	filePath := filepath.Join(uploadDir, filename)
-
-	// Log untuk debugging
-	log.Printf("Saving file to: %s", filePath)
-
-	// Create the file
-	dst, err := os.Create(filePath)
+	uploadDir := "uploads/laporan100"
+	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
-		http.Error(w, "Error creating file: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer dst.Close()
-
-	// Copy the uploaded file
-	if _, err := io.Copy(dst, file); err != nil {
-		http.Error(w, "Error saving file: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Gagal menyimpan file: " + err.Error(),
+		})
 		return
 	}
 
-	// Save to database
+	// Simpan ke database
 	db, err := config.GetDB()
 	if err != nil {
-		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Koneksi database gagal: " + err.Error(),
+		})
 		return
 	}
 	defer db.Close()
 
-	// Konversi string ke int
 	userIDInt, _ := strconv.Atoi(userID)
 	dosenIDInt, _ := strconv.Atoi(dosenID)
 
-	// Create ICP record
 	laporan100 := &entities.Laporan100{
 		UserID:          userIDInt,
 		DosenID:         dosenIDInt,
@@ -111,17 +124,18 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 
 	laporan100Model := models.NewLaporan100Model(db)
 	if err := laporan100Model.Create(laporan100); err != nil {
-		// If database insert fails, delete the uploaded file
 		os.Remove(filePath)
-		http.Error(w, "Error saving to database: "+err.Error(), http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Gagal menyimpan ke database: " + err.Error(),
+		})
 		return
 	}
 
-	// Send success response
-	w.Header().Set("Content-Type", "application/json")
+	// Berhasil
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Laporan 70% berhasil diunggah",
+		"message": "Laporan 100% berhasil diunggah",
 		"data": map[string]interface{}{
 			"file_path": filePath,
 		},
