@@ -207,18 +207,19 @@ func GetProposalHandler(w http.ResponseWriter, r *http.Request) {
 func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
-	// Direktori file proposal
-	baseDir := "uploads/proposal"
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-	// Ambil nama file dari query param, dan amankan dari path traversal
-	rawPath := r.URL.Query().Get("path")
-	if rawPath == "" {
+	baseDir := "uploads/proposal"
+	fileName := r.URL.Query().Get("path")
+	if fileName == "" {
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
 	}
-	safeFileName := filepath.Base(rawPath) // ← ini penting
-	joinedPath := filepath.Join(baseDir, safeFileName)
 
+	joinedPath := filepath.Join(baseDir, fileName)
 	absPath, err := filepath.Abs(joinedPath)
 	if err != nil {
 		http.Error(w, "Invalid file path", http.StatusBadRequest)
@@ -231,6 +232,7 @@ func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Buka file
 	file, err := os.Open(absPath)
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
@@ -238,13 +240,19 @@ func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Set header agar file dikenali browser
-	w.Header().Set("Content-Disposition", "attachment; filename="+safeFileName)
+	// Header download
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filepath.Base(fileName)))
 	w.Header().Set("Content-Type", "application/pdf")
+
+	// Kalau method HEAD, cukup kirim header saja
+	if r.Method == http.MethodHead {
+		return
+	}
 
 	_, err = io.Copy(w, file)
 	if err != nil {
 		http.Error(w, "Error downloading file", http.StatusInternalServerError)
+		return
 	}
 }
 
