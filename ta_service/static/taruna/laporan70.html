@@ -1562,6 +1562,8 @@
 								timeStyle: 'short'
 							});
 
+							const fileName = item.file_path ? item.file_path.split('/').pop() : '';
+
 							tableBody.innerHTML += `
 								<tr>
 									<td>${item.nama_dosen || '-'}</td>
@@ -1570,15 +1572,15 @@
 									<td>
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-											href="#" role="button" data-toggle="dropdown">
+												href="#" role="button" data-toggle="dropdown">
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												${item.file_path && item.file_path.startsWith('PENILAIAN_') ? `
-													<a class="dropdown-item" href="/api/document/penilaian/laporan70/download?path=${item.file_path}" target="_blank">
+												${fileName.startsWith('PENILAIAN_') ? `
+													<a class="dropdown-item" href="/api/document/penilaian/laporan70/download?path=${fileName}" target="_blank">
 														<i class="dw dw-eye"></i> Lihat Penilaian
 													</a>
-													<a class="dropdown-item" href="/api/document/penilaian/laporan70/download?path=${item.file_path}" download>
+													<a class="dropdown-item" href="/api/document/penilaian/laporan70/download?path=${fileName}" download>
 														<i class="dw dw-download"></i> Unduh Penilaian
 													</a>
 												` : `
@@ -1610,7 +1612,8 @@
 						`;
 					}
 				}
-			}		
+			}
+
 
 			// Panggil fungsi saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
