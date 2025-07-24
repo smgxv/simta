@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -198,52 +199,84 @@ func GetICPHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
+func DownloadFileICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
-	// Base direktori file yang diizinkan
-	baseDir := "uploads/icp" // sesuaikan dengan direktori
+	log.Println("🔽 [Download ICP] Mulai proses download")
 
-	// Ambil nama file dari query, bukan path langsung
-	fileName := r.URL.Query().Get("path")
-	if fileName == "" {
-		http.Error(w, "File name is required", http.StatusBadRequest)
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		log.Println("❌ [Download ICP] Metode HTTP tidak diizinkan:", r.Method)
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Gabungkan dan normalisasi path
-	combinedPath := filepath.Join(baseDir, fileName)
-	absPath, err := filepath.Abs(combinedPath)
-	if err != nil {
+	rawPath := r.URL.Query().Get("path")
+	log.Println("📝 [Download ICP] Parameter path =", rawPath)
+
+	if rawPath == "" {
+		log.Println("❌ [Download ICP] Parameter path kosong")
+		http.Error(w, "File path is required", http.StatusBadRequest)
+		return
+	}
+
+	// Cegah path traversal
+	if strings.Contains(rawPath, "..") || filepath.IsAbs(rawPath) {
+		log.Println("❌ [Download ICP] Terindikasi path traversal:", rawPath)
 		http.Error(w, "Invalid file path", http.StatusBadRequest)
 		return
 	}
 
-	// Pastikan path hasil gabungan tetap dalam baseDir
-	baseAbs, err := filepath.Abs(baseDir)
-	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
+	absFilePath, err := filepath.Abs(rawPath)
+	if err != nil {
+		log.Println("❌ [Download ICP] Gagal resolve abs path:", err)
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	baseDir := "uploads/icp"
+	absBaseDir, err := filepath.Abs(baseDir)
+	if err != nil {
+		log.Println("❌ [Download ICP] Gagal resolve absBaseDir:", err)
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("📁 [Download ICP] Absolute path file =", absFilePath)
+	log.Println("📁 [Download ICP] Base directory      =", absBaseDir)
+
+	if !strings.HasPrefix(absFilePath, absBaseDir) {
+		log.Println("❌ [Download ICP] Akses ke file di luar direktori yang diizinkan")
 		http.Error(w, "Unauthorized file path", http.StatusForbidden)
 		return
 	}
 
-	// Buka file secara aman
-	file, err := os.Open(absPath)
+	file, err := os.Open(absFilePath)
 	if err != nil {
+		log.Println("❌ [Download ICP] File tidak ditemukan:", absFilePath)
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
 	defer file.Close()
 
-	// Set header untuk download
-	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(fileName))
+	fileName := filepath.Base(rawPath)
+	log.Println("✅ [Download ICP] File ditemukan, mulai dikirim:", fileName)
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
 	w.Header().Set("Content-Type", "application/pdf")
 
-	// Salin file ke response
+	if r.Method == http.MethodHead {
+		log.Println("ℹ️ [Download ICP] HEAD request, hanya header dikirim")
+		return
+	}
+
 	_, err = io.Copy(w, file)
 	if err != nil {
+		log.Println("❌ [Download ICP] Gagal mengirim file:", err)
 		http.Error(w, "Error downloading file", http.StatusInternalServerError)
 		return
 	}
+
+	log.Println("✅ [Download ICP] File berhasil dikirim:", fileName)
 }
 
 func GetICPByIDHandler(w http.ResponseWriter, r *http.Request) {
