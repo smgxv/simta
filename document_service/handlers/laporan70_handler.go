@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -31,7 +32,6 @@ func UploadLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Batasi ukuran file maksimal
 	if r.ContentLength > filemanager.MaxFileSize {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -40,8 +40,7 @@ func UploadLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(filemanager.MaxFileSize)
-	if err != nil {
+	if err := r.ParseMultipartForm(filemanager.MaxFileSize); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
@@ -49,7 +48,6 @@ func UploadLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil form values
 	userID := r.FormValue("user_id")
 	dosenID := r.FormValue("dosen_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
@@ -63,7 +61,6 @@ func UploadLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil file dari form
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -74,7 +71,6 @@ func UploadLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Validasi ekstensi file
 	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -84,12 +80,24 @@ func UploadLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	file.Seek(0, 0)
 
-	// Buat nama file aman dan path upload
 	safeFilename := filemanager.ValidateFileName(handler.Filename)
-	filename := fmt.Sprintf("LAPORAN70_%s_%s_%s", userID, time.Now().Format("20060102150405"), safeFilename)
+	filename := fmt.Sprintf("LAPORAN70_%s_%s_%s",
+		userID,
+		time.Now().Format("20060102150405"),
+		safeFilename)
 	uploadDir := "uploads/laporan70"
 
-	// Simpan file
+	// ✅ Path traversal protection
+	absUploadDir, _ := filepath.Abs(uploadDir)
+	absFilePath, _ := filepath.Abs(filepath.Join(uploadDir, filename))
+	if !strings.HasPrefix(absFilePath, absUploadDir) {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File path tidak valid",
+		})
+		return
+	}
+
 	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -99,7 +107,6 @@ func UploadLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Simpan ke database
 	db, err := config.GetDB()
 	if err != nil {
 		os.Remove(filePath)
@@ -111,8 +118,25 @@ func UploadLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	userIDInt, _ := strconv.Atoi(userID)
-	dosenIDInt, _ := strconv.Atoi(dosenID)
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "User ID tidak valid",
+		})
+		return
+	}
+
+	dosenIDInt, err := strconv.Atoi(dosenID)
+	if err != nil {
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Dosen ID tidak valid",
+		})
+		return
+	}
 
 	laporan := &entities.Laporan70{
 		UserID:          userIDInt,
@@ -132,7 +156,6 @@ func UploadLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Sukses
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": "Laporan 70% berhasil diunggah",
@@ -177,25 +200,44 @@ func GetLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 func DownloadFileLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
-	filePath := r.URL.Query().Get("path")
-	if filePath == "" {
+	// Base direktori yang aman — GANTI sesuai struktur proyek kamu
+	baseDir := "uploads/laporan70"
+
+	// Ambil nama file dari query string (bukan path penuh)
+	fileName := r.URL.Query().Get("path")
+	if fileName == "" {
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
 	}
 
-	// Buka file
-	file, err := os.Open(filePath)
+	// Gabungkan dengan baseDir dan normalisasi path
+	joinedPath := filepath.Join(baseDir, fileName)
+	absPath, err := filepath.Abs(joinedPath)
+	if err != nil {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	// Pastikan file masih dalam direktori yang diizinkan
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
+		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+		return
+	}
+
+	// Buka file secara aman
+	file, err := os.Open(absPath)
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
 	defer file.Close()
 
-	// Set header untuk download
-	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(filePath))
+	// Set header download
+	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(fileName))
 	w.Header().Set("Content-Type", "application/pdf")
 
-	// Copy file ke response
+	// Kirim isi file ke response
 	_, err = io.Copy(w, file)
 	if err != nil {
 		http.Error(w, "Error downloading file", http.StatusInternalServerError)

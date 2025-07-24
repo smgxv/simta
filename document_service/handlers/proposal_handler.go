@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -31,7 +32,7 @@ func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check Content-Length
+	// Cek ukuran file
 	if r.ContentLength > filemanager.MaxFileSize {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -40,8 +41,7 @@ func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(filemanager.MaxFileSize)
-	if err != nil {
+	if err := r.ParseMultipartForm(filemanager.MaxFileSize); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
@@ -49,7 +49,7 @@ func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil form data
+	// Ambil data form
 	userID := r.FormValue("user_id")
 	dosenID := r.FormValue("dosen_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
@@ -63,7 +63,25 @@ func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil file dari form
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "User ID tidak valid",
+		})
+		return
+	}
+
+	dosenIDInt, err := strconv.Atoi(dosenID)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Dosen ID tidak valid",
+		})
+		return
+	}
+
+	// Ambil file
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -86,13 +104,25 @@ func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Buat nama file aman
 	safeFilename := filemanager.ValidateFileName(handler.Filename)
-	filename := fmt.Sprintf("PROPOSAL_%s_%s_%s",
-		userID,
+	filename := fmt.Sprintf("PROPOSAL_%d_%s_%s",
+		userIDInt,
 		time.Now().Format("20060102150405"),
 		safeFilename)
+
 	uploadDir := "uploads/proposal"
 
-	// Simpan file dengan validasi path & size
+	// Validasi path akhir agar tetap di dalam folder uploadDir
+	absUploadDir, _ := filepath.Abs(uploadDir)
+	absFilePath, _ := filepath.Abs(filepath.Join(uploadDir, filename))
+	if !strings.HasPrefix(absFilePath, absUploadDir) {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File path tidak valid",
+		})
+		return
+	}
+
+	// Simpan file
 	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -113,9 +143,6 @@ func UploadProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-
-	userIDInt, _ := strconv.Atoi(userID)
-	dosenIDInt, _ := strconv.Atoi(dosenID)
 
 	proposal := &entities.Proposal{
 		UserID:          userIDInt,
@@ -180,14 +207,33 @@ func GetProposalHandler(w http.ResponseWriter, r *http.Request) {
 func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
-	filePath := r.URL.Query().Get("path")
-	if filePath == "" {
+	// Direktori aman tempat file proposal disimpan
+	baseDir := "uploads/proposal" // Ganti sesuai struktur proyek kamu
+
+	// Ambil nama file (bukan path penuh) dari query string
+	fileName := r.URL.Query().Get("path")
+	if fileName == "" {
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
 	}
 
-	// Buka file
-	file, err := os.Open(filePath)
+	// Gabungkan dan normalisasi path
+	joinedPath := filepath.Join(baseDir, fileName)
+	absPath, err := filepath.Abs(joinedPath)
+	if err != nil {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	// Validasi bahwa path berada dalam direktori yang diizinkan
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
+		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+		return
+	}
+
+	// Buka file secara aman
+	file, err := os.Open(absPath)
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
@@ -195,10 +241,10 @@ func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	// Set header untuk download
-	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(filePath))
+	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(fileName))
 	w.Header().Set("Content-Type", "application/pdf")
 
-	// Copy file ke response
+	// Salin isi file ke response
 	_, err = io.Copy(w, file)
 	if err != nil {
 		http.Error(w, "Error downloading file", http.StatusInternalServerError)

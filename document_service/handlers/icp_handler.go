@@ -13,11 +13,13 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 )
 
+// UploadICPHandler digunakan untuk mengunggah ICP
 func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
@@ -30,7 +32,7 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check Content-Length header first if available
+	// Validasi ukuran file
 	if r.ContentLength > filemanager.MaxFileSize {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -39,9 +41,7 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse multipart form with size limit
-	err := r.ParseMultipartForm(filemanager.MaxFileSize)
-	if err != nil {
+	if err := r.ParseMultipartForm(filemanager.MaxFileSize); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
@@ -49,24 +49,24 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get form values
+	// Ambil form values
 	userID := r.FormValue("user_id")
 	dosenID := r.FormValue("dosen_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	// Get the file from form
+	// Ambil file dari form
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
-			"message": "Error mengambil file: " + err.Error(),
+			"message": "Gagal mengambil file: " + err.Error(),
 		})
 		return
 	}
 	defer file.Close()
 
-	// Validate file type
+	// Validasi tipe file
 	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -74,11 +74,9 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
-	// Reset file pointer after reading header
 	file.Seek(0, 0)
 
-	// Sanitize filename and create final filename
+	// Buat nama file yang aman
 	safeFilename := filemanager.ValidateFileName(handler.Filename)
 	filename := fmt.Sprintf("ICP_%s_%s_%s",
 		userID,
@@ -86,6 +84,19 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 		safeFilename)
 
 	uploadDir := "uploads/icp"
+
+	// Validasi path upload agar tidak keluar direktori
+	absUploadDir, _ := filepath.Abs(uploadDir)
+	absFilePath, _ := filepath.Abs(filepath.Join(uploadDir, filename))
+	if !strings.HasPrefix(absFilePath, absUploadDir) {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "File path tidak valid",
+		})
+		return
+	}
+
+	// Simpan file
 	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -95,20 +106,7 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Save to database
-	db, err := config.GetDB()
-	if err != nil {
-		// If database connection fails, delete the uploaded file
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Error koneksi database: " + err.Error(),
-		})
-		return
-	}
-	defer db.Close()
-
-	// Convert string to int
+	// Validasi ID numerik
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
 		os.Remove(filePath)
@@ -129,7 +127,19 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create ICP record
+	// Koneksi DB
+	db, err := config.GetDB()
+	if err != nil {
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Gagal koneksi database: " + err.Error(),
+		})
+		return
+	}
+	defer db.Close()
+
+	// Buat entitas ICP
 	icp := &entities.ICP{
 		UserID:          userIDInt,
 		DosenID:         dosenIDInt,
@@ -140,7 +150,6 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	icpModel := models.NewICPModel(db)
 	if err := icpModel.Create(icp); err != nil {
-		// If database insert fails, delete the uploaded file
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -149,7 +158,7 @@ func UploadICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Send success response
+	// Sukses
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": "ICP berhasil diunggah",
@@ -192,14 +201,33 @@ func GetICPHandler(w http.ResponseWriter, r *http.Request) {
 func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
-	filePath := r.URL.Query().Get("path")
-	if filePath == "" {
-		http.Error(w, "File path is required", http.StatusBadRequest)
+	// Base direktori file yang diizinkan
+	baseDir := "uploads/icp" // sesuaikan dengan direktori
+
+	// Ambil nama file dari query, bukan path langsung
+	fileName := r.URL.Query().Get("path")
+	if fileName == "" {
+		http.Error(w, "File name is required", http.StatusBadRequest)
 		return
 	}
 
-	// Buka file
-	file, err := os.Open(filePath)
+	// Gabungkan dan normalisasi path
+	combinedPath := filepath.Join(baseDir, fileName)
+	absPath, err := filepath.Abs(combinedPath)
+	if err != nil {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	// Pastikan path hasil gabungan tetap dalam baseDir
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
+		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+		return
+	}
+
+	// Buka file secara aman
+	file, err := os.Open(absPath)
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
@@ -207,10 +235,10 @@ func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	// Set header untuk download
-	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(filePath))
+	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(fileName))
 	w.Header().Set("Content-Type", "application/pdf")
 
-	// Copy file ke response
+	// Salin file ke response
 	_, err = io.Copy(w, file)
 	if err != nil {
 		http.Error(w, "Error downloading file", http.StatusInternalServerError)

@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -31,7 +32,6 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validasi ukuran file total
 	if r.ContentLength > filemanager.MaxFileSize {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -40,8 +40,7 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(filemanager.MaxFileSize)
-	if err != nil {
+	if err := r.ParseMultipartForm(filemanager.MaxFileSize); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": "File terlalu besar atau format tidak sesuai: " + err.Error(),
@@ -49,7 +48,6 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil data dari form
 	userID := r.FormValue("user_id")
 	dosenID := r.FormValue("dosen_id")
 	topikPenelitian := r.FormValue("topik_penelitian")
@@ -73,7 +71,6 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Validasi dan simpan file
 	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -84,12 +81,19 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	file.Seek(0, 0)
 
 	safeFilename := filemanager.ValidateFileName(handler.Filename)
-	filename := fmt.Sprintf("Laporan100_%s_%s_%s",
-		userID,
-		time.Now().Format("20060102150405"),
-		safeFilename)
+	filename := fmt.Sprintf("LAPORAN100_%s_%s_%s", userID, time.Now().Format("20060102150405"), safeFilename)
 
 	uploadDir := "uploads/laporan100"
+	absUploadDir, _ := filepath.Abs(uploadDir)
+	absFilePath, _ := filepath.Abs(filepath.Join(uploadDir, filename))
+	if !strings.HasPrefix(absFilePath, absUploadDir) {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Path file tidak valid",
+		})
+		return
+	}
+
 	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -99,7 +103,6 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Simpan ke database
 	db, err := config.GetDB()
 	if err != nil {
 		os.Remove(filePath)
@@ -111,10 +114,27 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	userIDInt, _ := strconv.Atoi(userID)
-	dosenIDInt, _ := strconv.Atoi(dosenID)
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "User ID tidak valid",
+		})
+		return
+	}
 
-	laporan100 := &entities.Laporan100{
+	dosenIDInt, err := strconv.Atoi(dosenID)
+	if err != nil {
+		os.Remove(filePath)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Dosen ID tidak valid",
+		})
+		return
+	}
+
+	laporan := &entities.Laporan100{
 		UserID:          userIDInt,
 		DosenID:         dosenIDInt,
 		TopikPenelitian: topikPenelitian,
@@ -122,8 +142,8 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		FilePath:        filePath,
 	}
 
-	laporan100Model := models.NewLaporan100Model(db)
-	if err := laporan100Model.Create(laporan100); err != nil {
+	model := models.NewLaporan100Model(db)
+	if err := model.Create(laporan); err != nil {
 		os.Remove(filePath)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
@@ -132,7 +152,6 @@ func UploadLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Berhasil
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
 		"message": "Laporan 100% berhasil diunggah",
@@ -177,14 +196,33 @@ func GetLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 func DownloadFileLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
-	filePath := r.URL.Query().Get("path")
-	if filePath == "" {
+	// Direktori aman tempat file disimpan
+	baseDir := "uploads/laporan100" // Ganti dengan direktori
+
+	// Ambil nama file (bukan path langsung) dari query
+	fileName := r.URL.Query().Get("path")
+	if fileName == "" {
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
 	}
 
+	// Gabungkan baseDir + fileName → lalu normalisasi path
+	joinedPath := filepath.Join(baseDir, fileName)
+	absPath, err := filepath.Abs(joinedPath)
+	if err != nil {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	// Validasi bahwa path tidak keluar dari direktori yang diizinkan
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
+		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+		return
+	}
+
 	// Buka file
-	file, err := os.Open(filePath)
+	file, err := os.Open(absPath)
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
@@ -192,10 +230,10 @@ func DownloadFileLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	// Set header untuk download
-	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(filePath))
+	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(fileName))
 	w.Header().Set("Content-Type", "application/pdf")
 
-	// Copy file ke response
+	// Kirim file ke response
 	_, err = io.Copy(w, file)
 	if err != nil {
 		http.Error(w, "Error downloading file", http.StatusInternalServerError)
