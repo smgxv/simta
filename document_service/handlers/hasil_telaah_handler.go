@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"document_service/config"
+	"document_service/utils"
 	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
@@ -159,7 +160,7 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
@@ -169,23 +170,24 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get user_id from query parameter
+	// Ambil user_id dari query parameter & sanitasi
 	userID := r.URL.Query().Get("user_id")
-	fmt.Printf("[Debug] Received request for user_id: %s\n", userID)
+	sanitizedUserID := utils.SanitizeLogInput(userID)
+	fmt.Printf("[Debug] Received request for user_id: %s\n", sanitizedUserID)
 
 	if userID == "" {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]interface{}{
 			"status":  "error",
 			"message": "User ID is required",
 		})
 		return
 	}
 
-	// Get database connection
+	// Ambil koneksi DB
 	db, err := config.GetDB()
 	if err != nil {
 		fmt.Printf("[Error] Database connection error: %v\n", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
 			"message": "Database error: " + err.Error(),
 		})
@@ -193,9 +195,9 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	fmt.Printf("[Debug] Found user_id: %d for user_id: %s\n", userID, userID)
+	fmt.Printf("[Debug] Preparing query for user_id: %s\n", sanitizedUserID)
 
-	// Query untuk mengambil data hasil telaah menggunakan taruna_id yang benar
+	// Query
 	query := `
 		SELECT ht.id, d.nama_lengkap, ht.topik_penelitian, ht.file_path, ht.tanggal_telaah
 		FROM hasil_telaah_icp ht
@@ -203,11 +205,10 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 		WHERE ht.user_id = ?
 		ORDER BY ht.tanggal_telaah DESC`
 
-	fmt.Printf("[Debug] Executing query with user_id: %d\n", userID)
 	rows, err := db.Query(query, userID)
 	if err != nil {
 		fmt.Printf("[Error] Query execution error: %v\n", err)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
 			"message": "Query error: " + err.Error(),
 		})
@@ -234,9 +235,9 @@ func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			result.ID, result.NamaDosen, result.TopikPenelitian)
 	}
 
-	fmt.Printf("[Debug] Found %d hasil telaah records\n", len(results))
+	fmt.Printf("[Debug] Found %d hasil telaah records for user_id: %s\n", len(results), sanitizedUserID)
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"status": "success",
 		"data":   results,
 	})

@@ -32,68 +32,146 @@ jobs:
 #       - name: Perform CodeQL Analysis
 #         uses: github/codeql-action/analyze@v3
 
-#   # 2. BUILD & PUSH DOCKER IMAGES
-#   build-image:
-#     name: Build Docker Images
-#     # needs: sast-codeql
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v4
+  build-ta-service:
+    # needs: running-tests
+    name: Build Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/ta-service
 
-#       - name: Build Docker Images
-#         run: |
-#           docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
-#           docker build -t smgxv/user-service -f user_service/Dockerfile user_service
-#           docker build -t smgxv/document-service -f document_service/Dockerfile document_service
-#           docker build -t smgxv/notification-service -f notification_service/Dockerfile notification_service
+  deploy-ta-service:
+    needs: build-ta-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop ta-service || true && docker rm ta-service || true
+            docker system prune -af
+            docker pull smgxv/ta-service
+            docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+            docker network connect simta_net ta-service
 
-#       - name: Login to DockerHub
-#         uses: docker/login-action@v3
-#         with:
-#           username: ${{ secrets.DOCKERHUB_USERNAME }}
-#           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-#       - name: Push Docker Images
-#         run: |
-#           docker push smgxv/ta-service
-#           docker push smgxv/user-service
-#           docker push smgxv/document-service
-#           docker push smgxv/notification-service
+  build-user-service:
+    # needs: running-tests
+    name: Build User Service Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/user-service -f user_service/Dockerfile user_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/user-service
 
-#   # 3. DEPLOY TO VPS (STAGING)
-#   deploy-staging:
-#     name: Deploy Semua Service ke VPS Local(Staging)
-#     needs: build-image
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Deploy Semua Service ke VPS Local(Staging)
-#         uses: appleboy/ssh-action@master
-#         with:
-#           host: ${{ secrets.VPS_HOST }}
-#           username: ${{ secrets.VPS_USERNAME }}
-#           password: ${{ secrets.VPS_PASSWORD }}
-#           port: ${{ secrets.VPS_PORT }}
-#           script: |
-#             docker stop ta-service || true && docker rm ta-service || true
-#             docker stop user-service || true && docker rm user-service || true
-#             docker stop document-service || true && docker rm document-service || true
-#             docker stop notification-service || true && docker rm notification-service || true
+  deploy-user-service:
+    needs: build-user-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy User Service to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop user-service || true && docker rm user-service || true
+            docker system prune -af
+            docker pull smgxv/user-service
+            docker run -d -p 8081:8081 --name user-service smgxv/user-service
+            docker network connect simta_net user-service
 
-#             docker pull smgxv/ta-service
-#             docker pull smgxv/user-service
-#             docker pull smgxv/document-service
-#             docker pull smgxv/notification-service
+  build-document-service:
+    # needs: running-tests
+    name: Build Document Service Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/document-service -f document_service/Dockerfile document_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/document-service
 
-#             docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
-#             docker run -d -p 8081:8081 --name user-service smgxv/user-service
-#             docker run -d -p 8082:8082 --name document-service smgxv/document-service
-#             docker run -d -p 8083:8083 --name notification-service smgxv/notification-service
+  deploy-document-service:
+    needs: build-document-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Document Service to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop document-service || true && docker rm document-service || true
+            docker system prune -af
+            docker pull smgxv/document-service
+            docker run -d -p 8082:8082 --name document-service smgxv/document-service
+            docker network connect simta_net document-service
 
-#             docker network connect simta_net ta-service || true
-#             docker network connect simta_net user-service || true
-#             docker network connect simta_net document-service || true
-#             docker network connect simta_net notification-service || true
+  build-notification-service:
+    # needs: running-tests
+    name: Build Notification Service Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/notification-service -f notification_service/Dockerfile notification_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/notification-service
+
+  deploy-notification-service:
+    needs: build-notification-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Notification Service to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop notification-service || true && docker rm notification-service || true
+            docker system prune -af
+            docker pull smgxv/notification-service
+            docker run -d -p 8083:8083 --name notification-service -v /home/youruser/uploads:/app/uploads smgxv/notification-service
+            docker network connect simta_net notification-service
 
   # 4. SAST - SONARCLOUD
   sast-analysis:

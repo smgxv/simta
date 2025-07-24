@@ -143,20 +143,17 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 
 // ... existing code ...
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	// Set header content type
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	// Ambil token dari localStorage atau sessionStorage
+	// Ambil token dari header / cookie
 	tokenString := r.Header.Get("Authorization")
 	if tokenString == "" {
-		// Jika tidak ada di header, coba ambil dari cookie
-		cookie, err := r.Cookie("token")
-		if err == nil {
+		if cookie, err := r.Cookie("token"); err == nil {
 			tokenString = cookie.Value
 		}
 	}
 
-	// Validasi token
+	// Validasi token & role
 	claims, err := utils.ParseJWT(tokenString)
 	if err != nil || strings.ToLower(claims.Role) != "admin" {
 		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
@@ -165,13 +162,13 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "GET" {
 		userID := r.URL.Query().Get("id")
+		safeUserID := utils.SanitizeLogInput(userID)
 
-		// Tambahkan timeout untuk request
 		client := &http.Client{
 			Timeout: 10 * time.Second,
 		}
 
-		apiURL := "http://104.43.89.154:8081/users/detail?id=" + userID
+		apiURL := "http://104.43.89.154:8081/users/detail?id=" + safeUserID
 		log.Printf("Mencoba mengakses API: %s", apiURL)
 
 		req, err := http.NewRequest("GET", apiURL, nil)
@@ -181,7 +178,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Pastikan token diteruskan dengan benar
+		// Tambahkan token ke header
 		if !strings.HasPrefix(tokenString, "Bearer ") {
 			tokenString = "Bearer " + tokenString
 		}
@@ -190,7 +187,6 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		resp, err := client.Do(req)
 		if err != nil {
 			log.Printf("Error mengakses API: %v", err)
-			// Tampilkan pesan error yang lebih informatif
 			if strings.Contains(err.Error(), "connection refused") {
 				http.Error(w, "API service tidak dapat diakses. Pastikan API service sudah berjalan di port 8081", http.StatusServiceUnavailable)
 			} else {
@@ -200,7 +196,6 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		}
 		defer resp.Body.Close()
 
-		// Baca response body
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			log.Printf("Error membaca response: %v", err)
@@ -208,8 +203,8 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Log response untuk debugging
-		log.Printf("API Response: %s", string(body))
+		// Log respons disanitasi (jika perlu, bisa dipangkas)
+		log.Printf("API Response (truncated): %.200s", utils.SanitizeLogInput(string(body)))
 
 		var user entities.User
 		if err := json.Unmarshal(body, &user); err != nil {
@@ -218,7 +213,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Parse template
+		// Parse dan tampilkan template
 		temp, err := template.ParseFiles("static/admin/deleteuser.html")
 		if err != nil {
 			log.Printf("Error parsing template: %v", err)

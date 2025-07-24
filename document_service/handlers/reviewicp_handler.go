@@ -5,6 +5,7 @@ import (
 	"document_service/config"
 	"document_service/entities"
 	"document_service/models"
+	"document_service/utils"
 	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
@@ -144,7 +145,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Cek Content-Length
 	if r.ContentLength > filemanager.MaxFileSize {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]interface{}{
 			"status":  "error",
 			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
 		})
@@ -153,7 +154,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseMultipartForm(filemanager.MaxFileSize)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]interface{}{
 			"status":  "error",
 			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
 		})
@@ -165,14 +166,15 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
+	// Logging aman (gunakan sanitasi)
 	log.Println("=== DATA DITERIMA FRONTEND ===")
-	log.Println("dosen_id:", dosenID)
-	log.Println("taruna_id:", tarunaID)
-	log.Println("topik_penelitian:", topikPenelitian)
-	log.Println("keterangan:", keterangan)
+	log.Println("dosen_id:", utils.SanitizeLogInput(dosenID))
+	log.Println("taruna_id:", utils.SanitizeLogInput(tarunaID))
+	log.Println("topik_penelitian:", utils.SanitizeLogInput(topikPenelitian))
+	log.Println("keterangan:", utils.SanitizeLogInput(keterangan))
 
 	if dosenID == "" || tarunaID == "" || topikPenelitian == "" {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]interface{}{
 			"status":  "error",
 			"message": "Missing required fields",
 		})
@@ -181,7 +183,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	db, err := config.GetDB()
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
 			"message": "Database error: " + err.Error(),
 		})
@@ -192,12 +194,13 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	var userID int
 	err = db.QueryRow("SELECT user_id FROM taruna WHERE id = ?", tarunaID).Scan(&userID)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusNotFound, map[string]interface{}{
 			"status":  "error",
 			"message": "Taruna tidak ditemukan berdasarkan taruna_id",
 		})
 		return
 	}
+
 	log.Println("user_id hasil lookup:", userID)
 
 	var icpID int
@@ -207,7 +210,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 		WHERE user_id = ? AND topik_penelitian = ?`,
 		userID, topikPenelitian).Scan(&icpID)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusNotFound, map[string]interface{}{
 			"status":  "error",
 			"message": "ICP tidak ditemukan: " + err.Error(),
 		})
@@ -216,7 +219,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]interface{}{
 			"status":  "error",
 			"message": "Gagal mengambil file: " + err.Error(),
 		})
@@ -224,9 +227,8 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Validasi file
 	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]interface{}{
 			"status":  "error",
 			"message": err.Error(),
 		})
@@ -236,14 +238,14 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	safeFilename := filemanager.ValidateFileName(handler.Filename)
 	filename := fmt.Sprintf("REVIEW_ICP_DOSEN_%s_%s_%s",
-		dosenID,
+		utils.SanitizeLogInput(dosenID),
 		time.Now().Format("20060102150405"),
 		safeFilename)
 	uploadDir := "uploads/reviewicp/dosen"
 
 	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
 			"message": err.Error(),
 		})
@@ -253,7 +255,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	tx, err := db.Begin()
 	if err != nil {
 		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
 			"message": "Gagal memulai transaksi: " + err.Error(),
 		})
@@ -264,7 +266,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
 			"message": "Gagal update status ICP: " + err.Error(),
 		})
@@ -296,7 +298,7 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
 			"message": "Gagal menyimpan review ICP: " + err.Error(),
 		})
@@ -306,14 +308,14 @@ func UploadDosenReviewICPHandler(w http.ResponseWriter, r *http.Request) {
 	if err := tx.Commit(); err != nil {
 		tx.Rollback()
 		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
 			"message": "Gagal commit transaksi: " + err.Error(),
 		})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"status":  "success",
 		"message": "Review ICP dosen berhasil diunggah dan status diperbarui",
 		"data": map[string]interface{}{
