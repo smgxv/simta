@@ -110,6 +110,7 @@ func main() {
 	// Laporan 70%
 	r.HandleFunc("/upload/laporan70", handlers.UploadLaporan70Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/laporan70", handlers.GetLaporan70Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/download/laporan70", handlers.DownloadFileLaporan70Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan70/{id}", handlers.GetLaporan70ByIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan70/edit", handlers.EditLaporan70Handler).Methods("PUT", "OPTIONS")
 
@@ -153,6 +154,7 @@ func main() {
 	// Laporan 100%
 	r.HandleFunc("/upload/laporan100", handlers.UploadLaporan100Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/laporan100", handlers.GetLaporan100Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/download/laporan100", handlers.DownloadFileLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan100/{id}", handlers.GetLaporan100ByIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan100/edit", handlers.EditLaporan100Handler).Methods("PUT", "OPTIONS")
 

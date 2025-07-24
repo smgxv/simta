@@ -200,17 +200,18 @@ func GetLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 func DownloadFileLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
-	// Base direktori yang aman — GANTI sesuai struktur proyek kamu
+	// Direktori file laporan 70
 	baseDir := "uploads/laporan70"
 
-	// Ambil nama file dari query string (bukan path penuh)
-	fileName := r.URL.Query().Get("path")
-	if fileName == "" {
+	// Ambil nama file dari query
+	rawPath := r.URL.Query().Get("path")
+	if rawPath == "" {
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
 	}
+	fileName := filepath.Base(rawPath) // Hanya ambil nama file-nya
 
-	// Gabungkan dengan baseDir dan normalisasi path
+	// Bangun path lengkap
 	joinedPath := filepath.Join(baseDir, fileName)
 	absPath, err := filepath.Abs(joinedPath)
 	if err != nil {
@@ -218,14 +219,14 @@ func DownloadFileLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Pastikan file masih dalam direktori yang diizinkan
+	// Pastikan masih dalam direktori yang diizinkan
 	baseAbs, err := filepath.Abs(baseDir)
 	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
 		http.Error(w, "Unauthorized file path", http.StatusForbidden)
 		return
 	}
 
-	// Buka file secara aman
+	// Buka file
 	file, err := os.Open(absPath)
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
@@ -233,11 +234,11 @@ func DownloadFileLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Set header download
-	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(fileName))
+	// Header download
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
 	w.Header().Set("Content-Type", "application/pdf")
 
-	// Kirim isi file ke response
+	// Kirim isi file
 	_, err = io.Copy(w, file)
 	if err != nil {
 		http.Error(w, "Error downloading file", http.StatusInternalServerError)
