@@ -212,21 +212,26 @@ func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	baseDir := "uploads/proposal"
 	rawPath := r.URL.Query().Get("path")
-	fileName := filepath.Base(rawPath) // hanya ambil nama file, buang folder
-	if fileName == "" {
+	if rawPath == "" {
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
 	}
 
-	joinedPath := filepath.Join(baseDir, fileName)
-	absPath, err := filepath.Abs(joinedPath)
+	// Cegah path traversal
+	if strings.Contains(rawPath, "..") || filepath.IsAbs(rawPath) {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	// Gabungkan base dir dan validasi path absolut
+	absPath, err := filepath.Abs(rawPath)
 	if err != nil {
 		http.Error(w, "Invalid file path", http.StatusBadRequest)
 		return
 	}
 
+	baseDir := "uploads/proposal"
 	baseAbs, err := filepath.Abs(baseDir)
 	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
 		http.Error(w, "Unauthorized file path", http.StatusForbidden)
@@ -241,15 +246,17 @@ func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Header download
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filepath.Base(fileName)))
-	w.Header().Set("Content-Type", "application/pdf")
+	// Set header agar browser mengunduh file dengan nama yang benar
+	filename := filepath.Base(rawPath)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	w.Header().Set("Content-Type", "application/pdf") // Jika yakin hanya PDF. Kalau bisa beda-beda, gunakan http.DetectContentType
 
-	// Kalau method HEAD, cukup kirim header saja
+	// Jika method HEAD, cukup kirim header saja
 	if r.Method == http.MethodHead {
 		return
 	}
 
+	// Kirim isi file ke client
 	_, err = io.Copy(w, file)
 	if err != nil {
 		http.Error(w, "Error downloading file", http.StatusInternalServerError)
