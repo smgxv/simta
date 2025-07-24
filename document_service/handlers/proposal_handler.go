@@ -213,7 +213,8 @@ func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	baseDir := "uploads/proposal"
-	fileName := r.URL.Query().Get("path")
+	rawPath := r.URL.Query().Get("path")
+	fileName := filepath.Base(rawPath) // hanya ambil nama file, buang folder
 	if fileName == "" {
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
