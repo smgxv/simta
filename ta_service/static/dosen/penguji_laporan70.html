@@ -847,12 +847,22 @@
 
 					tbody.innerHTML = '';
 
-					if (data.status === 'success' && data.data && data.data.length > 0) {
-						data.data.forEach(laporan70 => {
+					if (data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
+						data.data.forEach(item => {
+							const viewLink = item.file_path
+								? `<a class="dropdown-item" href="/api/document/download?path=${item.file_path}" target="_blank">
+										<i class="dw dw-eye"></i> View
+									</a>` : '';
+
+							const downloadLink = item.final_laporan70_id
+								? `<a class="dropdown-item" href="/api/document/finallaporan70/download/${item.final_laporan70_id}?type=laporan70" target="_blank">
+										<i class="dw dw-download"></i> Download
+									</a>` : `<span class="dropdown-item text-muted"><i class="dw dw-ban"></i> Tidak tersedia</span>`;
+
 							tbody.innerHTML += `
 								<tr>
-									<td>${laporan70.topik_penelitian || '-'}</td>
-									<td>${laporan70.taruna_nama || '-'}</td>
+									<td>${item.topik_penelitian || '-'}</td>
+									<td>${item.taruna_nama || '-'}</td>
 									<td>
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
@@ -860,12 +870,8 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/api/document/download?path=${laporan70.file_path}" target="_blank">
-													<i class="dw dw-eye"></i> View
-												</a>
-												<a class="dropdown-item" href="/api/document/finallaporan70/download/${laporan70.final_laporan70_id}?type=laporan70" target="_blank">
-													<i class="dw dw-download"></i> Download
-												</a>
+												${viewLink}
+												${downloadLink}
 											</div>
 										</div>
 									</td>
@@ -880,6 +886,7 @@
 					showAlert('Terjadi kesalahan saat memuat data Laporan 70%', 'danger');
 				}
 			}
+
 
 			// Fungsi untuk memuat data taruna
 			async function loadTarunaDropdown() {
