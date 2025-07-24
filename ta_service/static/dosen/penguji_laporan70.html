@@ -846,38 +846,33 @@
 
 					tbody.innerHTML = '';
 
-					if (data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
+					if (data.status === 'success' && data.data && data.data.length > 0) {
 						data.data.forEach(item => {
+							const finalLaporanId = item.final_laporan70_id;
+
+							const hasFinal = finalLaporanId && finalLaporanId > 0;
+
 							const row = document.createElement('tr');
 							row.innerHTML = `
 								<td>${item.topik_penelitian || '-'}</td>
 								<td>${item.taruna_nama || '-'}</td>
 								<td>
-									${item.final_laporan70_id > 0 ? `
+									${hasFinal ? `
 										<div class="dropdown">
-											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												href="#" role="button" data-toggle="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/api/document/finallaporan70/download/${item.final_laporan70_id}?type=form_bimbingan" download>
-													<i class="dw dw-download"></i> Download Form Bimbingan
-												</a>
-												<a class="dropdown-item" href="/api/document/finallaporan70/download/${item.final_laporan70_id}?type=laporan70" download>
+												<a class="dropdown-item" href="/api/document/finallaporan70/download/${finalLaporanId}?type=laporan70" download>
 													<i class="dw dw-download"></i> Download Final Laporan 70%
 												</a>
-												<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan70_id}, 'approved')">
-													<i class="dw dw-check"></i> Accept
-												</a>
-												<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan70_id}, 'rejected')">
-													<i class="dw dw-delete-3"></i> Reject
+												<a class="dropdown-item" href="/api/document/finallaporan70/download/${finalLaporanId}?type=form_bimbingan" download>
+													<i class="dw dw-download"></i> Download Form Bimbingan
 												</a>
 											</div>
 										</div>
 									` : `
-										<span class="dropdown-item text-muted">
-											<i class="dw dw-ban"></i> Tidak tersedia
-										</span>
+										<span class="text-muted"><i class="dw dw-ban"></i> Tidak tersedia</span>
 									`}
 								</td>
 							`;
@@ -888,9 +883,10 @@
 					}
 				} catch (error) {
 					console.error('Error loading laporan 70% data:', error);
-					showAlert('Terjadi kesalahan saat memuat data Laporan 70%', 'danger');
+					tbody.innerHTML = '<tr><td colspan="3" class="text-danger text-center">Terjadi kesalahan saat memuat data</td></tr>';
 				}
 			}
+
 
 
 
