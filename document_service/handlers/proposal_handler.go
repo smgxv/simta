@@ -216,17 +216,25 @@ func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	relativePath := r.URL.Query().Get("path")
-	log.Println("📝 [Download] Parameter path =", relativePath)
+	rawPath := r.URL.Query().Get("path")
+	log.Println("📝 [Download] Parameter path =", rawPath)
 
-	if relativePath == "" {
+	if rawPath == "" {
 		log.Println("❌ [Download] Parameter path kosong")
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
 	}
 
-	if strings.Contains(relativePath, "..") || filepath.IsAbs(relativePath) {
-		log.Println("❌ [Download] Terindikasi path traversal:", relativePath)
+	// Cegah path traversal
+	if strings.Contains(rawPath, "..") || filepath.IsAbs(rawPath) {
+		log.Println("❌ [Download] Terindikasi path traversal:", rawPath)
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	absFilePath, err := filepath.Abs(rawPath)
+	if err != nil {
+		log.Println("❌ [Download] Gagal resolve abs path:", err)
 		http.Error(w, "Invalid file path", http.StatusBadRequest)
 		return
 	}
@@ -239,14 +247,11 @@ func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileName := filepath.Base(relativePath)
-	fullPath := filepath.Join(baseDir, fileName)
-	absFilePath, err := filepath.Abs(fullPath)
-	log.Println("📁 [Download] Full path =", fullPath)
-	log.Println("📁 [Download] Absolute file path =", absFilePath)
+	log.Println("📁 [Download] Absolute path file =", absFilePath)
+	log.Println("📁 [Download] Base directory      =", absBaseDir)
 
-	if err != nil || !strings.HasPrefix(absFilePath, absBaseDir) {
-		log.Println("❌ [Download] Akses ditolak atau path tidak valid")
+	if !strings.HasPrefix(absFilePath, absBaseDir) {
+		log.Println("❌ [Download] Akses ke file di luar direktori yang diizinkan")
 		http.Error(w, "Unauthorized file path", http.StatusForbidden)
 		return
 	}
@@ -259,7 +264,8 @@ func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	log.Println("✅ [Download] File ditemukan, memulai pengiriman:", fileName)
+	fileName := filepath.Base(rawPath)
+	log.Println("✅ [Download] File ditemukan, mulai dikirim:", fileName)
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
 	w.Header().Set("Content-Type", "application/pdf")
