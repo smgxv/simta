@@ -831,7 +831,7 @@
 				try {
 					const dosenId = localStorage.getItem('dosenID');
 					if (!dosenId) {
-						console.error('Dosen ID not found');
+						console.error('Dosen ID tidak ditemukan');
 						return;
 					}
 
@@ -839,57 +839,41 @@
 					const data = await response.json();
 
 					const tbody = document.querySelector('.data-table tbody');
-					if (!tbody) {
-						console.error('Table body element not found');
-						return;
-					}
-
 					tbody.innerHTML = '';
 
-					if (data.status === 'success' && data.data && data.data.length > 0) {
+					if (data.status === 'success' && Array.isArray(data.data)) {
 						data.data.forEach(item => {
-							const finalLaporanId = item.final_laporan70_id;
-
-							const hasFinal = finalLaporanId && finalLaporanId > 0;
+							const finalId = item.final_laporan70_id;
 
 							const row = document.createElement('tr');
 							row.innerHTML = `
 								<td>${item.topik_penelitian || '-'}</td>
 								<td>${item.taruna_nama || '-'}</td>
 								<td>
-									${hasFinal ? `
+									${finalId && finalId > 0 ? `
 										<div class="dropdown">
-											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												href="#" role="button" data-toggle="dropdown">
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/api/document/finallaporan70/download/${finalLaporanId}?type=laporan70" download>
+												<a class="dropdown-item" href="/api/document/finallaporan70/dosen/download/${finalId}" download>
 													<i class="dw dw-download"></i> Download Final Laporan 70%
-												</a>
-												<a class="dropdown-item" href="/api/document/finallaporan70/download/${finalLaporanId}?type=form_bimbingan" download>
-													<i class="dw dw-download"></i> Download Form Bimbingan
 												</a>
 											</div>
 										</div>
-									` : `
-										<span class="text-muted"><i class="dw dw-ban"></i> Tidak tersedia</span>
-									`}
+									` : `<span class="text-muted"><i class="dw dw-ban"></i> Tidak tersedia</span>`}
 								</td>
 							`;
 							tbody.appendChild(row);
 						});
 					} else {
-						tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada data laporan 70%</td></tr>';
+						tbody.innerHTML = `<tr><td colspan="3" class="text-center">Data tidak ditemukan</td></tr>`;
 					}
-				} catch (error) {
-					console.error('Error loading laporan 70% data:', error);
-					tbody.innerHTML = '<tr><td colspan="3" class="text-danger text-center">Terjadi kesalahan saat memuat data</td></tr>';
+				} catch (err) {
+					console.error('Gagal memuat data:', err);
 				}
 			}
-
-
-
-
 
 			// Fungsi untuk memuat data taruna
 			async function loadTarunaDropdown() {

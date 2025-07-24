@@ -389,3 +389,53 @@ func DownloadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/pdf")
 	http.ServeFile(w, r, filePath)
 }
+
+func DownloadFinalLaporan70DosenHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Ambil final_laporan70_id dari parameter
+	vars := mux.Vars(r)
+	laporanID := vars["id"] // /finallaporan70/dosen/download/{id}
+
+	if laporanID == "" {
+		http.Error(w, "Parameter 'id' wajib disediakan", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.GetDB()
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	var filePath string
+	err = db.QueryRow("SELECT file_path FROM final_laporan70 WHERE id = ?", laporanID).Scan(&filePath)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "File tidak ditemukan", http.StatusNotFound)
+		} else {
+			http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		http.Error(w, "Gagal membuka file", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	fileName := filepath.Base(filePath)
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", "application/pdf")
+	http.ServeFile(w, r, filePath)
+}

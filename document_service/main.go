@@ -130,6 +130,7 @@ func main() {
 	// Final Laporan 70% routes
 	r.HandleFunc("/finallaporan70/upload", handlers.UploadFinalLaporan70Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/finallaporan70/download/{id}", handlers.DownloadFinalLaporan70Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finallaporan70/dosen/download/{id}", handlers.DownloadFinalLaporan70DosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finallaporan70/list", handlers.GetFinalLaporan70Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finallaporan70/all", handlers.GetAllFinalLaporan70WithTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finallaporan70/status", handlers.UpdateFinalLaporan70StatusHandler).Methods("POST", "OPTIONS")
