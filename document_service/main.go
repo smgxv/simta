@@ -66,6 +66,7 @@ func main() {
 	// Proposal routes
 	r.HandleFunc("/upload/proposal", handlers.UploadProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/proposal", handlers.GetProposalHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/download/proposal", handlers.DownloadFileProposalHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/proposal/{id}", handlers.GetProposalByIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/proposal/edit", handlers.EditProposalHandler).Methods("PUT", "OPTIONS")
 

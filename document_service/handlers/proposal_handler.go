@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -207,30 +208,81 @@ func GetProposalHandler(w http.ResponseWriter, r *http.Request) {
 func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
-	filePath := r.URL.Query().Get("path")
-	if filePath == "" {
+	log.Println("🔽 [Download] Mulai proses download")
+
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		log.Println("❌ [Download] Metode HTTP tidak diizinkan:", r.Method)
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	rawPath := r.URL.Query().Get("path")
+	log.Println("📝 [Download] Parameter path =", rawPath)
+
+	if rawPath == "" {
+		log.Println("❌ [Download] Parameter path kosong")
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
 	}
 
-	// Buka file
-	file, err := os.Open(filePath)
+	// Cegah path traversal
+	if strings.Contains(rawPath, "..") || filepath.IsAbs(rawPath) {
+		log.Println("❌ [Download] Terindikasi path traversal:", rawPath)
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	absFilePath, err := filepath.Abs(rawPath)
 	if err != nil {
+		log.Println("❌ [Download] Gagal resolve abs path:", err)
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	baseDir := "uploads/proposal"
+	absBaseDir, err := filepath.Abs(baseDir)
+	if err != nil {
+		log.Println("❌ [Download] Gagal resolve absBaseDir:", err)
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("📁 [Download] Absolute path file =", absFilePath)
+	log.Println("📁 [Download] Base directory      =", absBaseDir)
+
+	if !strings.HasPrefix(absFilePath, absBaseDir) {
+		log.Println("❌ [Download] Akses ke file di luar direktori yang diizinkan")
+		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+		return
+	}
+
+	file, err := os.Open(absFilePath)
+	if err != nil {
+		log.Println("❌ [Download] File tidak ditemukan:", absFilePath)
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
 	defer file.Close()
 
-	// Set header untuk download
-	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(filePath))
+	fileName := filepath.Base(rawPath)
+	log.Println("✅ [Download] File ditemukan, mulai dikirim:", fileName)
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
 	w.Header().Set("Content-Type", "application/pdf")
 
-	// Copy file ke response
+	if r.Method == http.MethodHead {
+		log.Println("ℹ️ [Download] HEAD request, hanya header dikirim")
+		return
+	}
+
 	_, err = io.Copy(w, file)
 	if err != nil {
+		log.Println("❌ [Download] Gagal mengirim file:", err)
 		http.Error(w, "Error downloading file", http.StatusInternalServerError)
 		return
 	}
+
+	log.Println("✅ [Download] File berhasil dikirim:", fileName)
 }
 
 func GetProposalByIDHandler(w http.ResponseWriter, r *http.Request) {
