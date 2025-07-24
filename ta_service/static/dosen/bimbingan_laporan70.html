@@ -741,7 +741,7 @@
 												<a class="dropdown-item reject-laporan70-btn" href="#" data-id="${laporan70.id}">
 													<i class="dw dw-delete-3"></i> Reject
 												</a>
-												<a class="dropdown-item" href="/api/document/download?path=${laporan70.file_path}" download>
+												<a class="dropdown-item" href="/api/document/download/laporan70?path=${laporan70.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -1014,7 +1014,7 @@
 													<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${review.id}, ${review.laporan70_id})">
 														<i class="dw dw-eye"></i> View Revisi
 													</a>
-													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" download>
+													<a class="dropdown-item" href="/api/document/download/reviewlaporan70/taruna?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Revisi
 													</a>
 													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.laporan70_id}, ${review.cycle_number || 0})">

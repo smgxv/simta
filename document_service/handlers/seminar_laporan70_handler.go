@@ -10,7 +10,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -320,6 +322,70 @@ func PenilaianLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 			"berita_acara_path": beritaPath,
 		},
 	})
+}
+
+// DownloadFilePenilaianLaporan70Handler digunakan untuk mengunduh file penilaian atau berita acara laporan 70%
+func DownloadFilePenilaianLaporan70Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Ambil nama file dari query
+	rawPath := r.URL.Query().Get("path")
+	if rawPath == "" {
+		http.Error(w, "Parameter 'path' wajib diisi", http.StatusBadRequest)
+		return
+	}
+
+	fileName := filepath.Base(rawPath) // Mencegah path traversal
+
+	// Tentukan direktori berdasarkan jenis file
+	var baseDir string
+	if strings.HasPrefix(fileName, "PENILAIAN_") {
+		baseDir = "uploads/penilaian_laporan70"
+	} else if strings.HasPrefix(fileName, "BERITAACARA_") {
+		baseDir = "uploads/berita_acara_laporan70"
+	} else {
+		http.Error(w, "Prefix nama file tidak valid", http.StatusForbidden)
+		return
+	}
+
+	// Bangun path absolut
+	joinedPath := filepath.Join(baseDir, fileName)
+	absPath, err := filepath.Abs(joinedPath)
+	if err != nil {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
+		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+		return
+	}
+
+	// Buka file
+	file, err := os.Open(absPath)
+	if err != nil {
+		http.Error(w, "File tidak ditemukan", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	// Set header untuk download
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", "application/pdf")
+
+	_, err = io.Copy(w, file)
+	if err != nil {
+		http.Error(w, "Gagal mengirim file", http.StatusInternalServerError)
+		return
+	}
 }
 
 // Helper function untuk menyimpan file

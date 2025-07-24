@@ -8,9 +8,12 @@ import (
 	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -283,6 +286,56 @@ func UploadDosenReviewLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// DownloadFileReviewDosenLaporan70Handler digunakan untuk mengunduh file review laporan 70% oleh dosen
+func DownloadFileReviewDosenLaporan70Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
+
+	// Direktori file review dosen
+	baseDir := "uploads/reviewlaporan70/dosen"
+
+	// Ambil path dari query
+	rawPath := r.URL.Query().Get("path")
+	if rawPath == "" {
+		http.Error(w, "File path is required", http.StatusBadRequest)
+		return
+	}
+	fileName := filepath.Base(rawPath) // Hindari traversal path
+
+	// Gabungkan path lengkap
+	joinedPath := filepath.Join(baseDir, fileName)
+	absPath, err := filepath.Abs(joinedPath)
+	if err != nil {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	// Validasi direktori target
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
+		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+		return
+	}
+
+	// Buka file
+	file, err := os.Open(absPath)
+	if err != nil {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	// Header untuk download
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", "application/pdf")
+
+	// Salin isi file ke response
+	_, err = io.Copy(w, file)
+	if err != nil {
+		http.Error(w, "Error downloading file", http.StatusInternalServerError)
+		return
+	}
+}
+
 // Handler untuk mengambil daftar review ICP dosen dari table review_icp_dosen
 func GetReviewLaporan70DosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
@@ -505,6 +558,56 @@ func UploadTarunaRevisiLaporan70Handler(w http.ResponseWriter, r *http.Request) 
 			"file_path": filePath,
 		},
 	})
+}
+
+// DownloadFileRevisiTarunaLaporan70Handler digunakan untuk mengunduh file revisi laporan 70% oleh taruna
+func DownloadFileRevisiTarunaLaporan70Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
+
+	// Direktori file revisi taruna
+	baseDir := "uploads/reviewlaporan70/taruna"
+
+	// Ambil nama file dari query
+	rawPath := r.URL.Query().Get("path")
+	if rawPath == "" {
+		http.Error(w, "File path is required", http.StatusBadRequest)
+		return
+	}
+	fileName := filepath.Base(rawPath) // Amankan dari path traversal
+
+	// Gabungkan path lengkap
+	joinedPath := filepath.Join(baseDir, fileName)
+	absPath, err := filepath.Abs(joinedPath)
+	if err != nil {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	// Validasi path tetap dalam baseDir
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
+		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+		return
+	}
+
+	// Buka file
+	file, err := os.Open(absPath)
+	if err != nil {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	// Header untuk download
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", "application/pdf")
+
+	// Salin isi file ke response
+	_, err = io.Copy(w, file)
+	if err != nil {
+		http.Error(w, "Error downloading file", http.StatusInternalServerError)
+		return
+	}
 }
 
 // Handler untuk mengambil daftar revisi ICP taruna dari table review_icp_taruna
