@@ -829,13 +829,12 @@
 			// Fungsi untuk memuat data laporan70
 			async function loadLaporan70Data() {
 				try {
-					const dosenId = localStorage.getItem('dosenID'); // Gunakan dosenID yang sudah di-map
+					const dosenId = localStorage.getItem('dosenID');
 					if (!dosenId) {
 						console.error('Dosen ID not found');
 						return;
 					}
 
-					console.log('Fetching Laporan 70% data for dosen:', dosenId);
 					const response = await fetch(`/api/document/seminarlaporan70/dosen?dosen_id=${dosenId}`);
 					const data = await response.json();
 
@@ -849,15 +848,7 @@
 
 					if (data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
 						data.data.forEach(item => {
-							const viewLink = item.file_path
-								? `<a class="dropdown-item" href="/api/document/download?path=${item.file_path}" target="_blank">
-										<i class="dw dw-eye"></i> View
-									</a>` : '';
-
-							const downloadLink = item.final_laporan70_id
-								? `<a class="dropdown-item" href="/api/document/finallaporan70/download/${item.final_laporan70_id}?type=laporan70" target="_blank">
-										<i class="dw dw-download"></i> Download
-									</a>` : `<span class="dropdown-item text-muted"><i class="dw dw-ban"></i> Tidak tersedia</span>`;
+							const hasFile = item.final_laporan70_id && item.file_path;
 
 							tbody.innerHTML += `
 								<tr>
@@ -870,8 +861,25 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												${viewLink}
-												${downloadLink}
+												${item.file_path ? `
+													<a class="dropdown-item" href="/api/document/download?path=${item.file_path}" target="_blank">
+														<i class="dw dw-eye"></i> View
+													</a>
+												` : `
+													<span class="dropdown-item text-muted">
+														<i class="dw dw-ban"></i> Tidak tersedia
+													</span>
+												`}
+												
+												${hasFile ? `
+													<a class="dropdown-item" href="/api/document/finallaporan70/download/${item.final_laporan70_id}?type=laporan70" download>
+														<i class="dw dw-download"></i> Download
+													</a>
+												` : `
+													<span class="dropdown-item text-muted">
+														<i class="dw dw-ban"></i> Tidak tersedia
+													</span>
+												`}
 											</div>
 										</div>
 									</td>
@@ -886,6 +894,7 @@
 					showAlert('Terjadi kesalahan saat memuat data Laporan 70%', 'danger');
 				}
 			}
+
 
 
 			// Fungsi untuk memuat data taruna
