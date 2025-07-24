@@ -207,32 +207,30 @@ func GetProposalHandler(w http.ResponseWriter, r *http.Request) {
 func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
-	// Direktori aman tempat file proposal disimpan
-	baseDir := "uploads/proposal" // Ganti sesuai struktur proyek kamu
+	// Direktori file proposal
+	baseDir := "uploads/proposal"
 
-	// Ambil nama file (bukan path penuh) dari query string
-	fileName := r.URL.Query().Get("path")
-	if fileName == "" {
+	// Ambil nama file dari query param, dan amankan dari path traversal
+	rawPath := r.URL.Query().Get("path")
+	if rawPath == "" {
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
 	}
+	safeFileName := filepath.Base(rawPath) // ← ini penting
+	joinedPath := filepath.Join(baseDir, safeFileName)
 
-	// Gabungkan dan normalisasi path
-	joinedPath := filepath.Join(baseDir, fileName)
 	absPath, err := filepath.Abs(joinedPath)
 	if err != nil {
 		http.Error(w, "Invalid file path", http.StatusBadRequest)
 		return
 	}
 
-	// Validasi bahwa path berada dalam direktori yang diizinkan
 	baseAbs, err := filepath.Abs(baseDir)
 	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
 		http.Error(w, "Unauthorized file path", http.StatusForbidden)
 		return
 	}
 
-	// Buka file secara aman
 	file, err := os.Open(absPath)
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
@@ -240,15 +238,13 @@ func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Set header untuk download
-	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(fileName))
+	// Set header agar file dikenali browser
+	w.Header().Set("Content-Disposition", "attachment; filename="+safeFileName)
 	w.Header().Set("Content-Type", "application/pdf")
 
-	// Salin isi file ke response
 	_, err = io.Copy(w, file)
 	if err != nil {
 		http.Error(w, "Error downloading file", http.StatusInternalServerError)
-		return
 	}
 }
 
