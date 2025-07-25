@@ -74,7 +74,7 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type FinalProposalData struct {
-		ProposalID      int    `json:"proposal_id"`
+		FinalProposalID int    `json:"final_proposal_id"`
 		UserID          int    `json:"user_id"`
 		TopikPenelitian string `json:"topik_penelitian"`
 		FilePath        string `json:"file_path"`
@@ -84,7 +84,7 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	var data []FinalProposalData
 	for rows.Next() {
 		var item FinalProposalData
-		err := rows.Scan(&item.ProposalID, &item.UserID, &item.TopikPenelitian, &item.FilePath, &item.TarunaNama)
+		err := rows.Scan(&item.FinalProposalID, &item.UserID, &item.TopikPenelitian, &item.FilePath, &item.TarunaNama)
 		if err != nil {
 			http.Error(w, "Error scanning data: "+err.Error(), http.StatusInternalServerError)
 			return

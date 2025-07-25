@@ -18,12 +18,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Laporan70Data struct {
-	FinalLaporan70ID int    `json:"final_laporan70_id"`
-	UserID           int    `json:"user_id"`
-	TopikPenelitian  string `json:"topik_penelitian"`
-	FilePath         string `json:"file_path"`
-	TarunaNama       string `json:"taruna_nama"`
+type HasilTelaahLaporan70 struct {
+	ID              int    `json:"id"`
+	NamaDosen       string `json:"nama_dosen"`
+	TopikPenelitian string `json:"topik_penelitian"`
+	FilePath        string `json:"file_path"`
+	SubmittedAt     string `json:"submitted_at"`
 }
 
 // GetSeminarLaporan70ByDosenHandler menangani request untuk mendapatkan data seminar laporan70 berdasarkan ID dosen
@@ -710,9 +710,9 @@ func GetCatatanPerbaikanTarunaLaporan70Handler(w http.ResponseWriter, r *http.Re
 	}
 	defer rows.Close()
 
-	var results []CatatanPerbaikan
+	var results []HasilTelaahLaporan70
 	for rows.Next() {
-		var c CatatanPerbaikan
+		var c HasilTelaahLaporan70
 		err := rows.Scan(&c.ID, &c.NamaDosen, &c.TopikPenelitian, &c.FilePath, &c.SubmittedAt)
 		if err != nil {
 			continue // skip baris yang gagal diparse
