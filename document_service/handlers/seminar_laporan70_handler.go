@@ -18,12 +18,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type CatatanPerbaikanLaporan70 struct {
-	ID              int    `json:"id"`
-	NamaDosen       string `json:"nama_dosen"`
-	TopikPenelitian string `json:"topik_penelitian"`
-	FilePath        string `json:"file_path"`
-	SubmittedAt     string `json:"submitted_at"`
+type Laporan70Data struct {
+	FinalLaporan70ID int    `json:"final_laporan70_id"`
+	UserID           int    `json:"user_id"`
+	TopikPenelitian  string `json:"topik_penelitian"`
+	FilePath         string `json:"file_path"`
+	TarunaNama       string `json:"taruna_nama"`
 }
 
 // GetSeminarLaporan70ByDosenHandler menangani request untuk mendapatkan data seminar laporan70 berdasarkan ID dosen
