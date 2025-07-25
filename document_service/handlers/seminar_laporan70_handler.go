@@ -73,17 +73,17 @@ func GetSeminarLaporan70ByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type Laporan70Data struct {
-		ID              int    `json:"id"`
-		UserID          int    `json:"user_id"`
-		TopikPenelitian string `json:"topik_penelitian"`
-		FilePath        string `json:"file_path"`
-		TarunaNama      string `json:"taruna_nama"`
+		FinalLaporan70ID int    `json:"final_laporan70_id"`
+		UserID           int    `json:"user_id"`
+		TopikPenelitian  string `json:"topik_penelitian"`
+		FilePath         string `json:"file_path"`
+		TarunaNama       string `json:"taruna_nama"`
 	}
 
 	var laporan70s []Laporan70Data
 	for rows.Next() {
 		var p Laporan70Data
-		err := rows.Scan(&p.ID, &p.UserID, &p.TopikPenelitian, &p.FilePath, &p.TarunaNama)
+		err := rows.Scan(&p.FinalLaporan70ID, &p.UserID, &p.TopikPenelitian, &p.FilePath, &p.TarunaNama)
 		if err != nil {
 			http.Error(w, "Error scanning rows: "+err.Error(), http.StatusInternalServerError)
 			return
