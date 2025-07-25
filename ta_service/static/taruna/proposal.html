@@ -968,7 +968,7 @@
 													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" target="_blank">
 														<i class="dw dw-eye"></i> View Review
 													</a>
-													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" download>
+													<a class="dropdown-item" href="/api/document/download/reviewproposal/dosen?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Review
 													</a>
 													<a class="dropdown-item" href="#" onclick="openUploadRevisionModal(${review.dosen_id}, '${review.topik_penelitian}')">
@@ -1586,6 +1586,8 @@
 								timeStyle: 'short'
 							});
 
+							const fileName = item.file_path ? item.file_path.split('/').pop() : '';
+
 							tableBody.innerHTML += `
 								<tr>
 									<td>${item.nama_dosen || '-'}</td>
@@ -1594,16 +1596,22 @@
 									<td>
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-											href="#" role="button" data-toggle="dropdown">
+												href="#" role="button" data-toggle="dropdown">
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/api/document/download?path=${item.file_path}" target="_blank">
-													<i class="dw dw-eye"></i> Lihat Catatan
-												</a>
-												<a class="dropdown-item" href="/api/document/download?path=${item.file_path}" download>
-													<i class="dw dw-download"></i> Unduh Catatan
-												</a>
+												${fileName.startsWith('PENILAIAN_') ? `
+													<a class="dropdown-item" href="/api/document/penilaian/proposal/download?path=${fileName}" target="_blank">
+														<i class="dw dw-eye"></i> Lihat Catatan
+													</a>
+													<a class="dropdown-item" href="/api/document/penilaian/proposal/download?path=${fileName}" download>
+														<i class="dw dw-download"></i> Unduh Catatan
+													</a>
+												` : `
+													<span class="dropdown-item text-muted">
+														<i class="dw dw-ban"></i> Tidak tersedia
+													</span>
+												`}
 											</div>
 										</div>
 									</td>

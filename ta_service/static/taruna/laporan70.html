@@ -723,11 +723,11 @@
 					</div>
 					<!-- Tabel Final Laporan 70% End -->
 
-					<!-- Tabel Catatan Perbaikan Dosen -->
+					<!-- Tabel Hasil Telaah Dosen -->
 					<div class="pd-20 card-box mb-30">
 						<div class="clearfix">
 							<div class="pull-left">
-								<h4 class="text-blue h4">Catatan Perbaikan Laporan 70%</h4>
+								<h4 class="text-blue h4">Hasil Telaah Laporan 70%</h4>
 							</div>
 						</div>
 						<div class="pb-20">
@@ -746,7 +746,7 @@
 							</table>
 						</div>
 					</div>
-					<!-- Tabel Catatan Perbaikan Dosen End -->
+					<!-- Tabel Hasil Telaah Dosen End -->
 					
 					<!-- Form Revisi Laporan 70% -->
 					<div class="pd-20 card-box mb-30">
@@ -1578,10 +1578,10 @@
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
 												${fileName.startsWith('PENILAIAN_') ? `
 													<a class="dropdown-item" href="/api/document/penilaian/laporan70/download?path=${fileName}" target="_blank">
-														<i class="dw dw-eye"></i> Lihat Penilaian
+														<i class="dw dw-eye"></i> Lihat Hasil telaah
 													</a>
 													<a class="dropdown-item" href="/api/document/penilaian/laporan70/download?path=${fileName}" download>
-														<i class="dw dw-download"></i> Unduh Penilaian
+														<i class="dw dw-download"></i> Unduh Hasil Telaah
 													</a>
 												` : `
 													<span class="dropdown-item text-muted">
@@ -1613,7 +1613,6 @@
 					}
 				}
 			}
-
 
 			// Panggil fungsi saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {

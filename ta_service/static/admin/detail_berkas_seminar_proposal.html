@@ -1074,7 +1074,7 @@
 						penilaianStatus.innerHTML = '<span class="badge-exists">Ada</span>';
 						if (penilaianDownload) {
 							penilaianDownload.style.display = 'inline-block';
-							penilaianDownload.href = `/api/document/download?path=${data.file_penilaian_path}`;
+							penilaianDownload.href = `/api/document/penilaian/proposal/download?path=${data.file_penilaian_path}`;
 						}
 					} else {
 						penilaianStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
@@ -1089,7 +1089,7 @@
 						beritaAcaraStatus.innerHTML = '<span class="badge-exists">Ada</span>';
 						if (beritaAcaraDownload) {
 							beritaAcaraDownload.style.display = 'inline-block';
-							beritaAcaraDownload.href = `/api/document/download?path=${data.file_berita_acara_path}`;
+							beritaAcaraDownload.href = `/api/document/penilaian/proposal/download?path=${data.file_berita_acara_path}`;
 						}
 					} else {
 						beritaAcaraStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';

@@ -64,8 +64,8 @@ func main() {
 	r.HandleFunc("/dosbingproposal", handlers.GetDosbingByUserID).Methods("GET", "OPTIONS")
 
 	// Proposal routes
-	r.HandleFunc("/upload/proposal", handlers.UploadProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/proposal", handlers.GetProposalHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/upload/proposal", handlers.UploadProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/download/proposal", handlers.DownloadFileProposalHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/proposal/{id}", handlers.GetProposalByIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/proposal/edit", handlers.EditProposalHandler).Methods("PUT", "OPTIONS")
@@ -75,8 +75,10 @@ func main() {
 	r.HandleFunc("/reviewproposal/dosen/list", handlers.GetReviewProposalDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewproposal/dosen/detail", handlers.GetReviewProposalDosenDetailHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/upload/reviewproposal/dosen", handlers.UploadDosenReviewProposalHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/download/reviewproposal/dosen", handlers.DownloadFileReviewDosenProposalHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/updateproposalstatus", handlers.UpdateProposalStatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload/revisiproposal/taruna", handlers.UploadTarunaRevisiProposalHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/download/reviewproposal/taruna", handlers.DownloadFileRevisiTarunaProposalHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewproposal/taruna/list", handlers.GetRevisiProposalTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewproposal/dosen/list", handlers.GetReviewProposalDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewproposal/dosen/detail", handlers.GetReviewProposalDosenDetailHandler).Methods("GET", "OPTIONS")
@@ -87,12 +89,14 @@ func main() {
 	r.HandleFunc("/finalproposal/all", handlers.GetAllFinalProposalWithTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finalproposal/status", handlers.UpdateFinalProposalStatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/finalproposal/download/{id}", handlers.DownloadFinalProposalHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finalproposal/dosen/download/{id}", handlers.DownloadFinalProposalDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finalproposal/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
 	// Register seminar proposal routes
 	r.HandleFunc("/seminarproposal/dosen", handlers.GetSeminarProposalByDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/seminarproposal/taruna/list", handlers.GetSeminarProposalTarunaListForDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/penilaian/proposal", handlers.PenilaianProposalHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/penilaian/proposal/download", handlers.DownloadFilePenilaianProposalHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/monitoring/penilaian_proposal", handlers.GetMonitoringPenilaianProposalHandler).Methods("GET", "OPTIONS")
 
 	// Detail Berkas Seminar Proposal routes
@@ -153,7 +157,6 @@ func main() {
 	r.HandleFunc("/revisilaporan70/list", handlers.GetRevisiLaporan70Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/revisilaporan70/all", handlers.GetAllRevisiLaporan70WithTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/revisilaporan70/status", handlers.UpdateRevisiLaporan70StatusHandler).Methods("POST", "OPTIONS")
-	// r.HandleFunc("/revisilaporan70/download/{id}", handlers.DownloadRevisiLaporan70Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/revisilaporan70/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
 	// Laporan 100%
