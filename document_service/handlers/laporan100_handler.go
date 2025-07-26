@@ -192,22 +192,22 @@ func GetLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// DownloadFileLaporan100Handler digunakan untuk mengunduh file proposal
+// DownloadFileLaporan100Handler digunakan untuk mengunduh file laporan 100
 func DownloadFileLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
-	// Direktori tempat file Laporan 100% disimpan
+	// Direktori file laporan 70
 	baseDir := "uploads/laporan100"
 
-	// Ambil parameter "path" dan amankan nama file-nya
+	// Ambil nama file dari query
 	rawPath := r.URL.Query().Get("path")
 	if rawPath == "" {
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
 	}
-	fileName := filepath.Base(rawPath)
+	fileName := filepath.Base(rawPath) // Hanya ambil nama file-nya
 
-	// Bangun path absolut dan validasi lokasi file
+	// Bangun path lengkap
 	joinedPath := filepath.Join(baseDir, fileName)
 	absPath, err := filepath.Abs(joinedPath)
 	if err != nil {
@@ -215,6 +215,7 @@ func DownloadFileLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Pastikan masih dalam direktori yang diizinkan
 	baseAbs, err := filepath.Abs(baseDir)
 	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
 		http.Error(w, "Unauthorized file path", http.StatusForbidden)

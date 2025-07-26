@@ -1784,15 +1784,15 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/api/document/revisilaporan100/download?path=${row.file_path}" download>
+												<a class="dropdown-item" href="/api/document/revisilaporan100/download/${row.id}?type=form_bimbingan" download>
 													<i class="dw dw-download"></i> Download Laporan
 												</a>
 												${row.file_produk_path ? `
-													<a class="dropdown-item" href="/api/document/download?path=${row.file_produk_path}" download>
+													<a class="dropdown-item" href="/api/document/revisilaporan100/download?path=${row.file_produk_path}" download>
 														<i class="dw dw-download"></i> Download Produk TA
 													</a>` : ''}
 												${row.file_bap_path ? `
-													<a class="dropdown-item" href="/api/document/download?path=${row.file_bap_path}" download>
+													<a class="dropdown-item" href="/api/document/revisilaporan100/download?path=${row.file_bap_path}" download>
 														<i class="dw dw-download"></i> Download BAP
 													</a>` : ''}
 											</div>
