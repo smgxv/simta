@@ -924,6 +924,7 @@
 			});
 
 			// Fungsi untuk memuat detail telaah ICP
+			// Fungsi untuk memuat detail telaah ICP
 			async function loadDetailTelaah() {
 				const params = new URLSearchParams(window.location.search);
 				const icpId = params.get('id');
@@ -975,12 +976,27 @@
 					}
 
 					telaah.forEach(item => {
+						const hasFile = item.file_path && item.file_path.trim() !== '';
+						const fileName = hasFile ? item.file_path.split('/').pop() : '';
+						const tanggal = item.tanggal_telaah
+							? new Date(item.tanggal_telaah).toLocaleString('id-ID', {
+								dateStyle: 'medium',
+								timeStyle: 'short'
+							})
+							: '-';
+
 						const row = document.createElement('tr');
 						row.innerHTML = `
 							<td>${item.nama_dosen || '-'}</td>
-							<td><span class="badge badge-${item.file_path ? 'success' : 'danger'}">${item.file_path ? 'Sudah Ditelaah' : 'Belum Ditelaah'}</span></td>
-							<td>${item.tanggal_telaah || '-'}</td>
-							<td>${item.file_path ? `<a href="/api/document/hasiltelaah/download?path=${item.file_path}" download class="btn btn-outline-primary btn-sm">Download File</a>` : '-'}</td>
+							<td><span class="badge badge-${hasFile ? 'success' : 'danger'}">
+								${hasFile ? 'Sudah Ditelaah' : 'Belum Ditelaah'}
+							</span></td>
+							<td>${tanggal}</td>
+							<td>
+								${hasFile
+									? `<a href="/api/document/hasiltelaah/download?path=${fileName}" download class="btn btn-outline-primary btn-sm">Download File</a>`
+									: '-'}
+							</td>
 						`;
 						tableBody.appendChild(row);
 					});
@@ -990,6 +1006,7 @@
 					showAlert('Terjadi kesalahan saat mengambil data telaah', 'danger');
 				}
 			}
+
 
 			// Fungsi notifikasi
 			function showAlert(message, type = "info") {
