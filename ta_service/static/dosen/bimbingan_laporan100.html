@@ -966,85 +966,70 @@
 			}
 
 			// Fungsi untuk memuat data revisi Laporan 100%
-			async function loadLaporan100ReviewData() {
-				console.log('loadLaporan100ReviewData function called');
+			async function loadLaporan100Data() {
 				const dosenID = localStorage.getItem('dosenID');
-				console.log('Loading review data for dosenID:', dosenID);
-				if (!dosenID) {
-					console.warn('DosenID not found in localStorage');
-					return;
-				}
-				
+				console.log('Memuat Laporan100 untuk dosenID:', dosenID); // Debug
+				if (!dosenID) return;
 				try {
-					const url = `/api/document/reviewlaporan100/taruna/list?dosen_id=${dosenID}`;
-					console.log('Fetching from URL:', url);
-					
-					const response = await fetch(url);
+					const response = await fetch(`/api/document/reviewlaporan100?dosen_id=${dosenID}`);
 					const data = await response.json();
-					console.log('Review data received:', data);
 					
 					if (data.status === 'success') {
-						const tbody = document.querySelector('#revisiTable tbody');
-						console.log('Found tbody:', tbody);
-						
-						if (!tbody) {
-							console.error('Table body not found');
-							return;
-						}
+						const tbody = document.querySelector('.data-table tbody');
 						tbody.innerHTML = '';
 						
-						if (data.data && data.data.length > 0) {
-							console.log('Processing', data.data.length, 'reviews');
-							data.data.forEach(review => {
-								tbody.innerHTML += `
-									<tr>
-										<td>${review.topik_penelitian || '-'}</td>
-										<td>${review.taruna_nama || '-'}</td>
-										<td>${review.cycle_number || 1}</td>
-										<td>${review.keterangan || '-'}</td>
-										<td>
-											<div class="dropdown">
-												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
+						// First, display all Laporan 100%s immediately
+						data.data.forEach(laporan100 => {
+							const statusClass = {
+								'pending': 'badge badge-warning',
+								'approved': 'badge badge-success',
+								'rejected': 'badge badge-danger',
+								'on review': 'badge badge-secondary'
+							}[laporan100.status] || 'badge badge-secondary';
+
+							// Create a unique ID for this row to update later
+							const rowId = `laporan100-row-${laporan100.id}`;
+
+							tbody.innerHTML += `
+								<tr id="${rowId}">
+									<td>${laporan100.topik_penelitian}</td>
+									<td>${laporan100.nama_taruna || 'Nama tidak tersedia'}</td>
+									<td><span class="${statusClass}">${laporan100.status}</span></td>
+									<td>
+										<div class="dropdown">
+											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+											href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+												<a class="dropdown-item view-laporan100-btn" href="#" data-laporan100-id="${laporan100.id}">
+													<i class="dw dw-eye"></i> View
 												</a>
-												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${review.id}, ${review.laporan100_id})">
-														<i class="dw dw-eye"></i> View Revisi
-													</a>
-													<a class="dropdown-item" href="/api/document/download/reviewlaporan100/taruna?path=${review.file_path}" download>
-														<i class="dw dw-download"></i> Download Revisi
-													</a>
-													<a class="dropdown-item" href="#" onclick="openUploadReviewModal('${review.topik_penelitian}', ${review.taruna_id}, ${review.laporan100_id}, ${review.cycle_number || 0})">
-														<i class="dw dw-upload"></i> Upload Review Baru
-													</a>
-													<a class="dropdown-item" href="#" onclick="updateLaporan100Status(${review.laporan100_id}, 'approved')">
-														<i class="dw dw-check"></i> Approve Laporan 100%
-													</a>
-													<a class="dropdown-item" href="#" onclick="updateLaporan100Status(${review.laporan100_id}, 'rejected')">
-														<i class="dw dw-cancel"></i> Reject Laporan 100%
-													</a>
-												</div>
+												<a class="dropdown-item" href="#" onclick="openUploadReviewModalLaporan100('${laporan100.topik_penelitian}', ${laporan100.id}, ${laporan100.user_id})">
+													<i class="dw dw-upload"></i> Upload Review
+												</a>
+												<a class="dropdown-item accept-laporan100-btn" href="#" data-id="${laporan100.id}">
+													<i class="dw dw-edit2"></i> Accept
+												</a>
+												<a class="dropdown-item reject-laporan100-btn" href="#" data-id="${laporan100.id}">
+													<i class="dw dw-delete-3"></i> Reject
+												</a>
+												<a class="dropdown-item" href="/api/document/download/laporan100?path=${laporan100.file_path}" download>
+													<i class="dw dw-download"></i> Download
+												</a>
 											</div>
-										</td>
-									</tr>
-								`;
-							});
-							console.log('Table rows added');
-						} else {
-							console.log('No review data found');
-							tbody.innerHTML = `
-								<tr>
-									<td colspan="5" class="text-center">Tidak ada data revisi</td>
+										</div>
+									</td>
 								</tr>
 							`;
-						}
-					} else {
-						showAlert('Gagal memuat data revisi: ' + (data.message || 'Unknown error'), 'danger');
+						});
+
+						// Remove the old event listeners setup since we're now using onclick
+						
 					}
 				} catch (error) {
 					console.error('Error:', error);
-					showAlert('Gagal memuat data revisi', 'danger');
+					showAlert('Gagal memuat data Laporan 100%', 'danger');
 				}
 			}
 

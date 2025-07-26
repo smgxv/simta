@@ -548,7 +548,7 @@ func DownloadFileRevisiTarunaLaporan100Handler(w http.ResponseWriter, r *http.Re
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 
 	// Direktori file revisi taruna
-	baseDir := "uploads/reviewlaporan0/taruna"
+	baseDir := "uploads/reviewlaporan100/taruna"
 
 	// Ambil nama file dari query
 	rawPath := r.URL.Query().Get("path")

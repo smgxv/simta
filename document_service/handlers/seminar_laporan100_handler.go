@@ -222,7 +222,7 @@ func PenilaianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	penilaianFile.Seek(0, 0)
-	penilaianFilename := fmt.Sprintf("PENILAIAN%s_%s_%s", userID, time.Now().Format("20060102150405"), filemanager.ValidateFileName(penilaianHeader.Filename))
+	penilaianFilename := fmt.Sprintf("PENILAIAN_%s_%s_%s", userID, time.Now().Format("20060102150405"), filemanager.ValidateFileName(penilaianHeader.Filename))
 	penilaianPath, err := filemanager.SaveUploadedFile(penilaianFile, penilaianHeader, "uploads/penilaian_laporan100", penilaianFilename)
 	if err != nil {
 		sendError("Gagal menyimpan file penilaian: "+err.Error(), http.StatusInternalServerError)
