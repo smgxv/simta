@@ -29,7 +29,11 @@ func AssignPenelaahICP(w http.ResponseWriter, r *http.Request) {
 
 	var payload entities.PenelaahICP
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Invalid JSON: " + err.Error(),
+		})
 		return
 	}
 

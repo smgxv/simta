@@ -190,9 +190,23 @@ func GetFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Mapping output sesuai kebutuhan frontend taruna
+	mapped := []map[string]interface{}{}
+	for _, icp := range finalICPs {
+		mapped = append(mapped, map[string]interface{}{
+			"taruna_id":        icp.UserID,
+			"nama_lengkap":     icp.NamaLengkap,
+			"jurusan":          icp.Jurusan,
+			"kelas":            icp.Kelas,
+			"topik_penelitian": icp.TopikPenelitian,
+			"status":           icp.Status,
+			"final_icp_id":     icp.ID, // ini penting!
+		})
+	}
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   finalICPs,
+		"data":   mapped,
 	})
 }
 
@@ -322,7 +336,7 @@ func UpdateFinalICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler untuk download file Final ICP
 func DownloadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
