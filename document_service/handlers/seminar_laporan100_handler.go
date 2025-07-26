@@ -10,7 +10,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -72,17 +74,17 @@ func GetSeminarLaporan100ByDosenHandler(w http.ResponseWriter, r *http.Request) 
 	defer rows.Close()
 
 	type FinalLaporan100Data struct {
-		ID              int    `json:"id"`
-		UserID          int    `json:"user_id"`
-		TopikPenelitian string `json:"topik_penelitian"`
-		FilePath        string `json:"file_path"`
-		TarunaNama      string `json:"taruna_nama"`
+		FinalLaporan100ID int    `json:"final_laporan100_id"`
+		UserID            int    `json:"user_id"`
+		TopikPenelitian   string `json:"topik_penelitian"`
+		FilePath          string `json:"file_path"`
+		TarunaNama        string `json:"taruna_nama"`
 	}
 
 	var data []FinalLaporan100Data
 	for rows.Next() {
 		var item FinalLaporan100Data
-		err := rows.Scan(&item.ID, &item.UserID, &item.TopikPenelitian, &item.FilePath, &item.TarunaNama)
+		err := rows.Scan(&item.FinalLaporan100ID, &item.UserID, &item.TopikPenelitian, &item.FilePath, &item.TarunaNama)
 		if err != nil {
 			http.Error(w, "Error scanning data: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -220,7 +222,7 @@ func PenilaianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	penilaianFile.Seek(0, 0)
-	penilaianFilename := fmt.Sprintf("Penilaian_%s_%s_%s", userID, time.Now().Format("20060102150405"), filemanager.ValidateFileName(penilaianHeader.Filename))
+	penilaianFilename := fmt.Sprintf("PENILAIAN%s_%s_%s", userID, time.Now().Format("20060102150405"), filemanager.ValidateFileName(penilaianHeader.Filename))
 	penilaianPath, err := filemanager.SaveUploadedFile(penilaianFile, penilaianHeader, "uploads/penilaian_laporan100", penilaianFilename)
 	if err != nil {
 		sendError("Gagal menyimpan file penilaian: "+err.Error(), http.StatusInternalServerError)
@@ -242,7 +244,7 @@ func PenilaianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	beritaAcaraFile.Seek(0, 0)
-	beritaAcaraFilename := fmt.Sprintf("BeritaAcara_%s_%s_%s", userID, time.Now().Format("20060102150405"), filemanager.ValidateFileName(beritaAcaraHeader.Filename))
+	beritaAcaraFilename := fmt.Sprintf("BERITAACARA_%s_%s_%s", userID, time.Now().Format("20060102150405"), filemanager.ValidateFileName(beritaAcaraHeader.Filename))
 	beritaAcaraPath, err := filemanager.SaveUploadedFile(beritaAcaraFile, beritaAcaraHeader, "uploads/berita_acara_laporan100", beritaAcaraFilename)
 	if err != nil {
 		os.Remove(penilaianPath)
@@ -325,6 +327,70 @@ func PenilaianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 			"berita_acara_path": beritaAcaraPath,
 		},
 	})
+}
+
+// DownloadFilePenilaianLaporan100Handler digunakan untuk mengunduh file penilaian atau berita acara laporan 100%
+func DownloadFilePenilaianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Ambil nama file dari query
+	rawPath := r.URL.Query().Get("path")
+	if rawPath == "" {
+		http.Error(w, "Parameter 'path' wajib diisi", http.StatusBadRequest)
+		return
+	}
+
+	fileName := filepath.Base(rawPath) // Mencegah path traversal
+
+	// Tentukan direktori berdasarkan jenis file
+	var baseDir string
+	if strings.HasPrefix(fileName, "PENILAIAN_") {
+		baseDir = "uploads/penilaian_laporan100"
+	} else if strings.HasPrefix(fileName, "BERITAACARA_") {
+		baseDir = "uploads/berita_acara_laporan100"
+	} else {
+		http.Error(w, "Prefix nama file tidak valid", http.StatusForbidden)
+		return
+	}
+
+	// Bangun path absolut
+	joinedPath := filepath.Join(baseDir, fileName)
+	absPath, err := filepath.Abs(joinedPath)
+	if err != nil {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
+		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+		return
+	}
+
+	// Buka file
+	file, err := os.Open(absPath)
+	if err != nil {
+		http.Error(w, "File tidak ditemukan", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	// Set header untuk download
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", "application/pdf")
+
+	_, err = io.Copy(w, file)
+	if err != nil {
+		http.Error(w, "Gagal mengirim file", http.StatusInternalServerError)
+		return
+	}
 }
 
 // Helper function untuk menyimpan file
@@ -654,9 +720,9 @@ func GetCatatanPerbaikanTarunaLaporan100Handler(w http.ResponseWriter, r *http.R
 	}
 	defer rows.Close()
 
-	var results []CatatanPerbaikan
+	var results []CatatanPerbaikanLaporan100
 	for rows.Next() {
-		var c CatatanPerbaikan
+		var c CatatanPerbaikanLaporan100
 		err := rows.Scan(&c.ID, &c.NamaDosen, &c.TopikPenelitian, &c.FilePath, &c.SubmittedAt)
 		if err != nil {
 			continue // skip baris yang gagal diparse

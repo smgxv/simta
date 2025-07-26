@@ -829,57 +829,52 @@
 			// Fungsi untuk memuat data laporan100
 			async function loadLaporan100Data() {
 				try {
-					const dosenId = localStorage.getItem('dosenID'); // Gunakan dosenID yang sudah di-map
+					const dosenId = localStorage.getItem('dosenID');
 					if (!dosenId) {
-						console.error('Dosen ID not found');
+						console.error('Dosen ID tidak ditemukan');
 						return;
 					}
 
-					console.log('Fetching laporan 100% data for dosen:', dosenId);
 					const response = await fetch(`/api/document/seminarlaporan100/dosen?dosen_id=${dosenId}`);
 					const data = await response.json();
 
 					const tbody = document.querySelector('.data-table tbody');
-					if (!tbody) {
-						console.error('Table body element not found');
-						return;
-					}
-
 					tbody.innerHTML = '';
 
-					if (data.status === 'success' && data.data && data.data.length > 0) {
-						data.data.forEach(laporan100 => {
-							tbody.innerHTML += `
-								<tr>
-									<td>${laporan100.topik_penelitian || '-'}</td>
-									<td>${laporan100.taruna_nama || '-'}</td>
-									<td>
+					if (data.status === 'success' && Array.isArray(data.data)) {
+						data.data.forEach(item => {
+							const finalId = item.final_laporan100_id;
+
+							const row = document.createElement('tr');
+							row.innerHTML = `
+								<td>${item.topik_penelitian || '-'}</td>
+								<td>${item.taruna_nama || '-'}</td>
+								<td>
+									${finalId && finalId > 0 ? `
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
 												href="#" role="button" data-toggle="dropdown">
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/api/document/download?path=${laporan100.file_path}" target="_blank">
-													<i class="dw dw-eye"></i> View
-												</a>
-												<a class="dropdown-item" href="/api/document/download?path=${laporan100.file_path}" download>
-													<i class="dw dw-download"></i> Download
+												<a class="dropdown-item" href="/api/document/finallaporan100/dosen/download/${finalId}" download>
+													<i class="dw dw-download"></i> Download Final Laporan 100%
 												</a>
 											</div>
 										</div>
-									</td>
-								</tr>
+									` : `<span class="text-muted"><i class="dw dw-ban"></i> Tidak tersedia</span>`}
+								</td>
 							`;
+							tbody.appendChild(row);
 						});
 					} else {
-						tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada data Laporan 100%</td></tr>';
+						tbody.innerHTML = `<tr><td colspan="3" class="text-center">Data tidak ditemukan</td></tr>`;
 					}
-				} catch (error) {
-					console.error('Error loading Laporan 100% data:', error);
-					showAlert('Terjadi kesalahan saat memuat data Laporan 100%', 'danger');
+				} catch (err) {
+					console.error('Gagal memuat data:', err);
 				}
 			}
+
 
 			// Fungsi untuk memuat data taruna
 			async function loadTarunaDropdown() {

@@ -10,9 +10,11 @@ import (
 	"document_service/utils/produkmanager"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -201,6 +203,56 @@ func UploadRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 			"file_bap_path":    revisi.FileBapPath,
 		},
 	})
+}
+
+// DownloadFileRevisiLaporan100Handler digunakan untuk mengunduh file revisi final laporan 100 taruna
+func DownloadFileRevisiLaporan100Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
+
+	// Direktori penyimpanan file revisi
+	baseDir := "uploads/revisifinallaporan100"
+
+	// Ambil nama file dari query
+	rawPath := r.URL.Query().Get("path")
+	if rawPath == "" {
+		http.Error(w, "File path is required", http.StatusBadRequest)
+		return
+	}
+	fileName := filepath.Base(rawPath) // Amankan dari traversal path
+
+	// Gabungkan path lengkap
+	joinedPath := filepath.Join(baseDir, fileName)
+	absPath, err := filepath.Abs(joinedPath)
+	if err != nil {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	// Pastikan masih dalam direktori yang diizinkan
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
+		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+		return
+	}
+
+	// Buka file
+	file, err := os.Open(absPath)
+	if err != nil {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	// Header untuk download
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", "application/pdf")
+
+	// Kirim isi file
+	_, err = io.Copy(w, file)
+	if err != nil {
+		http.Error(w, "Error downloading file", http.StatusInternalServerError)
+		return
+	}
 }
 
 // Handler untuk mengambil daftar revisi proposal berdasarkan user_id

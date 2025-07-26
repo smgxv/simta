@@ -161,8 +161,8 @@ func main() {
 
 	// Laporan 100%
 	r.HandleFunc("/upload/laporan100", handlers.UploadLaporan100Handler).Methods("POST", "OPTIONS")
-	r.HandleFunc("/laporan100", handlers.GetLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/download/laporan100", handlers.DownloadFileLaporan100Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/laporan100", handlers.GetLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan100/{id}", handlers.GetLaporan100ByIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan100/edit", handlers.EditLaporan100Handler).Methods("PUT", "OPTIONS")
 
@@ -171,11 +171,13 @@ func main() {
 	r.HandleFunc("/reviewlaporan100/dosen/list", handlers.GetReviewLaporan100DosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewlaporan100/dosen/detail", handlers.GetReviewLaporan100DosenDetailHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/upload/reviewlaporan100/dosen", handlers.UploadDosenReviewLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/download/reviewlaporan100/dosen", handlers.DownloadFileReviewDosenLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/updatelaporan100status", handlers.UpdateLaporan100StatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload/revisilaporan100/taruna", handlers.UploadTarunaRevisiLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/download/reviewlaporan100/taruna", handlers.DownloadFileRevisiTarunaLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewlaporan100/taruna/list", handlers.GetRevisiLaporan100TarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/reviewlaporan100/dosen/list", handlers.GetReviewLaporan100DosenHandler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/reviewlaporan70/dosen/detail", handlers.GetReviewLaporan100DosenDetailHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/reviewlaporan100/dosen/detail", handlers.GetReviewLaporan100DosenDetailHandler).Methods("GET", "OPTIONS")
 
 	// Final Laporan 100% routes
 	r.HandleFunc("/finallaporan100/upload", handlers.UploadFinalLaporan100Handler).Methods("POST", "OPTIONS")
@@ -183,12 +185,14 @@ func main() {
 	r.HandleFunc("/finallaporan100/all", handlers.GetAllFinalLaporan100WithTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finallaporan100/status", handlers.UpdateFinalLaporan100StatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/finallaporan100/download/{id}", handlers.DownloadFinalLaporan100Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/finallaporan100/dosen/download/{id}", handlers.DownloadFinalLaporan100DosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finallaporan100/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
 	// Register seminar proposal routes
 	r.HandleFunc("/seminarlaporan100/dosen", handlers.GetSeminarLaporan100ByDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/seminarlaporan100/taruna/list", handlers.GetSeminarLaporan100TarunaListForDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/penilaian/laporan100", handlers.PenilaianLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/penilaian/laporan100/download", handlers.DownloadFilePenilaianLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/monitoring/penilaian_laporan100", handlers.GetMonitoringPenilaianLaporan100Handler).Methods("GET", "OPTIONS")
 
 	// Detail Berkas Seminar Proposal routes
@@ -197,8 +201,8 @@ func main() {
 
 	// Revisi Laporan 100% routes
 	r.HandleFunc("/revisilaporan100/upload", handlers.UploadRevisiLaporan100Handler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/revisilaporan100/download", handlers.DownloadFileRevisiLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/revisilaporan100/list", handlers.GetRevisiLaporan100Handler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/revisilaporan100/download/{id}", handlers.DownloadRevisiLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/revisilaporan100/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
 	//Repositori

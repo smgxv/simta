@@ -1021,7 +1021,7 @@
 													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" target="_blank">
 														<i class="dw dw-eye"></i> View Review
 													</a>
-													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" download>
+													<a class="dropdown-item" href="/api/document/reviewlaporan100/dosen?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Review
 													</a>
 													<a class="dropdown-item" href="#" onclick="openUploadRevisionModal(${review.dosen_id}, '${review.topik_penelitian}')">
@@ -1435,62 +1435,62 @@
 
 			// Handle form submission untuk Final Laporan 100%
 			document.getElementById('finalLaporan100Form').addEventListener('submit', async function (e) {
-	e.preventDefault();
+				e.preventDefault();
 
-	const submitButton = this.querySelector('button[type="submit"]');
-	submitButton.disabled = true;
-	submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+				const submitButton = this.querySelector('button[type="submit"]');
+				submitButton.disabled = true;
+				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 
-	try {
-		const formData = new FormData(this);
-		const userId = localStorage.getItem('userId');
-		const token = localStorage.getItem('token');
+				try {
+					const formData = new FormData(this);
+					const userId = localStorage.getItem('userId');
+					const token = localStorage.getItem('token');
 
-		if (!userId || !token) throw new Error('User ID atau token tidak ditemukan');
+					if (!userId || !token) throw new Error('User ID atau token tidak ditemukan');
 
-		const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
-			headers: { 'Authorization': `Bearer ${token}` }
-		});
-		const tarunaData = await tarunaResponse.json();
-		const taruna = tarunaData.data?.find(t => t.user_id === parseInt(userId));
+					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
+						headers: { 'Authorization': `Bearer ${token}` }
+					});
+					const tarunaData = await tarunaResponse.json();
+					const taruna = tarunaData.data?.find(t => t.user_id === parseInt(userId));
 
-		if (!taruna?.nama_lengkap) throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
+					if (!taruna?.nama_lengkap) throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
 
-		formData.append('user_id', userId);
-		formData.append('nama_lengkap', taruna.nama_lengkap);
+					formData.append('user_id', userId);
+					formData.append('nama_lengkap', taruna.nama_lengkap);
 
-		const response = await fetch('/api/document/finallaporan100/upload', {
-			method: 'POST',
-			body: formData
-		});
+					const response = await fetch('/api/document/finallaporan100/upload', {
+						method: 'POST',
+						body: formData
+					});
 
-		let data;
-		try {
-			data = await response.json();
-		} catch {
-			const text = await response.text();
-			showAlert(text || 'Terjadi kesalahan pada server', 'danger');
-			return;
-		}
+					let data;
+					try {
+						data = await response.json();
+					} catch {
+						const text = await response.text();
+						showAlert(text || 'Terjadi kesalahan pada server', 'danger');
+						return;
+					}
 
-		showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
+					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
 
-		if (data.status === 'success') {
-			this.reset();
-			document.querySelector('#finalLaporan100File').nextElementSibling.textContent = 'Choose file';
-			document.getElementById('finalSelectedFileName').style.display = 'none';
-			document.querySelector('#formBimbinganFile').nextElementSibling.textContent = 'Choose file';
-			document.getElementById('formBimbinganSelectedFileName').style.display = 'none';
-			if (typeof loadFinalLaporan100Data === 'function') loadFinalLaporan100Data();
-		}
-	} catch (error) {
-		console.error(error);
-		showAlert(error.message || 'Terjadi kesalahan saat upload', 'danger');
-	} finally {
-		submitButton.disabled = false;
-		submitButton.innerHTML = 'Upload Final Laporan 100%';
-	}
-});
+					if (data.status === 'success') {
+						this.reset();
+						document.querySelector('#finalLaporan100File').nextElementSibling.textContent = 'Choose file';
+						document.getElementById('finalSelectedFileName').style.display = 'none';
+						document.querySelector('#formBimbinganFile').nextElementSibling.textContent = 'Choose file';
+						document.getElementById('formBimbinganSelectedFileName').style.display = 'none';
+						if (typeof loadFinalLaporan100Data === 'function') loadFinalLaporan100Data();
+					}
+				} catch (error) {
+					console.error(error);
+					showAlert(error.message || 'Terjadi kesalahan saat upload', 'danger');
+				} finally {
+					submitButton.disabled = false;
+					submitButton.innerHTML = 'Upload Final Laporan 100%';
+				}
+			});
 
 			// Fungsi untuk memuat data Final Laporan 100%
 			async function loadFinalLaporan100Data() {
@@ -1612,6 +1612,8 @@
 								timeStyle: 'short'
 							});
 
+							const fileName = item.file_path ? item.file_path.split('/').pop() : '';
+
 							tableBody.innerHTML += `
 								<tr>
 									<td>${item.nama_dosen || '-'}</td>
@@ -1620,16 +1622,22 @@
 									<td>
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-											href="#" role="button" data-toggle="dropdown">
+												href="#" role="button" data-toggle="dropdown">
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/api/document/download?path=${item.file_path}" target="_blank">
-													<i class="dw dw-eye"></i> Lihat Catatan
-												</a>
-												<a class="dropdown-item" href="/api/document/download?path=${item.file_path}" download>
-													<i class="dw dw-download"></i> Unduh Catatan
-												</a>
+												${fileName.startsWith('PENILAIAN_') ? `
+													<a class="dropdown-item" href="/api/document/penilaian/laporan100/download?path=${fileName}" target="_blank">
+														<i class="dw dw-eye"></i> Lihat Catatan Perbaikan
+													</a>
+													<a class="dropdown-item" href="/api/document/penilaian/laporan100/download?path=${fileName}" download>
+														<i class="dw dw-download"></i> Unduh Catatan Perbaikan
+													</a>
+												` : `
+													<span class="dropdown-item text-muted">
+														<i class="dw dw-ban"></i> Tidak tersedia
+													</span>
+												`}
 											</div>
 										</div>
 									</td>
@@ -1654,8 +1662,7 @@
 						`;
 					}
 				}
-			}		
-
+			}
 			// Panggil fungsi saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {
 				loadCatatanPerbaikanTaruna();
@@ -1777,7 +1784,7 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/api/document/download?path=${row.file_path}" download>
+												<a class="dropdown-item" href="/api/document/revisilaporan100/download?path=${row.file_path}" download>
 													<i class="dw dw-download"></i> Download Laporan
 												</a>
 												${row.file_produk_path ? `
