@@ -922,7 +922,7 @@
 			}
 
 			// Fungsi untuk memuat data ICP hasil review dosen
-			async function loadICPReviewData() {
+			async function loadProposalReviewData() {
 				const userId = localStorage.getItem('userId');
 				if (!userId) {
 					console.error('User ID not found in localStorage');
@@ -972,7 +972,7 @@
 													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" target="_blank">
 														<i class="dw dw-eye"></i> View Review
 													</a>
-													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" download>
+													<a class="dropdown-item" href="/api/document/download/reviewicp/dosen?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Review
 													</a>
 													<a class="dropdown-item" href="#" onclick="openUploadRevisionModal(${review.dosen_id}, '${review.topik_penelitian}')">

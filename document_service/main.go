@@ -33,7 +33,9 @@ func main() {
 	r.HandleFunc("/reviewicp/taruna/list", handlers.GetRevisiICPTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/updateicpstatus", handlers.UpdateICPStatusHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload/reviewicp/dosen", handlers.UploadDosenReviewICPHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/download/reviewicp/dosen", handlers.DownloadFileReviewDosenICPHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/upload/revisiicp/taruna", handlers.UploadTarunaRevisiICPHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/download/reviewicp/taruna", handlers.DownloadFileRevisiTarunaICPHandler).Methods("GET", "OPTIONS")
 
 	// Final ICP routes
 	r.HandleFunc("/finalicp/upload", handlers.UploadFinalICPHandler)
