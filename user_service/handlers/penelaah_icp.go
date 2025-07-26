@@ -44,7 +44,11 @@ func AssignPenelaahICP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := model.AssignPenelaahICP(&payload); err != nil {
-		http.Error(w, "Failed to assign penelaah: "+err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to assign penelaah: " + err.Error(),
+		})
 		return
 	}
 
