@@ -1632,34 +1632,38 @@
 
 			// Fungsi untuk memuat data hasil telaah ICP
 			async function loadHasilTelaahData() {
-				try {
-					const userId = localStorage.getItem('userId');
-					if (!userId) {
-						console.error('User ID not found');
-						return;
-					}
+				const userId = localStorage.getItem('userId');
+				if (!userId) {
+					console.error('User ID not found in localStorage');
+					return;
+				}
 
+				try {
 					const response = await fetch(`/api/document/hasiltelaah/taruna?user_id=${userId}`);
 					const data = await response.json();
 
-					console.log('Hasil telaah data:', data); // Debug log
+					const tableBody = document.querySelector('#hasilTelaahTable tbody');
+					if (!tableBody) {
+						console.error('Tabel Hasil Telaah tidak ditemukan');
+						return;
+					}
 
-					const tbody = document.querySelector('#hasilTelaahTable tbody');
-					tbody.innerHTML = '';
+					tableBody.innerHTML = '';
 
-					if (data.status === 'success' && data.data && data.data.length > 0) {
-						data.data.forEach(telaah => {
-							const date = new Date(telaah.tanggal_telaah).toLocaleDateString('id-ID', {
-								day: '2-digit',
-								month: 'long',
-								year: 'numeric'
+					if (data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
+						data.data.forEach(item => {
+							const formattedDate = new Date(item.submitted_at).toLocaleString('id-ID', {
+								dateStyle: 'medium',
+								timeStyle: 'short'
 							});
 
-							tbody.innerHTML += `
+							const fileName = item.file_path ? item.file_path.split('/').pop() : '';
+
+							tableBody.innerHTML += `
 								<tr>
-									<td>${telaah.nama_dosen || '-'}</td>
-									<td>${telaah.topik_penelitian || '-'}</td>
-									<td>${date}</td>
+									<td>${item.nama_dosen || '-'}</td>
+									<td>${item.topik_penelitian || '-'}</td>
+									<td>${formattedDate}</td>
 									<td>
 										<div class="dropdown">
 											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
@@ -1667,9 +1671,18 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/api/document/download?path=${telaah.file_path}" download>
-													<i class="dw dw-download"></i> Download
-												</a>
+												${fileName.startsWith('PENILAIAN_') ? `
+													<a class="dropdown-item" href="/api/document/hasiltelaah/download?path=${fileName}" target="_blank">
+														<i class="dw dw-eye"></i> Lihat Hasil Telaah
+													</a>
+													<a class="dropdown-item" href="/api/document/hasiltelaah/download?path=${fileName}" download>
+														<i class="dw dw-download"></i> Unduh Hasil Telaah
+													</a>
+												` : `
+													<span class="dropdown-item text-muted">
+														<i class="dw dw-ban"></i> Tidak tersedia
+													</span>
+												`}
 											</div>
 										</div>
 									</td>
@@ -1677,15 +1690,22 @@
 							`;
 						});
 					} else {
-						tbody.innerHTML = `
+						tableBody.innerHTML = `
 							<tr>
 								<td colspan="4" class="text-center">Belum ada hasil telaah</td>
 							</tr>
 						`;
 					}
 				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Gagal memuat data hasil telaah', 'danger');
+					console.error('Gagal memuat hasil telaah:', error);
+					const tableBody = document.querySelector('#hasilTelaahTable tbody');
+					if (tableBody) {
+						tableBody.innerHTML = `
+							<tr>
+								<td colspan="4" class="text-center text-danger">Gagal memuat data</td>
+							</tr>
+						`;
+					}
 				}
 			}
 

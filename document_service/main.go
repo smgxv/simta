@@ -50,6 +50,7 @@ func main() {
 
 	// Hasil Telaah ICP routes
 	r.HandleFunc("/hasiltelaah/upload", handlers.UploadHasilTelaahHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/hasiltelaah/download", handlers.DownloadFileHasilTelaahICPHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/hasiltelaah/taruna", handlers.GetHasilTelaahTarunaHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/hasiltelaah/monitoring", handlers.GetMonitoringTelaahHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/hasiltelaah/detail", handlers.GetDetailTelaahICPHandler).Methods("GET", "OPTIONS")

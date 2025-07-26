@@ -7,10 +7,13 @@ import (
 	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -25,6 +28,7 @@ type HasilTelaahResponse struct {
 	StatusTelaah    string    `json:"status_telaah"`
 }
 
+// UploadHasilTelaahHandler digunakan untuk mengunggah file hasil telaah ICP
 func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -156,6 +160,68 @@ func UploadHasilTelaahHandler(w http.ResponseWriter, r *http.Request) {
 			"file_path": filePath,
 		},
 	})
+}
+
+// DownloadFileHasilTelaahICPHandler digunakan untuk mengunduh hasil telaah ICP
+func DownloadFileHasilTelaahICPHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Ambil nama file dari query
+	rawPath := r.URL.Query().Get("path")
+	if rawPath == "" {
+		http.Error(w, "Parameter 'path' wajib diisi", http.StatusBadRequest)
+		return
+	}
+
+	fileName := filepath.Base(rawPath) // Mencegah path traversal
+
+	// Tentukan direktori berdasarkan jenis file
+	var baseDir string
+	if strings.HasPrefix(fileName, "HASIL_TELAAH_ICP_") {
+		baseDir = "uploads/hasil_telaah_icp"
+	} else {
+		http.Error(w, "Prefix nama file tidak valid", http.StatusForbidden)
+		return
+	}
+
+	// Bangun path absolut
+	joinedPath := filepath.Join(baseDir, fileName)
+	absPath, err := filepath.Abs(joinedPath)
+	if err != nil {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
+		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+		return
+	}
+
+	// Buka file
+	file, err := os.Open(absPath)
+	if err != nil {
+		http.Error(w, "File tidak ditemukan", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	// Set header untuk download
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", "application/pdf")
+
+	_, err = io.Copy(w, file)
+	if err != nil {
+		http.Error(w, "Gagal mengirim file", http.StatusInternalServerError)
+		return
+	}
 }
 
 func GetHasilTelaahTarunaHandler(w http.ResponseWriter, r *http.Request) {
