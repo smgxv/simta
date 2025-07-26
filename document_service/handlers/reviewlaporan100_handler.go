@@ -97,7 +97,7 @@ func UpdateLaporan100StatusHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk upload review laporan 70% oleh dosen ke table review_laporan100_dosen
+// Handler untuk upload review laporan 100% oleh dosen ke table review_laporan100_dosen
 func UploadDosenReviewLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
