@@ -217,67 +217,8 @@
 						</a>
 						<div class="dropdown-menu dropdown-menu-right">
 							<div class="notification-list mx-h-350 customscroll">
-								<ul>
-									<li>
-										<a href="#">
-											<img src="vendors/images/img.jpg" alt="" />
-											<h3>John Doe</h3>
-											<p>
-												Lorem ipsum dolor sit amet, consectetur adipisicing
-												elit, sed...
-											</p>
-										</a>
-									</li>
-									<li>
-										<a href="#">
-											<img src="vendors/images/photo1.jpg" alt="" />
-											<h3>Lea R. Frith</h3>
-											<p>
-												Lorem ipsum dolor sit amet, consectetur adipisicing
-												elit, sed...
-											</p>
-										</a>
-									</li>
-									<li>
-										<a href="#">
-											<img src="vendors/images/photo2.jpg" alt="" />
-											<h3>Erik L. Richards</h3>
-											<p>
-												Lorem ipsum dolor sit amet, consectetur adipisicing
-												elit, sed...
-											</p>
-										</a>
-									</li>
-									<li>
-										<a href="#">
-											<img src="vendors/images/photo3.jpg" alt="" />
-											<h3>John Doe</h3>
-											<p>
-												Lorem ipsum dolor sit amet, consectetur adipisicing
-												elit, sed...
-											</p>
-										</a>
-									</li>
-									<li>
-										<a href="#">
-											<img src="vendors/images/photo4.jpg" alt="" />
-											<h3>Renee I. Hansen</h3>
-											<p>
-												Lorem ipsum dolor sit amet, consectetur adipisicing
-												elit, sed...
-											</p>
-										</a>
-									</li>
-									<li>
-										<a href="#">
-											<img src="vendors/images/img.jpg" alt="" />
-											<h3>Vicki M. Coleman</h3>
-											<p>
-												Lorem ipsum dolor sit amet, consectetur adipisicing
-												elit, sed...
-											</p>
-										</a>
-									</li>
+								<ul id="notif-list">
+									<!-- Notifikasi akan dimuat lewat JavaScript -->
 								</ul>
 							</div>
 						</div>
@@ -920,6 +861,37 @@
 		</div>
 
 		<script>
+			// JS notifikasi
+			document.addEventListener("DOMContentLoaded", function () {
+				fetch("/api/notification/notifications?role=Taruna")
+					.then(res => res.json())
+					.then(data => {
+						const ul = document.getElementById("notif-list");
+						ul.innerHTML = ""; // Kosongkan
+
+						if (data.length === 0) {
+							ul.innerHTML = "<li><a><p class='text-center'>Tidak ada notifikasi.</p></a></li>";
+							return;
+						}
+
+						data.forEach(item => {
+							const li = document.createElement("li");
+							li.innerHTML = `
+								<a href="/taruna/detailinformasitaruna?id=${item.ID}">
+									<img src="vendors/images/logo.png" alt="" />
+									<h3>${item.Judul}</h3>
+									<p>${item.Deskripsi.length > 50 ? item.Deskripsi.substring(0, 50) + "..." : item.Deskripsi}</p>
+								</a>`;
+							ul.appendChild(li);
+						});
+
+						document.querySelector(".notification-active").style.display = "inline-block";
+					})
+					.catch(err => {
+						console.error("Gagal mengambil notifikasi:", err);
+					});
+			});
+
 			// Fungsi untuk memuat data Laporan 100%
 			async function loadLaporan100Data() {
 				const userId = localStorage.getItem('userId');

@@ -490,11 +490,15 @@
 							</a>
 						</li>
 
-						<li>
-							<a href="/dosen/review_icp" class="dropdown-toggle no-arrow">
+						<li class="dropdown">
+							<a href="javascript:;" class="dropdown-toggle">
 								<span class="micon bi bi-file-earmark-text"></span
 								><span class="mtext">ICP</span>
 							</a>
+							<ul class="submenu">
+								<li><a href="/dosen/bimbingan_icp">Bimbingan ICP</a></li>
+								<li><a href="/dosen/pengujian_icp">Pengujian ICP</a></li>
+							</ul>
 						</li>
 
 						<li class="dropdown">
@@ -576,6 +580,37 @@
 
 
 		<script>
+			// JS notifikasi
+			document.addEventListener("DOMContentLoaded", function () {
+				fetch("/api/notification/notifications?role=Dosen")
+					.then(res => res.json())
+					.then(data => {
+						const ul = document.getElementById("notif-list");
+						ul.innerHTML = ""; // Kosongkan
+
+						if (data.length === 0) {
+							ul.innerHTML = "<li><a><p class='text-center'>Tidak ada notifikasi.</p></a></li>";
+							return;
+						}
+
+						data.forEach(item => {
+							const li = document.createElement("li");
+							li.innerHTML = `
+								<a href="/dosen/detailinformasidosen?id=${item.ID}">
+									<img src="vendors/images/logo.png" alt="" />
+									<h3>${item.Judul}</h3>
+									<p>${item.Deskripsi.length > 50 ? item.Deskripsi.substring(0, 50) + "..." : item.Deskripsi}</p>
+								</a>`;
+							ul.appendChild(li);
+						});
+
+						document.querySelector(".notification-active").style.display = "inline-block";
+					})
+					.catch(err => {
+						console.error("Gagal mengambil notifikasi:", err);
+					});
+			});
+
 		// JS untuk menampilkan informasi
 		document.addEventListener("DOMContentLoaded", function () {
 			const urlParams = new URLSearchParams(window.location.search);
