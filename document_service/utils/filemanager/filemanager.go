@@ -10,13 +10,13 @@ import (
 	"strings"
 )
 
-// Constants for file validation
+// Ukuran maksimal dan minimal file
 const (
 	MaxFileSize = 15 << 20 // 15 MB
 	MinFileSize = 1 << 10  // 1 KB
 )
 
-// Allowed MIME types and their corresponding file extensions
+// Mengizinkan tipe file PDF
 var (
 	AllowedMimeTypes = map[string][]string{
 		"application/pdf": {".pdf"},
