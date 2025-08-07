@@ -199,71 +199,71 @@ func GetICPHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// DownloadFileICPHandler digunakan untuk mengunduh file proposal
+// DownloadFileICPHandler digunakan untuk mengunduh file ICP
 func DownloadFileICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	log.Println("🔽 [Download] Mulai proses download")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	rawPath := r.URL.Query().Get("path")
-	if rawPath == "" {
-		http.Error(w, "File path is required", http.StatusBadRequest)
+	// Ambil nama file dari query parameter
+	filename := r.URL.Query().Get("filename")
+	if filename == "" {
+		http.Error(w, "Parameter 'filename' dibutuhkan", http.StatusBadRequest)
 		return
 	}
 
-	// Validasi dasar untuk cegah traversal & path absolut
-	if strings.Contains(rawPath, "..") || filepath.IsAbs(rawPath) {
-		http.Error(w, "Invalid file path", http.StatusBadRequest)
+	// Validasi nama file: hanya izinkan karakter alfanumerik, underscore, dash, dan titik
+	if strings.Contains(filename, "..") || strings.ContainsAny(filename, "/\\") {
+		http.Error(w, "Nama file tidak valid", http.StatusBadRequest)
 		return
 	}
 
-	// Direktori dasar
-	baseDir := "uploads/icp"
+	// Direktori tempat file ICP disimpan
+	uploadDir := "uploads/icp"
+	fullPath := filepath.Join(uploadDir, filename)
 
-	// Gabungkan dan normalisasi path
-	fullPath := filepath.Join(baseDir, rawPath)
-	absFullPath, err := filepath.Abs(fullPath)
-	if err != nil {
-		http.Error(w, "Invalid file path", http.StatusBadRequest)
-		return
-	}
-
-	// Normalisasi baseDir
-	absBaseDir, err := filepath.Abs(baseDir)
+	// Validasi bahwa path final masih dalam direktori yang diizinkan
+	absUploadDir, err := filepath.Abs(uploadDir)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}
-
-	// Validasi bahwa file berada di dalam direktori yang diizinkan
-	if !strings.HasPrefix(absFullPath, absBaseDir+string(os.PathSeparator)) {
-		http.Error(w, "Unauthorized file path", http.StatusForbidden)
+	absFullPath, err := filepath.Abs(fullPath)
+	if err != nil || !strings.HasPrefix(absFullPath, absUploadDir+string(os.PathSeparator)) {
+		http.Error(w, "Akses file tidak sah", http.StatusForbidden)
 		return
 	}
 
+	// Buka file
 	file, err := os.Open(absFullPath)
 	if err != nil {
-		http.Error(w, "File not found", http.StatusNotFound)
+		http.Error(w, "File tidak ditemukan", http.StatusNotFound)
 		return
 	}
 	defer file.Close()
 
-	fileName := filepath.Base(absFullPath)
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
+	// Set header response
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 	w.Header().Set("Content-Type", "application/pdf")
 
 	if r.Method == http.MethodHead {
 		return
 	}
 
-	_, err = io.Copy(w, file)
-	if err != nil {
-		http.Error(w, "Error downloading file", http.StatusInternalServerError)
-		return
+	// Kirim isi file
+	if _, err := io.Copy(w, file); err != nil {
+		http.Error(w, "Gagal mengunduh file", http.StatusInternalServerError)
 	}
 }
 
