@@ -684,6 +684,23 @@
 									</select>
 								</div>
 							</div>
+
+							<!-- Input NPM (Nomor Pokok Mahasiswa), hanya muncul jika role = Taruna -->
+							<div class="form-group row" id="NPM" style="display: none;">
+								<label class="col-sm-12 col-md-2 col-form-label">NPM</label>
+								<div class="col-sm-12 col-md-10">
+									<input
+										class="form-control"
+										type="number"
+										placeholder="Masukkan NPM (10 digit)"
+										name="npm"
+										min="1000000000"
+										max="9999999999"
+										oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"
+										required
+									/>
+								</div>
+							</div>
 							
 							<!-- Dropdown Jurusan (awalnya tersembunyi) -->
 							<div class="form-group row" id="jurusanGroup" style="display: none;">
@@ -788,11 +805,11 @@
 				]
 			};
 
-			// Fungsi untuk menampilkan/menyembunyikan dropdown jurusan dan kelas
 			function toggleJurusanKelas() {
 				const role = document.getElementById('role').value;
 				const jurusanGroup = document.getElementById('jurusanGroup');
 				const kelasGroup = document.getElementById('kelasGroup');
+				const npmGroup = document.getElementById('npmGroup');
 				const jurusanSelect = document.getElementById('jurusan');
 				const kelasSelect = document.getElementById('kelas');
 
@@ -801,23 +818,26 @@
 				kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
 
 				if (role === 'Dosen') {
-					// Tampilkan hanya dropdown jurusan untuk Dosen
 					jurusanGroup.style.display = 'flex';
 					kelasGroup.style.display = 'none';
+					npmGroup.style.display = 'none'; // Sembunyikan NPM untuk Dosen
 					jurusanSelect.required = true;
 					kelasSelect.required = false;
+					document.querySelector('[name="npm"]').required = false;
 				} else if (role === 'Taruna') {
-					// Tampilkan dropdown jurusan dan kelas untuk Taruna
 					jurusanGroup.style.display = 'flex';
 					kelasGroup.style.display = 'flex';
+					npmGroup.style.display = 'flex'; // Tampilkan NPM untuk Taruna
 					jurusanSelect.required = true;
 					kelasSelect.required = true;
+					document.querySelector('[name="npm"]').required = true;
 				} else {
-					// Sembunyikan keduanya jika tidak ada role yang dipilih
 					jurusanGroup.style.display = 'none';
 					kelasGroup.style.display = 'none';
+					npmGroup.style.display = 'none'; // Sembunyikan NPM jika tidak ada role
 					jurusanSelect.required = false;
 					kelasSelect.required = false;
+					document.querySelector('[name="npm"]').required = false;
 				}
 			}
 

@@ -115,6 +115,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 			ConfirmPassword string `json:"confirm_password"`
 			Jurusan         string `json:"jurusan"`
 			Kelas           string `json:"kelas"`
+			NPM             string `json:"npm"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
@@ -144,7 +145,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Simpan user baru
-		_, err = userModel.CreateUser(userData.FullName, userData.Email, userData.Username, userData.Role, string(hashedPassword), userData.Jurusan, userData.Kelas)
+		_, err = userModel.CreateUser(userData.FullName, userData.Email, userData.Username, userData.Role, string(hashedPassword), userData.Jurusan, userData.Kelas, userData.NPM)
 		if err != nil {
 			log.Printf("Error creating user: %v", err) // Tambahkan logging ini
 			http.Error(w, "Gagal menambahkan user", http.StatusInternalServerError)
@@ -225,6 +226,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 			Role     string `json:"role"`
 			Jurusan  string `json:"jurusan"`
 			Kelas    string `json:"kelas"`
+			NPM      string `json:"npm"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
@@ -247,8 +249,19 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Parse NPM jika tidak kosong
+		var npm *int
+		if userData.NPM != "" {
+			npmInt, err := strconv.Atoi(userData.NPM)
+			if err != nil {
+				http.Error(w, "NPM harus berupa angka", http.StatusBadRequest)
+				return
+			}
+			npm = &npmInt
+		}
+
 		// Update data user
-		err := userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, userData.Role, userData.Jurusan, userData.Kelas)
+		err := userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, userData.Role, userData.Jurusan, userData.Kelas, npm)
 		if err != nil {
 			log.Printf("Failed to update user: %v", err)
 			http.Error(w, "Gagal mengupdate user", http.StatusInternalServerError)

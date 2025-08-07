@@ -9,4 +9,5 @@ type User struct {
 	Password    string `json:"password"`
 	Jurusan     string `json:"jurusan"`
 	Kelas       string `json:"kelas,omitempty"` // omitempty karena Dosen tidak memiliki kelas
+	NPM         *int   `json:"npm,omitempty"`
 }

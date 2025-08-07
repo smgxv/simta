@@ -113,6 +113,7 @@ func EditUserTaruna(w http.ResponseWriter, r *http.Request) {
 			Role     string `json:"role"`
 			Jurusan  string `json:"jurusan"`
 			Kelas    string `json:"kelas"`
+			NPM      string `json:"npm"`
 			Password string `json:"password,omitempty"`
 		}
 
@@ -136,8 +137,18 @@ func EditUserTaruna(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		var npm *int
+		if userData.NPM != "" {
+			npmVal, err := strconv.Atoi(userData.NPM)
+			if err != nil {
+				http.Error(w, "NPM harus berupa angka", http.StatusBadRequest)
+				return
+			}
+			npm = &npmVal
+		}
+
 		// Update data user
-		err = userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, "Taruna", userData.Jurusan, userData.Kelas)
+		err = userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, "Taruna", userData.Jurusan, userData.Kelas, npm)
 		if err != nil {
 			log.Printf("Failed to update user: %v", err)
 			http.Error(w, "Gagal mengupdate user", http.StatusInternalServerError)

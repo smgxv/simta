@@ -21,7 +21,7 @@ func NewUserModel() (*UserModel, error) {
 }
 
 func (u UserModel) Where(user *entities.User, fieldName, fieldValue string) error {
-	row, err := u.db.Query("SELECT id, nama_lengkap, email, username, password, role, jurusan, kelas FROM users WHERE "+fieldName+" = ? LIMIT 1", fieldValue)
+	row, err := u.db.Query("SELECT id, nama_lengkap, email, username, password, role, jurusan, kelas, npm FROM users WHERE "+fieldName+" = ? LIMIT 1", fieldValue)
 
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func (u UserModel) Where(user *entities.User, fieldName, fieldValue string) erro
 	defer row.Close()
 
 	for row.Next() {
-		row.Scan(&user.ID, &user.NamaLengkap, &user.Email, &user.Username, &user.Password, &user.Role, &user.Jurusan, &user.Kelas)
+		row.Scan(&user.ID, &user.NamaLengkap, &user.Email, &user.Username, &user.Password, &user.Role, &user.Jurusan, &user.Kelas, &user.NPM)
 	}
 
 	return nil
@@ -38,7 +38,7 @@ func (u UserModel) Where(user *entities.User, fieldName, fieldValue string) erro
 
 func (m *UserModel) FindAll() ([]entities.User, error) {
 	rows, err := m.db.Query(`
-        SELECT id, nama_lengkap, username, email, role, jurusan, kelas
+        SELECT id, nama_lengkap, username, email, role, jurusan, kelas, npm
         FROM users
     `)
 	if err != nil {
@@ -57,6 +57,7 @@ func (m *UserModel) FindAll() ([]entities.User, error) {
 			&user.Role,
 			&user.Jurusan,
 			&user.Kelas,
+			&user.NPM,
 		)
 		if err != nil {
 			return nil, err
@@ -67,7 +68,7 @@ func (m *UserModel) FindAll() ([]entities.User, error) {
 	return users, nil
 }
 
-func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan, kelas string) (int64, error) {
+func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan, kelas, npm string) (int64, error) {
 	// Mulai transaksi
 	tx, err := u.db.Begin()
 	if err != nil {
@@ -75,8 +76,8 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 	}
 
 	// Insert ke tabel users
-	result, err := tx.Exec("INSERT INTO users (nama_lengkap, email, username, role, password, jurusan, kelas) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		fullName, email, username, role, password, jurusan, kelas)
+	result, err := tx.Exec("INSERT INTO users (nama_lengkap, email, username, role, password, jurusan, kelas, npm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		fullName, email, username, role, password, jurusan, kelas, npm)
 	if err != nil {
 		tx.Rollback()
 		return 0, fmt.Errorf("error inserting user: %v", err)
@@ -98,9 +99,9 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 			tx.Rollback()
 			return 0, fmt.Errorf("error inserting dosen: %v", err)
 		}
-	case "Taruna":
-		_, err = tx.Exec("INSERT INTO taruna (user_id, nama_lengkap, email, jurusan, kelas) VALUES (?, ?, ?, ?, ?)",
-			userID, fullName, email, jurusan, kelas)
+	case "taruna":
+		_, err = tx.Exec(`INSERT INTO taruna (user_id, nama_lengkap, email, jurusan, kelas, npm) VALUES (?, ?, ?, ?, ?, ?)`,
+			userID, fullName, email, jurusan, kelas, npm)
 		if err != nil {
 			tx.Rollback()
 			return 0, fmt.Errorf("error inserting taruna: %v", err)
@@ -116,7 +117,7 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 	return userID, nil
 }
 
-func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurusan, kelas string) error {
+func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurusan, kelas string, npm *int) error {
 	// Mulai transaksi
 	tx, err := u.db.Begin()
 	if err != nil {
@@ -132,8 +133,8 @@ func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurus
 	}
 
 	// Update tabel users
-	_, err = tx.Exec("UPDATE users SET nama_lengkap = ?, email = ?, username = ?, role = ?, jurusan = ?, kelas = ? WHERE id = ?",
-		fullName, email, username, role, jurusan, kelas, userID)
+	_, err = tx.Exec(`UPDATE users SET nama_lengkap = ?, email = ?, username = ?, role = ?, jurusan = ?, kelas = ?, npm = ? WHERE id = ?`,
+		fullName, email, username, role, jurusan, kelas, npm, userID)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("error updating user: %v", err)
@@ -159,8 +160,8 @@ func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurus
 			_, err = tx.Exec("INSERT INTO dosen (user_id, nama_lengkap, email, jurusan) VALUES (?, ?, ?, ?)",
 				userID, fullName, email, jurusan)
 		case "taruna":
-			_, err = tx.Exec("INSERT INTO taruna (user_id, nama_lengkap, email, jurusan, kelas) VALUES (?, ?, ?, ?, ?)",
-				userID, fullName, email, jurusan, kelas)
+			_, err = tx.Exec(`UPDATE taruna SET nama_lengkap = ?, email = ?, jurusan = ?, kelas = ?, npm = ? WHERE user_id = ?`,
+				fullName, email, jurusan, kelas, npm, userID)
 		}
 		if err != nil {
 			tx.Rollback()
@@ -193,8 +194,11 @@ func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurus
 
 func (u UserModel) GetUserByID(userID int) (*entities.User, error) {
 	user := &entities.User{}
-	err := u.db.QueryRow("SELECT id, nama_lengkap, email, username, role, jurusan, kelas FROM users WHERE id = ?", userID).
-		Scan(&user.ID, &user.NamaLengkap, &user.Email, &user.Username, &user.Role, &user.Jurusan, &user.Kelas)
+	err := u.db.QueryRow(`
+		SELECT id, nama_lengkap, email, username, role, jurusan, kelas, npm
+		FROM users WHERE id = ?`, userID).
+		Scan(&user.ID, &user.NamaLengkap, &user.Email, &user.Username,
+			&user.Role, &user.Jurusan, &user.Kelas, &user.NPM)
 	if err != nil {
 		return nil, err
 	}

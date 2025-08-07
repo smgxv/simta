@@ -201,6 +201,13 @@
                             </div>
                         </div>
 
+                        <div class="form-group row" id="npmGroup" style="display: none;">
+                            <label class="col-sm-12 col-md-2 col-form-label">NPM</label>
+                            <div class="col-sm-12 col-md-10">
+                                <input class="form-control" type="number" id="npm" name="npm" placeholder="Nomor Pokok Mahasiswa">
+                            </div>
+                        </div>                        
+
                         <div class="form-group row" id="jurusanGroup" style="display: none;">
                             <label class="col-sm-12 col-md-2 col-form-label">Jurusan</label>
                             <div class="col-sm-12 col-md-10">
@@ -261,29 +268,34 @@
         const kelasGroup = document.getElementById('kelasGroup');
         const jurusanSelect = document.getElementById('jurusan');
         const kelasSelect = document.getElementById('kelas');
+        const npmGroup = document.getElementById('npmGroup');
+        const npmInput = document.getElementById('npm');
 
         // Reset nilai
         jurusanSelect.value = '';
         kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
 
-        if (role.toLowerCase() === 'dosen') {
-            // Tampilkan hanya dropdown jurusan untuk Dosen
-            jurusanGroup.style.display = 'flex';
-            kelasGroup.style.display = 'none';
-            jurusanSelect.required = true;
-            kelasSelect.required = false;
-        } else if (role.toLowerCase() === 'taruna') {
-            // Tampilkan dropdown jurusan dan kelas untuk Taruna
+        if (role.toLowerCase() === 'taruna') {
             jurusanGroup.style.display = 'flex';
             kelasGroup.style.display = 'flex';
+            npmGroup.style.display = 'flex'; // ← Tampilkan NPM
             jurusanSelect.required = true;
             kelasSelect.required = true;
+            npmInput.required = true;       // ← Wajibkan
+        } else if (role.toLowerCase() === 'dosen') {
+            jurusanGroup.style.display = 'flex';
+            kelasGroup.style.display = 'none';
+            npmGroup.style.display = 'none'; // ← Sembunyikan
+            jurusanSelect.required = true;
+            kelasSelect.required = false;
+            npmInput.required = false;
         } else {
-            // Sembunyikan keduanya untuk role lain (admin)
             jurusanGroup.style.display = 'none';
             kelasGroup.style.display = 'none';
+            npmGroup.style.display = 'none'; // ← Sembunyikan
             jurusanSelect.required = false;
             kelasSelect.required = false;
+            npmInput.required = false;
         }
     }
 
@@ -364,6 +376,7 @@
                 // Set nilai kelas setelah opsi diupdate
                 setTimeout(() => {
                     document.getElementById('kelas').value = user.kelas || '';
+                    document.getElementById('npm').value = user.npm || '';
                 }, 100);
             }
         })
@@ -388,6 +401,7 @@
                     // Tambahkan kelas jika role adalah Taruna
             if (userData.role.toLowerCase() === 'taruna') {
                 userData.kelas = document.getElementById('kelas').value;
+                userData.npm = document.getElementById('npm').value;
             }
 
 
