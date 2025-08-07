@@ -1,0 +1,547 @@
+# name: CI Pipeline - Secure SIMTA
+
+# on:
+#   push:
+#     branches: [main]
+
+# jobs:
+
+  # # 1. SAST - CodeQL (GitHub Native)
+  # sast-codeql:
+  #   name: SAST dengan CodeQL (Go + JS)
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     security-events: write
+  #     actions: read
+  #     contents: read
+
+  #   steps:
+  #     - name: Checkout source code
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Go
+  #       uses: actions/setup-go@v5
+  #       with:
+  #         go-version: 1.23
+
+  #     - name: Initialize CodeQL
+  #       uses: github/codeql-action/init@v3
+  #       with:
+  #         languages: go, javascript
+
+  #     - name: Perform CodeQL Analysis
+  #       uses: github/codeql-action/analyze@v3
+
+# # 2. BUILD & PUSH DOCKER IMAGES
+#   build-image:
+#     name: Build Docker Images
+#     needs: sast-codeql
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+
+#       - name: Build Docker Images
+#         run: |
+#           docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
+#           docker build -t smgxv/user-service -f user_service/Dockerfile user_service
+#           docker build -t smgxv/document-service -f document_service/Dockerfile document_service
+#           docker build -t smgxv/notification-service -f notification_service/Dockerfile notification_service
+
+#       - name: Login to DockerHub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+#       - name: Push Docker Images
+#         run: |
+#           docker push smgxv/ta-service
+#           docker push smgxv/user-service
+#           docker push smgxv/document-service
+#           docker push smgxv/notification-service
+
+#   # 3. DEPLOY TO VPS (STAGING)
+#   deploy-staging:
+#     name: Deploy Semua Service ke VPS Local(Staging)
+#     needs: build-image
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Deploy Semua Service ke VPS Local(Staging)
+#         uses: appleboy/ssh-action@master
+#         with:
+#           host: ${{ secrets.VPS_HOST }}
+#           username: ${{ secrets.VPS_USERNAME }}
+#           password: ${{ secrets.VPS_PASSWORD }}
+#           port: ${{ secrets.VPS_PORT }}
+#           script: |
+#             docker stop ta-service || true && docker rm ta-service || true
+#             docker stop user-service || true && docker rm user-service || true
+#             docker stop document-service || true && docker rm document-service || true
+#             docker stop notification-service || true && docker rm notification-service || true
+
+#             docker system prune -af
+
+#             docker pull smgxv/ta-service
+#             docker pull smgxv/user-service
+#             docker pull smgxv/document-service
+#             docker pull smgxv/notification-service
+
+#             docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+#             docker run -d -p 8081:8081 --name user-service smgxv/user-service
+#             docker run -d -p 8082:8082 --name document-service smgxv/document-service
+#             docker run -d -p 8083:8083 --name notification-service smgxv/notification-service
+
+#             docker network connect simta_net ta-service || true
+#             docker network connect simta_net user-service || true
+#             docker network connect simta_net document-service || true
+#             docker network connect simta_net notification-service || true
+
+  # # 4. SAST - SONARCLOUD
+  # sast-analysis:
+  #   name: SAST dengan SonarCloud
+  #   needs: deploy-staging
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout source code
+  #       uses: actions/checkout@v4
+
+  #     - name: Set up Java 17
+  #       uses: actions/setup-java@v4
+  #       with:
+  #         distribution: 'temurin'
+  #         java-version: '17'
+
+  #     - name: SonarCloud Scan
+  #       uses: SonarSource/sonarcloud-github-action@v2
+  #       with:
+  #         projectBaseDir: .
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  
+  # # 5. DAST - ZAP TEST TERHADAP VPS
+  # dast-analysis:
+  #   name: DAST dengan OWASP ZAP (TA Service + Auth)
+  #   # needs: deploy-staging
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Jalankan ZAP terhadap TA Service
+  #       run: |
+  #         docker run --rm \
+  #           -v $(pwd)/zap_output:/zap/wrk \
+  #           -v $(pwd)/.zap:/zap/.zap/scripts/ \
+  #           ghcr.io/zaproxy/zaproxy:stable \
+  #           zap.sh -cmd -autorun /zap/wrk/simta.yaml || true
+
+  #     - name: Upload Laporan ZAP TA Service
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: zap-ta-report
+  #         path: .zap/report.html
+
+
+
+
+  # # 2. BUILD & PUSH DOCKER IMAGES
+  # build-image:
+  #   name: Build Docker Images
+  #   # needs: sast-codeql
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+
+  #     - name: Build Docker Images
+  #       run: |
+  #         docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
+  #         docker build -t smgxv/user-service -f user_service/Dockerfile user_service
+  #         docker build -t smgxv/document-service -f document_service/Dockerfile document_service
+  #         docker build -t smgxv/notification-service -f notification_service/Dockerfile notification_service
+
+  #     - name: Login to DockerHub
+  #       uses: docker/login-action@v3
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  #     - name: Push Docker Images
+  #       run: |
+  #         docker push smgxv/ta-service
+  #         docker push smgxv/user-service
+  #         docker push smgxv/document-service
+  #         docker push smgxv/notification-service
+
+  # # 3. DEPLOY TO VPS (STAGING)
+  # deploy-staging:
+  #   name: Deploy Semua Service ke VPS Local(Staging)
+  #   needs: build-image
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Deploy Semua Service ke VPS Local(Staging)
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.VPS_HOST }}
+  #         username: ${{ secrets.VPS_USERNAME }}
+  #         password: ${{ secrets.VPS_PASSWORD }}
+  #         port: ${{ secrets.VPS_PORT }}
+  #         script: |
+  #           docker stop ta-service || true && docker rm ta-service || true
+  #           docker stop user-service || true && docker rm user-service || true
+  #           docker stop document-service || true && docker rm document-service || true
+  #           docker stop notification-service || true && docker rm notification-service || true
+
+  #           docker pull smgxv/ta-service
+  #           docker pull smgxv/user-service
+  #           docker pull smgxv/document-service
+  #           docker pull smgxv/notification-service
+
+  #           docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+  #           docker run -d -p 8081:8081 --name user-service smgxv/user-service
+  #           docker run -d -p 8082:8082 --name document-service smgxv/document-service
+  #           docker run -d -p 8083:8083 --name notification-service smgxv/notification-service
+
+  #           docker network connect simta_net ta-service || true
+  #           docker network connect simta_net user-service || true
+  #           docker network connect simta_net document-service || true
+  #           docker network connect simta_net notification-service || true
+
+
+
+
+name : CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # running-tests:
+  #   name: Running Tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Set up Go
+  #       uses: actions/setup-go@v2
+  #       with:
+  #         go-version: 1.23
+
+  build-ta-service:
+    # needs: running-tests
+    name: Build Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/ta-service
+
+  deploy-ta-service:
+    needs: build-ta-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop ta-service || true && docker rm ta-service || true
+            docker system prune -af
+            docker pull smgxv/ta-service
+            docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+            docker network connect simta_net ta-service
+
+
+  build-user-service:
+    # needs: running-tests
+    name: Build User Service Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/user-service -f user_service/Dockerfile user_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/user-service
+
+  deploy-user-service:
+    needs: build-user-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy User Service to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop user-service || true && docker rm user-service || true
+            docker system prune -af
+            docker pull smgxv/user-service
+            docker run -d -p 8081:8081 --name user-service smgxv/user-service
+            docker network connect simta_net user-service
+
+  # build-document-service:
+  #   # needs: running-tests
+  #   name: Build Document Service Image
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Build Image
+  #       run: docker build -t smgxv/document-service -f document_service/Dockerfile document_service
+  #     - name: Login to DockerHub
+  #       uses: docker/login-action@v1
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+  #     - name: Push Image
+  #       run: docker push smgxv/document-service
+
+  # deploy-document-service:
+  #   needs: build-document-service
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Deploy Document Service to VPS
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.VPS_HOST }}
+  #         username: ${{ secrets.VPS_USERNAME }}
+  #         password: ${{ secrets.VPS_PASSWORD }}
+  #         port: ${{ secrets.VPS_PORT }}
+  #         script: |
+  #           docker stop document-service || true && docker rm document-service || true
+  #           docker system prune -af
+  #           docker pull smgxv/document-service
+  #           docker run -d -p 8082:8082 --name document-service smgxv/document-service
+  #           docker network connect simta_net document-service
+
+  # build-notification-service:
+  #   # needs: running-tests
+  #   name: Build Notification Service Image
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Build Image
+  #       run: docker build -t smgxv/notification-service -f notification_service/Dockerfile notification_service
+  #     - name: Login to DockerHub
+  #       uses: docker/login-action@v1
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+  #     - name: Push Image
+  #       run: docker push smgxv/notification-service
+
+  # deploy-notification-service:
+  #   needs: build-notification-service
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Deploy Notification Service to VPS
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.VPS_HOST }}
+  #         username: ${{ secrets.VPS_USERNAME }}
+  #         password: ${{ secrets.VPS_PASSWORD }}
+  #         port: ${{ secrets.VPS_PORT }}
+  #         script: |
+  #           docker stop notification-service || true && docker rm notification-service || true
+  #           docker system prune -af
+  #           docker pull smgxv/notification-service
+  #           docker run -d -p 8083:8083 --name notification-service -v /home/youruser/uploads:/app/uploads smgxv/notification-service
+  #           docker network connect simta_net notification-service
+
+# name: ZAP API Scan
+
+# permissions:
+#   contents: read
+#   issues: write
+  
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   zap_scan:
+#     runs-on: ubuntu-latest
+#     # env:
+#     #   ZAP_AUTH_HEADER: 'Authorization'
+#     #   ZAP_AUTH_HEADER_VALUE: 'Bearer ${{ secrets.API_TOKEN }}'
+#     #   ZAP_AUTH_HEADER_SITE: 'http://104.43.89.154:8080'
+
+#     steps:
+#       - name: Checkout repo
+#         uses: actions/checkout@v4
+
+#       - name: Jalankan ZAP API Scan
+#         uses: zaproxy/action-api-scan@v0.9.0
+#         with:
+#           token: ${{ secrets.GITHUB_TOKEN }}
+#           target: 'http://104.43.89.154/openapi.yaml'
+#           format: openapi
+#           cmd_options: '-a'
+
+# name: ZAP API Scan
+
+# permissions:
+#   contents: read
+#   issues: write
+  
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   zap_scan:
+#     runs-on: ubuntu-latest
+#     env:
+#       ZAP_AUTH_HEADER: 'Authorization'
+#       ZAP_AUTH_HEADER_VALUE: 'Bearer ${{ secrets.API_TOKEN }}'
+#       ZAP_AUTH_HEADER_SITE: 'http://104.43.89.154:8081'
+
+#     steps:
+#       - name: Checkout repo
+#         uses: actions/checkout@v4
+
+#       - name: Jalankan ZAP API Scan
+#         uses: zaproxy/action-api-scan@v0.9.0
+#         with:
+#           token: ${{ secrets.GITHUB_TOKEN }}
+#           target: 'http://104.43.89.154/openapi_users.yaml'
+#           format: openapi
+#           cmd_options: '-a'
+
+
+# name: ZAP Full Scan for Taruna Dashboard
+
+# permissions:
+#   contents: read
+#   issues: write
+  
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   zap_scan:
+#     runs-on: ubuntu-latest
+
+#     services:
+#       ta-service:
+#         image: smgxv/ta-service
+#         ports:
+#           - 8080:8080
+#         options: >-
+#           --health-cmd "curl --fail http://localhost:8080/loginusers || exit 1"
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 10
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Docker Hub Login
+#         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+#       - name: ZAP Full Scan
+#         uses: zaproxy/action-full-scan@v0.12.0
+#         with:
+#           target: 'http://localhost:8080/taruna/dashboard'
+#           cmd_options: '-a -j'
+#         env:
+#           ZAP_AUTH_HEADER: "Authorization"
+#           ZAP_AUTH_HEADER_VALUE: "Bearer ${{ secrets.TARUNA_TOKEN }}"
+#           ZAP_AUTH_HEADER_SITE: "http://localhost:8080"
+
+# .github/workflows/zap-analysis.yml
+
+# name: DAST - ZAP TEST TERHADAP VPS
+
+# on:
+#   workflow_dispatch:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   dast-analysis:
+#     name: DAST dengan OWASP ZAP (Target VPS)
+#     # needs: deploy-staging
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v3
+
+#       - name: Siapkan Direktori Output
+#         run: mkdir -p zap_output
+
+#       - name: Jalankan ZAP terhadap TA Service
+#         run: |
+#           docker run --rm \
+#           -v $(pwd)/zap_output:/zap/wrk \
+#           ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+#           -t http://104.43.89.154:8080 \
+#           -r ta_report.html || true
+
+#       - name: Jalankan ZAP terhadap User Service
+#         run: |
+#           docker run --rm \
+#           -v $(pwd)/zap_output:/zap/wrk \
+#           ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+#           -t http://104.43.89.154:8081 \
+#           -r user_report.html || true
+
+#       - name: Jalankan ZAP terhadap Document Service
+#         run: |
+#           docker run --rm \
+#           -v $(pwd)/zap_output:/zap/wrk \
+#           ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+#           -t http://104.43.89.154:8082 \
+#           -r document_report.html || true
+
+#       - name: Jalankan ZAP terhadap Notification Service
+#         run: |
+#           docker run --rm \
+#           -v $(pwd)/zap_output:/zap/wrk \
+#           ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+#           -t http://104.43.89.154:8083 \
+#           -r notification_report.html || true
+
+#       - name: Upload Semua Laporan ZAP
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: zap-dast-reports
+#           path: |
+#             zap_output/ta_report.html
+#             zap_output/user_report.html
+#             zap_output/document_report.html
+#             zap_output/notification_report.html
+
+
+
+          
+
