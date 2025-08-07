@@ -134,7 +134,10 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol", http.StatusBadRequest)
 			return
 		}
+<<<<<<< HEAD
 
+=======
+>>>>>>> work-in-progress
 		// Cek email duplikat
 		var existingUser entities.User
 		userModel.Where(&existingUser, "email", userData.Email)
