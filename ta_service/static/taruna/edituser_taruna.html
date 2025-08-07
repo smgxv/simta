@@ -237,7 +237,7 @@
             const username = document.getElementById('username').value;
             const jurusan = document.getElementById('jurusan').value;
             const kelas = document.getElementById('kelas').value;
-            const npm = parseInt(document.getElementById('npm').value);
+            const npm = document.getElementById('npm').value;
             const password = document.getElementById('password').value;
             const confirm = document.getElementById('confirm_password').value;
 
@@ -248,8 +248,13 @@
 
             const userData = {
                 id: parseInt(userId),
-                nama_lengkap, email, username, jurusan, kelas, npm,
-                role: 'Taruna'
+                nama_lengkap,
+                email,
+                username,
+                jurusan,
+                kelas,
+                npm // JANGAN gunakan parseInt()
+                // role: 'Taruna' <-- HAPUS ini
             };
             if (password) userData.password = password;
 
