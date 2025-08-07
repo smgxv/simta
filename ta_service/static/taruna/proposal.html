@@ -839,7 +839,6 @@
 					});
 			});
 
-
 			// Fungsi untuk memuat data Proposal
 			async function loadProposalData() {
 				const userId = localStorage.getItem('userId');
@@ -870,9 +869,6 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/taruna/viewproposal?id=${proposal.id}">
-													<i class="dw dw-eye"></i> View
-												</a>
 												<a class="dropdown-item" href="/taruna/editproposal?id=${proposal.id}"><i class="dw dw-edit2"></i> Edit</a>
 												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
 												<a class="dropdown-item" href="/api/document/download/proposal?path=${proposal.file_path}" download>
@@ -938,9 +934,6 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" target="_blank">
-														<i class="dw dw-eye"></i> View Review
-													</a>
 													<a class="dropdown-item" href="/api/document/download/reviewproposal/dosen?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Review
 													</a>
@@ -1574,9 +1567,6 @@
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
 												${fileName.startsWith('PENILAIAN_') ? `
-													<a class="dropdown-item" href="/api/document/penilaian/proposal/download?path=${fileName}" target="_blank">
-														<i class="dw dw-eye"></i> Lihat Catatan
-													</a>
 													<a class="dropdown-item" href="/api/document/penilaian/proposal/download?path=${fileName}" download>
 														<i class="dw dw-download"></i> Unduh Catatan
 													</a>

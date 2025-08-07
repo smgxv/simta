@@ -873,12 +873,7 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/taruna/viewicp?id=${icp.id}">
-													<i class="dw dw-eye"></i> View
-												</a>
-												<a class="dropdown-item" href="/taruna/editicp?id=${icp.id}"><i class="dw dw-edit2"></i> Edit</a>
-												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
-												<a class="dropdown-item" href="/api/document/download/icp?path=${icp.file_path}" download>
+												<a class="dropdown-item" href="/api/document/icp/download?path=${icp.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
 											</div>
@@ -941,9 +936,6 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" target="_blank">
-														<i class="dw dw-eye"></i> View Review
-													</a>
 													<a class="dropdown-item" href="/api/document/download/reviewicp/dosen?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Review
 													</a>
@@ -1644,9 +1636,6 @@
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
 												${fileName.startsWith('HASIL_TELAAH_ICP_') ? `
-													<a class="dropdown-item" href="/api/document/hasiltelaah/download?path=${fileName}" target="_blank">
-														<i class="dw dw-eye"></i> Lihat Hasil Telaah
-													</a>
 													<a class="dropdown-item" href="/api/document/hasiltelaah/download?path=${fileName}" download>
 														<i class="dw dw-download"></i> Unduh Hasil Telaah
 													</a>

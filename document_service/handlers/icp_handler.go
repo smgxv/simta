@@ -199,9 +199,10 @@ func GetICPHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// DownloadFileICPHandler digunakan untuk mengunduh file proposal
 func DownloadFileICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
-	log.Println("🔽 [Download ICP] Mulai proses download")
+	log.Println("🔽 [Download] Mulai proses download")
 
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -214,33 +215,31 @@ func DownloadFileICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Pastikan input tidak mengandung traversal
+	// Validasi dasar untuk cegah traversal & path absolut
 	if strings.Contains(rawPath, "..") || filepath.IsAbs(rawPath) {
 		http.Error(w, "Invalid file path", http.StatusBadRequest)
 		return
 	}
 
-	// Direktori dasar yang diizinkan
+	// Direktori dasar
 	baseDir := "uploads/icp"
 
-	// Gabungkan baseDir dengan rawPath (tanpa user membentuk sendiri)
+	// Gabungkan dan normalisasi path
 	fullPath := filepath.Join(baseDir, rawPath)
-
-	// Normalisasi path ke absolute canonical
 	absFullPath, err := filepath.Abs(fullPath)
 	if err != nil {
 		http.Error(w, "Invalid file path", http.StatusBadRequest)
 		return
 	}
 
-	// Normalisasi baseDir juga
+	// Normalisasi baseDir
 	absBaseDir, err := filepath.Abs(baseDir)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
-	// Validasi apakah file benar-benar di dalam baseDir
+	// Validasi bahwa file berada di dalam direktori yang diizinkan
 	if !strings.HasPrefix(absFullPath, absBaseDir+string(os.PathSeparator)) {
 		http.Error(w, "Unauthorized file path", http.StatusForbidden)
 		return

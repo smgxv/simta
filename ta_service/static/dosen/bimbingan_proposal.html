@@ -705,9 +705,6 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item view-proposal-btn" href="#" data-proposal-id="${proposal.id}">
-													<i class="dw dw-eye"></i> View
-												</a>
 												<a class="dropdown-item" href="#" onclick="openUploadReviewModalProposal('${proposal.topik_penelitian}', ${proposal.id}, ${proposal.user_id})">
 													<i class="dw dw-upload"></i> Upload Review
 												</a>
@@ -987,9 +984,6 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${review.id}, ${review.proposal_id})">
-														<i class="dw dw-eye"></i> View Revisi
-													</a>
 													<a class="dropdown-item" href="/api/document/download/reviewproposal/taruna?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Revisi
 													</a>

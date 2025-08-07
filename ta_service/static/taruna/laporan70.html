@@ -870,11 +870,6 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/taruna/viewlaporan70?id=${laporan70.id}">
-													<i class="dw dw-eye"></i> View
-												</a>
-												<a class="dropdown-item" href="/taruna/editlaporan70?id=${laporan70.id}"><i class="dw dw-edit2"></i> Edit</a>
-												<a class="dropdown-item" href=""><i class="dw dw-delete-3"></i> Delete</a>
 												<a class="dropdown-item" href="/api/document/download/laporan70?path=${laporan70.file_path}" download>
 													<i class="dw dw-download"></i> Download
 												</a>
@@ -938,9 +933,6 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="/api/document/download?path=${review.file_path}" target="_blank">
-														<i class="dw dw-eye"></i> View Review
-													</a>
 													<a class="dropdown-item" href="/api/document/download/reviewlaporan70/dosen?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Review
 													</a>
@@ -1549,9 +1541,6 @@
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
 												${fileName.startsWith('PENILAIAN_') ? `
-													<a class="dropdown-item" href="/api/document/penilaian/laporan70/download?path=${fileName}" target="_blank">
-														<i class="dw dw-eye"></i> Lihat Hasil telaah
-													</a>
 													<a class="dropdown-item" href="/api/document/penilaian/laporan70/download?path=${fileName}" download>
 														<i class="dw dw-download"></i> Unduh Hasil Telaah
 													</a>

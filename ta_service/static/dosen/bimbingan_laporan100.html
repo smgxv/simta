@@ -705,9 +705,6 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item view-laporan100-btn" href="#" data-laporan100-id="${laporan100.id}">
-													<i class="dw dw-eye"></i> View
-												</a>
 												<a class="dropdown-item" href="#" onclick="openUploadReviewModalLaporan100('${laporan100.topik_penelitian}', ${laporan100.id}, ${laporan100.user_id})">
 													<i class="dw dw-upload"></i> Upload Review
 												</a>
@@ -985,9 +982,6 @@
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="#" onclick="viewRevisiDetail(${review.id}, ${review.laporan100_id})">
-														<i class="dw dw-eye"></i> View Revisi
-													</a>
 													<a class="dropdown-item" href="/api/document/download/reviewlaporan100/taruna?path=${review.file_path}" download>
 														<i class="dw dw-download"></i> Download Revisi
 													</a>
