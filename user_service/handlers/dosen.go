@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"user_service/entities"
 	"user_service/models"
+	"user_service/utils"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -158,6 +159,12 @@ func EditUserDosen(w http.ResponseWriter, r *http.Request) {
 
 		// Jika password diisi, hash dan update password
 		if userData.Password != "" {
+			// Validasi kekuatan password
+			if !utils.IsValidPassword(userData.Password) {
+				http.Error(w, "Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol", http.StatusBadRequest)
+				return
+			}
+
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
 			if err != nil {
 				log.Printf("Failed to hash password: %v", err)
