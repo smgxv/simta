@@ -681,6 +681,7 @@
 										<option value="" disabled selected>Pilih Role</option>
 										<option value="Dosen">Dosen</option>
 										<option value="Taruna">Taruna</option>
+										<option value="Taruna">Admin</option>
 									</select>
 								</div>
 							</div>
@@ -820,21 +821,23 @@
 				if (role === 'Dosen') {
 					jurusanGroup.style.display = 'flex';
 					kelasGroup.style.display = 'none';
-					npmGroup.style.display = 'none'; // Sembunyikan NPM untuk Dosen
+					npmGroup.style.display = 'none';
 					jurusanSelect.required = true;
 					kelasSelect.required = false;
 					document.querySelector('[name="npm"]').required = false;
+
 				} else if (role === 'Taruna') {
 					jurusanGroup.style.display = 'flex';
 					kelasGroup.style.display = 'flex';
-					npmGroup.style.display = 'flex'; // Tampilkan NPM untuk Taruna
+					npmGroup.style.display = 'flex';
 					jurusanSelect.required = true;
 					kelasSelect.required = true;
 					document.querySelector('[name="npm"]').required = true;
-				} else {
+
+				} else if (role === 'Admin') {
 					jurusanGroup.style.display = 'none';
 					kelasGroup.style.display = 'none';
-					npmGroup.style.display = 'none'; // Sembunyikan NPM jika tidak ada role
+					npmGroup.style.display = 'none';
 					jurusanSelect.required = false;
 					kelasSelect.required = false;
 					document.querySelector('[name="npm"]').required = false;
@@ -932,6 +935,14 @@
 				if (data.role === 'Dosen') {
 					delete data.kelas;
 				}
+
+				// Bersihkan field tidak relevan saat role Admin
+				if (data.role === 'Admin') {
+					data.jurusan = "";
+					data.kelas = "";
+					data.npm = "";
+				}
+
 				
 				try {
 					const response = await fetch('/api/user/users/add', {

@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"user_service/entities"
 	"user_service/models"
 	"user_service/utils"
@@ -105,66 +106,83 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method == http.MethodPost {
-		// Parse request body
-		var userData struct {
-			FullName        string `json:"nama_lengkap"`
-			Email           string `json:"email"`
-			Username        string `json:"username"`
-			Role            string `json:"role"`
-			Password        string `json:"password"`
-			ConfirmPassword string `json:"confirm_password"`
-			Jurusan         string `json:"jurusan"`
-			Kelas           string `json:"kelas"`
-			NPM             string `json:"npm"`
-		}
-
-		if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
-			return
-		}
-
-		// Validasi password
-		if userData.Password != userData.ConfirmPassword {
-			http.Error(w, "Password dan Confirm Password tidak cocok!", http.StatusBadRequest)
-			return
-		}
-
-		if !utils.IsValidPassword(userData.Password) {
-			http.Error(w, "Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol", http.StatusBadRequest)
-			return
-		}
-		// Cek email duplikat
-		var existingUser entities.User
-		userModel.Where(&existingUser, "email", userData.Email)
-		if existingUser.Email != "" {
-			http.Error(w, "Email sudah terdaftar!", http.StatusConflict)
-			return
-		}
-
-		// Hash password
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
-		if err != nil {
-			http.Error(w, "Error hashing password", http.StatusInternalServerError)
-			return
-		}
-
-		// Simpan user baru
-		_, err = userModel.CreateUser(userData.FullName, userData.Email, userData.Username, userData.Role, string(hashedPassword), userData.Jurusan, userData.Kelas, userData.NPM)
-		if err != nil {
-			log.Printf("Error creating user: %v", err) // Tambahkan logging ini
-			http.Error(w, "Gagal menambahkan user", http.StatusInternalServerError)
-			return
-		}
-
-		// Kirim response sukses
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "User berhasil ditambahkan",
-		})
-	} else {
+	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
+
+	// Parse request body
+	var userData struct {
+		FullName        string `json:"nama_lengkap"`
+		Email           string `json:"email"`
+		Username        string `json:"username"`
+		Role            string `json:"role"`
+		Password        string `json:"password"`
+		ConfirmPassword string `json:"confirm_password"`
+		Jurusan         string `json:"jurusan"`
+		Kelas           string `json:"kelas"`
+		NPM             string `json:"npm"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validasi password
+	if userData.Password != userData.ConfirmPassword {
+		http.Error(w, "Password dan Confirm Password tidak cocok!", http.StatusBadRequest)
+		return
+	}
+	if !utils.IsValidPassword(userData.Password) {
+		http.Error(w, "Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol", http.StatusBadRequest)
+		return
+	}
+
+	// Kosongkan field tidak perlu untuk Admin
+	if strings.ToLower(userData.Role) == "admin" {
+		userData.Jurusan = ""
+		userData.Kelas = ""
+		userData.NPM = ""
+	}
+
+	// Cek email duplikat
+	var existingUser entities.User
+	userModel.Where(&existingUser, "email", userData.Email)
+	if existingUser.Email != "" {
+		http.Error(w, "Email sudah terdaftar!", http.StatusConflict)
+		return
+	}
+
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Error hashing password", http.StatusInternalServerError)
+		return
+	}
+
+	// Simpan user baru
+	_, err = userModel.CreateUser(
+		userData.FullName,
+		userData.Email,
+		userData.Username,
+		userData.Role,
+		string(hashedPassword),
+		userData.Jurusan,
+		userData.Kelas,
+		userData.NPM,
+	)
+	if err != nil {
+		log.Printf("Error creating user: %v", err)
+		http.Error(w, "Gagal menambahkan user", http.StatusInternalServerError)
+		return
+	}
+
+	// Kirim response sukses
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "User berhasil ditambahkan",
+	})
 }
 
 // Fungsi Edit user

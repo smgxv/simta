@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 	"user_service/config"
 	"user_service/entities"
@@ -75,9 +76,20 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 		return 0, fmt.Errorf("error memulai transaksi: %v", err)
 	}
 
+	var kelasVal, npmVal interface{}
+	if strings.ToLower(role) == "taruna" {
+		kelasVal = kelas
+		npmVal = npm
+	} else {
+		kelasVal = nil
+		npmVal = nil
+	}
+
 	// Insert ke tabel users
-	result, err := tx.Exec("INSERT INTO users (nama_lengkap, email, username, role, password, jurusan, kelas, npm) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-		fullName, email, username, role, password, jurusan, kelas, npm)
+	result, err := tx.Exec(`
+		INSERT INTO users (nama_lengkap, email, username, role, password, jurusan, kelas, npm) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		fullName, email, username, role, password, jurusan, kelasVal, npmVal)
 	if err != nil {
 		tx.Rollback()
 		return 0, fmt.Errorf("error inserting user: %v", err)
@@ -93,7 +105,7 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 	// Insert ke tabel sesuai role
 	switch strings.ToLower(role) {
 	case "dosen":
-		_, err = tx.Exec("INSERT INTO dosen (user_id, nama_lengkap, email, jurusan) VALUES (?, ?, ?, ?)",
+		_, err = tx.Exec(`INSERT INTO dosen (user_id, nama_lengkap, email, jurusan) VALUES (?, ?, ?, ?)`,
 			userID, fullName, email, jurusan)
 		if err != nil {
 			tx.Rollback()
@@ -107,6 +119,10 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 			tx.Rollback()
 			return 0, fmt.Errorf("error inserting taruna: %v", err)
 		}
+
+	case "admin":
+		// Tidak perlu insert tambahan
+		log.Printf("Admin %s berhasil dibuat", email)
 	}
 
 	// Commit transaksi
