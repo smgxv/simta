@@ -91,14 +91,15 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 	}
 
 	// Insert ke tabel sesuai role
-	switch role {
-	case "Dosen":
+	switch strings.ToLower(role) {
+	case "dosen":
 		_, err = tx.Exec("INSERT INTO dosen (user_id, nama_lengkap, email, jurusan) VALUES (?, ?, ?, ?)",
 			userID, fullName, email, jurusan)
 		if err != nil {
 			tx.Rollback()
 			return 0, fmt.Errorf("error inserting dosen: %v", err)
 		}
+
 	case "taruna":
 		_, err = tx.Exec(`INSERT INTO taruna (user_id, nama_lengkap, email, jurusan, kelas, npm) VALUES (?, ?, ?, ?, ?, ?)`,
 			userID, fullName, email, jurusan, kelas, npm)
@@ -118,6 +119,9 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 }
 
 func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurusan, kelas string, npm *int) error {
+	// Normalisasi role ke lowercase
+	role = strings.ToLower(role)
+
 	// Mulai transaksi
 	tx, err := u.db.Begin()
 	if err != nil {
@@ -131,6 +135,7 @@ func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurus
 		tx.Rollback()
 		return fmt.Errorf("error mendapatkan role lama: %v", err)
 	}
+	oldRole = strings.ToLower(oldRole)
 
 	// Update tabel users
 	_, err = tx.Exec(`UPDATE users SET nama_lengkap = ?, email = ?, username = ?, role = ?, jurusan = ?, kelas = ?, npm = ? WHERE id = ?`,
@@ -140,10 +145,10 @@ func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurus
 		return fmt.Errorf("error updating user: %v", err)
 	}
 
-	// Jika role berubah, perlu menangani tabel terkait
+	// Jika role berubah
 	if oldRole != role {
 		// Hapus data dari tabel role lama
-		switch strings.ToLower(oldRole) {
+		switch oldRole {
 		case "dosen":
 			_, err = tx.Exec("DELETE FROM dosen WHERE user_id = ?", userID)
 		case "taruna":
@@ -154,28 +159,29 @@ func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurus
 			return fmt.Errorf("error menghapus data role lama: %v", err)
 		}
 
-		// Insert ke tabel sesuai role baru
-		switch strings.ToLower(role) {
+		// Masukkan data ke tabel role baru
+		switch role {
 		case "dosen":
 			_, err = tx.Exec("INSERT INTO dosen (user_id, nama_lengkap, email, jurusan) VALUES (?, ?, ?, ?)",
 				userID, fullName, email, jurusan)
 		case "taruna":
-			_, err = tx.Exec(`UPDATE taruna SET nama_lengkap = ?, email = ?, jurusan = ?, kelas = ?, npm = ? WHERE user_id = ?`,
-				fullName, email, jurusan, kelas, npm, userID)
+			_, err = tx.Exec(`INSERT INTO taruna (user_id, nama_lengkap, email, jurusan, kelas, npm) VALUES (?, ?, ?, ?, ?, ?)`,
+				userID, fullName, email, jurusan, kelas, npm)
 		}
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("error menambah data role baru: %v", err)
 		}
+
 	} else {
-		// Jika role tidak berubah tapi data lain berubah, update tabel terkait
-		switch strings.ToLower(role) {
+		// Role tidak berubah, cukup update data tabel role-nya
+		switch role {
 		case "dosen":
 			_, err = tx.Exec("UPDATE dosen SET nama_lengkap = ?, email = ?, jurusan = ? WHERE user_id = ?",
 				fullName, email, jurusan, userID)
 		case "taruna":
-			_, err = tx.Exec("UPDATE taruna SET nama_lengkap = ?, email = ?, jurusan = ?, kelas = ? WHERE user_id = ?",
-				fullName, email, jurusan, kelas, userID)
+			_, err = tx.Exec("UPDATE taruna SET nama_lengkap = ?, email = ?, jurusan = ?, kelas = ?, npm = ? WHERE user_id = ?",
+				fullName, email, jurusan, kelas, npm, userID)
 		}
 		if err != nil {
 			tx.Rollback()
