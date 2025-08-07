@@ -107,6 +107,7 @@ func EditUserTaruna(w http.ResponseWriter, r *http.Request) {
 			Kelas    string `json:"kelas"`
 			NPM      string `json:"npm"`
 			Password string `json:"password,omitempty"`
+			Role     string `json:"role"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
