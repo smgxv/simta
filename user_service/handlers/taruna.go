@@ -103,7 +103,6 @@ func EditUserTaruna(w http.ResponseWriter, r *http.Request) {
 			FullName string `json:"nama_lengkap"`
 			Email    string `json:"email"`
 			Username string `json:"username"`
-			Role     string `json:"role"`
 			Jurusan  string `json:"jurusan"`
 			Kelas    string `json:"kelas"`
 			NPM      string `json:"npm"`
@@ -138,7 +137,17 @@ func EditUserTaruna(w http.ResponseWriter, r *http.Request) {
 			npm = &npmVal
 		}
 
-		err = userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, "Taruna", userData.Jurusan, userData.Kelas, npm)
+		err = userModel.UpdateUser(
+			userData.UserID,
+			userData.FullName,
+			userData.Email,
+			userData.Username,
+			"Taruna", // role ditetapkan langsung
+			userData.Jurusan,
+			userData.Kelas,
+			npm,
+		)
+
 		if err != nil {
 			log.Printf("Gagal update user: %v", err)
 			http.Error(w, "Gagal mengupdate user", http.StatusInternalServerError)
