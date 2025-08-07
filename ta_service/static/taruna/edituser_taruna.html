@@ -13,8 +13,9 @@
     <link rel="stylesheet" type="text/css" href="vendors/styles/style.css" />
 
     <style>
-        .position-relative {
-            position: relative;
+        /* Pastikan input punya padding kanan agar icon tidak overlap */
+        .password-input {
+            padding-right: 40px;
         }
 
         .toggle-password {
@@ -22,20 +23,13 @@
             top: 50%;
             right: 15px;
             transform: translateY(-50%);
-            border: none;
-            background: none;
-            padding: 0;
             cursor: pointer;
-            z-index: 5;
+            z-index: 10;
+            color: #999;
         }
 
-        .toggle-password:focus {
-            outline: none;
-        }
-
-        .toggle-password i {
-            font-size: 1.1rem;
-            color: #6c757d;
+        .toggle-password:hover {
+            color: #333;
         }
 
     </style>
@@ -130,22 +124,23 @@
                     <div class="form-group row">
                         <label class="col-sm-12 col-md-2 col-form-label">Password Baru</label>
                         <div class="col-sm-12 col-md-10 position-relative">
-                            <input class="form-control pr-5" type="password" id="password" name="password" placeholder="Kosongkan jika tidak ingin mengubah password">
-                            <button type="button" class="btn btn-sm btn-outline-secondary toggle-password" data-target="password">
+                            <input class="form-control password-input" type="password" id="password" name="password" placeholder="Kosongkan jika tidak ingin mengubah password">
+                            <span toggle="#password" class="toggle-password">
                                 <i class="fa fa-eye"></i>
-                            </button>
+                            </span>
                         </div>
                     </div>
                     
                     <div class="form-group row">
                         <label class="col-sm-12 col-md-2 col-form-label">Konfirmasi Password</label>
                         <div class="col-sm-12 col-md-10 position-relative">
-                            <input class="form-control pr-5" type="password" id="confirm_password" name="confirm_password" placeholder="Ulangi password baru">
-                            <button type="button" class="btn btn-sm btn-outline-secondary toggle-password" data-target="confirm_password">
+                            <input class="form-control password-input" type="password" id="confirm_password" name="confirm_password" placeholder="Ulangi password baru">
+                            <span toggle="#confirm_password" class="toggle-password">
                                 <i class="fa fa-eye"></i>
-                            </button>
+                            </span>
                         </div>
                     </div>
+                    
                     <div class="form-group row">
                         <div class="col-sm-12 col-md-10 offset-md-2">
                             <button type="submit" class="btn btn-primary">Update Profile</button>
@@ -162,16 +157,20 @@
 <script src="vendors/scripts/process.js"></script>
 <script src="vendors/scripts/layout-settings.js"></script>
 <script>
-    document.querySelectorAll('.toggle-password').forEach(button => {
-        button.addEventListener('click', function () {
-            const targetId = this.getAttribute('data-target');
-            const input = document.getElementById(targetId);
+    document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+        toggle.addEventListener('click', function () {
+            const input = document.querySelector(this.getAttribute('toggle'));
             const icon = this.querySelector('i');
-            const isHidden = input.type === 'password';
 
-            input.type = isHidden ? 'text' : 'password';
-            icon.classList.toggle('fa-eye');
-            icon.classList.toggle('fa-eye-slash');
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
         });
     });
 
