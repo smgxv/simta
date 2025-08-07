@@ -76,13 +76,24 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 		return 0, fmt.Errorf("error memulai transaksi: %v", err)
 	}
 
+	// Siapkan nilai NULL untuk field opsional (taruna only)
 	var kelasVal, npmVal interface{}
 	if strings.ToLower(role) == "taruna" {
+		if jurusan == "" || kelas == "" || npm == "" {
+			tx.Rollback()
+			return 0, fmt.Errorf("taruna wajib mengisi jurusan, kelas, dan NPM")
+		}
 		kelasVal = kelas
 		npmVal = npm
 	} else {
 		kelasVal = nil
 		npmVal = nil
+	}
+
+	// Validasi tambahan untuk dosen
+	if strings.ToLower(role) == "dosen" && jurusan == "" {
+		tx.Rollback()
+		return 0, fmt.Errorf("dosen wajib mengisi jurusan")
 	}
 
 	// Insert ke tabel users
@@ -95,7 +106,7 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 		return 0, fmt.Errorf("error inserting user: %v", err)
 	}
 
-	// Dapatkan ID user yang baru dibuat
+	// Ambil user_id
 	userID, err := result.LastInsertId()
 	if err != nil {
 		tx.Rollback()
@@ -105,15 +116,23 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 	// Insert ke tabel sesuai role
 	switch strings.ToLower(role) {
 	case "dosen":
-		_, err = tx.Exec(`INSERT INTO dosen (user_id, nama_lengkap, email, jurusan) VALUES (?, ?, ?, ?)`,
+		log.Printf("Insert ke dosen: user_id=%d, nama=%s, email=%s, jurusan=%s", userID, fullName, email, jurusan)
+		_, err = tx.Exec(`
+			INSERT INTO dosen (user_id, nama_lengkap, email, jurusan)
+			VALUES (?, ?, ?, ?)`,
 			userID, fullName, email, jurusan)
 		if err != nil {
+			log.Printf("Insert ke dosen gagal! userID=%d, err=%v", userID, err)
 			tx.Rollback()
 			return 0, fmt.Errorf("error inserting dosen: %v", err)
 		}
 
 	case "taruna":
-		_, err = tx.Exec(`INSERT INTO taruna (user_id, nama_lengkap, email, jurusan, kelas, npm) VALUES (?, ?, ?, ?, ?, ?)`,
+		log.Printf("Insert ke taruna: user_id=%d, nama=%s, email=%s, jurusan=%s, kelas=%s, npm=%s",
+			userID, fullName, email, jurusan, kelas, npm)
+		_, err = tx.Exec(`
+			INSERT INTO taruna (user_id, nama_lengkap, email, jurusan, kelas, npm)
+			VALUES (?, ?, ?, ?, ?, ?)`,
 			userID, fullName, email, jurusan, kelas, npm)
 		if err != nil {
 			tx.Rollback()
@@ -121,11 +140,11 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 		}
 
 	case "admin":
+		log.Printf("Admin berhasil dibuat: user_id=%d, email=%s", userID, email)
 		// Tidak perlu insert tambahan
-		log.Printf("Admin %s berhasil dibuat", email)
 	}
 
-	// Commit transaksi
+	// Commit
 	if err = tx.Commit(); err != nil {
 		tx.Rollback()
 		return 0, fmt.Errorf("error committing transaction: %v", err)
