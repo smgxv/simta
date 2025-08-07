@@ -25,15 +25,26 @@
         .position-relative {
             position: relative;
         }
-        .toggle-btn {
+
+        .toggle-password {
             position: absolute;
             top: 50%;
-            right: 10px;
+            right: 15px;
             transform: translateY(-50%);
-            padding: 3px 8px;
-            font-size: 14px;
-            border-radius: 5px;
-            z-index: 2;
+            border: none;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        .toggle-password:focus {
+            outline: none;
+        }
+
+        .toggle-password i {
+            font-size: 1.1rem;
+            color: #6c757d;
         }
     </style>
     
@@ -140,7 +151,9 @@
                             <label class="col-sm-12 col-md-2 col-form-label">Password Baru</label>
                             <div class="col-sm-12 col-md-10 position-relative">
                                 <input class="form-control pr-5" type="password" id="password" name="password" placeholder="Kosongkan jika tidak ingin mengubah password">
-                                <button type="button" onclick="togglePassword('password', this)" class="btn btn-sm btn-outline-secondary toggle-btn">👁️</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary toggle-password" data-target="password">
+                                    <i class="fa fa-eye"></i>
+                                </button>
                             </div>
                         </div>
                         
@@ -148,7 +161,9 @@
                             <label class="col-sm-12 col-md-2 col-form-label">Konfirmasi Password</label>
                             <div class="col-sm-12 col-md-10 position-relative">
                                 <input class="form-control pr-5" type="password" id="confirm_password" name="confirm_password" placeholder="Ulangi password baru">
-                                <button type="button" onclick="togglePassword('confirm_password', this)" class="btn btn-sm btn-outline-secondary toggle-btn">👁️</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary toggle-password" data-target="confirm_password">
+                                    <i class="fa fa-eye"></i>
+                                </button>
                             </div>
                         </div>
                         
@@ -173,17 +188,19 @@
     <script src="vendors/scripts/layout-settings.js"></script>
 
     <script>
-    function togglePassword(fieldId, button) {
-        const field = document.getElementById(fieldId);
-        if (field.type === "password") {
-            field.type = "text";
-            button.textContent = "🙈";
-        } else {
-            field.type = "password";
-            button.textContent = "👁️";
-        }
-    }
-    
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function () {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            const isHidden = input.type === 'password';
+
+            input.type = isHidden ? 'text' : 'password';
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
         let userId = urlParams.get('id');
