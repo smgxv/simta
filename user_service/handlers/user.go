@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"user_service/entities"
 	"user_service/models"
+	"user_service/utils"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -129,6 +130,10 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if !utils.IsValidPassword(userData.Password) {
+			http.Error(w, "Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol", http.StatusBadRequest)
+			return
+		}
 		// Cek email duplikat
 		var existingUser entities.User
 		userModel.Where(&existingUser, "email", userData.Email)

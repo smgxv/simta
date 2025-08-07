@@ -957,13 +957,21 @@
 						return;
 					}
 					
-					const result = await response.json();
-					
+					let resultText = await response.text();
+					let resultMessage = resultText;
+
+					try {
+						const resultJSON = JSON.parse(resultText);
+						resultMessage = resultJSON.message || resultText;
+					} catch (e) {
+						// resultText tetap digunakan
+					}
+
 					if (response.ok) {
-						showAlert('User berhasil ditambahkan!', 'success');
+						showAlert(resultMessage || 'User berhasil ditambahkan!', 'success');
 						form.reset();
 					} else {
-						showAlert('Gagal menambahkan user: ' + result.message, 'danger');
+						showAlert('Gagal menambahkan user: ' + resultMessage, 'danger');
 					}
 				} catch (error) {
 					console.error('Error:', error);
