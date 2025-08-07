@@ -17,15 +17,15 @@ func NewTarunaModel() (*TarunaModel, error) {
 	return &TarunaModel{db: db}, nil
 }
 
-func (d *TarunaModel) CreateTaruna(userID int, namaLengkap, jurusan string) error {
-	_, err := d.db.Exec("INSERT INTO dosen (id, nama_lengkap, jurusan) VALUES (?, ?, ?)",
-		userID, namaLengkap, jurusan)
+func (d *TarunaModel) CreateTaruna(userID int, namaLengkap, email, jurusan, kelas string, npm *int) error {
+	_, err := d.db.Exec("INSERT INTO taruna (user_id, nama_lengkap, email, jurusan, kelas, npm) VALUES (?, ?, ?, ?, ?, ?)",
+		userID, namaLengkap, email, jurusan, kelas, npm)
 	return err
 }
 
 func (d *TarunaModel) GetAllTaruna() ([]map[string]interface{}, error) {
 	rows, err := d.db.Query(`
-        SELECT t.id, t.user_id, t.nama_lengkap, t.jurusan, t.kelas
+        SELECT t.id, t.user_id, t.nama_lengkap, t.jurusan, t.kelas, t.npm
         FROM taruna t
         JOIN users u ON t.user_id = u.id
         WHERE u.role = 'Taruna'
@@ -35,27 +35,28 @@ func (d *TarunaModel) GetAllTaruna() ([]map[string]interface{}, error) {
 	}
 	defer rows.Close()
 
-	var dosens []map[string]interface{}
+	var tarunas []map[string]interface{}
 	for rows.Next() {
 		var id, userID int
-		var namaLengkap, jurusan, kelas string
+		var namaLengkap, jurusan, kelas, npm string
 
-		err := rows.Scan(&id, &userID, &namaLengkap, &jurusan, &kelas)
+		err := rows.Scan(&id, &userID, &namaLengkap, &jurusan, &kelas, &npm)
 		if err != nil {
 			return nil, err
 		}
 
-		dosen := map[string]interface{}{
+		taruna := map[string]interface{}{
 			"id":           id,
 			"user_id":      userID,
 			"nama_lengkap": namaLengkap,
 			"jurusan":      jurusan,
 			"kelas":        kelas,
+			"npm":          npm,
 		}
-		dosens = append(dosens, dosen)
+		tarunas = append(tarunas, taruna)
 	}
 
-	return dosens, nil
+	return tarunas, nil
 }
 
 // Update password taruna berdasarkan user_id

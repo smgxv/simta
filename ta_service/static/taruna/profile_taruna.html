@@ -549,6 +549,10 @@
 											<span id="username"></span>
 										</li>
 										<li>
+											<span>NPM:</span>
+											<span id="npm"></span>
+										</li>
+										<li>
 											<span>Email:</span>
 											<span id="email"></span>
 										</li>
@@ -650,6 +654,7 @@
 						updateElement("fullName", user.nama_lengkap);
 						updateElement("role", user.role);
 						updateElement("username", user.username);
+						updateElement("npm", user.npm);
 						updateElement("email", user.email);
 						updateElement("jurusan", user.jurusan);
 						updateElement("kelas", user.kelas);
@@ -781,6 +786,7 @@
 					document.getElementById('edit_nama_lengkap').value = document.getElementById('fullName').textContent;
 					document.getElementById('edit_email').value = document.getElementById('email').textContent;
 					document.getElementById('edit_username').value = document.getElementById('username').textContent;
+					document.getElementById('edit_npm').value = document.getElementById('npm').textContent;
 					document.getElementById('edit_jurusan').value = document.getElementById('jurusan').textContent;
 					updateKelasEditModal();
 					document.getElementById('edit_kelas').value = document.getElementById('kelas').textContent;
@@ -804,6 +810,7 @@
 						nama_lengkap: document.getElementById('edit_nama_lengkap').value,
 						email: document.getElementById('edit_email').value,
 						username: document.getElementById('edit_username').value,
+						npm: document.getElementById('edit_npm').value,
 						jurusan: document.getElementById('edit_jurusan').value,
 						kelas: document.getElementById('edit_kelas').value,
 						role: 'taruna'

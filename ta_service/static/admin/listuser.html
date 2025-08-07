@@ -635,6 +635,7 @@
 								<thead>
 									<tr>
 										<th class="table-plus datatable-nosort">Nama Panjang</th>
+										<th>NPM</th>
 										<th>Email</th>
 										<th>username</th>
 										<th>Jurusan</th>
@@ -730,6 +731,7 @@
 						const row = document.createElement("tr");
 						row.innerHTML = `
 							<td>${user.nama_lengkap || '-'}</td>
+							<td>${user.npm || '-'}</td>
 							<td>${user.email || '-'}</td>
 							<td>${user.username || '-'}</td>
 							<td>${user.jurusan || '-'}</td>

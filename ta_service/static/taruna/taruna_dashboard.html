@@ -600,6 +600,12 @@
 					  </div>
 					  <div class="col-md-4">
 						<div class="card shadow-sm p-3 mb-4">
+						  <h6 class="text-muted">NPM</h6>
+						  <p class="mb-0 fw-bold" id="npm-taruna">-</p>
+						</div>
+					  </div>
+					  <div class="col-md-4">
+						<div class="card shadow-sm p-3 mb-4">
 						  <h6 class="text-muted">Jurusan</h6>
 						  <p class="mb-0 fw-bold" id="jurusan">-</p>
 						</div>
@@ -856,6 +862,7 @@
 						// Identitas taruna
 						document.getElementById('nama-taruna').textContent = data.nama_lengkap || '-';
 						document.getElementById('nama-taruna-header').textContent = data.nama_lengkap || 'Taruna';
+						document.getElementById('npm-taruna').textContent = data.npm || '-';
 						document.getElementById('jurusan').textContent = data.jurusan || '-';
 						document.getElementById('kelas').textContent = data.kelas || '-';
 
@@ -934,6 +941,7 @@
 						// Fallback tampilan kosong
 						document.getElementById('nama-taruna').textContent = '-';
 						document.getElementById('nama-taruna-header').textContent = 'Taruna';
+						document.getElementById('npm-taruna').textContent = '-';
 						document.getElementById('jurusan').textContent = '-';
 						document.getElementById('kelas').textContent = '-';
 						document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
@@ -954,6 +962,7 @@
 				.catch(() => {
 					document.getElementById('nama-taruna').textContent = '-';
 					document.getElementById('nama-taruna-header').textContent = 'Taruna';
+					document.getElementById('npm-taruna').textContent = '-';
 					document.getElementById('jurusan').textContent = '-';
 					document.getElementById('kelas').textContent = '-';
 					document.getElementById('status-icp').innerHTML = 'Belum mengumpulkan ICP';
