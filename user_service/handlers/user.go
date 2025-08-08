@@ -15,7 +15,7 @@ import (
 
 // Fungsi Get user
 func UserHandler(w http.ResponseWriter, r *http.Request) {
-	// Header CORS
+	// CORS header (tidak perlu diubah)
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -32,7 +32,6 @@ func UserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get token from Authorization header
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		http.Error(w, "No token provided", http.StatusUnauthorized)
@@ -41,7 +40,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request) {
 
 	userModel, err := models.NewUserModel()
 	if err != nil {
-		log.Printf("Database connection error: %v", err)
+		log.Printf("❌ Gagal koneksi DB: %v", err)
 		http.Error(w, "Database connection error", http.StatusInternalServerError)
 		return
 	}
@@ -49,7 +48,6 @@ func UserHandler(w http.ResponseWriter, r *http.Request) {
 	// Cek apakah ada parameter id
 	userID := r.URL.Query().Get("id")
 	if userID != "" {
-		// Jika ada id, ambil data user spesifik
 		id, err := strconv.Atoi(userID)
 		if err != nil {
 			http.Error(w, "Invalid user ID", http.StatusBadRequest)
@@ -66,15 +64,22 @@ func UserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Jika tidak ada id, ambil semua user
+	// Ambil semua user
 	users, err := userModel.FindAll()
 	if err != nil {
-		log.Printf("Failed to fetch users: %v", err)
+		log.Printf("❌ Gagal ambil data user dari DB: %v", err)
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(users)
+	log.Printf("✅ Berhasil ambil %d users", len(users))
+
+	err = json.NewEncoder(w).Encode(users)
+	if err != nil {
+		log.Printf("❌ Gagal encode JSON: %v", err)
+		http.Error(w, "Gagal encode JSON", http.StatusInternalServerError)
+		return
+	}
 }
 
 // Fungsi Add user

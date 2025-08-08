@@ -725,7 +725,7 @@
 					tableBody.innerHTML = ""; // Kosongkan tabel sebelum mengisi data
 
 					// Filter hanya user dengan role Taruna
-					const tarunaUsers = users.filter(user => user.role.toLowerCase() === "Taruna");
+					const tarunaUsers = users.filter(user => user.role.toLowerCase() === "taruna");
 
 					tarunaUsers.forEach(user => {
 						const row = document.createElement("tr");

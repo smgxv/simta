@@ -722,7 +722,7 @@
 					tableBody.innerHTML = ""; // Kosongkan tabel sebelum mengisi data
 
 					// Filter hanya user dengan role Dosen
-					const dosenUsers = users.filter(user => user.role.toLowerCase() === "Dosen");
+					const dosenUsers = users.filter(user => user.role.toLowerCase() === "dosen");
 
 					dosenUsers.forEach(user => {
 						const row = document.createElement("tr");
