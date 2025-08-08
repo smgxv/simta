@@ -445,7 +445,8 @@
                     username: document.getElementById('username').value,
                     jurusan: document.getElementById('jurusan').value || null,
                     role: document.getElementById('role').value,
-                    password: password // ← Kirim password baru jika diisi
+                    password: password,
+                    confirm_password: confirmPassword // ← tambahkan ini!
                 };
         
                 if (userData.role.toLowerCase() === 'taruna') {
@@ -482,7 +483,7 @@
                 });
             });
         });
-        </script>
+    </script>
         
 <!-- // ... existing code ... -->
 </body>
