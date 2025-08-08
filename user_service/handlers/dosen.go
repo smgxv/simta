@@ -135,7 +135,7 @@ func EditUserDosen(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Update data user
-		err = userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, "dosen", userData.Jurusan, "", nil)
+		err = userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, "dosen", userData.Jurusan, "", nil, nil)
 		if err != nil {
 			log.Printf("Failed to update user: %v", err)
 			http.Error(w, "Gagal mengupdate user", http.StatusInternalServerError)

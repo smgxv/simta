@@ -189,7 +189,7 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 	return userID, nil
 }
 
-func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurusan, kelas string, npm *int) error {
+func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurusan, kelas string, npm *int, hashedPassword []byte) error {
 	role = strings.ToLower(role)
 
 	tx, err := u.db.Begin()
@@ -205,19 +205,39 @@ func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurus
 	}
 	oldRole = strings.ToLower(oldRole)
 
-	// 💡 Update tabel users: sesuaikan field berdasarkan role
+	// ================================
+	// Update tabel users
+	// ================================
 	switch role {
 	case "taruna":
-		_, err = tx.Exec(`
-			UPDATE users SET nama_lengkap = ?, email = ?, username = ?, role = ?, jurusan = ?, kelas = ?, npm = ?
-			WHERE id = ?`,
-			fullName, email, username, role, jurusan, kelas, npm, userID)
+		if len(hashedPassword) > 0 {
+			_, err = tx.Exec(`
+				UPDATE users 
+				SET nama_lengkap = ?, email = ?, username = ?, role = ?, jurusan = ?, kelas = ?, npm = ?, password = ?
+				WHERE id = ?`,
+				fullName, email, username, role, jurusan, kelas, npm, hashedPassword, userID)
+		} else {
+			_, err = tx.Exec(`
+				UPDATE users 
+				SET nama_lengkap = ?, email = ?, username = ?, role = ?, jurusan = ?, kelas = ?, npm = ?
+				WHERE id = ?`,
+				fullName, email, username, role, jurusan, kelas, npm, userID)
+		}
 
 	case "dosen", "admin":
-		_, err = tx.Exec(`
-			UPDATE users SET nama_lengkap = ?, email = ?, username = ?, role = ?, jurusan = ?
-			WHERE id = ?`,
-			fullName, email, username, role, jurusan, userID)
+		if len(hashedPassword) > 0 {
+			_, err = tx.Exec(`
+				UPDATE users 
+				SET nama_lengkap = ?, email = ?, username = ?, role = ?, jurusan = ?, password = ?
+				WHERE id = ?`,
+				fullName, email, username, role, jurusan, hashedPassword, userID)
+		} else {
+			_, err = tx.Exec(`
+				UPDATE users 
+				SET nama_lengkap = ?, email = ?, username = ?, role = ?, jurusan = ?
+				WHERE id = ?`,
+				fullName, email, username, role, jurusan, userID)
+		}
 
 	default:
 		tx.Rollback()
@@ -229,7 +249,9 @@ func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurus
 		return fmt.Errorf("error updating user: %v", err)
 	}
 
-	// 💡 Jika role berubah
+	// ================================
+	// Bagian ini TIDAK diubah
+	// ================================
 	if oldRole != role {
 		switch oldRole {
 		case "dosen":
@@ -255,7 +277,6 @@ func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurus
 			return fmt.Errorf("error menambah data role baru: %v", err)
 		}
 	} else {
-		// 💡 Jika role tidak berubah, cukup update data tabel peran
 		switch role {
 		case "dosen":
 			_, err = tx.Exec("UPDATE dosen SET nama_lengkap = ?, email = ?, jurusan = ? WHERE user_id = ?",

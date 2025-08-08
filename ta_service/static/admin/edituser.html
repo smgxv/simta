@@ -20,6 +20,27 @@
     <link rel="stylesheet" type="text/css" href="vendors/styles/core.css" />
     <link rel="stylesheet" type="text/css" href="vendors/styles/icon-font.min.css"/>
     <link rel="stylesheet" type="text/css" href="vendors/styles/style.css" />
+    <style>
+        /* Pastikan input punya padding kanan agar icon tidak overlap */
+        .password-input {
+            padding-right: 40px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            z-index: 10;
+            color: #999;
+        }
+
+        .toggle-password:hover {
+            color: #333;
+        }
+
+    </style>
 </head>
 
 <body>
@@ -194,7 +215,6 @@
                             <label class="col-sm-12 col-md-2 col-form-label">Role</label>
                             <div class="col-sm-12 col-md-10">
                                 <select class="custom-select col-12" id="role" name="role" required>
-                                    <option value="admin">Admin</option>
                                     <option value="dosen">Dosen</option>
                                     <option value="taruna">Taruna</option>
                                 </select>
@@ -227,6 +247,26 @@
                                 </select>
                             </div>
                         </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-12 col-md-2 col-form-label">Password Baru</label>
+                            <div class="col-sm-12 col-md-10 position-relative">
+                                <input class="form-control password-input" type="password" id="password" name="password" placeholder="Kosongkan jika tidak ingin mengubah password">
+                                <span toggle="#password" class="toggle-password">
+                                    <i class="fa fa-eye"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-sm-12 col-md-2 col-form-label">Konfirmasi Password</label>
+                            <div class="col-sm-12 col-md-10 position-relative">
+                                <input class="form-control password-input" type="password" id="confirm_password" name="confirm_password" placeholder="Ulangi password baru">
+                                <span toggle="#confirm_password" class="toggle-password">
+                                    <i class="fa fa-eye"></i>
+                                </span>
+                            </div>
+                        </div>
                         
                         <div class="form-group row">
                             <div class="col-sm-12 col-md-10 offset-md-2">
@@ -249,193 +289,201 @@
 
     <!-- // ... existing code ... -->
     <script>
-    const kelasPerJurusan = {
-        'Keamanan Siber': [
-            'IV Rekayasa Keamanan Siber Echo',
-            'IV Rekayasa Keamanan Siber Trace',
-            'IV Rekayasa Keamanan Siber Route'
-        ],
-        'Kriptografi': [
-            'IV Rekayasa Perangkat Lunak Kripto',
-            'IV Rekayasa Perangkat Keras Kriptografi',
-            'IV Rekayasa Sistem Kriptografi'
-        ]
-    };
-
-    function toggleJurusanKelas() {
-        const role = document.getElementById('role').value;
-        const jurusanGroup = document.getElementById('jurusanGroup');
-        const kelasGroup = document.getElementById('kelasGroup');
-        const jurusanSelect = document.getElementById('jurusan');
-        const kelasSelect = document.getElementById('kelas');
-        const npmGroup = document.getElementById('npmGroup');
-        const npmInput = document.getElementById('npm');
-
-        // Reset nilai
-        jurusanSelect.value = '';
-        kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
-
-        if (role.toLowerCase() === 'taruna') {
-            jurusanGroup.style.display = 'flex';
-            kelasGroup.style.display = 'flex';
-            npmGroup.style.display = 'flex'; // ← Tampilkan NPM
-            jurusanSelect.required = true;
-            kelasSelect.required = true;
-            npmInput.required = true;       // ← Wajibkan
-        } else if (role.toLowerCase() === 'dosen') {
-            jurusanGroup.style.display = 'flex';
-            kelasGroup.style.display = 'none';
-            npmGroup.style.display = 'none'; // ← Sembunyikan
-            jurusanSelect.required = true;
-            kelasSelect.required = false;
-            npmInput.required = false;
-        } else {
-            jurusanGroup.style.display = 'none';
-            kelasGroup.style.display = 'none';
-            npmGroup.style.display = 'none'; // ← Sembunyikan
-            jurusanSelect.required = false;
-            kelasSelect.required = false;
-            npmInput.required = false;
-        }
-    }
-
-    function updateKelas() {
-        const role = document.getElementById('role').value;
-        const jurusanSelect = document.getElementById('jurusan');
-        const kelasSelect = document.getElementById('kelas');
-        const selectedJurusan = jurusanSelect.value;
-
-        // Jika role adalah Dosen, tidak perlu mengupdate kelas
-        if (role.toLowerCase() === 'dosen') {
-            return;
-        }
-
-        // Reset dropdown kelas
-        kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
-
-        // Jika ada jurusan yang dipilih dan role adalah Taruna
-        if (selectedJurusan && role.toLowerCase() === 'taruna') {
-            const kelasOptions = kelasPerJurusan[selectedJurusan];
-            if (kelasOptions) {
-                kelasOptions.forEach(kelas => {
-                    const option = document.createElement('option');
-                    option.value = kelas;
-                    option.textContent = kelas;
-                    kelasSelect.appendChild(option);
-                });
-            }
-        }
-    }
-
-    // Update event listener untuk role
-    document.getElementById('role').addEventListener('change', toggleJurusanKelas);
-
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('id');
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    
-        if (!token) {
-            window.location.replace('/loginusers');
-            return;
-        }
-    
-        // Fetch data user yang akan diedit
-        fetch(`/api/user/users/edit?id=${userId}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                'Origin': 'http://104.43.89.154:8080'
-            }
-        })
-        .then(response => response.json())
-        .then(user => {
-            console.log('Data user:', user);
-            if (!user) {
-                throw new Error('Data user tidak ditemukan');
-            }
-            document.getElementById('nama_lengkap').value = user.nama_lengkap || '';
-            document.getElementById('email').value = user.email || '';
-            document.getElementById('username').value = user.username || '';
-            document.getElementById('role').value = (user.role || '').toLowerCase();
-            
-            // Set jurusan dan kelas jika ada
-            if (user.jurusan) {
-                document.getElementById('jurusan').value = user.jurusan;
-            }
-            
-            // Tampilkan/sembunyikan field berdasarkan role
-            toggleJurusanKelas();
-            
-            // Update opsi kelas jika role adalah Taruna
-            if (user.role.toLowerCase() === 'taruna' && user.jurusan) {
-                updateKelas();
-                // Set nilai kelas setelah opsi diupdate
-                setTimeout(() => {
-                    document.getElementById('kelas').value = user.kelas || '';
-                    document.getElementById('npm').value = user.npm || '';
-                }, 100);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Gagal mengambil data user: ' + error.message);
+        document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+            toggle.addEventListener('click', function () {
+                const input = document.querySelector(this.getAttribute('toggle'));
+                const icon = this.querySelector('i');
+        
+                if (input.type === "password") {
+                    input.type = "text";
+                    icon.classList.remove("fa-eye");
+                    icon.classList.add("fa-eye-slash");
+                } else {
+                    input.type = "password";
+                    icon.classList.remove("fa-eye-slash");
+                    icon.classList.add("fa-eye");
+                }
+            });
         });
-    
-        // Handle form submission
-        document.getElementById('editUserForm').addEventListener('submit', function (e) {
-            e.preventDefault(); // Hindari reload halaman
-
-            const userData = {
-                id: parseInt(userId), // Ambil ID dari URL
-                nama_lengkap: document.getElementById('nama_lengkap').value,
-                email: document.getElementById('email').value,
-                username: document.getElementById('username').value,
-                jurusan: document.getElementById('jurusan').value || null,
-                role: document.getElementById('role').value
-            };
-
-                    // Tambahkan kelas jika role adalah Taruna
-            if (userData.role.toLowerCase() === 'taruna') {
-                userData.kelas = document.getElementById('kelas').value;
-                userData.npm = document.getElementById('npm').value;
+        
+        const kelasPerJurusan = {
+            'Keamanan Siber': [
+                'IV Rekayasa Keamanan Siber Echo',
+                'IV Rekayasa Keamanan Siber Trace',
+                'IV Rekayasa Keamanan Siber Route'
+            ],
+            'Kriptografi': [
+                'IV Rekayasa Perangkat Lunak Kripto',
+                'IV Rekayasa Perangkat Keras Kriptografi',
+                'IV Rekayasa Sistem Kriptografi'
+            ]
+        };
+        
+        function toggleJurusanKelas() {
+            const role = document.getElementById('role').value;
+            const jurusanGroup = document.getElementById('jurusanGroup');
+            const kelasGroup = document.getElementById('kelasGroup');
+            const jurusanSelect = document.getElementById('jurusan');
+            const kelasSelect = document.getElementById('kelas');
+            const npmGroup = document.getElementById('npmGroup');
+            const npmInput = document.getElementById('npm');
+        
+            jurusanSelect.value = '';
+            kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
+        
+            if (role.toLowerCase() === 'taruna') {
+                jurusanGroup.style.display = 'flex';
+                kelasGroup.style.display = 'flex';
+                npmGroup.style.display = 'flex';
+                jurusanSelect.required = true;
+                kelasSelect.required = true;
+                npmInput.required = true;
+            } else if (role.toLowerCase() === 'dosen') {
+                jurusanGroup.style.display = 'flex';
+                kelasGroup.style.display = 'none';
+                npmGroup.style.display = 'none';
+                jurusanSelect.required = true;
+                kelasSelect.required = false;
+                npmInput.required = false;
+            } else {
+                jurusanGroup.style.display = 'none';
+                kelasGroup.style.display = 'none';
+                npmGroup.style.display = 'none';
+                jurusanSelect.required = false;
+                kelasSelect.required = false;
+                npmInput.required = false;
             }
-
-
-            console.log('Sending data:', userData);
-
-            fetch(`/api/user/users/edit`, {
-                method: 'PUT',
+        }
+        
+        function updateKelas() {
+            const role = document.getElementById('role').value;
+            const jurusanSelect = document.getElementById('jurusan');
+            const kelasSelect = document.getElementById('kelas');
+            const selectedJurusan = jurusanSelect.value;
+        
+            if (role.toLowerCase() === 'dosen') return;
+        
+            kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
+            if (selectedJurusan && role.toLowerCase() === 'taruna') {
+                const kelasOptions = kelasPerJurusan[selectedJurusan];
+                if (kelasOptions) {
+                    kelasOptions.forEach(kelas => {
+                        const option = document.createElement('option');
+                        option.value = kelas;
+                        option.textContent = kelas;
+                        kelasSelect.appendChild(option);
+                    });
+                }
+            }
+        }
+        
+        document.getElementById('role').addEventListener('change', toggleJurusanKelas);
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('id');
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        
+            if (!token) {
+                window.location.replace('/loginusers');
+                return;
+            }
+        
+            fetch(`/api/user/users/edit?id=${userId}`, {
+                method: 'GET',
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify(userData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text || 'Gagal mengupdate user');
-                    });
+                    'Authorization': `Bearer ${token}`
                 }
-                return response.json();
             })
-            .then(data => {
-                console.log('Success:', data);
-                alert('User berhasil diupdate');
-                window.location.href = '/admin/listuser';
+            .then(response => response.json())
+            .then(user => {
+                if (!user) {
+                    throw new Error('Data user tidak ditemukan');
+                }
+        
+                document.getElementById('nama_lengkap').value = user.nama_lengkap || '';
+                document.getElementById('email').value = user.email || '';
+                document.getElementById('username').value = user.username || '';
+                document.getElementById('role').value = (user.role || '').toLowerCase();
+        
+                if (user.jurusan) {
+                    document.getElementById('jurusan').value = user.jurusan;
+                }
+        
+                toggleJurusanKelas();
+        
+                if (user.role.toLowerCase() === 'taruna' && user.jurusan) {
+                    updateKelas();
+                    setTimeout(() => {
+                        document.getElementById('kelas').value = user.kelas || '';
+                        document.getElementById('npm').value = user.npm || '';
+                    }, 100);
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert(error.message || 'Terjadi kesalahan saat mengupdate user');
+                alert('Gagal mengambil data user: ' + error.message);
+            });
+        
+            document.getElementById('editUserForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+        
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm_password').value;
+        
+                if (password && password !== confirmPassword) {
+                    alert('Password dan konfirmasi password tidak cocok!');
+                    return;
+                }
+        
+                const userData = {
+                    id: parseInt(userId),
+                    nama_lengkap: document.getElementById('nama_lengkap').value,
+                    email: document.getElementById('email').value,
+                    username: document.getElementById('username').value,
+                    jurusan: document.getElementById('jurusan').value || null,
+                    role: document.getElementById('role').value,
+                    password: password // ← Kirim password baru jika diisi
+                };
+        
+                if (userData.role.toLowerCase() === 'taruna') {
+                    userData.kelas = document.getElementById('kelas').value;
+                    userData.npm = document.getElementById('npm').value;
+                }
+        
+                console.log('Sending data:', userData);
+        
+                fetch(`/api/user/users/edit`, {
+                    method: 'PUT',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(userData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(text || 'Gagal mengupdate user');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert('User berhasil diupdate');
+                    window.location.href = '/admin/listuser';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message || 'Terjadi kesalahan saat mengupdate user');
+                });
             });
         });
-    });
-    </script>
+        </script>
+        
 <!-- // ... existing code ... -->
 </body>
 </html>

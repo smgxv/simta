@@ -247,14 +247,16 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == http.MethodPut {
 		// Parse request body
 		var userData struct {
-			UserID   int    `json:"id"`
-			FullName string `json:"nama_lengkap"`
-			Email    string `json:"email"`
-			Username string `json:"username"`
-			Role     string `json:"role"`
-			Jurusan  string `json:"jurusan"`
-			Kelas    string `json:"kelas"`
-			NPM      string `json:"npm"`
+			UserID          int    `json:"id"`
+			FullName        string `json:"nama_lengkap"`
+			Email           string `json:"email"`
+			Username        string `json:"username"`
+			Role            string `json:"role"`
+			Jurusan         string `json:"jurusan"`
+			Kelas           string `json:"kelas"`
+			NPM             string `json:"npm"`
+			Password        string `json:"password"`
+			ConfirmPassword string `json:"confirm_password"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
@@ -267,6 +269,25 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 		if userData.UserID == 0 || userData.FullName == "" || userData.Email == "" || userData.Username == "" || userData.Role == "" {
 			http.Error(w, "Semua field harus diisi", http.StatusBadRequest)
 			return
+		}
+
+		// Validasi password (jika ingin ganti password)
+		var hashedPassword []byte
+		if userData.Password != "" {
+			if userData.Password != userData.ConfirmPassword {
+				http.Error(w, "Password dan konfirmasi tidak cocok", http.StatusBadRequest)
+				return
+			}
+			if !utils.IsValidPassword(userData.Password) {
+				http.Error(w, "Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol", http.StatusBadRequest)
+				return
+			}
+			hashedPassword, err = bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
+			if err != nil {
+				log.Printf("Gagal hash password: %v", err)
+				http.Error(w, "Gagal memproses password", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		// Cek apakah email sudah digunakan oleh user lain
@@ -289,7 +310,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Update data user
-		err := userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, userData.Role, userData.Jurusan, userData.Kelas, npm)
+		err := userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, userData.Role, userData.Jurusan, userData.Kelas, npm, hashedPassword)
 		if err != nil {
 			log.Printf("Failed to update user: %v", err)
 			http.Error(w, "Gagal mengupdate user", http.StatusInternalServerError)

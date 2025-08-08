@@ -147,6 +147,7 @@ func EditUserTaruna(w http.ResponseWriter, r *http.Request) {
 			userData.Jurusan,
 			userData.Kelas,
 			npm,
+			nil,
 		)
 
 		if err != nil {
