@@ -73,6 +73,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Anti brute force (minimal delay)
 	time.Sleep(1 * time.Second)
 
+	log.Printf("Mencari user dengan email: '%s'", req.Email) // <<<<< TAMBAHKAN INI
+
 	// Cari user
 	userModel := models.NewUserModel()
 	var user entities.User
