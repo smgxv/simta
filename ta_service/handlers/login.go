@@ -60,6 +60,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Trim input
 	req.Email = strings.TrimSpace(req.Email)
+	req.Email = strings.ToLower(req.Email)
 	req.Password = strings.TrimSpace(req.Password)
 
 	// Validasi input
