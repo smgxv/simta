@@ -229,40 +229,40 @@ jobs:
   #       with:
   #         go-version: 1.23
 
-  build-ta-service:
-    # needs: running-tests
-    name: Build Image
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build Image
-        run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Push Image
-        run: docker push smgxv/ta-service
+  # build-ta-service:
+  #   # needs: running-tests
+  #   name: Build Image
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Build Image
+  #       run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
+  #     - name: Login to DockerHub
+  #       uses: docker/login-action@v1
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+  #     - name: Push Image
+  #       run: docker push smgxv/ta-service
 
-  deploy-ta-service:
-    needs: build-ta-service
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}
-          port: ${{ secrets.VPS_PORT }}
-          script: |
-            docker stop ta-service || true && docker rm ta-service || true
-            docker system prune -af
-            docker pull smgxv/ta-service
-            docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
-            docker network connect simta_net ta-service
+  # deploy-ta-service:
+  #   needs: build-ta-service
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Deploy to VPS
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.VPS_HOST }}
+  #         username: ${{ secrets.VPS_USERNAME }}
+  #         password: ${{ secrets.VPS_PASSWORD }}
+  #         port: ${{ secrets.VPS_PORT }}
+  #         script: |
+  #           docker stop ta-service || true && docker rm ta-service || true
+  #           docker system prune -af
+  #           docker pull smgxv/ta-service
+  #           docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+  #           docker network connect simta_net ta-service
 
 
   build-user-service:

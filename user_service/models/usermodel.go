@@ -50,6 +50,7 @@ func (m *UserModel) FindAll() ([]entities.User, error) {
 	var users []entities.User
 	for rows.Next() {
 		var user entities.User
+		var jurusan, kelas sql.NullString
 		var npm sql.NullInt64
 
 		err := rows.Scan(
@@ -58,14 +59,29 @@ func (m *UserModel) FindAll() ([]entities.User, error) {
 			&user.Username,
 			&user.Email,
 			&user.Role,
-			&user.Jurusan,
-			&user.Kelas,
+			&jurusan,
+			&kelas,
 			&npm,
 		)
 		if err != nil {
 			return nil, err
 		}
 
+		// Handle jurusan
+		if jurusan.Valid {
+			user.Jurusan = jurusan.String
+		} else {
+			user.Jurusan = ""
+		}
+
+		// Handle kelas
+		if kelas.Valid {
+			user.Kelas = kelas.String
+		} else {
+			user.Kelas = ""
+		}
+
+		// Handle npm
 		if npm.Valid {
 			npmVal := int(npm.Int64)
 			user.NPM = &npmVal
