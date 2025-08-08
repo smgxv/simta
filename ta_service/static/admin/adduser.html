@@ -892,58 +892,53 @@
 
 			async function submitForm(event) {
 				event.preventDefault();
-				
+
 				const form = document.getElementById('addUserForm');
 				const formData = new FormData(form);
-				
-				
+				const data = Object.fromEntries(formData);
+
 				// Ambil token dari storage
 				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 				if (!token) {
 					showAlert('Sesi Anda telah berakhir. Silakan login kembali.', 'danger');
-					setTimeout(() => {
-						window.location.href = '/loginusers';
-					}, 2000);
+					setTimeout(() => window.location.href = '/loginusers', 2000);
 					return;
 				}
-				
-				const data = Object.fromEntries(formData);
+
+				// Validasi password
 				if (data.password !== data.confirm_password) {
 					showAlert('Password dan Konfirmasi Password harus sama!', 'danger');
 					return;
 				}
 
-				// Validasi role harus dipilih
-				if (!data.role) {
+				// Validasi role
+				const role = data.role;
+				if (!role) {
 					showAlert('Silakan pilih Role!', 'danger');
 					return;
 				}
 
-				// Validasi jurusan untuk semua role
-				if (!data.jurusan) {
-					showAlert('Silakan pilih Jurusan!', 'danger');
-					return;
-				}
-
-				// Validasi kelas khusus untuk Taruna
-				if (data.role === 'Taruna' && !data.kelas) {
-					showAlert('Silakan pilih Kelas!', 'danger');
-					return;
-				}
-
-				// Hapus field kelas jika role adalah Dosen
-				if (data.role === 'Dosen') {
+				// Validasi per role
+				if (role === 'Taruna') {
+					if (!data.jurusan || !data.kelas || !data.npm) {
+						showAlert('Taruna harus mengisi Jurusan, Kelas, dan NPM!', 'danger');
+						return;
+					}
+				} else if (role === 'Dosen') {
+					if (!data.jurusan) {
+						showAlert('Dosen harus mengisi Jurusan!', 'danger');
+						return;
+					}
+					// Hapus field tidak relevan
 					delete data.kelas;
+					delete data.npm;
+				} else if (role === 'Admin') {
+					// Hapus field tidak relevan
+					delete data.jurusan;
+					delete data.kelas;
+					delete data.npm;
 				}
 
-				// Bersihkan field tidak relevan saat role Admin
-				if (data.role === 'Admin') {
-					data.jurusan = "";
-					data.kelas = "";
-					data.npm = "";
-				}
-
-				
 				try {
 					const response = await fetch('/api/user/users/add', {
 						method: 'POST',
@@ -953,30 +948,26 @@
 						},
 						body: JSON.stringify(data)
 					});
-					
+
+					// Tangani respons khusus
 					if (response.status === 401) {
 						showAlert('Sesi Anda telah berakhir. Silakan login kembali.', 'danger');
-						setTimeout(() => {
-							window.location.href = '/loginusers';
-						}, 2000);
+						setTimeout(() => window.location.href = '/loginusers', 2000);
 						return;
 					}
-
-					// Tambahkan penanganan khusus untuk status 409 (Conflict)
 					if (response.status === 409) {
 						showAlert('Email sudah terdaftar! Silakan gunakan email lain.', 'danger');
 						return;
 					}
-					
+
+					// Parsing hasil
 					let resultText = await response.text();
 					let resultMessage = resultText;
 
 					try {
 						const resultJSON = JSON.parse(resultText);
 						resultMessage = resultJSON.message || resultText;
-					} catch (e) {
-						// resultText tetap digunakan
-					}
+					} catch (e) {}
 
 					if (response.ok) {
 						showAlert(resultMessage || 'User berhasil ditambahkan!', 'success');
@@ -984,12 +975,12 @@
 					} else {
 						showAlert('Gagal menambahkan user: ' + resultMessage, 'danger');
 					}
-
 				} catch (error) {
 					console.error('Error:', error);
 					showAlert('Terjadi kesalahan, coba lagi.', 'danger');
 				}
 			}
+
 
 			async function logout() {
 				try {
