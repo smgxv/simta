@@ -77,15 +77,25 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 	}
 
 	// Siapkan nilai NULL untuk field opsional (taruna only)
-	var kelasVal, npmVal interface{}
+	var kelasVal, npmVal, jurusanVal interface{}
 	if strings.ToLower(role) == "taruna" {
 		if jurusan == "" || kelas == "" || npm == "" {
 			tx.Rollback()
 			return 0, fmt.Errorf("taruna wajib mengisi jurusan, kelas, dan NPM")
 		}
+		jurusanVal = jurusan
 		kelasVal = kelas
 		npmVal = npm
-	} else {
+	} else if strings.ToLower(role) == "dosen" {
+		if jurusan == "" {
+			tx.Rollback()
+			return 0, fmt.Errorf("dosen wajib mengisi jurusan")
+		}
+		jurusanVal = jurusan
+		kelasVal = nil
+		npmVal = nil
+	} else { // admin
+		jurusanVal = nil
 		kelasVal = nil
 		npmVal = nil
 	}
@@ -100,7 +110,7 @@ func (u UserModel) CreateUser(fullName, email, username, role, password, jurusan
 	result, err := tx.Exec(`
 		INSERT INTO users (nama_lengkap, email, username, role, password, jurusan, kelas, npm) 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		fullName, email, username, role, password, jurusan, kelasVal, npmVal)
+		fullName, email, username, role, password, jurusanVal, kelasVal, npmVal)
 	if err != nil {
 		tx.Rollback()
 		return 0, fmt.Errorf("error inserting user: %v", err)
