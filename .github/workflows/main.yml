@@ -574,12 +574,18 @@ jobs:
             -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
             -v "$PWD/security/zap/jwt-taruna.js:/zap/wrk/jwt-taruna.js:ro" \
             ghcr.io/zaproxy/zaproxy:stable \
-            zap.sh -cmd -addonupdate -addoninstall reports -autorun /zap/wrk/zap.yaml -silent
+            zap.sh -cmd \
+              -addonupdate \
+              -addoninstall reports \
+              -addoninstall spiderAjax \
+              -addoninstall webdriverlinux \
+              -autorun /zap/wrk/zap.yaml \
+              -silent
 
           mkdir -p zap-out
           docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html  zap-out/zap-report.html  || true
-          docker cp zaprun:/home/zap/.ZAP/reports/zap-report.md    zap-out/zap-report.md    || true
           docker cp zaprun:/home/zap/.ZAP/reports/zap-results.json zap-out/zap-results.json || true
+          docker cp zaprun:/home/zap/.ZAP/zap.log                  zap-out/zap.log          || true
           docker rm -f zaprun || true
 
 

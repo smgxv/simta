@@ -1,14 +1,18 @@
 addOns:
   install:
     - reports
+    - spiderAjax
+    - webdriverlinux
 
 env:
   contexts:
     - name: SIMTA
-      urls: ["https://securesimta.my.id"]
-      includePaths: ["https://securesimta.my.id.*"]
+      urls:
+        - "https://securesimta.my.id"
+      includePaths:
+        - "^https?://securesimta\\.my\\.id($|/.*)"   # cover semua path & /api/*
       authentication: { method: manual }
-      sessionManagement: { method: cookie }
+      sessionManagement: { method: http }
       users: []
 
 parameters:
@@ -26,40 +30,32 @@ jobs:
   - type: passiveScan-wait
     parameters: { maxDuration: 1 }
 
-  # Crawl publik
-  - type: spider
-    parameters:
-      context: SIMTA
-      url: "https://securesimta.my.id"
-      maxDuration: 5
-      maxDepth: 10
-      parseRobotsTxt: true
-      parseSitemapXml: true
-
-  # Pancing login (script JWT akan login otomatis)
+  # Seed 1–2 halaman setelah login; script JWT akan login otomatis & menyuntik Bearer
   - type: requestor
     requests:
       - url: "https://securesimta.my.id/taruna/dashboard"
         method: "GET"
+      - url: "https://securesimta.my.id/taruna/icp"
+        method: "GET"
 
-  # (opsional) Spider dari dashboard untuk menambah cakupan
-  - type: spider
+  # HANYA Ajax Spider
+  - type: spiderAjax
     parameters:
       context: SIMTA
       url: "https://securesimta.my.id/taruna/dashboard"
-      maxDuration: 5
-      maxDepth: 15
-      parseRobotsTxt: false
-      parseSitemapXml: false
+      maxDuration: 12          # naikkan jika cakupan kurang
+      maxCrawlDepth: 6
+      numberOfBrowsers: 2
+      runOnlyIfModern: true
 
   - type: activeScan
     parameters:
       context: SIMTA
-      policy: Default Policy
+      policy: "Default Policy"
       maxRuleDurationInMins: 10
       addQueryParam: true
 
   - type: report
-    parameters: { template: traditional-html,  reportFile: zap-report.html,  reportDir: /home/zap/.ZAP/reports, displayReport: false }
+    parameters: { template: traditional-html, reportFile: zap-report.html,  reportDir: /home/zap/.ZAP/reports, displayReport: false }
   - type: report
-    parameters: { template: traditional-json,  reportFile: zap-results.json,  reportDir: /home/zap/.ZAP/reports, displayReport: false }
+    parameters: { template: traditional-json, reportFile: zap-results.json, reportDir: /home/zap/.ZAP/reports, displayReport: false }
