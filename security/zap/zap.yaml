@@ -1,0 +1,61 @@
+env:
+  target: ${TARGET_URL}
+  spiderMax: ${SPIDER_MAX_DURATION:5}
+  activeMax: ${ACTIVE_MAX_DURATION:10}
+
+parameters:
+  failOnError: true
+  progressToStdout: true
+
+contexts:
+  - name: SIMTA
+    urls: ["${target}"]
+    includePaths: ["${target}.*"]
+    excludePaths:
+      - ".*\\.(png|jpg|jpeg|gif|svg|webp|ico|css|woff2?)$"
+    authentication:
+      method: manual
+    sessionManagement:
+      method: cookie
+    users: []
+
+scripts:
+  - name: jwt_taruna
+    type: httpsender
+    engine: ECMAScript : Graal.js
+    file: /zap/wrk/jwt_taruna.js
+    enabled: true
+
+jobs:
+  - type: passiveScan-wait
+    parameters: { maxDuration: 1 }
+
+  - type: spider
+    parameters:
+      context: SIMTA
+      url: "${target}"
+      maxDuration: ${spiderMax}
+      maxDepth: 10
+      parseRobotsTxt: true
+      parseSitemapXml: true
+
+  - type: ajaxSpider
+    parameters:
+      context: SIMTA
+      url: "${target}"
+      maxDuration: ${spiderMax}
+
+  - type: activeScan
+    parameters:
+      context: SIMTA
+      policy: Default Policy
+      maxRuleDurationInMins: ${activeMax}
+      addQueryParam: true
+      recurse: true
+
+  - type: report
+    parameters: { template: traditional-html, reportFile: zap-report.html, reportDir: /, displayReport: false }
+  - type: report
+    parameters: { template: traditional-md,   reportFile: zap-report.md,   reportDir: /, displayReport: false }
+  - type: report
+    parameters: { template: traditional-json, reportFile: zap-results.json, reportDir: /, displayReport: false }
