@@ -548,8 +548,6 @@ on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
-  schedule:
-    - cron: "0 18 * * *"   # daily 01:00 WIB
 
 jobs:
   zap-dast:
@@ -565,10 +563,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pull ZAP Docker
-        run: docker pull owasp/zap2docker-stable
+      - name: Pull ZAP image (GHCR)
+        run: docker pull ghcr.io/zaproxy/zaproxy:stable
 
-      - name: Run ZAP automation
+      - name: Run ZAP Automation Framework
         run: |
           docker run --rm \
             -e TARGET_URL \
@@ -578,16 +576,11 @@ jobs:
             -e ACTIVE_MAX_DURATION \
             -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
             -v "$PWD/security/zap/jwt_taruna.js:/zap/wrk/jwt_taruna.js:ro" \
-            -v "$PWD:/zap/wrk/reports" \
-            owasp/zap2docker-stable zap.sh -cmd -autorun /zap/wrk/zap.yaml -silent
+            -v "$PWD:/zap/wrk" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap.sh -cmd -autorun /zap/wrk/zap.yaml -silent
 
-      - name: Copy reports out of container workspace
-        run: |
-          mv zap-report.html ./zap-report.html || true
-          mv zap-report.md   ./zap-report.md   || true
-          mv zap-results.json ./zap-results.json || true
-
-      - name: Upload Artifacts
+      - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
           name: zap-dast-reports
@@ -596,7 +589,6 @@ jobs:
             zap-report.md
             zap-results.json
 
-      # Optional: fail pipeline if any High severity present
       - name: Fail on High alerts
         if: always()
         run: |
