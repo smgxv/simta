@@ -567,7 +567,10 @@ jobs:
       - name: Run ZAP Automation Framework (Spider + Active Scan)
         run: |
           mkdir -p zap-out
+          chmod 777 zap-out   # pastikan writable dari dalam container
+
           docker run --rm \
+            --user 1000:1000 \   # <- pakai UID/GID default user "zap"
             -e TARGET_URL \
             -e LOGIN_EMAIL \
             -e LOGIN_PASSWORD \
@@ -581,14 +584,15 @@ jobs:
               -autorun /zap/wrk/zap.yaml \
               -silent
 
+
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
           name: zap-dast-reports
-          path: |
-            zap-out/zap-report.html
-            zap-out/zap-report.md
-            zap-out/zap-results.json
+        path: |
+          zap-out/zap-report.html
+          zap-out/zap-report.md
+          zap-out/zap-results.json
 
 
           
