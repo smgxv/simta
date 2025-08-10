@@ -22,7 +22,7 @@ contexts:
 scripts:
   - name: jwt_taruna
     type: httpsender
-    engine: ECMAScript : Graal.js
+    engine: "ECMAScript : Graal.js"   # ← WAJIB pakai quotes
     file: /zap/wrk/jwt_taruna.js
     enabled: true
 
@@ -54,8 +54,22 @@ jobs:
       recurse: true
 
   - type: report
-    parameters: { template: traditional-html, reportFile: zap-report.html, reportDir: /, displayReport: false }
+    parameters:
+      template: traditional-html
+      reportFile: zap-report.html
+      reportDir: /zap/wrk
+      displayReport: false
+
   - type: report
-    parameters: { template: traditional-md,   reportFile: zap-report.md,   reportDir: /, displayReport: false }
+    parameters:
+      template: traditional-md
+      reportFile: zap-report.md
+      reportDir: /zap/wrk
+      displayReport: false
+
   - type: report
-    parameters: { template: traditional-json, reportFile: zap-results.json, reportDir: /, displayReport: false }
+    parameters:
+      template: traditional-json
+      reportFile: zap-results.json
+      reportDir: /zap/wrk
+      displayReport: false
