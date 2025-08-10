@@ -566,24 +566,29 @@ jobs:
 
       - name: Run ZAP Automation Framework (Spider + Active Scan)
         run: |
+          mkdir -p zap-out
           docker run --rm \
-            -e TARGET_URL='https://securesimta.my.id' \
-            -e LOGIN_EMAIL='${{ secrets.LOGIN_EMAIL }}' \
-            -e LOGIN_PASSWORD='${{ secrets.LOGIN_PASSWORD }}' \
+            -e TARGET_URL \
+            -e LOGIN_EMAIL \
+            -e LOGIN_PASSWORD \
             -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
             -v "$PWD/security/zap/jwt-taruna.js:/zap/wrk/jwt-taruna.js:ro" \
-            -v "$PWD:/zap/wrk" \
+            -v "$PWD/zap-out:/zap/wrk/out" \
             ghcr.io/zaproxy/zaproxy:stable \
-            zap.sh -cmd -addonupdate -autorun /zap/wrk/zap.yaml -silent
+            zap.sh -cmd \
+              -addonupdate \
+              -addoninstall report \
+              -autorun /zap/wrk/zap.yaml \
+              -silent
 
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
           name: zap-dast-reports
           path: |
-            zap-report.html
-            zap-report.md
-            zap-results.json
+            zap-out/zap-report.html
+            zap-out/zap-report.md
+            zap-out/zap-results.json
 
           
 
