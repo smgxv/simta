@@ -1,33 +1,37 @@
+env:
+  contexts:
+    - name: SIMTA
+      urls: ["https://securesimta.my.id"]
+      includePaths: ["https://securesimta.my.id.*"]
+      excludePaths:
+        - ".*\\.(png|jpg|jpeg|gif|svg|webp|ico|css|woff2?)$"
+      authentication:
+        method: manual
+      sessionManagement:
+        method: cookie
+      users: []
+
 parameters:
   failOnError: true
   progressToStdout: true
-
-contexts:
-  - name: SIMTA
-    urls: ["https://securesimta.my.id"]
-    includePaths: ["https://securesimta.my.id.*"]
-    excludePaths:
-      - ".*\\.(png|jpg|jpeg|gif|svg|webp|ico|css|woff2?)$"
-    authentication: { method: manual }
-    sessionManagement: { method: cookie }
-    users: []
 
 scripts:
   - name: jwt_taruna
     type: httpsender
     engine: "ECMAScript : Graal.js"
-    file: /zap/wrk/jwt-taruna.js   # <-- pastikan sama dengan nama file di repo
+    file: /zap/wrk/jwt-taruna.js   # samakan dg nama file di repo
     enabled: true
 
 jobs:
   - type: passiveScan-wait
-    parameters: { maxDuration: 1 }
+    parameters:
+      maxDuration: 1
 
   - type: spider
     parameters:
       context: SIMTA
       url: "https://securesimta.my.id"
-      maxDuration: 5        # menit
+      maxDuration: 5
       maxDepth: 10
       parseRobotsTxt: true
       parseSitemapXml: true

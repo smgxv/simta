@@ -567,9 +567,9 @@ jobs:
       - name: Run ZAP Automation Framework (Spider + Active Scan)
         run: |
           docker run --rm \
-            -e TARGET_URL \
-            -e LOGIN_EMAIL \
-            -e LOGIN_PASSWORD \
+            -e TARGET_URL='https://securesimta.my.id' \
+            -e LOGIN_EMAIL='${{ secrets.LOGIN_EMAIL }}' \
+            -e LOGIN_PASSWORD='${{ secrets.LOGIN_PASSWORD }}' \
             -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
             -v "$PWD/security/zap/jwt-taruna.js:/zap/wrk/jwt-taruna.js:ro" \
             -v "$PWD:/zap/wrk" \
