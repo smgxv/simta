@@ -1,3 +1,7 @@
+addOns:
+  install:
+    - reports
+
 env:
   contexts:
     - name: SIMTA
@@ -5,10 +9,8 @@ env:
       includePaths: ["https://securesimta.my.id.*"]
       excludePaths:
         - ".*\\.(png|jpg|jpeg|gif|svg|webp|ico|css|woff2?)$"
-      authentication:
-        method: manual
-      sessionManagement:
-        method: cookie
+      authentication: { method: manual }
+      sessionManagement: { method: cookie }
       users: []
 
 parameters:
@@ -19,13 +21,12 @@ scripts:
   - name: jwt_taruna
     type: httpsender
     engine: "ECMAScript : Graal.js"
-    file: /zap/wrk/jwt-taruna.js   # samakan dg nama file di repo
+    file: /zap/wrk/jwt-taruna.js
     enabled: true
 
 jobs:
   - type: passiveScan-wait
-    parameters:
-      maxDuration: 1
+    parameters: { maxDuration: 1 }
 
   - type: spider
     parameters:

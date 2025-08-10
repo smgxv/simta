@@ -577,7 +577,7 @@ jobs:
             ghcr.io/zaproxy/zaproxy:stable \
             zap.sh -cmd \
               -addonupdate \
-              -addoninstall report \
+              -addoninstall reports \
               -autorun /zap/wrk/zap.yaml \
               -silent
 
@@ -589,6 +589,7 @@ jobs:
             zap-out/zap-report.html
             zap-out/zap-report.md
             zap-out/zap-results.json
+
 
           
 
