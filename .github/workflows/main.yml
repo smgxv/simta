@@ -553,9 +553,9 @@ jobs:
   zap-dast:
     runs-on: ubuntu-latest
     env:
-      TARGET_URL: ${{ secrets.TARGET_URL }}
-      LOGIN_EMAIL: ${{ secrets.LOGIN_EMAIL }}
-      LOGIN_PASSWORD: ${{ secrets.LOGIN_PASSWORD }}
+      TARGET_URL: ${{ secrets.TARGET_URL }}          # contoh: https://securesimta.my.id
+      LOGIN_EMAIL: ${{ secrets.LOGIN_EMAIL }}        # daniel@gmail.com
+      LOGIN_PASSWORD: ${{ secrets.LOGIN_PASSWORD }}  # P@ssword1
       SPIDER_MAX_DURATION: "5"
       ACTIVE_MAX_DURATION: "10"
 
@@ -563,8 +563,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install envsubst
+        run: sudo apt-get update && sudo apt-get install -y gettext-base jq
+
       - name: Pull ZAP image (GHCR)
         run: docker pull ghcr.io/zaproxy/zaproxy:stable
+
+      - name: Prepare ZAP plan (render variables)
+        run: |
+          mkdir -p ./zap-wrk
+          # copy files
+          cp security/zap/jwt_taruna.js ./zap-wrk/jwt_taruna.js
+          # render zap.yaml -> zap.yaml.rendered
+          sed -e "s|__TARGET_URL__|${TARGET_URL}|g" \
+              -e "s|__SPIDER_MAX__|${SPIDER_MAX_DURATION}|g" \
+              -e "s|__ACTIVE_MAX__|${ACTIVE_MAX_DURATION}|g" \
+              security/zap/zap.yaml > ./zap-wrk/zap.yaml
 
       - name: Run ZAP Automation Framework
         run: |
@@ -572,28 +586,27 @@ jobs:
             -e TARGET_URL \
             -e LOGIN_EMAIL \
             -e LOGIN_PASSWORD \
-            -e SPIDER_MAX_DURATION \
-            -e ACTIVE_MAX_DURATION \
-            -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
-            -v "$PWD/security/zap/jwt_taruna.js:/zap/wrk/jwt_taruna.js:ro" \
-            -v "$PWD:/zap/wrk" \
+            -v "$PWD/zap-wrk:/zap/wrk" \
             ghcr.io/zaproxy/zaproxy:stable \
-            zap.sh -cmd -autorun /zap/wrk/zap.yaml -silent
+            zap.sh -cmd \
+              -addonupdate \
+              -addoninstall ajaxSpider \
+              -autorun /zap/wrk/zap.yaml \
+              -silent
 
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
           name: zap-dast-reports
           path: |
-            zap-report.html
-            zap-report.md
-            zap-results.json
+            zap-wrk/zap-report.html
+            zap-wrk/zap-report.md
+            zap-wrk/zap-results.json
 
       - name: Fail on High alerts
         if: always()
         run: |
-          sudo apt-get update && sudo apt-get install -y jq
-          HIGH=$(jq '[.site[]?.alerts[]? | select(.riskcode=="3")] | length' zap-results.json 2>/dev/null || echo 0)
+          HIGH=$(jq '[.site[]?.alerts[]? | select(.riskcode=="3")] | length' zap-wrk/zap-results.json 2>/dev/null || echo 0)
           echo "High alerts: $HIGH"
           if [ "$HIGH" -gt 0 ]; then
             echo "::error ::Found $HIGH High risk alerts"; exit 1

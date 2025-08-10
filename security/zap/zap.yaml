@@ -1,16 +1,11 @@
-env:
-  target: ${TARGET_URL}
-  spiderMax: ${SPIDER_MAX_DURATION:5}
-  activeMax: ${ACTIVE_MAX_DURATION:10}
-
 parameters:
   failOnError: true
   progressToStdout: true
 
 contexts:
   - name: SIMTA
-    urls: ["${target}"]
-    includePaths: ["${target}.*"]
+    urls: ["__TARGET_URL__"]
+    includePaths: ["__TARGET_URL__.*"]
     excludePaths:
       - ".*\\.(png|jpg|jpeg|gif|svg|webp|ico|css|woff2?)$"
     authentication:
@@ -19,57 +14,45 @@ contexts:
       method: cookie
     users: []
 
+# pastikan engine di-quote (ada titik dua)
 scripts:
   - name: jwt_taruna
     type: httpsender
-    engine: "ECMAScript : Graal.js"   # ← WAJIB pakai quotes
+    engine: "ECMAScript : Graal.js"
     file: /zap/wrk/jwt_taruna.js
     enabled: true
 
 jobs:
   - type: passiveScan-wait
-    parameters: { maxDuration: 1 }
+    parameters:
+      maxDuration: 1
 
   - type: spider
     parameters:
       context: SIMTA
-      url: "${target}"
-      maxDuration: ${spiderMax}
+      url: "__TARGET_URL__"
+      maxDuration: __SPIDER_MAX__
       maxDepth: 10
       parseRobotsTxt: true
       parseSitemapXml: true
 
+  # (opsional) AJAX Spider – butuh add-on, kita install via CLI
   - type: ajaxSpider
     parameters:
       context: SIMTA
-      url: "${target}"
-      maxDuration: ${spiderMax}
+      url: "__TARGET_URL__"
+      maxDuration: __SPIDER_MAX__
 
   - type: activeScan
     parameters:
       context: SIMTA
       policy: Default Policy
-      maxRuleDurationInMins: ${activeMax}
+      maxRuleDurationInMins: __ACTIVE_MAX__
       addQueryParam: true
-      recurse: true
 
   - type: report
-    parameters:
-      template: traditional-html
-      reportFile: zap-report.html
-      reportDir: /zap/wrk
-      displayReport: false
-
+    parameters: { template: traditional-html, reportFile: zap-report.html,  reportDir: /zap/wrk, displayReport: false }
   - type: report
-    parameters:
-      template: traditional-md
-      reportFile: zap-report.md
-      reportDir: /zap/wrk
-      displayReport: false
-
+    parameters: { template: traditional-md,   reportFile: zap-report.md,    reportDir: /zap/wrk, displayReport: false }
   - type: report
-    parameters:
-      template: traditional-json
-      reportFile: zap-results.json
-      reportDir: /zap/wrk
-      displayReport: false
+    parameters: { template: traditional-json, reportFile: zap-results.json, reportDir: /zap/wrk, displayReport: false }
