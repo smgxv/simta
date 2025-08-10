@@ -10,7 +10,7 @@ env:
       urls:
         - "https://securesimta.my.id"
       includePaths:
-        - "^https?://securesimta\\.my\\.id($|/.*)"   # cover semua path & /api/*
+        - "^https?://securesimta\\.my\\.id($|/.*)"  # cover semua path & /api/*
       authentication: { method: manual }
       sessionManagement: { method: http }
       users: []
@@ -30,23 +30,33 @@ jobs:
   - type: passiveScan-wait
     parameters: { maxDuration: 1 }
 
-  # Seed 1–2 halaman setelah login; script JWT akan login otomatis & menyuntik Bearer
+  # Seed halaman setelah login; ini akan memicu doLogin() dari script JWT
   - type: requestor
     requests:
       - url: "https://securesimta.my.id/taruna/dashboard"
         method: "GET"
       - url: "https://securesimta.my.id/taruna/icp"
         method: "GET"
+      - url: "https://securesimta.my.id/taruna/proposal"
+        method: "GET"
+      - url: "https://securesimta.my.id/taruna/ta70"
+        method: "GET"
+      - url: "https://securesimta.my.id/taruna/ta100"
+        method: "GET"
 
-  # HANYA Ajax Spider
+  # HANYA Ajax Spider (paksa jalan)
   - type: spiderAjax
     parameters:
       context: SIMTA
       url: "https://securesimta.my.id/taruna/dashboard"
-      maxDuration: 12          # naikkan jika cakupan kurang
+      maxDuration: 15
       maxCrawlDepth: 6
       numberOfBrowsers: 2
-      runOnlyIfModern: true
+      runOnlyIfModern: false     # <- penting: jangan di-skip lagi
+      # (opsional) stabilkan browser headless
+      browserId: "chrome"
+      clickElemsOnce: true
+      randomInputs: true
 
   - type: activeScan
     parameters:
