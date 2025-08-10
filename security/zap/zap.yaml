@@ -45,8 +45,8 @@ jobs:
       addQueryParam: true
 
   - type: report
-    parameters: { template: traditional-html,  reportFile: zap-report.html,  reportDir: /zap/wrk/out, displayReport: false }
+    parameters: { template: traditional-html,  reportFile: zap-report.html,  reportDir: /home/zap/.ZAP/reports, displayReport: false }
   - type: report
-    parameters: { template: traditional-md,    reportFile: zap-report.md,    reportDir: /zap/wrk/out, displayReport: false }
+    parameters: { template: traditional-md,    reportFile: zap-report.md,    reportDir: /home/zap/.ZAP/reports, displayReport: false }
   - type: report
-    parameters: { template: traditional-json,  reportFile: zap-results.json, reportDir: /zap/wrk/out, displayReport: false }
+    parameters: { template: traditional-json,  reportFile: zap-results.json, reportDir: /home/zap/.ZAP/reports, displayReport: false }

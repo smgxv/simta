@@ -564,25 +564,23 @@ jobs:
       - name: Pull ZAP image (GHCR)
         run: docker pull ghcr.io/zaproxy/zaproxy:stable
 
-      - name: Run ZAP Automation Framework (Spider + Active Scan)
+      - name: Run ZAP (named container)
         run: |
-          mkdir -p zap-out
-          chmod 777 zap-out   # pastikan writable dari dalam container
-
-          docker run --rm \
-            --user 1000:1000 \   # <- pakai UID/GID default user "zap"
+          docker rm -f zaprun 2>/dev/null || true
+          docker run --name zaprun \
             -e TARGET_URL \
             -e LOGIN_EMAIL \
             -e LOGIN_PASSWORD \
             -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
             -v "$PWD/security/zap/jwt-taruna.js:/zap/wrk/jwt-taruna.js:ro" \
-            -v "$PWD/zap-out:/zap/wrk/out" \
             ghcr.io/zaproxy/zaproxy:stable \
-            zap.sh -cmd \
-              -addonupdate \
-              -addoninstall reports \
-              -autorun /zap/wrk/zap.yaml \
-              -silent
+            zap.sh -cmd -addonupdate -addoninstall reports -autorun /zap/wrk/zap.yaml -silent
+
+          mkdir -p zap-out
+          docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html  zap-out/zap-report.html  || true
+          docker cp zaprun:/home/zap/.ZAP/reports/zap-report.md    zap-out/zap-report.md    || true
+          docker cp zaprun:/home/zap/.ZAP/reports/zap-results.json zap-out/zap-results.json || true
+          docker rm -f zaprun || true
 
 
       - name: Upload reports
