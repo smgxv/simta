@@ -7,8 +7,6 @@ env:
     - name: SIMTA
       urls: ["https://securesimta.my.id"]
       includePaths: ["https://securesimta.my.id.*"]
-      excludePaths:
-        - ".*\\.(png|jpg|jpeg|gif|svg|webp|ico|css|woff2?)$"
       authentication: { method: manual }
       sessionManagement: { method: cookie }
       users: []
@@ -28,7 +26,7 @@ jobs:
   - type: passiveScan-wait
     parameters: { maxDuration: 1 }
 
-  # (1) Crawl publik (opsional)
+  # Crawl publik
   - type: spider
     parameters:
       context: SIMTA
@@ -38,29 +36,22 @@ jobs:
       parseRobotsTxt: true
       parseSitemapXml: true
 
-  # (2) Pancing login + akses halaman proteksi
+  # Pancing login (script JWT akan login otomatis)
   - type: requestor
-    parameters:
-      title: "Seed logged-in area (Taruna)"
-      followRedirects: true
     requests:
-      # GET ke dashboard akan memicu script JWT melakukan login() dan menempelkan Authorization otomatis
       - url: "https://securesimta.my.id/taruna/dashboard"
         method: "GET"
 
-  # (3) Spider dari dashboard Taruna (sudah login)
+  # (opsional) Spider dari dashboard untuk menambah cakupan
   - type: spider
     parameters:
       context: SIMTA
       url: "https://securesimta.my.id/taruna/dashboard"
       maxDuration: 5
       maxDepth: 15
-      recurse: true
       parseRobotsTxt: false
       parseSitemapXml: false
-      subtreeOnly: true
 
-  # (4) Active Scan
   - type: activeScan
     parameters:
       context: SIMTA
@@ -68,8 +59,7 @@ jobs:
       maxRuleDurationInMins: 10
       addQueryParam: true
 
-  # (5) Reports
   - type: report
     parameters: { template: traditional-html,  reportFile: zap-report.html,  reportDir: /home/zap/.ZAP/reports, displayReport: false }
   - type: report
-    parameters: { template: traditional-json, reportFile: zap-results.json, reportDir: /home/zap/.ZAP/reports, displayReport: false }
+    parameters: { template: traditional-json,  reportFile: zap-results.json,  reportDir: /home/zap/.ZAP/reports, displayReport: false }
