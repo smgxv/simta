@@ -568,11 +568,10 @@ jobs:
         run: |
           docker rm -f zaprun 2>/dev/null || true
           docker run --name zaprun \
-            -e TARGET_URL \
-            -e LOGIN_EMAIL \
-            -e LOGIN_PASSWORD \
+            -e TARGET_URL -e LOGIN_EMAIL -e LOGIN_PASSWORD \
             -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
             -v "$PWD/security/zap/jwt-taruna.js:/zap/wrk/jwt-taruna.js:ro" \
+            -v "$PWD/security/zap/Taruna.policy:/home/zap/.ZAP/policies/Taruna.policy:ro" \
             ghcr.io/zaproxy/zaproxy:stable \
             zap.sh -cmd \
               -addonupdate \
