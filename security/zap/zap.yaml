@@ -3,33 +3,38 @@ addOns:
     - reports
     - spiderAjax
     - webdriverlinux
+    - selenium             # ← WAJIB untuk Ajax Spider yang stabil di CI
 
 env:
   contexts:
     - name: SIMTA
       urls: ["https://securesimta.my.id"]
       includePaths:
-        - "^https?://securesimta\\.my\\.id($|/.*)"
-      authentication: { method: manual }
+        - "^https?://securesimta\\.my\\.id/taruna/.*"   # ← fokus ke area Taruna
+      excludePaths:
+        - "^https?://securesimta\\.my\\.id/logout.*"
+        - ".*\\.(png|jpe?g|svg|gif|css|js|ico|woff2?|pdf|zip)$"
+      authentication: { method: manual }                # auth via HTTP Sender (JWT)
       sessionManagement: { method: http }
       users: []
+      # (opsional, membantu ZAP deteksi sesi)
+      # loggedInIndicator: "SIMTA - taruna panel"
+      # loggedOutIndicator: "loginusers"
 
 parameters:
   failOnError: true
   progressToStdout: true
 
+# Script JWT-mu tetap dipakai
 scripts:
-  - name: jwt_taruna
+  - name: jwt_taruna.js
     type: httpsender
     engine: "ECMAScript : Graal.js"
     file: /zap/wrk/jwt-taruna.js
     enabled: true
 
 jobs:
-  - type: passiveScan-wait
-    parameters: { maxDuration: 1 }
-
-  # seed halaman yg kamu klik di GUI
+  # 0) Seed manual (tetap dipertahankan)
   - type: requestor
     requests:
       - { url: "https://securesimta.my.id/taruna/dashboard", method: "GET" }
@@ -38,27 +43,46 @@ jobs:
       - { url: "https://securesimta.my.id/taruna/ta70",      method: "GET" }
       - { url: "https://securesimta.my.id/taruna/ta100",     method: "GET" }
 
-  # AJAX Spider (paksa jalan)
+  # 1) Spider klasik – sumber seed terbanyak
+  - type: spider
+    parameters:
+      context: SIMTA
+      url: "https://securesimta.my.id/taruna/dashboard"
+      recurse: true
+      maxChildren: 0
+
+  # 2) Ajax Spider – gali link dinamis (pakai Firefox)
   - type: spiderAjax
     parameters:
       context: SIMTA
       url: "https://securesimta.my.id/taruna/dashboard"
-      maxDuration: 15
+      maxDuration: 12            # tambah durasi
       maxCrawlDepth: 6
-      numberOfBrowsers: 2
+      numberOfBrowsers: 1        # 1 browser biasanya lebih stabil di CI
       runOnlyIfModern: false
-      browserId: "chrome"
+      browserId: "firefox"       # ← lebih aman di container
       clickElemsOnce: true
       randomInputs: true
+      outputFile: "/home/zap/.ZAP/reports/zap-ajax-spider.log"
 
-  # Active Scan dengan policy GUI kamu
+  # 3) Tunggu passive selesai setelah crawling
+  - type: passiveScan-wait
+    parameters: { maxDuration: 2 }
+
+  # 4) Active Scan – pakai policy kustom kamu
   - type: activeScan
     parameters:
       context: SIMTA
-      policy: "Taruna"            # <- nama file policy tanpa ekstensi
-      maxRuleDurationInMins: 10
+      policy: "Taruna"            # nama policy (tanpa .policy) yang kamu mount
       addQueryParam: true
+      scanHeadersAllRequests: true
+      maxRuleDurationInMins: 10
 
+  # 5) Tunggu passive selesai lagi (hasil active juga dipassive-scan)
+  - type: passiveScan-wait
+    parameters: { maxDuration: 2 }
+
+  # 6) Report multi-format
   - type: report
     parameters: { template: traditional-html, reportFile: zap-report.html,  reportDir: /home/zap/.ZAP/reports, displayReport: false }
   - type: report
