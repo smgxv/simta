@@ -1697,84 +1697,157 @@
 				}
 			});
 
-			// Update fungsi loadRevisiProposalData
+			// Helper kecil biar aman dari HTML injection
+			function escapeHtml(str) {
+			return (str || '').toString().replace(/[&<>"']/g, m => ({
+				'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+			}[m]));
+			}
+
+			// Panggil endpoint download (sama seperti yang sudah kamu punya)
+			async function downloadRevisiProposal(id) {
+			try {
+				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				if (!token) {
+				alert('Token tidak ditemukan. Silakan login ulang.');
+				return;
+				}
+
+				const resp = await fetch(`/api/document/revisiproposal/download/${id}`, {
+				method: 'GET',
+				headers: { 'Authorization': `Bearer ${token}` }
+				});
+
+				if (!resp.ok) {
+				const msg = await resp.text().catch(() => '');
+				throw new Error(msg || `Gagal mengunduh (HTTP ${resp.status})`);
+				}
+
+				const cd = resp.headers.get('Content-Disposition') || '';
+				let filename = null;
+				const fnStar = cd.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+				if (fnStar) filename = decodeURIComponent(fnStar[1]);
+				else {
+				const fn = cd.match(/filename\s*=\s*("?)([^"]+)\1/i);
+				if (fn) filename = fn[2];
+				}
+				filename = filename || `revisi_proposal_${id}.pdf`;
+
+				const blob = await resp.blob();
+				const url = URL.createObjectURL(blob);
+
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = filename;
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+				URL.revokeObjectURL(url);
+			} catch (err) {
+				console.error(err);
+				alert(`Unduh gagal: ${err.message}`);
+			}
+			}
+
 			async function loadRevisiProposalData() {
-				const userId = localStorage.getItem('userId');
-				if (!userId) {
-					console.error('User ID not found in localStorage');
-					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
+			const userId = localStorage.getItem('userId');
+			if (!userId) {
+				console.error('User ID not found in localStorage');
+				showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
+				return;
+			}
+
+			try {
+				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				console.log('Fetching Revisi Proposal data for user:', userId);
+
+				const response = await fetch(`/api/document/revisiproposal/list?user_id=${encodeURIComponent(userId)}`, {
+				headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+				});
+				if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+				const data = await response.json();
+				console.log('Received Revisi Proposal data:', data);
+
+				if (data.status === 'success') {
+				const tbody = document.querySelector('#revisiProposalTable tbody');
+				if (!tbody) {
+					console.error('Table body element not found');
 					return;
 				}
-				
-				try {
-					console.log('Fetching Final Proposal data for user:', userId);
-					const response = await fetch(`/api/document/revisiproposal/list?user_id=${userId}`);
-					
-					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
-					}
-					
-					const data = await response.json();
-					console.log('Received Final Proposal data:', data);
-					
-					if (data.status === 'success') {
-						const tbody = document.querySelector('#revisiProposalTable tbody');
-						if (!tbody) {
-							console.error('Table body element not found');
-							return;
-						}
-						
-						tbody.innerHTML = '';
-						
-						if (data.data && data.data.length > 0) {
-							data.data.forEach(revisiProposal => {
-								const statusClass = {
-									'pending': 'badge badge-warning',
-									'approved': 'badge badge-success',
-									'rejected': 'badge badge-danger',
-									'on review': 'badge badge-info'
-								}[revisiProposal.status] || 'badge badge-secondary';
 
-								tbody.innerHTML += `
-									<tr>
-										<td>${revisiProposal.topik_penelitian || '-'}</td>
-										<td>${revisiProposal.jurusan || '-'}</td>
-										<td>${revisiProposal.kelas || '-'}</td>
-										<td><span class="${statusClass}">${revisiProposal.status || 'pending'}</span></td>
-										<td>
-											<div class="dropdown">
-												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												   href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
-												</a>
-												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="/api/document/revisiproposal/download/${revisiproposal.id}" download>
-														<i class="dw dw-download"></i> Download Final Proposal
-													</a>
-													<a class="dropdown-item" href="/api/document/download?path=${revisiProposal.file_path}" download>
-														<i class="dw dw-download"></i> Download
-													</a>
-												</div>
-											</div>
-										</td>
-									</tr>
-								`;
-							});
-						} else {
-							tbody.innerHTML = `
-								<tr>
-									<td colspan="5" class="text-center">Belum ada Revisi Proposal yang diupload</td>
-								</tr>
-							`;
-						}
-					} else {
-						console.error('Failed to load Revisi Proposal data:', data.message);
-						showAlert('Gagal memuat data Revisi Proposal: ' + (data.message || 'Unknown error'), 'danger');
+				tbody.innerHTML = '';
+
+				if (Array.isArray(data.data) && data.data.length > 0) {
+					data.data.forEach(revisiProposal => {
+					const statusClass = ({
+						'pending': 'badge badge-warning',
+						'approved': 'badge badge-success',
+						'rejected': 'badge badge-danger',
+						'on review': 'badge badge-info'
+					}[revisiProposal.status] || 'badge badge-secondary');
+
+					// pastikan ada id; dukung {id} atau {revisi_icp_id}
+					const revId = revisiProposal.revisi_proposal_id || revisiProposal.id || null;
+
+					// Jika id ada → tombol download via API; kalau tidak, fallback ke file_path (kalau memang ada endpoint public)
+					const downloadHtml = revId
+						? `<a class="dropdown-item" href="#" data-download-id="${revId}">
+							<i class="dw dw-download"></i> Download
+						</a>`
+						: (revisiProposal.file_path
+							? `<a class="dropdown-item" href="/api/document/download?path=${encodeURIComponent(revisiProposal.file_path)}" download>
+								<i class="dw dw-download"></i> Download (fallback)
+							</a>`
+							: `<span class="dropdown-item text-muted disabled">Tidak ada file</span>`);
+
+					tbody.insertAdjacentHTML('beforeend', `
+						<tr>
+						<td>${escapeHtml(revisiProposal.topik_penelitian) || '-'}</td>
+						<td>${escapeHtml(revisiProposal.jurusan) || '-'}</td>
+						<td>${escapeHtml(revisiProposal.kelas) || '-'}</td>
+						<td><span class="${statusClass}">${revisiProposal.status || 'pending'}</span></td>
+						<td>
+							<div class="dropdown">
+							<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+								href="#" role="button" data-toggle="dropdown">
+								<i class="dw dw-more"></i>
+							</a>
+							<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+								${downloadHtml}
+							</div>
+							</div>
+						</td>
+						</tr>
+					`);
+					});
+
+					// Delegasi event klik download, agar tidak menempel event per-row
+					if (!tbody.dataset.boundDownload) {
+					tbody.addEventListener('click', (e) => {
+						const a = e.target.closest('a[data-download-id]');
+						if (!a) return;
+						e.preventDefault();
+						const id = a.getAttribute('data-download-id');
+						downloadRevisiICP(id);
+					});
+					tbody.dataset.boundDownload = '1';
 					}
-				} catch (error) {
-					console.error('Error loading Revisi Proposal data:', error);
-					showAlert('Terjadi kesalahan saat memuat data Revisi Proposal: ' + error.message, 'danger');
+				} else {
+					tbody.innerHTML = `
+					<tr>
+						<td colspan="5" class="text-center">Belum ada Revisi Proposal yang diupload</td>
+					</tr>
+					`;
 				}
+				} else {
+				console.error('Failed to load Revisi Proposal data:', data.message);
+				showAlert('Gagal memuat data Revisi Proposal: ' + (data.message || 'Unknown error'), 'danger');
+				}
+			} catch (error) {
+				console.error('Error loading Revisi Proposal data:', error);
+				showAlert('Terjadi kesalahan saat memuat data Revisi Proposal: ' + error.message, 'danger');
+			}
 			}
 
 			// Load Revisi Proposal data saat halaman dimuat
