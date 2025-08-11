@@ -594,8 +594,8 @@ jobs:
           name: zap-dast-reports
           path: |
             zap-out/zap-report.html
-            zap-out/zap-report.md
             zap-out/zap-results.json
+            zap-out/zap.log
 
 
           

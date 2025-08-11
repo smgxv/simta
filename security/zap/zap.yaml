@@ -8,6 +8,7 @@ env:
       urls: ["https://securesimta.my.id"]
       includePaths:
         - "^https?://securesimta\\.my\\.id/taruna/.*"
+        - "^https?://securesimta\\.my\\.id($|/.*)"
       excludePaths:
         - "^https?://securesimta\\.my\\.id/logout.*"
         - ".*\\.(png|jpe?g|svg|gif|css|js|ico|woff2?|pdf|zip)$"
@@ -30,6 +31,8 @@ jobs:
   # 2.1 Paksa ada 1 request terautentikasi untuk memicu doLogin()
   - type: requestor
     requests:
+      - { url: "https://securesimta.my.id/",                 method: "GET" }
+      - { url: "https://securesimta.my.id/loginusers",       method: "GET" }
       - { url: "https://securesimta.my.id/taruna/dashboard", method: "GET" }
 
   # 2.2 Tunggu passive scanner sebentar (opsional)
@@ -41,8 +44,9 @@ jobs:
     parameters:
       context: SIMTA
       url: "https://securesimta.my.id/taruna/dashboard"
-      maxChildren: 0         # unlimited
-      maxDepth: 6
+      maxChildren: 0
+      maxDuration: 15
+      acceptCookies: true
       postForm: true
       parseComments: true
       parseRobotsTxt: true
