@@ -880,7 +880,7 @@
 			async function loadRevisiProposalData() {
 				try {
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('/api/document/revisiicp/all', {
+					const response = await fetch('/api/document/revisiproposal/all', {
 						headers: {
 							'Authorization': `Bearer ${token}`
 						}
