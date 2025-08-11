@@ -20,32 +20,33 @@ parameters:
   progressToStdout: true
 
 scripts:
-  - name: jwt_taruna.js
+  - name: jwt_taruna
     type: httpsender
     engine: "ECMAScript : Graal.js"
     file: /zap/wrk/jwt-taruna.js
     enabled: true
 
 jobs:
-  # Seed awal (opsional, tambahkan jika mau langsung buka URL ini)
+  # 2.1 Paksa ada 1 request terautentikasi untuk memicu doLogin()
   - type: requestor
     requests:
       - { url: "https://securesimta.my.id/taruna/dashboard", method: "GET" }
-      - { url: "https://securesimta.my.id/taruna/icp", method: "GET" }
-      - { url: "https://securesimta.my.id/taruna/proposal", method: "GET" }
-      - { url: "https://securesimta.my.id/taruna/ta70", method: "GET" }
-      - { url: "https://securesimta.my.id/taruna/ta100", method: "GET" }
 
-  # Spider klasik saja
+  # 2.2 Tunggu passive scanner sebentar (opsional)
+  - type: passiveScan-wait
+    parameters: { maxDuration: 2 }
+
+  # 2.3 Baru Spider (sekarang sudah logged-in)
   - type: spider
     parameters:
       context: SIMTA
       url: "https://securesimta.my.id/taruna/dashboard"
-      maxChildren: 0
-
-  # Passive scan setelah spider
-  - type: passiveScan-wait
-    parameters: { maxDuration: 2 }
+      maxChildren: 0         # unlimited
+      maxDepth: 6
+      postForm: true
+      parseComments: true
+      parseRobotsTxt: true
+      parseSitemapXml: true
 
   # Active scan setelah crawling
   - type: activeScan
@@ -56,9 +57,9 @@ jobs:
       scanHeadersAllRequests: true
       maxRuleDurationInMins: 10
 
-  # Passive scan lagi setelah active scan
-  - type: passiveScan-wait
-    parameters: { maxDuration: 2 }
+  # # Passive scan lagi setelah active scan
+  # - type: passiveScan-wait
+  #   parameters: { maxDuration: 2 }
 
   # Report ke lokasi lama yang berhasil
   - type: report

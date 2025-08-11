@@ -576,6 +576,7 @@ jobs:
             zap.sh -cmd \
               -addonupdate \
               -addoninstall reports \
+              -config log.level=DEBUG \
               -autorun /zap/wrk/zap.yaml \
               -silent
 
