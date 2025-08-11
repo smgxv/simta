@@ -118,7 +118,7 @@ func UploadRevisiProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Final Proposal berhasil diunggah",
+		"message": "Revisi Final Proposal berhasil diunggah",
 		"data": map[string]interface{}{
 			"id":        revisiProposal.ID,
 			"file_path": uploadPath,

@@ -1787,7 +1787,7 @@
 						'on review': 'badge badge-info'
 					}[revisiProposal.status] || 'badge badge-secondary');
 
-					// pastikan ada id; dukung {id} atau {revisi_icp_id}
+					// pastikan ada id; dukung {id} atau {revisi_proposal_id}
 					const revId = revisiProposal.revisi_proposal_id || revisiProposal.id || null;
 
 					// Jika id ada → tombol download via API; kalau tidak, fallback ke file_path (kalau memang ada endpoint public)
@@ -1829,7 +1829,7 @@
 						if (!a) return;
 						e.preventDefault();
 						const id = a.getAttribute('data-download-id');
-						downloadRevisiICP(id);
+						downloadRevisiProposal(id);
 					});
 					tbody.dataset.boundDownload = '1';
 					}

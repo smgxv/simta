@@ -136,7 +136,7 @@ func UploadRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 	// Respon sukses
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Final Proposal berhasil diunggah",
+		"message": "Revisi Final ICP berhasil diunggah",
 		"data": map[string]interface{}{
 			"id":        revisiICP.ID,
 			"file_path": filePath,
