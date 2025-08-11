@@ -1022,10 +1022,50 @@
 				}
 			}
 
-			// Fungsi untuk download TugasAkhir
-			function downloadRevisiProposal(id) {
-				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				window.open(`/api/document/revisiproposal/download/${id}?token=${token}`, '_blank');
+			// FUngsi download revisi Proposal
+			async function downloadRevisiProposal(id) {
+				try {
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					if (!token) {
+						alert('Token tidak ditemukan. Silakan login ulang.');
+						return;
+					}
+
+					const resp = await fetch(`/api/document/revisiproposal/download/${id}`, {
+						method: 'GET',
+						headers: {
+							'Authorization': `Bearer ${token}`, // jika middleware auth butuh Bearer
+							// 'Accept': 'application/pdf' // opsional
+						},
+					// mode CORS default sudah cukup, OPTIONS dihandle server
+					});
+
+					if (!resp.ok) {
+						const msg = await resp.text().catch(() => '');
+						throw new Error(msg || `Gagal mengunduh (HTTP ${resp.status})`);
+					}
+
+					// Ambil nama file dari header Content-Disposition jika ada
+					const cd = resp.headers.get('Content-Disposition') || '';
+					const match = cd.match(/filename\s*=\s*("?)([^"]+)\1/i);
+					const filename = match ? match[2] : `revisi_proposal_${id}.pdf`;
+
+					// Unduh sebagai blob
+					const blob = await resp.blob();
+					const url = URL.createObjectURL(blob);
+
+					// Trigger download
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = filename;
+					document.body.appendChild(a);
+					a.click();
+					a.remove();
+					URL.revokeObjectURL(url);
+				} catch (err) {
+					console.error(err);
+					alert(`Unduh gagal: ${err.message}`);
+				}
 			}
 
 			// Load data TugasAkhir saat halaman dimuat

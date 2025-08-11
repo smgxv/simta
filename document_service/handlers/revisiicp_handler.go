@@ -84,11 +84,11 @@ func UploadRevisiICPHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Generate safe filename
 	safeFilename := filemanager.ValidateFileName(handler.Filename)
-	filename := fmt.Sprintf("FINAL_PROPOSAL_%s_%s_%s",
+	filename := fmt.Sprintf("REVISI_FINAL_ICP_%s_%s_%s",
 		userID,
 		time.Now().Format("20060102150405"),
 		safeFilename)
-	uploadDir := "uploads/revisiproposal"
+	uploadDir := "uploads/revisiicp"
 
 	// Simpan file dengan aman
 	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
