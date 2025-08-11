@@ -191,14 +191,14 @@ func main() {
 	r.HandleFunc("/finallaporan100/dosen/download/{id}", handlers.DownloadFinalLaporan100DosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/finallaporan100/taruna-topics", handlers.GetTarunaTopicsHandler).Methods("GET", "OPTIONS")
 
-	// Register seminar proposal routes
+	// Register seminar laporan100 routes
 	r.HandleFunc("/seminarlaporan100/dosen", handlers.GetSeminarLaporan100ByDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/seminarlaporan100/taruna/list", handlers.GetSeminarLaporan100TarunaListForDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/penilaian/laporan100", handlers.PenilaianLaporan100Handler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/penilaian/laporan100/download", handlers.DownloadFilePenilaianLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/monitoring/penilaian_laporan100", handlers.GetMonitoringPenilaianLaporan100Handler).Methods("GET", "OPTIONS")
 
-	// Detail Berkas Seminar Proposal routes
+	// Detail Berkas Seminar laporan100 routes
 	r.HandleFunc("/seminarlaporan100/detail/{id}", handlers.GetFinalLaporan100DetailHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/catatanperbaikanlaporan100/taruna", handlers.GetCatatanPerbaikanTarunaLaporan100Handler).Methods("GET", "OPTIONS")
 

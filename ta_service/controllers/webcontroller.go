@@ -345,6 +345,34 @@ func DetailTelaahICP(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/admin/detail_telaah_icp.html")
 }
 
+// Handler untuk list Revisi ICP admin
+func RevisiICP(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "admin" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the admin Proposal HTML file
+	http.ServeFile(w, r, "static/admin/revisi_icp_admin.html")
+}
+
 // Handler untuk halaman Proposal admin
 func ListProposal(w http.ResponseWriter, r *http.Request) {
 	// Set header content type
@@ -455,6 +483,34 @@ func ListPengujiProposal(w http.ResponseWriter, r *http.Request) {
 
 	// Serve the admin Proposal HTML file
 	http.ServeFile(w, r, "static/admin/penguji_proposal_admin.html")
+}
+
+// Handler untuk list Revisi Proposal admin
+func RevisiProposal(w http.ResponseWriter, r *http.Request) {
+	// Set header content type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Ambil token dari cookie atau header
+	var tokenString string
+	cookie, err := r.Cookie("token")
+	if err == nil {
+		tokenString = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString = strings.Replace(authHeader, "Bearer ", "", 1)
+		}
+	}
+
+	// Validasi token
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil || strings.ToLower(claims.Role) != "admin" {
+		http.Redirect(w, r, "/loginusers", http.StatusSeeOther)
+		return
+	}
+
+	// Serve the admin Proposal HTML file
+	http.ServeFile(w, r, "static/admin/revisi_proposal_admin.html")
 }
 
 // Handler untuk halaman List Penguji Proposal admin

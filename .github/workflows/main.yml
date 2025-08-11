@@ -211,13 +211,13 @@
 
 
 
-# name : CI
+name : CI
 
-# on:
-#   push:
-#     branches: [main]
+on:
+  push:
+    branches: [main]
 
-# jobs:
+jobs:
   # running-tests:
   #   name: Running Tests
   #   runs-on: ubuntu-latest
@@ -229,40 +229,40 @@
   #       with:
   #         go-version: 1.23
 
-  # build-ta-service:
-  #   # needs: running-tests
-  #   name: Build Image
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-  #     - name: Build Image
-  #       run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
-  #     - name: Login to DockerHub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - name: Push Image
-  #       run: docker push smgxv/ta-service
+  build-ta-service:
+    # needs: running-tests
+    name: Build Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/ta-service
 
-  # deploy-ta-service:
-  #   needs: build-ta-service
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Deploy to VPS
-  #       uses: appleboy/ssh-action@master
-  #       with:
-  #         host: ${{ secrets.VPS_HOST }}
-  #         username: ${{ secrets.VPS_USERNAME }}
-  #         password: ${{ secrets.VPS_PASSWORD }}
-  #         port: ${{ secrets.VPS_PORT }}
-  #         script: |
-  #           docker stop ta-service || true && docker rm ta-service || true
-  #           docker system prune -af
-  #           docker pull smgxv/ta-service
-  #           docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
-  #           docker network connect simta_net ta-service
+  deploy-ta-service:
+    needs: build-ta-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop ta-service || true && docker rm ta-service || true
+            docker system prune -af
+            docker pull smgxv/ta-service
+            docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+            docker network connect simta_net ta-service
 
 
   # build-user-service:
@@ -300,40 +300,40 @@
   #           docker run -d -p 8081:8081 --name user-service smgxv/user-service
   #           docker network connect simta_net user-service
 
-  # build-document-service:
-  #   # needs: running-tests
-  #   name: Build Document Service Image
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-  #     - name: Build Image
-  #       run: docker build -t smgxv/document-service -f document_service/Dockerfile document_service
-  #     - name: Login to DockerHub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - name: Push Image
-  #       run: docker push smgxv/document-service
+  build-document-service:
+    # needs: running-tests
+    name: Build Document Service Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/document-service -f document_service/Dockerfile document_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/document-service
 
-  # deploy-document-service:
-  #   needs: build-document-service
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Deploy Document Service to VPS
-  #       uses: appleboy/ssh-action@master
-  #       with:
-  #         host: ${{ secrets.VPS_HOST }}
-  #         username: ${{ secrets.VPS_USERNAME }}
-  #         password: ${{ secrets.VPS_PASSWORD }}
-  #         port: ${{ secrets.VPS_PORT }}
-  #         script: |
-  #           docker stop document-service || true && docker rm document-service || true
-  #           docker system prune -af
-  #           docker pull smgxv/document-service
-  #           docker run -d -p 8082:8082 --name document-service smgxv/document-service
-  #           docker network connect simta_net document-service
+  deploy-document-service:
+    needs: build-document-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Document Service to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop document-service || true && docker rm document-service || true
+            docker system prune -af
+            docker pull smgxv/document-service
+            docker run -d -p 8082:8082 --name document-service smgxv/document-service
+            docker network connect simta_net document-service
 
   # build-notification-service:
   #   # needs: running-tests
@@ -542,60 +542,60 @@
 #             zap_output/notification_report.html
 
 
-name: ZAP DAST (Taruna)
+# name: ZAP DAST (Taruna)
 
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+# on:
+#   push:
+#     branches: [ "main" ]
+#   workflow_dispatch:
 
-jobs:
-  zap-dast:
-    runs-on: ubuntu-latest
-    env:
-      TARGET_URL: ${{ secrets.TARGET_URL }}          # dipakai oleh script JWT
-      LOGIN_EMAIL: ${{ secrets.LOGIN_EMAIL }}
-      LOGIN_PASSWORD: ${{ secrets.LOGIN_PASSWORD }}
+# jobs:
+#   zap-dast:
+#     runs-on: ubuntu-latest
+#     env:
+#       TARGET_URL: ${{ secrets.TARGET_URL }}          # dipakai oleh script JWT
+#       LOGIN_EMAIL: ${{ secrets.LOGIN_EMAIL }}
+#       LOGIN_PASSWORD: ${{ secrets.LOGIN_PASSWORD }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
 
-      - name: Pull ZAP image (GHCR)
-        run: docker pull ghcr.io/zaproxy/zaproxy:stable
+#       - name: Pull ZAP image (GHCR)
+#         run: docker pull ghcr.io/zaproxy/zaproxy:stable
 
-      - name: Run ZAP (named container)
-        run: |
-          docker rm -f zaprun 2>/dev/null || true
-          docker run --name zaprun \
-            -e TARGET_URL -e LOGIN_EMAIL -e LOGIN_PASSWORD \
-            -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
-            -v "$PWD/security/zap/jwt-taruna.js:/zap/wrk/jwt-taruna.js:ro" \
-            -v "$PWD/security/zap/Taruna.policy:/home/zap/.ZAP/policies/Taruna.policy:ro" \
-            ghcr.io/zaproxy/zaproxy:stable \
-            zap.sh -cmd \
-              -addonupdate \
-              -addoninstall reports \
-              -config log.level=DEBUG \
-              -autorun /zap/wrk/zap.yaml \
-              -silent
+#       - name: Run ZAP (named container)
+#         run: |
+#           docker rm -f zaprun 2>/dev/null || true
+#           docker run --name zaprun \
+#             -e TARGET_URL -e LOGIN_EMAIL -e LOGIN_PASSWORD \
+#             -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
+#             -v "$PWD/security/zap/jwt-taruna.js:/zap/wrk/jwt-taruna.js:ro" \
+#             -v "$PWD/security/zap/Taruna.policy:/home/zap/.ZAP/policies/Taruna.policy:ro" \
+#             ghcr.io/zaproxy/zaproxy:stable \
+#             zap.sh -cmd \
+#               -addonupdate \
+#               -addoninstall reports \
+#               -config log.level=DEBUG \
+#               -autorun /zap/wrk/zap.yaml \
+#               -silent
 
-          mkdir -p zap-out
-          docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html  zap-out/zap-report.html  || true
-          docker cp zaprun:/home/zap/.ZAP/reports/zap-results.json zap-out/zap-results.json || true
-          docker cp zaprun:/home/zap/.ZAP/zap.log                  zap-out/zap.log          || true
-          docker rm -f zaprun || true
+#           mkdir -p zap-out
+#           docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html  zap-out/zap-report.html  || true
+#           docker cp zaprun:/home/zap/.ZAP/reports/zap-results.json zap-out/zap-results.json || true
+#           docker cp zaprun:/home/zap/.ZAP/zap.log                  zap-out/zap.log          || true
+#           docker rm -f zaprun || true
 
 
 
-      - name: Upload reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: zap-dast-reports
-          path: |
-            zap-out/zap-report.html
-            zap-out/zap-results.json
-            zap-out/zap.log
+#       - name: Upload reports
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: zap-dast-reports
+#           path: |
+#             zap-out/zap-report.html
+#             zap-out/zap-results.json
+#             zap-out/zap.log
 
 
           

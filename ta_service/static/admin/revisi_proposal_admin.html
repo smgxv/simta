@@ -3,7 +3,7 @@
 	<head>
 		<!-- Basic Page Info -->
 		<meta charset="utf-8" />
-		<title>SIMTA - Profilel</title>
+		<title>SIMTA - Revisi Proposal</title>
 
 		<!-- Site favicon -->
 		<link
@@ -42,17 +42,41 @@
 			type="text/css"
 			href="vendors/styles/icon-font.min.css"
 		/>
-		<link
-			rel="stylesheet"
-			type="text/css"
-			href="src/plugins/datatables/css/dataTables.bootstrap4.min.css"
-		/>
-		<link
-			rel="stylesheet"
-			type="text/css"
-			href="src/plugins/datatables/css/responsive.bootstrap4.min.css"
-		/>
 		<link rel="stylesheet" type="text/css" href="vendors/styles/style.css" />
+		<!-- Add DataTables CSS -->
+		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.7/css/responsive.dataTables.min.css">
+
+		<style>
+			.alert-wrapper {
+				position: fixed;
+				top: 20px;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 9999;
+				width: 80%;
+				max-width: 500px;
+			}
+		
+			.alert {
+				padding: 15px;
+				border-radius: 4px;
+				margin-bottom: 10px;
+				text-align: center;
+			}
+		
+			.alert-success {
+				background-color: #d4edda;
+				border-color: #c3e6cb;
+				color: #155724;
+			}
+		
+			.alert-danger {
+				background-color: #f8d7da;
+				border-color: #f5c2c7;
+				color: #842029;
+			}
+		</style>
 
 		<!-- Global site tag (gtag.js) - Google Analytics -->
 		<script
@@ -90,7 +114,6 @@
 	</head>
 
 	<body>
-
 		<div class="pre-loader">
 			<div class="pre-loader-box">
 				<div class="loader-logo">
@@ -183,6 +206,7 @@
 						</a>
 					</div>
 				</div>
+
 				<div class="user-notification">
 					<div class="dropdown">
 						<a
@@ -262,6 +286,7 @@
 						</div>
 					</div>
 				</div>
+
 				<div class="user-info-dropdown">
 					<div class="dropdown">
 						<a
@@ -273,17 +298,17 @@
 							<span class="user-icon">
 								<img src="vendors/images/photo1.jpg" alt="" />
 							</span>
-							<span class="user-name">{{.username}}</span>
+							<span class="user-name" id="username"></span>
 						</a>
 						<div
 							class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list"
 						>
-							<a class="dropdown-item" href="/admin/profile"
-								><i class="dw dw-user1"></i> Profile</a
-							>
-							<a class="dropdown-item" href="/logout"
-								><i class="dw dw-logout"></i> Log Out</a
-							>
+							<a class="dropdown-item" href="#" onclick="redirectToProfile(); return false;">
+								<i class="dw dw-user1"></i> Profile
+							</a>
+							<a class="dropdown-item" href="#" onclick="logout(); return false;">
+								<i class="dw dw-logout"></i> Log Out
+							</a>
 						</div>
 					</div>
 				</div>
@@ -574,13 +599,22 @@
 		<div class="mobile-menu-overlay"></div>
 
 		<div class="main-container">
+
+			<!-- Tambahkan div untuk alert di bawah ini -->
+			<div class="alert-wrapper" id="alertContainer" style="display: none;">
+				<div class="alert" id="alertMessage" role="alert">
+				</div>
+			</div>
+
 			<div class="pd-ltr-20 xs-pd-20-10">
 				<div class="min-height-200px">
+
+					<!-- Header section with filters -->
 					<div class="page-header">
 						<div class="row">
-							<div class="col-md-12 col-sm-12">
+							<div class="col-md-6 col-sm-12">
 								<div class="title">
-									<h4>Profile</h4>
+									<h4>Revisi Proposal</h4>
 								</div>
 								<nav aria-label="breadcrumb" role="navigation">
 									<ol class="breadcrumb">
@@ -588,174 +622,86 @@
 											<a href="/admin/dashboard">Home</a>
 										</li>
 										<li class="breadcrumb-item active" aria-current="page">
-											Profile
+											Revisi Proposal
 										</li>
 									</ol>
 								</nav>
 							</div>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col-12 mb-30">
-							<div class="pd-20 card-box height-100-p">
-								<div class="profile-photo">
-									<a
-										href="modal"
-										data-toggle="modal"
-										data-target="#modal"
-										class="edit-avatar"
-										><i class="fa fa-pencil"></i
-									></a>
-									<img
-										src="vendors/images/photo1.jpg"
-										alt=""
-										class="avatar-photo"
-									/>
-									<div
-										class="modal fade"
-										id="modal"
-										tabindex="-1"
-										role="dialog"
-										aria-labelledby="modalLabel"
-										aria-hidden="true"
-									>
-										<div
-											class="modal-dialog modal-dialog-centered"
-											role="document"
-										>
-											<div class="modal-content">
-												<div class="modal-body pd-5">
-													<div class="img-container">
-														<img
-															id="image"
-															src="vendors/images/photo2.jpg"
-															alt="Picture"
-														/>
-													</div>
-												</div>
-												<div class="modal-footer">
-													<input
-														type="submit"
-														value="Update"
-														class="btn btn-primary"
-													/>
-													<button
-														type="button"
-														class="btn btn-default"
-														data-dismiss="modal"
-													>
-														Close
-													</button>
-												</div>
-											</div>
-										</div>
+							<div class="col-md-6 col-sm-12">
+								<div class="d-flex justify-content-end align-items-center">
+									<div class="form-group mb-0 mr-2">
+										<select class="form-control" id="jurusanFilter" onchange="applyFilters()">
+											<option value="">Semua Jurusan</option>
+										</select>
 									</div>
-								</div>
-								<h5 class="text-center h5 mb-0" id="fullName">Nama Panjang</h5>
-								<p class="text-center text-muted font-14">
-									<span id="role">Role</span>
-								</p>
-								<div class="profile-info">
-									<h5 class="mb-20 h5 text-blue">Contact Information</h5>
-									<ul>
-										<li>
-											<span>Username:</span>
-											<span id="username"></span>
-										</li>
-										<li>
-											<span>Email:</span>
-											<span id="email"></span>
-										</li>
-										<li>
-											<span>Jurusan:</span>
-											<span id="jurusan"></span>
-										</li>
-										<li>
-											<span>Kelas:</span>
-											<span id="kelas"></span>
-										</li>
-									</ul>
+									<div class="form-group mb-0">
+										<select class="form-control" id="kelasFilter" onchange="applyFilters()">
+											<option value="">Semua Kelas</option>
+										</select>
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
+
+					<!-- List Revisi Proposal Taruna -->
+					<div class="card-box mb-30">
+						<div class="pd-20">
+							<h4 class="text-blue h4">List Revisi Proposal</h4>
+						</div>
+						<div class="pb-20">
+							<table class="data-table table stripe hover nowrap">
+								<thead>
+									<tr>
+										<th class="table-plus datatable-nosort">Nama Lengkap</th>
+										<th class="table-plus datatable-nosort">Jurusan</th>
+										<th class="table-plus datatable-nosort">Kelas</th>
+										<th class="table-plus datatable-nosort">Topik</th>
+										<th class="table-plus datatable-nosort">Status</th>
+										<th class="datatable-nosort">Action</th>
+									</tr>
+								</thead>
+								<tbody>
+									
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<!-- End List Revisi Proposal Taruna -->
+
 				</div>
+
 			</div>
+
+					
 		</div>
+
 
 		<!-- js -->
 		<script src="vendors/scripts/core.js"></script>
 		<script src="vendors/scripts/script.min.js"></script>
 		<script src="vendors/scripts/process.js"></script>
 		<script src="vendors/scripts/layout-settings.js"></script>
-		<script src="src/plugins/cropperjs/dist/cropper.js"></script>
-        <script src="src/plugins/bootstrap-select/bootstrap-select.min.js"></script>
+		<!-- Add DataTables JS -->
+		<script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+		<script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.7/js/dataTables.responsive.min.js"></script>
+		<!-- Google Tag Manager (noscript) -->
+		<noscript
+			><iframe
+				src="https://www.googletagmanager.com/ns.html?id=GTM-NXZMQSS"
+				height="0"
+				width="0"
+				style="display: none; visibility: hidden"
+			></iframe
+		></noscript>
+		<!-- End Google Tag Manager (noscript) -->
 
 		<script>
-			document.addEventListener("DOMContentLoaded", function() {
-				// Ambil token dari storage
-				const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-				if (!token) {
-					window.location.replace("/loginusers");
-					return;
-				}
-
-				// Ambil ID dari parameter URL
-				const urlParams = new URLSearchParams(window.location.search);
-				const userId = urlParams.get('id');
-
-				// Jika ada ID, ambil data user spesifik
-				if (userId) {
-					fetch(`/api/user/users?id=${userId}`, {
-						headers: {
-							"Authorization": `Bearer ${token}`
-						}
-					})
-					.then(response => {
-						if (!response.ok) {
-							throw new Error("Gagal mengambil data user");
-						}
-						return response.json();
-					})
-					.then(user => {
-						// Update informasi profile dengan pengecekan data kosong
-						const updateElement = (elementId, value) => {
-							const element = document.getElementById(elementId);
-							if (element) {
-								element.textContent = value || '-';
-							}
-						};
-
-						// Update setiap elemen dengan pengecekan data kosong
-						updateElement("fullName", user.nama_lengkap);
-						updateElement("role", user.role);
-						updateElement("username", user.username);
-						updateElement("email", user.email);
-						updateElement("jurusan", user.jurusan);
-						updateElement("kelas", user.kelas);
-						updateElement("roleInfo", user.role);
-					})
-					.catch(error => {
-						console.error("Error:", error);
-						// Hanya tampilkan alert jika error bukan karena data kosong
-						if (error.message !== "Gagal mengambil data user") {
-							alert("Terjadi kesalahan saat mengakses server");
-						}
-					});
-				} else {
-					// Jika tidak ada ID, tampilkan pesan atau redirect
-					console.log("ID user tidak ditemukan");
-					// Optional: redirect ke halaman lain
-					// window.location.replace("/admin/listuser");
-				}
-			});
-
+			// Fungsi Logout
 			async function logout() {
 				try {
-					// Ambil token dari localStorage dan sessionStorage
 					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 					
-					// Kirim request logout ke server
 					const response = await fetch('https://securesimta.my.id/logout', {
 						method: 'POST',
 						headers: {
@@ -768,23 +714,54 @@
 					const data = await response.json();
 					
 					if (response.ok && data.status === 'success') {
-						// Hapus semua data storage
+						// Clear localStorage
 						localStorage.clear();
+						
+						// Clear sessionStorage
 						sessionStorage.clear();
 						
-						// Hapus semua cookies
+						// Clear all cookies for all possible paths
+						const paths = ['/', '/admin', '/taruna', '/admin/', '/taruna/'];
 						const cookies = document.cookie.split(';');
+						
 						for (let cookie of cookies) {
 							const eqPos = cookie.indexOf('=');
-							const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-							document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-							document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/admin';
+							const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+							
+							// Hapus cookie untuk setiap path
+							paths.forEach(path => {
+								document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path}`;
+							});
+						}
+						
+						// Clear cache if browser supports it
+						if (window.caches) {
+							caches.keys().then(names => {
+								names.forEach(name => {
+									caches.delete(name);
+								});
+							});
+						}
+
+						// Clear application cache
+						if (window.applicationCache) {
+							window.applicationCache.abort();
+						}
+
+						// Clear service workers if any
+						if (navigator.serviceWorker) {
+							navigator.serviceWorker.getRegistrations().then(registrations => {
+								registrations.forEach(registration => {
+									registration.unregister();
+								});
+							});
 						}
 						
 						console.log('Logout berhasil');
 						
 						// Force reload halaman login untuk membersihkan cache
-						window.location.replace('/loginusers');
+						window.location.href = '/loginusers';
+						window.location.reload(true);
 					} else {
 						throw new Error(data.message || 'Gagal logout');
 					}
@@ -803,13 +780,42 @@
 					return;
 				}
 
+				// Ambil ID user dari token
+				const userId = localStorage.getItem('userId');
+
+				// Ambil data user dari API
+				fetch(`/api/user/users?id=${userId}`, {
+					headers: {
+						'Authorization': `Bearer ${token}`
+					}
+				})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Gagal mengambil data user');
+					}
+					return response.json();
+				})
+				.then(user => {
+					// Update username di header
+					const usernameElement = document.getElementById('username');
+					if (usernameElement) {
+						usernameElement.textContent = user.username || user.nama_lengkap || 'User';
+					}
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					const usernameElement = document.getElementById('username');
+					if (usernameElement) {
+						usernameElement.textContent = 'User';
+					}
+				});
+
 				// Validasi token dengan server
-				fetch('https://securesimta.my.id/admin/dashboard', {
+				fetch('https://securesimta.my.id/taruna/dashboard', { // Ubah ke endpoint taruna
 					headers: {
 						'Authorization': `Bearer ${token}`
 					}
 				}).catch(() => {
-					// Jika ada error, redirect ke login
 					window.location.replace('/loginusers');
 				});
 			});
@@ -824,17 +830,251 @@
 					});
 				}
 			});
+
+			// Fungsi untuk menampilkan alert
+			function showAlert(message, type) {
+				const alertContainer = document.getElementById('alertContainer');
+				const alertMessage = document.getElementById('alertMessage');
+				
+				alertMessage.className = `alert alert-${type}`;
+				alertMessage.textContent = message;
+				alertContainer.style.display = 'block';
+				
+				// Sembunyikan alert setelah 5 detik
+				setTimeout(() => {
+					alertContainer.style.display = 'none';
+				}, 5000);
+			}
+
+			let allRevisiProposalData = []; // Menyimpan semua data TugasAkhir
+			let uniqueJurusan = new Set();
+			let uniqueKelas = new Set();
+
+			// Fungsi untuk memperbarui opsi filter
+			function updateFilterOptions() {
+				const jurusanFilter = document.getElementById('jurusanFilter');
+				const kelasFilter = document.getElementById('kelasFilter');
+
+				// Clear existing options except the first one
+				jurusanFilter.innerHTML = '<option value="">Semua Jurusan</option>';
+				kelasFilter.innerHTML = '<option value="">Semua Kelas</option>';
+
+				// Add unique jurusan options
+				[...uniqueJurusan].sort().forEach(jurusan => {
+					const option = document.createElement('option');
+					option.value = jurusan;
+					option.textContent = jurusan;
+					jurusanFilter.appendChild(option);
+				});
+
+				// Add unique kelas options
+				[...uniqueKelas].sort().forEach(kelas => {
+					const option = document.createElement('option');
+					option.value = kelas;
+					option.textContent = kelas;
+					kelasFilter.appendChild(option);
+				});
+			}
+
+			// Fungsi untuk memuat data TugasAkhir
+			async function loadRevisiProposalData() {
+				try {
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					const response = await fetch('/api/document/revisiicp/all', {
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+
+					if (!response.ok) {
+						throw new Error('Failed to fetch Tugas Akhir data');
+					}
+
+					const result = await response.json();
+					if (result.status !== 'success') {
+						throw new Error(result.message || 'Failed to load data');
+					}
+
+					allRevisiProposalData = result.data;
+
+					// Collect unique values
+					allRevisiProposalData.forEach(item => {
+						if (item.jurusan) uniqueJurusan.add(item.jurusan);
+						if (item.kelas) uniqueKelas.add(item.kelas);
+					});
+
+					// Update filter options
+					updateFilterOptions();
+					
+					// Display data
+					displayFilteredData();
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Failed to load Tugas Akhir data', 'danger');
+				}
+			}
+
+			// Fungsi untuk menampilkan data yang sudah difilter
+			function displayFilteredData() {
+				const jurusanFilter = document.getElementById('jurusanFilter').value;
+				const kelasFilter = document.getElementById('kelasFilter').value;
+
+				const filteredData = allRevisiProposalData.filter(item => {
+					const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
+					const matchKelas = !kelasFilter || item.kelas === kelasFilter;
+					return matchJurusan && matchKelas;
+				});
+
+				const tableBody = document.querySelector('.data-table tbody');
+				tableBody.innerHTML = '';
+
+				filteredData.forEach(item => {
+					const row = document.createElement('tr');
+					row.innerHTML = `
+						<td>${item.nama_lengkap || '-'}</td>
+						<td>${item.jurusan || '-'}</td>
+						<td>${item.kelas || '-'}</td>
+						<td>${item.topik_penelitian || '-'}</td>
+						<td>
+							${item.status ? 
+								`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
+								: '-'}
+						</td>
+						<td>
+							${item.revisi_proposal_id > 0 ? 
+								`<div class="dropdown">
+									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+										<i class="dw dw-more"></i>
+									</a>
+									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+										<a class="dropdown-item" href="#" onclick="downloadRevisiProposal(${item.revisi_proposal_id})">
+											<i class="dw dw-download"></i> Download
+										</a>
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.revisi_proposal_id}, 'approved')">
+											<i class="dw dw-check"></i> Accept
+										</a>
+										<a class="dropdown-item" href="#" onclick="updateStatus(${item.revisi_proposal_id}, 'rejected')">
+											<i class="dw dw-delete-3"></i> Reject
+										</a>
+									</div>
+								</div>`
+								: '-'}
+						</td>
+					`;
+					tableBody.appendChild(row);
+				});
+			}
+
+			// Fungsi untuk menerapkan filter
+			function applyFilters() {
+				displayFilteredData();
+			}
+
+			// Fungsi untuk menentukan class badge berdasarkan status
+			function getStatusBadgeClass(status) {
+				switch (status?.toLowerCase()) {
+					case 'approved':
+						return 'success';
+					case 'rejected':
+						return 'danger';
+					case 'revision':
+						return 'warning';
+					default:
+						return 'warning';
+				}
+			}
+
+			// Fungsi untuk redirect ke profile
+			function redirectToProfile() {
+				window.location.href = '/admin/profile';
+			}
+
+			// Fungsi untuk mengupdate status TugasAkhir
+			async function updateStatus(id, status) {
+				try {
+					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+					const response = await fetch('/api/document/revisiproposal/status', {
+						method: 'POST',
+						headers: {
+							'Authorization': `Bearer ${token}`,
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							id: id,
+							status: status
+						})
+					});
+
+					if (!response.ok) {
+						throw new Error('Failed to update status');
+					}
+
+					const result = await response.json();
+					if (result.status === 'success') {
+						showAlert(`Revisi Proposal berhasil di${status}`, 'success');
+						loadRevisiProposalData(); // Reload data
+					} else {
+						throw new Error(result.message || 'Failed to update status');
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					showAlert('Failed to update status', 'danger');
+				}
+			}
+
+			// Fungsi untuk download TugasAkhir
+			function downloadRevisiProposal(id) {
+				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				window.open(`/api/document/revisiproposal/download/${id}?token=${token}`, '_blank');
+			}
+
+			// Load data TugasAkhir saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', function() {
+				loadRevisiProposalData();
+
+				// Set username dari localStorage
+				const username = document.getElementById('username');
+				if (username) {
+					username.textContent = localStorage.getItem('username') || 'Admin';
+				}
+			});
 		</script>
-		
-		<!-- Google Tag Manager (noscript) -->	
-		<noscript
-			><iframe
-				src="https://www.googletagmanager.com/ns.html?id=GTM-NXZMQSS"
-				height="0"
-				width="0"
-				style="display: none; visibility: hidden"
-			></iframe
-		></noscript>
-		<!-- End Google Tag Manager (noscript) -->
+
+		<style>
+		.badge {
+			padding: 5px 10px;
+			border-radius: 4px;
+			font-weight: normal;
+		}
+		.badge-success {
+			background-color: #28a745;
+			color: white;
+		}
+		.badge-warning {
+			background-color: #ffc107;
+			color: black;
+		}
+		.badge-danger {
+			background-color: #dc3545;
+			color: white;
+		}
+		.badge-secondary {
+			background-color: #6c757d;
+			color: white;
+		}
+		.text-success {
+			color: #28a745 !important;
+			font-weight: bold;
+		}
+		.text-warning {
+			color: #ffc107 !important;
+			font-weight: bold;
+		}
+		.text-danger {
+			color: #dc3545 !important;
+			font-weight: bold;
+		}
+		</style>
+
 	</body>
 </html>
