@@ -572,7 +572,6 @@ jobs:
             -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
             -v "$PWD/security/zap/jwt-taruna.js:/zap/wrk/jwt-taruna.js:ro" \
             -v "$PWD/security/zap/Taruna.policy:/home/zap/.ZAP/policies/Taruna.policy:ro" \
-            -v "$PWD/security/zap/reports:/zap/wrk/reports" \
             ghcr.io/zaproxy/zaproxy:stable \
             zap.sh -cmd \
               -addonupdate \
@@ -580,10 +579,12 @@ jobs:
               -autorun /zap/wrk/zap.yaml \
               -silent
 
-          # ambil semua laporan
-          docker cp zaprun:/zap/wrk/reports/. zap-out/ || true
-          docker cp zaprun:/home/zap/.ZAP/zap.log zap-out/zap.log || true
+          mkdir -p zap-out
+          docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html  zap-out/zap-report.html  || true
+          docker cp zaprun:/home/zap/.ZAP/reports/zap-results.json zap-out/zap-results.json || true
+          docker cp zaprun:/home/zap/.ZAP/zap.log                  zap-out/zap.log          || true
           docker rm -f zaprun || true
+
 
 
       - name: Upload reports

@@ -11,7 +11,7 @@ env:
       excludePaths:
         - "^https?://securesimta\\.my\\.id/logout.*"
         - ".*\\.(png|jpe?g|svg|gif|css|js|ico|woff2?|pdf|zip)$"
-      authentication: { method: manual }   # pakai HTTP Sender (JWT)
+      authentication: { method: manual }
       sessionManagement: { method: http }
       users: []
 
@@ -27,45 +27,49 @@ scripts:
     enabled: true
 
 jobs:
-  # Seed manual (opsional)
+  # Seed awal (opsional, tambahkan jika mau langsung buka URL ini)
   - type: requestor
     requests:
       - { url: "https://securesimta.my.id/taruna/dashboard", method: "GET" }
+      - { url: "https://securesimta.my.id/taruna/icp", method: "GET" }
+      - { url: "https://securesimta.my.id/taruna/proposal", method: "GET" }
+      - { url: "https://securesimta.my.id/taruna/ta70", method: "GET" }
+      - { url: "https://securesimta.my.id/taruna/ta100", method: "GET" }
 
   # Spider klasik saja
   - type: spider
     parameters:
       context: SIMTA
       url: "https://securesimta.my.id/taruna/dashboard"
-      maxChildren: 0           # 0 = tanpa batas
+      maxChildren: 0
 
-  # Tunggu passive scanner memproses hasil spider
+  # Passive scan setelah spider
   - type: passiveScan-wait
     parameters: { maxDuration: 2 }
 
-  # Active Scan setelah crawling selesai (biar ada temuan)
+  # Active scan setelah crawling
   - type: activeScan
     parameters:
       context: SIMTA
-      policy: "Taruna"         # atau "Default Policy" kalau perlu uji cepat
+      policy: "Taruna"
       addQueryParam: true
       scanHeadersAllRequests: true
       maxRuleDurationInMins: 10
 
-  # Tunggu passive scanner lagi (hasil active juga dipassive-scan)
+  # Passive scan lagi setelah active scan
   - type: passiveScan-wait
     parameters: { maxDuration: 2 }
 
-  # Report ke folder kerja yang dimount
+  # Report ke lokasi lama yang berhasil
   - type: report
     parameters:
       template: traditional-html
       reportFile: zap-report.html
-      reportDir: /zap/wrk/reports
+      reportDir: /home/zap/.ZAP/reports
       displayReport: false
   - type: report
     parameters:
       template: traditional-json
       reportFile: zap-results.json
-      reportDir: /zap/wrk/reports
+      reportDir: /home/zap/.ZAP/reports
       displayReport: false
