@@ -562,7 +562,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Pull ZAP image (GHCR)
-        run: docker pull ghcr.io/zaproxy/zaproxy:weekly
+        run: docker pull ghcr.io/zaproxy/zaproxy:stable
 
       - name: Run ZAP (named container)
         run: |
@@ -570,22 +570,19 @@ jobs:
           docker run --name zaprun \
             -e TARGET_URL -e LOGIN_EMAIL -e LOGIN_PASSWORD \
             -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
-            -v "$PWD/security/zap/scripts:/zap/wrk/scripts:ro" \
+            -v "$PWD/security/zap/jwt-taruna.js:/zap/wrk/jwt-taruna.js:ro" \
             -v "$PWD/security/zap/Taruna.policy:/home/zap/.ZAP/policies/Taruna.policy:ro" \
-            ghcr.io/zaproxy/zaproxy:weekly \
+            -v "$PWD/security/zap/reports:/zap/wrk/reports" \
+            ghcr.io/zaproxy/zaproxy:stable \
             zap.sh -cmd \
               -addonupdate \
               -addoninstall reports \
-              -addoninstall selenium \
-              -addoninstall spiderAjax \
-              -addoninstall webdriverlinux \
               -autorun /zap/wrk/zap.yaml \
               -silent
 
-          mkdir -p zap-out
-          # Ambil semua report yang dibuat oleh plan (lihat path di plan)
-          docker cp zaprun:/home/zap/.ZAP/reports/. zap-out/ || true
-          docker cp zaprun:/home/zap/.ZAP/zap.log      zap-out/zap.log || true
+          # ambil semua laporan
+          docker cp zaprun:/zap/wrk/reports/. zap-out/ || true
+          docker cp zaprun:/home/zap/.ZAP/zap.log zap-out/zap.log || true
           docker rm -f zaprun || true
 
 
