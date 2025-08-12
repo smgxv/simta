@@ -570,39 +570,39 @@ jobs:
       - name: Check URL
         run: curl "$TARGET_URL"
 
-      # - name: Pull ZAP image (GHCR)
-      #   run: docker pull ghcr.io/zaproxy/zaproxy:stable
+      - name: Pull ZAP image (GHCR)
+        run: docker pull ghcr.io/zaproxy/zaproxy:stable
 
-      # - name: Run ZAP (named container)
-      #   run: |
-      #     docker rm -f zaprun 2>/dev/null || true
-      #     docker run --name zaprun \
-      #       -e TARGET_URL -e LOGIN_EMAIL -e LOGIN_PASSWORD \
-      #       -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
-      #       -v "$PWD/security/zap/jwt-taruna.js:/zap/wrk/jwt-taruna.js:ro" \
-      #       -v "$PWD/security/zap/Taruna.policy:/home/zap/.ZAP/policies/Taruna.policy:ro" \
-      #       ghcr.io/zaproxy/zaproxy:stable \
-      #       zap.sh -cmd \
-      #         -addonupdate \
-      #         -addoninstall reports \
-      #         -config log.level=DEBUG \
-      #         -autorun /zap/wrk/zap.yaml \
-      #         -silent
+      - name: Run ZAP (named container)
+        run: |
+          docker rm -f zaprun 2>/dev/null || true
+          docker run --name zaprun \
+            -e TARGET_URL -e LOGIN_EMAIL -e LOGIN_PASSWORD \
+            -v "$PWD/security/zap/zap.yaml:/zap/wrk/zap.yaml:ro" \
+            -v "$PWD/security/zap/jwt-taruna.js:/zap/wrk/jwt-taruna.js:ro" \
+            -v "$PWD/security/zap/Taruna.policy:/home/zap/.ZAP/policies/Taruna.policy:ro" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap.sh -cmd \
+              -addonupdate \
+              -addoninstall reports \
+              -config log.level=DEBUG \
+              -autorun /zap/wrk/zap.yaml \
+              -silent
 
-      #     mkdir -p zap-out
-      #     docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html  zap-out/zap-report.html  || true
-      #     docker cp zaprun:/home/zap/.ZAP/reports/zap-results.json zap-out/zap-results.json || true
-      #     docker cp zaprun:/home/zap/.ZAP/zap.log                  zap-out/zap.log          || true
-      #     docker rm -f zaprun || true
+          mkdir -p zap-out
+          docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html  zap-out/zap-report.html  || true
+          docker cp zaprun:/home/zap/.ZAP/reports/zap-results.json zap-out/zap-results.json || true
+          docker cp zaprun:/home/zap/.ZAP/zap.log                  zap-out/zap.log          || true
+          docker rm -f zaprun || true
 
-      # - name: Upload reports
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: zap-dast-reports
-      #     path: |
-      #       zap-out/zap-report.html
-      #       zap-out/zap-results.json
-      #       zap-out/zap.log
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-dast-reports
+          path: |
+            zap-out/zap-report.html
+            zap-out/zap-results.json
+            zap-out/zap.log
 
 
           
