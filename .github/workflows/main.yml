@@ -563,9 +563,9 @@ jobs:
 
       - name: Check Environment
         run: |
-         echo TARGET_URL
-         echo LOGIN_EMAIL
-         echo LOGIN_PASSWORD
+         echo "$TARGET_URL"
+         echo "$LOGIN_EMAIL"
+         echo "$LOGIN_PASSWORD"
 
       # - name: Pull ZAP image (GHCR)
       #   run: docker pull ghcr.io/zaproxy/zaproxy:stable
