@@ -566,6 +566,9 @@ jobs:
          echo "$TARGET_URL"
          echo "$LOGIN_EMAIL"
          echo "$LOGIN_PASSWORD"
+      
+      - name: Check URL
+        run: curl "$TARGET_URL"
 
       # - name: Pull ZAP image (GHCR)
       #   run: docker pull ghcr.io/zaproxy/zaproxy:stable
@@ -591,8 +594,6 @@ jobs:
       #     docker cp zaprun:/home/zap/.ZAP/reports/zap-results.json zap-out/zap-results.json || true
       #     docker cp zaprun:/home/zap/.ZAP/zap.log                  zap-out/zap.log          || true
       #     docker rm -f zaprun || true
-
-
 
       # - name: Upload reports
       #   uses: actions/upload-artifact@v4
