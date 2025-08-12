@@ -553,7 +553,7 @@ jobs:
   zap-dast:
     runs-on: ubuntu-latest
     env:
-      TARGET_URL: https://securesimta.my.id          # dipakai oleh script JWT
+      TARGET_URL: https://securesimta.my.id/loginusers         # dipakai oleh script JWT
       LOGIN_EMAIL: daniel@gmail.com
       LOGIN_PASSWORD: P@ssword1
 
