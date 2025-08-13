@@ -719,10 +719,10 @@
 								<td>: <span id="penguji1">-</span></td>
 							</tr>
 							<tr>
-								<td>Dokumen Penilaian</td>
+								<td>Dokumen Hasil Telaah</td>
 								<td>
-									<span id="penguji1-penilaian-status">-</span>
-									<a href="#" id="penguji1-penilaian-download" class="btn-download" style="display:none;">
+									<span id="penguji1-hasiltelaah-status">-</span>
+									<a href="#" id="penguji1-hasiltelaah-download" class="btn-download" style="display:none;">
 										<i class="dw dw-download"></i> Download
 									</a>
 								</td>
@@ -730,8 +730,8 @@
 							<tr>
 								<td>Dokumen Berita Acara</td>
 								<td>
-									<span id="penguji1-berita-acara-status">-</span>
-									<a href="#" id="penguji1-berita-acara-download" class="btn-download" style="display:none;">
+									<span id="penguji1-penilaian-status">-</span>
+									<a href="#" id="penguji1-penilaian-download" class="btn-download" style="display:none;">
 										<i class="dw dw-download"></i> Download
 									</a>
 								</td>
@@ -748,10 +748,10 @@
 								<td>: <span id="penguji2">-</span></td>
 							</tr>
 							<tr>
-								<td>Dokumen Penilaian</td>
+								<td>Dokumen Hasil Telaah</td>
 								<td>
-									<span id="penguji2-penilaian-status">-</span>
-									<a href="#" id="penguji2-penilaian-download" class="btn-download" style="display:none;">
+									<span id="penguji2-hasiltelaah-status">-</span>
+									<a href="#" id="penguji2-hasiltelaah-download" class="btn-download" style="display:none;">
 										<i class="dw dw-download"></i> Download
 									</a>
 								</td>
@@ -759,8 +759,8 @@
 							<tr>
 								<td>Dokumen Berita Acara</td>
 								<td>
-									<span id="penguji2-berita-acara-status">-</span>
-									<a href="#" id="penguji2-berita-acara-download" class="btn-download" style="display:none;">
+									<span id="penguji2-penilaian-status">-</span>
+									<a href="#" id="penguji2-penilaian-download" class="btn-download" style="display:none;">
 										<i class="dw dw-download"></i> Download
 									</a>
 								</td>
@@ -981,99 +981,166 @@
 
 			// Fungsi untuk memuat detail laporan70
 			async function loadLaporan70Details(laporan70Id) {
-				try {
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch(`/api/document/seminarlaporan70/detail/${laporan70Id}`, {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-					
-					if (!response.ok) {
-						throw new Error('Failed to fetch laporan70 details');
-					}
+			try {
+				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				const response = await fetch(`/api/document/seminarlaporan70/detail/${laporan70Id}`, {
+				headers: { 'Authorization': `Bearer ${token}` }
+				});
+				if (!response.ok) throw new Error('Failed to fetch laporan70 details');
 
-					const result = await response.json();
-					if (result.status !== 'success') {
-						throw new Error(result.message || 'Failed to load data');
-					}
+				const result = await response.json();
+				if (result.status !== 'success') throw new Error(result.message || 'Failed to load data');
 
-					const data = result.data;
+				const data = result.data;
 
-					// Update informasi taruna
-					document.getElementById('nama-taruna').textContent = data.nama_taruna || '-';
-					document.getElementById('jurusan').textContent = data.jurusan || '-';
-					document.getElementById('kelas').textContent = data.kelas || '-';
-					document.getElementById('topik-penelitian').textContent = data.topik_penelitian || '-';
+				// Update informasi taruna
+				document.getElementById('nama-taruna').textContent = data.nama_taruna || '-';
+				document.getElementById('jurusan').textContent = data.jurusan || '-';
+				document.getElementById('kelas').textContent = data.kelas || '-';
+				document.getElementById('topik-penelitian').textContent = data.topik_penelitian || '-';
 
-					// Update ketua penguji
-					const ketuaPenguji = data.ketua_penguji || {};
-					updatePengujiSection('ketua', {
-						nama_lengkap: ketuaPenguji.nama_dosen || '-',
-						file_penilaian_path: ketuaPenguji.file_penilaian || '',
-						file_berita_acara_path: ketuaPenguji.file_berita_acara || '',
-						status_pengumpulan: ketuaPenguji.status_pengumpulan || 'belum'
-					});
+				// Helper ambil array penilaian (baru/legacy)
+				const getPaths = (obj) => {
+				if (Array.isArray(obj?.penilaian_paths)) return obj.penilaian_paths;
+				if (obj?.file_penilaian) return [obj.file_penilaian];        // legacy: satu string
+				if (obj?.file_penilaian_path) return [obj.file_penilaian_path]; // legacy nama field lama
+				return [];
+				};
 
-					// Update penguji 1
-					const penguji1 = data.penguji1 || {};
-					updatePengujiSection('penguji1', {
-						nama_lengkap: penguji1.nama_dosen || '-',
-						file_penilaian_path: penguji1.file_penilaian || '',
-						file_berita_acara_path: penguji1.file_berita_acara || '',
-						status_pengumpulan: penguji1.status_pengumpulan || 'belum'
-					});
+				// Penguji 1
+				const p1 = data.penguji1 || {};
+				updatePengujiSection('penguji1', {
+				nama_lengkap: p1.nama_dosen || '-',
+				file_hasiltelaah_path: p1.file_hasiltelaah || '',
+				penilaian_paths: getPaths(p1),
+				status_pengumpulan: p1.status_pengumpulan || 'belum'
+				});
 
-					// Update penguji 2
-					const penguji2 = data.penguji2 || {};
-					updatePengujiSection('penguji2', {
-						nama_lengkap: penguji2.nama_dosen || '-',
-						file_penilaian_path: penguji2.file_penilaian || '',
-						file_berita_acara_path: penguji2.file_berita_acara || '',
-						status_pengumpulan: penguji2.status_pengumpulan || 'belum'
-					});
+				// Penguji 2
+				const p2 = data.penguji2 || {};
+				updatePengujiSection('penguji2', {
+				nama_lengkap: p2.nama_dosen || '-',
+				file_hasiltelaah_path: p2.file_hasiltelaah || '',
+				penilaian_paths: getPaths(p2),
+				status_pengumpulan: p2.status_pengumpulan || 'belum'
+				});
 
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Terjadi kesalahan saat memuat data', 'danger');
+			} catch (error) {
+				console.error('Error:', error);
+				showAlert('Terjadi kesalahan saat memuat data', 'danger');
+			}
+			}
+
+			// ===== Util =====
+			function baseName(p) {
+			if (!p) return '';
+			const parts = p.split('/');           // "uploads/file_penilaian_laporan70/Name.pdf" -> "Name.pdf"
+			return parts[parts.length - 1] || '';
+			}
+			function makeDownloadUrl(fileName) {
+			return `/api/document/penilaian/laporan70/download?path=${encodeURIComponent(fileName)}`;
+			}
+
+			// Fungsi untuk memperbarui data penguji (mendukung multi-file penilaian)
+			function updatePengujiSection(type, data) {
+			// Nama dosen
+			const namaEl = document.getElementById(`${type}`);
+			if (namaEl) namaEl.textContent = data.nama_lengkap;
+
+			// Catatan Perbaikan (single)
+			const catatanStatus = document.getElementById(`${type}-hasiltelaah-status`);
+			const catatanBtn = document.getElementById(`${type}-hasiltelaah-download`);
+			const catatanFile = baseName(data.file_hasiltelaah_path);
+
+			if (catatanStatus) {
+				if (catatanFile) {
+				catatanStatus.innerHTML = '<span class="badge-exists">Ada</span>';
+				if (catatanBtn) {
+					catatanBtn.style.display = 'inline-block';
+					catatanBtn.href = makeDownloadUrl(catatanFile);
+				}
+				} else {
+				catatanStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
+				if (catatanBtn) catatanBtn.style.display = 'none';
 				}
 			}
 
-			// Fungsi untuk memperbarui data penguji
-			function updatePengujiSection(type, data) {
-				const namaEl = document.getElementById(`${type}`);
-				if (namaEl) namaEl.textContent = data.nama_lengkap;
+			// Penilaian (multi-file)
+			const penilaianStatus = document.getElementById(`${type}-penilaian-status`);
+			const penilaianBtnSingle = document.getElementById(`${type}-penilaian-download`); // tombol bawaan (single)
+			const paths = Array.isArray(data.penilaian_paths) ? data.penilaian_paths : [];
+			const files = paths.map(baseName).filter(Boolean);
 
-				const penilaianStatus = document.getElementById(`${type}-penilaian-status`);
-				const penilaianDownload = document.getElementById(`${type}-penilaian-download`);
-				if (penilaianStatus) {
-					if (data.file_penilaian_path) {
-						penilaianStatus.innerHTML = '<span class="badge-exists">Ada</span>';
-						if (penilaianDownload) {
-							penilaianDownload.style.display = 'inline-block';
-							penilaianDownload.href = `/api/document/penilaian/laporan70/download?path=${data.file_penilaian_path}`;
+			if (penilaianStatus) {
+				if (files.length > 0) {
+				penilaianStatus.innerHTML = `<span class="badge-exists">Ada (${files.length} file)</span>`;
 
-						}
-					} else {
-						penilaianStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
-						if (penilaianDownload) penilaianDownload.style.display = 'none';
+				// Jika hanya 1 file: pakai tombol bawaan
+				if (files.length === 1) {
+					if (penilaianBtnSingle) {
+					penilaianBtnSingle.style.display = 'inline-block';
+					penilaianBtnSingle.href = makeDownloadUrl(files[0]);
+					penilaianBtnSingle.textContent = 'Download';
+					}
+					// Hapus daftar jika pernah dibuat
+					removePenilaianList(type);
+				} else {
+					// >1 file: sembunyikan tombol single, render daftar link
+					if (penilaianBtnSingle) penilaianBtnSingle.style.display = 'none';
+					renderPenilaianList(type, files);
+				}
+				} else {
+				penilaianStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
+				if (penilaianBtnSingle) penilaianBtnSingle.style.display = 'none';
+				removePenilaianList(type);
+				}
+			}
+			}
+
+			// Buat daftar link download penilaian (multi-file)
+			function renderPenilaianList(type, files) {
+				// Cari/buat container list di sel yang sama
+				const anchorRef = document.getElementById(`${type}-penilaian-download`);
+				let container = document.getElementById(`${type}-penilaian-list`);
+
+				if (!container) {
+					container = document.createElement('div');
+					container.id = `${type}-penilaian-list`;
+					container.style.marginTop = '6px';
+					container.style.display = 'flex';
+					container.style.flexDirection = 'column'; // supaya rapih ke bawah
+					container.style.gap = '4px';
+
+					// sisipkan setelah anchor bawaan (kalau ada), atau di akhir sel
+					if (anchorRef && anchorRef.parentElement) {
+						anchorRef.parentElement.appendChild(container);
 					}
 				}
 
-				const beritaAcaraStatus = document.getElementById(`${type}-berita-acara-status`);
-				const beritaAcaraDownload = document.getElementById(`${type}-berita-acara-download`);
-				if (beritaAcaraStatus) {
-					if (data.file_berita_acara_path) {
-						beritaAcaraStatus.innerHTML = '<span class="badge-exists">Ada</span>';
-						if (beritaAcaraDownload) {
-							beritaAcaraDownload.style.display = 'inline-block';
-							beritaAcaraDownload.href = `/api/document/penilaian/laporan70/download?path=${data.file_berita_acara_path}`;
-						}
-					} else {
-						beritaAcaraStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
-						if (beritaAcaraDownload) beritaAcaraDownload.style.display = 'none';
-					}
-				}
+				// Bersihkan isi lama
+				container.innerHTML = '';
+
+				// Render setiap file dengan nama aslinya
+				files.forEach((fname) => {
+					const a = document.createElement('a');
+					a.href = makeDownloadUrl(fname);
+					a.className = 'btn-download';
+					a.style.display = 'inline-block';
+					a.style.padding = '2px 8px';
+					a.style.borderRadius = '12px';
+					a.style.border = '1px solid #ccc';
+					a.style.textDecoration = 'none';
+					a.title = fname; // tooltip
+					a.textContent = fname; // tampilkan nama asli file
+					container.appendChild(a);
+				});
+			}
+
+			function removePenilaianList(type) {
+			const container = document.getElementById(`${type}-penilaian-list`);
+			if (container && container.parentElement) {
+				container.parentElement.removeChild(container);
+			}
 			}
 
 		</script>
