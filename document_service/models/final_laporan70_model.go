@@ -15,13 +15,14 @@ func NewFinalLaporan70Model(db *sql.DB) *FinalLaporan70Model {
 	}
 }
 
+// Create menyimpan final laporan70 + form bimbingan + file pendukung (JSON string)
 func (m *FinalLaporan70Model) Create(finalLaporan70 *entities.FinalLaporan70) error {
 	query := `
 		INSERT INTO final_laporan70 (
-			user_id, nama_lengkap, jurusan, 
-			kelas, topik_penelitian, file_path, 
-			form_bimbingan_path, keterangan, status
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			user_id, nama_lengkap, jurusan,
+			kelas, topik_penelitian, file_path,
+			form_bimbingan_path, file_pendukung_path, keterangan, status
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := m.db.Exec(query,
 		finalLaporan70.UserID,
@@ -31,10 +32,10 @@ func (m *FinalLaporan70Model) Create(finalLaporan70 *entities.FinalLaporan70) er
 		finalLaporan70.TopikPenelitian,
 		finalLaporan70.FilePath,
 		finalLaporan70.FormBimbinganPath,
+		finalLaporan70.FilePendukungPath, // <- JSON array string
 		finalLaporan70.Keterangan,
 		"pending", // default status
 	)
-
 	if err != nil {
 		return err
 	}
@@ -43,17 +44,17 @@ func (m *FinalLaporan70Model) Create(finalLaporan70 *entities.FinalLaporan70) er
 	if err != nil {
 		return err
 	}
-
 	finalLaporan70.ID = int(id)
 	return nil
 }
 
+// GetByUserID mengembalikan data termasuk file_pendukung_path
 func (m *FinalLaporan70Model) GetByUserID(userID string) ([]entities.FinalLaporan70, error) {
 	query := `
 		SELECT 
 			id, user_id, nama_lengkap, 
 			jurusan, kelas, topik_penelitian, file_path, 
-			form_bimbingan_path, keterangan, status, 
+			form_bimbingan_path, file_pendukung_path, keterangan, status, 
 			created_at, updated_at
 		FROM final_laporan70 
 		WHERE user_id = ?
@@ -77,6 +78,7 @@ func (m *FinalLaporan70Model) GetByUserID(userID string) ([]entities.FinalLapora
 			&finalLaporan70.TopikPenelitian,
 			&finalLaporan70.FilePath,
 			&finalLaporan70.FormBimbinganPath,
+			&finalLaporan70.FilePendukungPath,
 			&finalLaporan70.Keterangan,
 			&finalLaporan70.Status,
 			&finalLaporan70.CreatedAt,
