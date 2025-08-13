@@ -59,11 +59,19 @@ func GetSeminarLaporan100ByDosenHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Tambahkan file_pendukung_path di SELECT
 	query := `
-		SELECT fl.id, fl.user_id, fl.topik_penelitian, fl.file_path, fl.file_pendukung_path, u.nama_lengkap
-		FROM final_laporan100 fl
-		JOIN users u ON fl.user_id = u.id
-		JOIN penguji_laporan100 pl ON fl.id = pl.final_laporan100_id
-		WHERE pl.penguji_1_id = ? OR pl.penguji_2_id = ?
+		SELECT 
+			fp.id, 
+			fp.user_id, 
+			fp.topik_penelitian, 
+			fp.file_path, 
+			COALESCE(fp.file_pendukung_path, '') AS file_pendukung_path,
+			u.nama_lengkap
+		FROM final_laporan100 fp
+		JOIN users u ON fp.user_id = u.id
+		JOIN penguji_laporan100 pp ON fp.id = pp.final_laporan100_id
+		WHERE pp.ketua_penguji_id = ? 
+		   OR pp.penguji_1_id = ? 
+		   OR pp.penguji_2_id = ?
 	`
 
 	// Kirim hanya 2 parameter sesuai jumlah placeholder
