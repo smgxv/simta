@@ -727,7 +727,7 @@
 								</td>
 							</tr>
 							<tr>
-								<td>Dokumen Berita Acara</td>
+								<td>Dokumen Penilaian</td>
 								<td>
 									<span id="ketua-penilaian-status">-</span>
 									<a href="#" id="ketua-penilaian-download" class="btn-download" style="display:none;">
@@ -748,7 +748,7 @@
 								<td>: <span id="penguji1">-</span></td>
 							</tr>
 							<tr>
-								<td>Dokumen Penilaian</td>
+								<td>Dokumen Catatan Perbaikan</td>
 								<td>
 									<span id="penguji1-catatanperbaikan-status">-</span>
 									<a href="#" id="penguji1-catatanperbaikan-download" class="btn-download" style="display:none;">
@@ -757,7 +757,7 @@
 								</td>
 							</tr>
 							<tr>
-								<td>Dokumen Berita Acara</td>
+								<td>Dokumen Penilaian</td>
 								<td>
 									<span id="penguji1-penilaian-status">-</span>
 									<a href="#" id="penguji1-penilaian-download" class="btn-download" style="display:none;">
@@ -777,7 +777,7 @@
 								<td>: <span id="penguji2">-</span></td>
 							</tr>
 							<tr>
-								<td>Dokumen Penilaian</td>
+								<td>Dokumen Catatan Perbaikan</td>
 								<td>
 									<span id="penguji2-catatanperbaikan-status">-</span>
 									<a href="#" id="penguji2-catatanperbaikan-download" class="btn-download" style="display:none;">
@@ -786,7 +786,7 @@
 								</td>
 							</tr>
 							<tr>
-								<td>Dokumen Berita Acara</td>
+								<td>Dokumen Penilaian</td>
 								<td>
 									<span id="penguji2-penilaian-status">-</span>
 									<a href="#" id="penguji2-penilaian-download" class="btn-download" style="display:none;">
@@ -1091,7 +1091,7 @@
 				const penilaianStatus = document.getElementById(`${type}-penilaian-status`);
 				const penilaianDownload = document.getElementById(`${type}-penilaian-download`);
 				if (penilaianStatus) {
-					if (data.file_berita_acara_path) {
+					if (data.file_penilaian_path) {
 						penilaianStatus.innerHTML = '<span class="badge-exists">Ada</span>';
 						if (penilaianDownload) {
 							penilaianDownload.style.display = 'inline-block';
