@@ -1010,13 +1010,13 @@
 				// Ambil elemen/values
 				const tarunaSelect = document.getElementById('tarunaSelect');
 				const finalLaporan70Id = document.getElementById('finalLaporan70Id').value;
-				const catatanperbaikanInput = document.getElementById('catatanperbaikanFile');
+				const hasiltelaahInput = document.getElementById('hasiltelaahFile');
 				const penilaianInput = document.getElementById('penilaianFile');
 				const dosenId = localStorage.getItem('dosenID');
 
 				// Tidak ada validasi ukuran/jenis file di sini — serahkan ke backend
 				// Hanya cek wajib terisi (field non-file + ada minimal satu file)
-				if (!tarunaSelect.value || !finalLaporan70Id || !catatanperbaikanInput.files[0] || (penilaianInput.files.length === 0) || !dosenId) {
+				if (!tarunaSelect.value || !finalLaporan70Id || !hasiltelaahInput.files[0] || (penilaianInput.files.length === 0) || !dosenId) {
 					showAlert('Semua field harus diisi', 'warning');
 					return;
 				}
@@ -1034,7 +1034,7 @@
 					formData.append('dosen_id', dosenId);
 
 					// Single file: catatan perbaikan
-					formData.append('catatanperbaikan_file', catatanperbaikanInput.files[0]);
+					formData.append('hasiltelaah_file', hasiltelaahInput.files[0]);
 
 					// Multi-file: penilaian
 					// Gunakan key 'penilaian_file[]' agar backend menerima array
