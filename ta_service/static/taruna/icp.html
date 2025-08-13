@@ -1510,12 +1510,13 @@
 								if (finalIcp.file_pendukung_path) {
 									try {
 										const supportFiles = JSON.parse(finalIcp.file_pendukung_path);
-										supportFiles.forEach((_, idx) => {
+										supportFiles.forEach((path, idx) => {
+											const fileName = path.split('/').pop(); // Ambil nama file asli
 											pendukungLinks += `
 												<a class="dropdown-item" 
 												href="/api/document/finalicp/download/${finalIcp.final_icp_id}?type=support&index=${idx}" 
 												download>
-													<i class="dw dw-download"></i> File Pendukung ${idx + 1}
+													<i class="dw dw-download"></i> ${fileName}
 												</a>
 											`;
 										});
