@@ -621,6 +621,7 @@ func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filePath)
 }
 
+// Handler untuk download file Final Proposal pada dosen
 func DownloadFinalProposalDosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -631,13 +632,17 @@ func DownloadFinalProposalDosenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil final_proposal_id dari parameter
 	vars := mux.Vars(r)
 	proposalID := vars["id"] // /finalproposal/dosen/download/{id}
-
 	if proposalID == "" {
 		http.Error(w, "Parameter 'id' wajib disediakan", http.StatusBadRequest)
 		return
+	}
+
+	// Ambil parameter type (default = proposal)
+	fileType := r.URL.Query().Get("type")
+	if fileType == "" {
+		fileType = "proposal"
 	}
 
 	db, err := config.GetDB()
@@ -648,25 +653,64 @@ func DownloadFinalProposalDosenHandler(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	var filePath string
-	err = db.QueryRow("SELECT file_path FROM final_proposal WHERE id = ?", proposalID).Scan(&filePath)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "File tidak ditemukan", http.StatusNotFound)
-		} else {
-			http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+
+	if fileType == "proposal" {
+		// Ambil path file final proposal utama
+		err = db.QueryRow(`SELECT file_path FROM final_proposal WHERE id = ?`, proposalID).Scan(&filePath)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "File tidak ditemukan", http.StatusNotFound)
+			} else {
+				http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+			}
+			return
 		}
+	} else if fileType == "support" {
+		// Ambil file pendukung
+		var raw string
+		err = db.QueryRow(`SELECT file_pendukung_path FROM final_proposal WHERE id = ?`, proposalID).Scan(&raw)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "Data tidak ditemukan", http.StatusNotFound)
+			} else {
+				http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		if raw == "" {
+			http.Error(w, "Tidak ada file pendukung", http.StatusNotFound)
+			return
+		}
+
+		// Parsing JSON array path
+		var paths []string
+		if err := json.Unmarshal([]byte(raw), &paths); err != nil {
+			http.Error(w, "Format file pendukung tidak valid", http.StatusInternalServerError)
+			return
+		}
+
+		// Ambil index dari query
+		indexStr := r.URL.Query().Get("index")
+		if indexStr == "" {
+			http.Error(w, "Parameter 'index' wajib untuk file pendukung", http.StatusBadRequest)
+			return
+		}
+		idx, err := strconv.Atoi(indexStr)
+		if err != nil || idx < 0 || idx >= len(paths) {
+			http.Error(w, "Index file pendukung tidak valid", http.StatusBadRequest)
+			return
+		}
+
+		filePath = paths[idx]
+	} else {
+		http.Error(w, "Tipe file tidak valid", http.StatusBadRequest)
 		return
 	}
 
-	file, err := os.Open(filePath)
-	if err != nil {
-		http.Error(w, "Gagal membuka file", http.StatusNotFound)
-		return
-	}
-	defer file.Close()
-
+	// Kirim file ke client
 	fileName := filepath.Base(filePath)
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
-	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Type", "application/octet-stream")
 	http.ServeFile(w, r, filePath)
 }

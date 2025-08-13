@@ -57,13 +57,21 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Ambil final proposal yang diuji oleh dosen_id
+	// Ambil final proposal yang diuji oleh dosen_id, sertakan file_pendukung_path
 	query := `
-		SELECT fp.id, fp.user_id, fp.topik_penelitian, fp.file_path, u.nama_lengkap
+		SELECT 
+			fp.id, 
+			fp.user_id, 
+			fp.topik_penelitian, 
+			fp.file_path, 
+			COALESCE(fp.file_pendukung_path, '') AS file_pendukung_path,
+			u.nama_lengkap
 		FROM final_proposal fp
 		JOIN users u ON fp.user_id = u.id
 		JOIN penguji_proposal pp ON fp.id = pp.final_proposal_id
-		WHERE pp.ketua_penguji_id = ? OR pp.penguji_1_id = ? OR pp.penguji_2_id = ?
+		WHERE pp.ketua_penguji_id = ? 
+		   OR pp.penguji_1_id = ? 
+		   OR pp.penguji_2_id = ?
 	`
 
 	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
@@ -74,22 +82,35 @@ func GetSeminarProposalByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type FinalProposalData struct {
-		FinalProposalID int    `json:"final_proposal_id"`
-		UserID          int    `json:"user_id"`
-		TopikPenelitian string `json:"topik_penelitian"`
-		FilePath        string `json:"file_path"`
-		TarunaNama      string `json:"taruna_nama"`
+		FinalProposalID   int    `json:"final_proposal_id"`
+		UserID            int    `json:"user_id"`
+		TopikPenelitian   string `json:"topik_penelitian"`
+		FilePath          string `json:"file_path"`
+		FilePendukungPath string `json:"file_pendukung_path"` // tambahkan field ini
+		TarunaNama        string `json:"taruna_nama"`
 	}
 
 	var data []FinalProposalData
 	for rows.Next() {
 		var item FinalProposalData
-		err := rows.Scan(&item.FinalProposalID, &item.UserID, &item.TopikPenelitian, &item.FilePath, &item.TarunaNama)
+		err := rows.Scan(
+			&item.FinalProposalID,
+			&item.UserID,
+			&item.TopikPenelitian,
+			&item.FilePath,
+			&item.FilePendukungPath,
+			&item.TarunaNama,
+		)
 		if err != nil {
 			http.Error(w, "Error scanning data: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		data = append(data, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Error reading rows: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
