@@ -59,19 +59,11 @@ func GetSeminarLaporan70ByDosenHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Ambil final laporan70 yang diuji oleh dosen_id, sertakan file_pendukung_path
 	query := `
-		SELECT 
-			fp.id, 
-			fp.user_id, 
-			fp.topik_penelitian, 
-			fp.file_path, 
-			COALESCE(fp.file_pendukung_path, '') AS file_pendukung_path,
-			u.nama_lengkap
-		FROM final_laporan70 fp
-		JOIN users u ON fp.user_id = u.id
-		JOIN penguji_laporan70 pp ON fp.id = pp.final_laporan70_id
-		WHERE pp.ketua_penguji_id = ? 
-		   OR pp.penguji_1_id = ? 
-		   OR pp.penguji_2_id = ?
+		SELECT fl.id, fl.user_id, fl.topik_penelitian, fl.file_path, u.nama_lengkap
+		FROM final_laporan70 fl
+		JOIN users u ON fl.user_id = u.id
+		JOIN penguji_laporan70 pl ON fl.id = pl.final_laporan70_id
+		WHERE pl.penguji_1_id = ? OR pl.penguji_2_id = ?
 	`
 
 	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
