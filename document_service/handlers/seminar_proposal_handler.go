@@ -608,7 +608,7 @@ func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var (
-			status, filePenilaian, fileBA string
+			status, fileCatatanPerbaikan, filePenilaian string
 		)
 
 		err = db.QueryRow(`
@@ -616,19 +616,19 @@ func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 			FROM seminar_proposal_penilaian
 			WHERE final_proposal_id = ? AND dosen_id = ?
 			LIMIT 1
-		`, finalProposalID, dosenID).Scan(&status, &filePenilaian, &fileBA)
+		`, finalProposalID, dosenID).Scan(&status, &fileCatatanPerbaikan, &filePenilaian)
 
 		if err != nil {
 			status = "belum"
+			fileCatatanPerbaikan = ""
 			filePenilaian = ""
-			fileBA = ""
 		}
 
 		return map[string]string{
-			"nama_dosen":         namaDosen,
-			"status_pengumpulan": status,
-			"file_penilaian":     filePenilaian,
-			"file_berita_acara":  fileBA,
+			"nama_dosen":            namaDosen,
+			"status_pengumpulan":    status,
+			"file_catatanperbaikan": fileCatatanPerbaikan,
+			"file_berita_acara":     filePenilaian,
 		}
 	}
 
@@ -663,16 +663,16 @@ func getPengujiData(db *sql.DB, proposalID string, dosenID int) map[string]inter
 	`
 
 	var data struct {
-		NamaLengkap       string
-		FilePenilaianPath sql.NullString
-		BeritaAcaraPath   sql.NullString
-		StatusPengumpulan sql.NullString
+		NamaLengkap              string
+		FileCatatanPerbaikanPath sql.NullString
+		FilePenilaianPath        sql.NullString
+		StatusPengumpulan        sql.NullString
 	}
 
 	err := db.QueryRow(query, proposalID, dosenID).Scan(
 		&data.NamaLengkap,
+		&data.FileCatatanPerbaikanPath,
 		&data.FilePenilaianPath,
-		&data.BeritaAcaraPath,
 		&data.StatusPengumpulan,
 	)
 
@@ -687,8 +687,8 @@ func getPengujiData(db *sql.DB, proposalID string, dosenID int) map[string]inter
 
 	return map[string]interface{}{
 		"nama_lengkap":               data.NamaLengkap,
-		"file_catatanperbaikan_path": data.FilePenilaianPath.String,
-		"file_penilaian_path":        data.BeritaAcaraPath.String,
+		"file_catatanperbaikan_path": data.FileCatatanPerbaikanPath.String,
+		"file_penilaian_path":        data.FilePenilaianPath.String,
 		"status_pengumpulan":         data.StatusPengumpulan.String,
 	}
 }
