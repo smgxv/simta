@@ -294,9 +294,49 @@ func GetFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	mapped := []map[string]interface{}{}
+	for _, proposal := range finalProposals {
+		// Parse daftar path pendukung dari kolom JSON (aman jika kosong/invalid)
+		var supportPaths []string
+		if paths, err := proposal.GetProposalSupportingFiles(); err == nil && len(paths) > 0 {
+			supportPaths = paths
+		}
+
+		// Buat URL download per index
+		filePendukungURL := make([]string, 0, len(supportPaths))
+		supportFiles := make([]map[string]interface{}, 0, len(supportPaths))
+		for i, p := range supportPaths {
+			url := fmt.Sprintf("/api/document/finalproposal/download/%d?type=support&index=%d", proposal.ID, i)
+			filePendukungURL = append(filePendukungURL, url)
+
+			name := filepath.Base(p)
+			supportFiles = append(supportFiles, map[string]interface{}{
+				"index": i,
+				"name":  name,
+				"url":   url,
+			})
+		}
+
+		mapped = append(mapped, map[string]interface{}{
+			"taruna_id":          proposal.UserID,
+			"nama_lengkap":       proposal.NamaLengkap,
+			"jurusan":            proposal.Jurusan,
+			"kelas":              proposal.Kelas,
+			"topik_penelitian":   proposal.TopikPenelitian,
+			"status":             proposal.Status,
+			"final_proposal_id":  proposal.ID, // penting untuk download by id
+			"final_download_url": fmt.Sprintf("/api/document/finalproposal/download/%d?type=final", proposal.ID),
+
+			// Kompatibilitas + kemudahan frontend:
+			"file_pendukung_path": proposal.FilePendukungPath, // string JSON asli dari DB (jika ingin)
+			"file_pendukung_url":  filePendukungURL,           // array URL download
+			"support_files":       supportFiles,               // array object {index,name,url}
+		})
+	}
+
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   finalProposals,
+		"data":   mapped,
 	})
 }
 
