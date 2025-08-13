@@ -1387,84 +1387,119 @@
 				});
 			}
 
-			// ====== SUBMIT FORM ======
-			document.getElementById('finalIcpForm').addEventListener('submit', async function (e) {
-				e.preventDefault();
+			// ====== SUBMIT FORM FINAL PROPOSAL ======
+			document.getElementById('finalProposalForm').addEventListener('submit', async function (e) {
+			e.preventDefault();
 
-				const submitButton = this.querySelector('button[type="submit"]');
-				submitButton.disabled = true;
-				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+			const submitButton = this.querySelector('button[type="submit"]');
+			submitButton.disabled = true;
+			submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 
-				try {
-					const formData = new FormData(this);
-					const userId = localStorage.getItem('userId');
-					const token = localStorage.getItem('token');
+			// referensi elemen input file (untuk reset label nanti)
+			const finalInput   = document.getElementById('finalProposalFile');
+			const formInput    = document.getElementById('formBimbinganFile');
+			const supportInput = document.getElementById('supportFiles');
 
-					if (!userId || !token) {
-						throw new Error('User ID atau token tidak ditemukan');
-					}
-
-					// Ambil data taruna
-					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
-						headers: { 'Authorization': `Bearer ${token}` }
-					});
-
-					if (!tarunaResponse.ok) {
-						throw new Error('Gagal mengambil data taruna');
-					}
-
-					const tarunaData = await tarunaResponse.json();
-					const taruna = tarunaData.data?.find(t => t.user_id === parseInt(userId));
-
-					if (!taruna || !taruna.nama_lengkap) {
-						throw new Error('Data taruna tidak lengkap atau tidak ditemukan');
-					}
-
-					// Tambahkan user_id dan nama_lengkap ke formData
-					formData.append('user_id', userId);
-					formData.append('nama_lengkap', taruna.nama_lengkap);
-
-					// Kirim ke server
-					const response = await fetch('/api/document/finalicp/upload', {
-						method: 'POST',
-						body: formData
-					});
-
-					let data;
-					try {
-						data = await response.json();
-					} catch {
-						const rawText = await response.text();
-						showAlert(rawText || 'Terjadi kesalahan pada server', 'danger');
-						return;
-					}
-
-					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
-
-					if (data.status === 'success') {
-						this.reset();
-						document.querySelector('#finalIcpFile').nextElementSibling.textContent = 'Choose file';
-						document.getElementById('finalSelectedFileName').style.display = 'none';
-						if (supportInput) {
-							supportInput.nextElementSibling.textContent = 'Pilih file pendukung';
-							document.getElementById('supportSelectedFileName').style.display = 'none';
-						}
-						if (typeof loadFinalICPData === 'function') loadFinalICPData();
-					}
-
-				} catch (error) {
-					console.error('Error saat upload final ICP:', error);
-					let errorMessage = error.message || 'Terjadi kesalahan saat mengunggah Final ICP';
-					if (errorMessage.includes('token')) {
-						errorMessage = 'User ID atau token tidak ditemukan. Silakan login kembali.';
-					} else if (errorMessage.includes('taruna')) {
-						errorMessage = 'Data taruna tidak lengkap atau tidak ditemukan. Silakan hubungi administrator.';
-					}
-					showAlert(errorMessage, 'danger');
-				} finally {
-					submitButton.disabled = false;
-					submitButton.innerHTML = 'Upload Final ICP';
+			try {
+				// (opsional) jika kamu memang isi jurusan & kelas dari backend
+				if (typeof isiJurusanDanKelasDariTarunaFinalProposal === 'function') {
+				await isiJurusanDanKelasDariTarunaFinalProposal();
 				}
+
+				const formData = new FormData(this);
+				const userId = localStorage.getItem('userId');
+				const token  = localStorage.getItem('token');
+
+				if (!userId || !token) {
+				throw new Error('User ID atau token tidak ditemukan');
+				}
+
+				// Ambil data taruna (untuk nama_lengkap)
+				const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
+				headers: { 'Authorization': `Bearer ${token}` }
+				});
+
+				if (!tarunaResponse.ok) {
+				throw new Error('Gagal mengambil data taruna');
+				}
+
+				const tarunaData = await tarunaResponse.json();
+				const taruna = tarunaData.data?.find(t => t.user_id === parseInt(userId, 10));
+
+				if (!taruna || !taruna.nama_lengkap) {
+				throw new Error('Data taruna tidak lengkap atau tidak ditemukan');
+				}
+
+				// Tambahkan user_id & nama_lengkap ke formData (menyerupai mekanisme ICP)
+				formData.append('user_id', userId);
+				formData.append('nama_lengkap', taruna.nama_lengkap);
+
+				// Jika di form ada hidden jurusan & kelas, ikutkan juga
+				const jurusan = document.getElementById('hiddenJurusan')?.value;
+				const kelas   = document.getElementById('hiddenKelas')?.value;
+				if (jurusan) formData.set('jurusan', jurusan);
+				if (kelas)   formData.set('kelas', kelas);
+
+				// Kirim ke server (biarkan browser set multipart boundary; jangan set Content-Type manual)
+				const response = await fetch('/api/document/finalproposal/upload', {
+				method: 'POST',
+				body: formData
+				});
+
+				let data;
+				try {
+				data = await response.json();
+				} catch {
+				const rawText = await response.text();
+				showAlert(rawText || 'Terjadi kesalahan pada server', 'danger');
+				return;
+				}
+
+				showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
+
+				if (data.status === 'success') {
+				// Reset form & label seperti di ICP
+				this.reset();
+
+				if (finalInput) {
+					const lbl = finalInput.nextElementSibling;
+					if (lbl) lbl.textContent = 'Choose file';
+					const info = document.getElementById('finalSelectedFileName');
+					if (info) info.style.display = 'none';
+				}
+
+				if (formInput) {
+					const lbl = formInput.nextElementSibling;
+					if (lbl) lbl.textContent = 'Choose file';
+					const info = document.getElementById('formBimbinganSelectedFileName');
+					if (info) info.style.display = 'none';
+				}
+
+				if (supportInput) {
+					const lbl = supportInput.nextElementSibling;
+					if (lbl) lbl.textContent = 'Pilih satu atau lebih file';
+					const info = document.getElementById('supportSelectedFileName');
+					if (info) info.style.display = 'none';
+				}
+
+				// Reload daftar final proposal
+				if (typeof loadFinalProposalData === 'function') loadFinalProposalData();
+				}
+
+			} catch (error) {
+				console.error('Error saat upload Final Proposal:', error);
+				let errorMessage = error.message || 'Terjadi kesalahan saat mengunggah Final Proposal';
+				if (errorMessage.toLowerCase().includes('token')) {
+				errorMessage = 'User ID atau token tidak ditemukan. Silakan login kembali.';
+				} else if (errorMessage.toLowerCase().includes('taruna')) {
+				errorMessage = 'Data taruna tidak lengkap atau tidak ditemukan. Silakan hubungi administrator.';
+				}
+				showAlert(errorMessage, 'danger');
+
+			} finally {
+				submitButton.disabled = false;
+				submitButton.innerHTML = 'Upload Final Proposal';
+			}
 			});
 
 			// Update fungsi loadFinalICPData

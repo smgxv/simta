@@ -15,13 +15,14 @@ func NewFinalProposalModel(db *sql.DB) *FinalProposalModel {
 	}
 }
 
+// Create menyimpan final proposal + form bimbingan + file pendukung (JSON string)
 func (m *FinalProposalModel) Create(finalProposal *entities.FinalProposal) error {
 	query := `
 		INSERT INTO final_proposal (
-			user_id, nama_lengkap, jurusan, 
-			kelas, topik_penelitian, file_path, file_pendukung_path, keterangan, 
-			status
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			user_id, nama_lengkap, jurusan,
+			kelas, topik_penelitian, file_path,
+			form_bimbingan_path, file_pendukung_path, keterangan, status
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := m.db.Exec(query,
 		finalProposal.UserID,
@@ -30,7 +31,8 @@ func (m *FinalProposalModel) Create(finalProposal *entities.FinalProposal) error
 		finalProposal.Kelas,
 		finalProposal.TopikPenelitian,
 		finalProposal.FilePath,
-		finalProposal.FilePendukungPath, // << kolom baru
+		finalProposal.FormBimbinganPath,
+		finalProposal.FilePendukungPath, // <- JSON array string
 		finalProposal.Keterangan,
 		"pending", // default status
 	)
@@ -46,13 +48,15 @@ func (m *FinalProposalModel) Create(finalProposal *entities.FinalProposal) error
 	return nil
 }
 
+// GetByUserID mengembalikan data termasuk file_pendukung_path
 func (m *FinalProposalModel) GetByUserID(userID string) ([]entities.FinalProposal, error) {
 	query := `
-		SELECT 
-			id, user_id, nama_lengkap, 
-			jurusan, kelas, topik_penelitian, file_path, file_pendukung_path, 
-			keterangan, status, created_at, updated_at
-		FROM final_proposal 
+		SELECT
+			id, user_id, nama_lengkap,
+			jurusan, kelas, topik_penelitian, file_path,
+			form_bimbingan_path, file_pendukung_path, keterangan, status,
+			created_at, updated_at
+		FROM final_proposal
 		WHERE user_id = ?
 		ORDER BY created_at DESC`
 
@@ -64,26 +68,26 @@ func (m *FinalProposalModel) GetByUserID(userID string) ([]entities.FinalProposa
 
 	var finalProposals []entities.FinalProposal
 	for rows.Next() {
-		var finalProposal entities.FinalProposal
+		var fp entities.FinalProposal
 		err := rows.Scan(
-			&finalProposal.ID,
-			&finalProposal.UserID,
-			&finalProposal.NamaLengkap,
-			&finalProposal.Jurusan,
-			&finalProposal.Kelas,
-			&finalProposal.TopikPenelitian,
-			&finalProposal.FilePath,
-			&finalProposal.FilePendukungPath, // << kolom baru
-			&finalProposal.Keterangan,
-			&finalProposal.Status,
-			&finalProposal.CreatedAt,
-			&finalProposal.UpdatedAt,
+			&fp.ID,
+			&fp.UserID,
+			&fp.NamaLengkap,
+			&fp.Jurusan,
+			&fp.Kelas,
+			&fp.TopikPenelitian,
+			&fp.FilePath,
+			&fp.FormBimbinganPath,
+			&fp.FilePendukungPath, // <- ikut di-scan
+			&fp.Keterangan,
+			&fp.Status,
+			&fp.CreatedAt,
+			&fp.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
-		finalProposals = append(finalProposals, finalProposal)
+		finalProposals = append(finalProposals, fp)
 	}
-
 	return finalProposals, nil
 }

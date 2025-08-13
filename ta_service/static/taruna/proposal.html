@@ -1469,106 +1469,6 @@
 				}
 			});
 
-			// Update fungsi loadFinalICPData
-			async function loadFinalProposalData() {
-				const userId = localStorage.getItem('userId');
-				if (!userId) {
-					console.error('User ID not found in localStorage');
-					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
-					return;
-				}
-
-				try {
-					console.log('Fetching Final Proposal data for user:', userId);
-					const response = await fetch(`/api/document/finalproposal/list?user_id=${userId}`);
-
-					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
-					}
-
-					const data = await response.json();
-					console.log('Received Final Proposal data:', data);
-
-					if (data.status === 'success') {
-						const tbody = document.querySelector('#finalProposalTable tbody');
-						if (!tbody) {
-							console.error('Table body element not found');
-							return;
-						}
-
-						tbody.innerHTML = '';
-
-						if (data.data && data.data.length > 0) {
-							data.data.forEach(finalProposal => {
-								const statusClass = {
-									'pending': 'badge badge-warning',
-									'approved': 'badge badge-success',
-									'rejected': 'badge badge-danger',
-									'on review': 'badge badge-info'
-								}[finalProposal.status] || 'badge badge-secondary';
-
-								// Parsing file pendukung dari JSON string
-								let pendukungLinks = '';
-								if (finalProposal.file_pendukung_path) {
-									try {
-										const supportFiles = JSON.parse(finalProposal.file_pendukung_path);
-										supportFiles.forEach((path, idx) => {
-											const fileName = path.split('/').pop(); // Ambil nama file asli
-											pendukungLinks += `
-												<a class="dropdown-item" 
-												href="/api/document/finalproposal/download/${finalProposal.final_icp_id}?type=support&index=${idx}" 
-												download>
-													<i class="dw dw-download"></i> ${fileName}
-												</a>
-											`;
-										});
-									} catch (e) {
-										console.error('Gagal parse file_pendukung_path:', e);
-									}
-								}
-
-								tbody.innerHTML += `
-									<tr>
-										<td>${finalProposal.topik_penelitian || '-'}</td>
-										<td>${finalProposal.jurusan || '-'}</td>
-										<td>${finalProposal.kelas || '-'}</td>
-										<td><span class="${statusClass}">${finalProposal.status || 'pending'}</span></td>
-										<td>
-											<div class="dropdown">
-												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
-												</a>
-												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" 
-													href="/api/document/finalproposal/download/${finalProposal.final_icp_id}?type=final" 
-													download>
-														<i class="dw dw-download"></i> Final Proposal
-													</a>
-													${pendukungLinks}
-												</div>
-											</div>
-										</td>
-									</tr>
-								`;
-							});
-						} else {
-							tbody.innerHTML = `
-								<tr>
-									<td colspan="5" class="text-center">Belum ada Final Proposal yang diupload</td>
-								</tr>
-							`;
-						}
-					} else {
-						console.error('Failed to load Final Proposal data:', data.message);
-						showAlert('Gagal memuat data Final Proposal: ' + (data.message || 'Unknown error'), 'danger');
-					}
-				} catch (error) {
-					console.error('Error loading Final Proposal data:', error);
-					showAlert('Terjadi kesalahan saat memuat data Final Proposal: ' + error.message, 'danger');
-				}
-			}
-
 			// Update fungsi loadFinalProposalData
 			async function loadFinalProposalData() {
 				const userId = localStorage.getItem('userId');
@@ -1607,6 +1507,24 @@
 									'on review': 'badge badge-info'
 								}[finalProposal.status] || 'badge badge-secondary';
 
+								// Buat link file pendukung
+								let supportLinks = '';
+								if (Array.isArray(finalProposal.support_files) && finalProposal.support_files.length > 0) {
+									finalProposal.support_files.forEach(sf => {
+										supportLinks += `
+											<a class="dropdown-item" href="${sf.url}" download>
+												<i class="dw dw-download"></i> File Pendukung: ${sf.name}
+											</a>
+										`;
+									});
+								} else {
+									supportLinks += `
+										<span class="dropdown-item text-muted">
+											<i class="dw dw-file-2"></i> Tidak ada file pendukung
+										</span>
+									`;
+								}
+
 								tbody.innerHTML += `
 									<tr>
 										<td>${finalProposal.topik_penelitian || '-'}</td>
@@ -1616,16 +1534,18 @@
 										<td>
 											<div class="dropdown">
 												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												   href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
+												href="#" role="button" data-toggle="dropdown">
+												<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="/api/document/finalproposal/download/${finalProposal.id}?type=form_bimbingan" download>
+													<a class="dropdown-item" href="${finalProposal.form_bimbingan_url}" download>
 														<i class="dw dw-download"></i> Download Form Bimbingan
 													</a>
-													<a class="dropdown-item" href="/api/document/finalproposal/download/${finalProposal.id}?type=proposal" download>
+													<a class="dropdown-item" href="${finalProposal.final_download_url}" download>
 														<i class="dw dw-download"></i> Download Final Proposal
 													</a>
+													<div class="dropdown-divider"></div>
+													${supportLinks}
 												</div>
 											</div>
 										</td>

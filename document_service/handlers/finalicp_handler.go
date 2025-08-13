@@ -263,7 +263,8 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler untuk mengambil daftar final ICP berdasarkan user_id
-func GetFinalICPHandler(w http.ResponseWriter, r *http.Request) {
+// Handler untuk mengambil daftar final proposal berdasarkan user_id (lengkap dengan URL download)
+func GetFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -287,50 +288,56 @@ func GetFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	finalICPModel := models.NewFinalICPModel(db)
-	finalICPs, err := finalICPModel.GetByUserID(userID)
+	finalProposalModel := models.NewFinalProposalModel(db)
+	finalProposals, err := finalProposalModel.GetByUserID(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	mapped := []map[string]interface{}{}
-	for _, icp := range finalICPs {
+	for _, p := range finalProposals {
 		// Parse daftar path pendukung dari kolom JSON (aman jika kosong/invalid)
 		var supportPaths []string
-		if paths, err := icp.GetSupportingFiles(); err == nil && len(paths) > 0 {
-			supportPaths = paths
+		if s := strings.TrimSpace(p.FilePendukungPath); s != "" {
+			_ = json.Unmarshal([]byte(s), &supportPaths) // kalau gagal, biarkan kosong
 		}
 
 		// Buat URL download per index
 		filePendukungURL := make([]string, 0, len(supportPaths))
 		supportFiles := make([]map[string]interface{}, 0, len(supportPaths))
-		for i, p := range supportPaths {
-			url := fmt.Sprintf("/api/document/finalicp/download/%d?type=support&index=%d", icp.ID, i)
+		for i, sp := range supportPaths {
+			url := fmt.Sprintf("/api/document/finalproposal/download/%d?type=support&index=%d", p.ID, i)
 			filePendukungURL = append(filePendukungURL, url)
-
-			name := filepath.Base(p)
 			supportFiles = append(supportFiles, map[string]interface{}{
 				"index": i,
-				"name":  name,
+				"name":  filepath.Base(sp),
 				"url":   url,
 			})
 		}
 
-		mapped = append(mapped, map[string]interface{}{
-			"taruna_id":          icp.UserID,
-			"nama_lengkap":       icp.NamaLengkap,
-			"jurusan":            icp.Jurusan,
-			"kelas":              icp.Kelas,
-			"topik_penelitian":   icp.TopikPenelitian,
-			"status":             icp.Status,
-			"final_icp_id":       icp.ID, // penting untuk download by id
-			"final_download_url": fmt.Sprintf("/api/document/finalicp/download/%d?type=final", icp.ID),
+		finalURL := fmt.Sprintf("/api/document/finalproposal/download/%d?type=final", p.ID)
+		formURL := fmt.Sprintf("/api/document/finalproposal/download/%d?type=form", p.ID)
 
-			// Kompatibilitas + kemudahan frontend:
-			"file_pendukung_path": icp.FilePendukungPath, // string JSON asli dari DB (jika ingin)
-			"file_pendukung_url":  filePendukungURL,      // array URL download
-			"support_files":       supportFiles,          // array object {index,name,url}
+		mapped = append(mapped, map[string]interface{}{
+			"taruna_id":        p.UserID,
+			"nama_lengkap":     p.NamaLengkap,
+			"jurusan":          p.Jurusan,
+			"kelas":            p.Kelas,
+			"topik_penelitian": p.TopikPenelitian,
+			"status":           p.Status,
+
+			"final_proposal_id":   p.ID,     // penting untuk download by id
+			"final_download_url":  finalURL, // file final proposal
+			"form_bimbingan_path": p.FormBimbinganPath,
+			"form_bimbingan_url":  formURL, // file form bimbingan
+
+			"file_pendukung_path": p.FilePendukungPath, // raw JSON dari DB
+			"file_pendukung_url":  filePendukungURL,    // array URL download
+			"support_files":       supportFiles,        // array objek {index,name,url}
+
+			"created_at": p.CreatedAt,
+			"updated_at": p.UpdatedAt,
 		})
 	}
 
