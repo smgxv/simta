@@ -570,10 +570,10 @@
 								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
 							</div>
 							<div class="form-group">
-								<label>File Penilaian (PDF)</label>
+								<label>File Catatan Perbaikan (PDF)</label>
 								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="penilaianFile" name="penilaian_file" accept=".pdf" required>
-									<label class="custom-file-label" for="penilaianFile">Choose file</label>
+									<input type="file" class="custom-file-input" id="catatanperbaikanFile" name="catatanperbaikan_file" accept=".pdf" required>
+									<label class="custom-file-label" for="catatanperbaikanFile">Choose file</label>
 								</div>
 								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
@@ -898,7 +898,6 @@
 			}
 			}
 
-
 			// Fungsi untuk memuat data taruna
 			async function loadTarunaDropdown() {
 				try {
@@ -963,7 +962,7 @@
 			});
 
 			// Update nama file saat file penilaian dipilih
-			document.getElementById('penilaianFile').addEventListener('change', function(e) {
+			document.getElementById('catatanperbaikanFile').addEventListener('change', function(e) {
 				const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
 				this.nextElementSibling.textContent = fileName;
 			});
@@ -981,12 +980,12 @@
 				// Validasi form
 				const tarunaSelect = document.getElementById('tarunaSelect');
 				const finalProposalId = document.getElementById('finalProposalId').value;
-				const penilaianFile = document.getElementById('penilaianFile').files[0];
+				const catatanperbaikanFile = document.getElementById('catatanperbaikanFile').files[0];
 				const beritaAcaraFile = document.getElementById('beritaAcaraFile').files[0];
 				const dosenId = localStorage.getItem('dosenID');
 
 				// Validasi semua field yang diperlukan
-				if (!tarunaSelect.value || !finalProposalId || !penilaianFile || !beritaAcaraFile || !dosenId) {
+				if (!tarunaSelect.value || !finalProposalId || !catatanperbaikanFile || !beritaAcaraFile || !dosenId) {
 					showAlert('Semua field harus diisi', 'warning');
 					return;
 				}
@@ -1003,7 +1002,7 @@
 					formData.append('user_id', tarunaSelect.value);
 					formData.append('final_proposal_id', finalProposalId);
 					formData.append('dosen_id', dosenId);
-					formData.append('penilaian_file', penilaianFile);
+					formData.append('catatanperbaikan_file', catatanperbaikanFile);
 					formData.append('berita_acara_file', beritaAcaraFile);
 
 					// Log data yang akan dikirim
