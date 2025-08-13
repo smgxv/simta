@@ -686,7 +686,7 @@
 							</div>
 						</div>
 						<div class="pb-20">
-							<table class="table stripe hover nowrap" id="catatanPerbaikanTable">
+							<table class="table stripe hover nowrap" id="hasilTelaahTable">
 								<thead>
 									<tr>
 										<th>Nama Dosen</th>
@@ -1581,12 +1581,12 @@
 				}
 
 				try {
-					const response = await fetch(`/api/document/catatanperbaikanlaporan70/taruna?user_id=${userId}`);
+					const response = await fetch(`/api/document/hasiltelaahlaporan70/taruna?user_id=${userId}`);
 					const data = await response.json();
 
-					const tableBody = document.querySelector('#catatanPerbaikanTable tbody');
+					const tableBody = document.querySelector('#hasilTelaahTable tbody');
 					if (!tableBody) {
-						console.error('Tabel catatan perbaikan tidak ditemukan');
+						console.error('Tabel hasil telaah tidak ditemukan');
 						return;
 					}
 
@@ -1613,7 +1613,7 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												${fileName.startsWith('PENILAIAN_') ? `
+												${fileName.startsWith('Hasil_Telaah_') ? `
 													<a class="dropdown-item" href="/api/document/penilaian/laporan70/download?path=${fileName}" download>
 														<i class="dw dw-download"></i> Unduh Hasil Telaah
 													</a>
@@ -1631,13 +1631,13 @@
 					} else {
 						tableBody.innerHTML = `
 							<tr>
-								<td colspan="4" class="text-center">Belum ada catatan perbaikan</td>
+								<td colspan="4" class="text-center">Belum ada hasil telaah</td>
 							</tr>
 						`;
 					}
 				} catch (error) {
-					console.error('Gagal memuat catatan perbaikan:', error);
-					const tableBody = document.querySelector('#catatanPerbaikanTable tbody');
+					console.error('Gagal memuat hasil telaah:', error);
+					const tableBody = document.querySelector('#hasilTelaahTable tbody');
 					if (tableBody) {
 						tableBody.innerHTML = `
 							<tr>
@@ -1646,7 +1646,7 @@
 						`;
 					}
 				}
-			}
+			}		
 
 			// Panggil fungsi saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {

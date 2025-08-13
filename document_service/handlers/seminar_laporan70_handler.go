@@ -471,7 +471,7 @@ func DownloadFilePenilaianLaporan70Handler(w http.ResponseWriter, r *http.Reques
 	var baseDir string
 	switch {
 	case strings.HasPrefix(fileName, "Hasil_Telaah_"):
-		// (TETAP) dipakai oleh taruna untuk unduh catatan perbaikan
+		// (TETAP) dipakai oleh taruna untuk unduh hasil telaah
 		baseDir = "uploads/hasiltelaah_laporan70"
 
 	case strings.HasPrefix(fileName, "File_Penilaian_"):
@@ -833,8 +833,7 @@ func getPengujiLaporan70Data(db *sql.DB, laporan70ID string, dosenID int) map[st
 }
 
 func GetHasilTelaahTarunaLaporan70Handler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
@@ -867,7 +866,7 @@ func GetHasilTelaahTarunaLaporan70Handler(w http.ResponseWriter, r *http.Request
 
 	// Query ambil hasil telaah
 	query := `
-		SELECT spp.id, d.nama_lengkap, fp.topik_penelitian, spp.file_penilaian_path, spp.submitted_at
+		SELECT spp.id, d.nama_lengkap, fp.topik_penelitian, spp.file_hasiltelaah_path, spp.submitted_at
 		FROM seminar_laporan70_penilaian spp
 		JOIN dosen d ON spp.dosen_id = d.id
 		LEFT JOIN final_laporan70 fp ON spp.final_laporan70_id = fp.id

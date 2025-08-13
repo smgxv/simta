@@ -152,7 +152,7 @@ func main() {
 
 	// Detail Berkas Seminar Laporan70 routes
 	r.HandleFunc("/seminarlaporan70/detail/{id}", handlers.GetFinalLaporan70DetailHandler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/catatanperbaikanlaporan70/taruna", handlers.GetHasilTelaahTarunaLaporan70Handler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/hasiltelaahlaporan70/taruna", handlers.GetHasilTelaahTarunaLaporan70Handler).Methods("GET", "OPTIONS")
 
 	// Revisi Laporan 70% routes
 	r.HandleFunc("/revisilaporan70/upload", handlers.UploadRevisiLaporan70Handler).Methods("POST", "OPTIONS")
