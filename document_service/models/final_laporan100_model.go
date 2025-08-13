@@ -15,13 +15,14 @@ func NewFinalLaporan100Model(db *sql.DB) *FinalLaporan100Model {
 	}
 }
 
+// Create menyimpan final laporan100 + form bimbingan + file pendukung (JSON string)
 func (m *FinalLaporan100Model) Create(finalLaporan100 *entities.FinalLaporan100) error {
 	query := `
 		INSERT INTO final_laporan100 (
-			user_id, nama_lengkap, jurusan, 
-			kelas, topik_penelitian, file_path, 
-			form_bimbingan_path, keterangan, status
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			user_id, nama_lengkap, jurusan,
+			kelas, topik_penelitian, file_path,
+			form_bimbingan_path, file_pendukung_path, keterangan, status
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := m.db.Exec(query,
 		finalLaporan100.UserID,
@@ -31,10 +32,10 @@ func (m *FinalLaporan100Model) Create(finalLaporan100 *entities.FinalLaporan100)
 		finalLaporan100.TopikPenelitian,
 		finalLaporan100.FilePath,
 		finalLaporan100.FormBimbinganPath,
+		finalLaporan100.FilePendukungPath, // <- JSON array string
 		finalLaporan100.Keterangan,
 		"pending", // default status
 	)
-
 	if err != nil {
 		return err
 	}
@@ -43,17 +44,17 @@ func (m *FinalLaporan100Model) Create(finalLaporan100 *entities.FinalLaporan100)
 	if err != nil {
 		return err
 	}
-
 	finalLaporan100.ID = int(id)
 	return nil
 }
 
+// GetByUserID mengembalikan data termasuk file_pendukung_path
 func (m *FinalLaporan100Model) GetByUserID(userID string) ([]entities.FinalLaporan100, error) {
 	query := `
 		SELECT 
 			id, user_id, nama_lengkap, 
 			jurusan, kelas, topik_penelitian, file_path, 
-			form_bimbingan_path, keterangan, status, 
+			form_bimbingan_path, file_pendukung_path, keterangan, status, 
 			created_at, updated_at
 		FROM final_laporan100 
 		WHERE user_id = ?
@@ -77,6 +78,7 @@ func (m *FinalLaporan100Model) GetByUserID(userID string) ([]entities.FinalLapor
 			&finalLaporan100.TopikPenelitian,
 			&finalLaporan100.FilePath,
 			&finalLaporan100.FormBimbinganPath,
+			&finalLaporan100.FilePendukungPath,
 			&finalLaporan100.Keterangan,
 			&finalLaporan100.Status,
 			&finalLaporan100.CreatedAt,

@@ -57,16 +57,17 @@ func GetSeminarLaporan100ByDosenHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	defer db.Close()
 
-	// Ambil final laporan100 yang diuji oleh dosen_id
+	// Tambahkan file_pendukung_path di SELECT
 	query := `
-		SELECT fp.id, fp.user_id, fp.topik_penelitian, fp.file_path, u.nama_lengkap
-		FROM final_laporan100 fp
-		JOIN users u ON fp.user_id = u.id
-		JOIN penguji_laporan100 pp ON fp.id = pp.final_laporan100_id
-		WHERE pp.ketua_penguji_id = ? OR pp.penguji_1_id = ? OR pp.penguji_2_id = ?
+		SELECT fl.id, fl.user_id, fl.topik_penelitian, fl.file_path, fl.file_pendukung_path, u.nama_lengkap
+		FROM final_laporan100 fl
+		JOIN users u ON fl.user_id = u.id
+		JOIN penguji_laporan100 pl ON fl.id = pl.final_laporan100_id
+		WHERE pl.penguji_1_id = ? OR pl.penguji_2_id = ?
 	`
 
-	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
+	// Kirim hanya 2 parameter sesuai jumlah placeholder
+	rows, err := db.Query(query, dosenIDInt, dosenIDInt)
 	if err != nil {
 		http.Error(w, "Error querying database: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -78,18 +79,31 @@ func GetSeminarLaporan100ByDosenHandler(w http.ResponseWriter, r *http.Request) 
 		UserID            int    `json:"user_id"`
 		TopikPenelitian   string `json:"topik_penelitian"`
 		FilePath          string `json:"file_path"`
+		FilePendukungPath string `json:"file_pendukung_path"`
 		TarunaNama        string `json:"taruna_nama"`
 	}
 
 	var data []FinalLaporan100Data
 	for rows.Next() {
 		var item FinalLaporan100Data
-		err := rows.Scan(&item.FinalLaporan100ID, &item.UserID, &item.TopikPenelitian, &item.FilePath, &item.TarunaNama)
+		err := rows.Scan(
+			&item.FinalLaporan100ID,
+			&item.UserID,
+			&item.TopikPenelitian,
+			&item.FilePath,
+			&item.FilePendukungPath,
+			&item.TarunaNama,
+		)
 		if err != nil {
 			http.Error(w, "Error scanning data: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		data = append(data, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Error reading rows: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{

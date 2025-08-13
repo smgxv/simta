@@ -904,42 +904,136 @@
 				});
 			}
 
-			// Fungsi untuk memuat data Laporan100
+			// ====== Load data Final Laporan100 (admin) ======
 			async function loadLaporan100Data() {
-				try {
-					const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-					const response = await fetch('/api/document/finallaporan100/all', {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
+			try {
+				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				const response = await fetch('/api/document/finallaporan100/all', {
+				headers: { 'Authorization': `Bearer ${token}` }
+				});
 
-					if (!response.ok) {
-						throw new Error('Failed to fetch Laporan100 data');
-					}
+				if (!response.ok) throw new Error('Failed to fetch Laporan 100% data');
 
-					const result = await response.json();
-					if (result.status !== 'success') {
-						throw new Error(result.message || 'Failed to load data');
-					}
-
-					allLaporan100Data = result.data;
-
-					// Collect unique values
-					allLaporan100Data.forEach(item => {
-						if (item.jurusan) uniqueJurusan.add(item.jurusan);
-						if (item.kelas) uniqueKelas.add(item.kelas);
-					});
-
-					// Update filter options
-					updateFilterOptions();
-					
-					// Display data
-					displayFilteredData();
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert('Failed to load Laporan100 data', 'danger');
+				const result = await response.json();
+				if (result.status !== 'success') {
+				throw new Error(result.message || 'Failed to load data');
 				}
+
+				allLaporan100Data = result.data || [];
+
+				// Kumpulkan nilai unik filter
+				allLaporan100Data.forEach(item => {
+				if (item.jurusan) uniqueJurusan.add(item.jurusan);
+				if (item.kelas) uniqueKelas.add(item.kelas);
+				});
+
+				updateFilterOptions();
+				displayFilteredData();
+			} catch (error) {
+				console.error('Error:', error);
+				showAlert('Failed to load Laporan 100% data', 'danger');
+			}
+			}
+
+			// ====== Helper: buat item menu untuk file pendukung Final Laporan100 ======
+			function buildSupportMenuItemsLaporan100(item) {
+			let html = '';
+
+			if (!item || !item.final_laporan100_id || item.final_laporan100_id <= 0) return html;
+
+			const raw = item.file_pendukung_path; // JSON string: ["path1","path2",...]
+			if (!raw) return html;
+
+			try {
+				const parsed = JSON.parse(raw);
+				if (!Array.isArray(parsed) || parsed.length === 0) return html;
+
+				html += `<div class="dropdown-divider"></div>`;
+
+				parsed.forEach((entry, idx) => {
+				// jika formatnya string path
+				let displayName = `File Pendukung ${idx + 1}`;
+				if (typeof entry === 'string') {
+					const parts = entry.split('/');
+					displayName = parts[parts.length - 1] || displayName;
+				} else if (entry && typeof entry === 'object') {
+					// jika suatu saat format disimpan sebagai object {original, stored}
+					displayName = entry.original || (entry.stored ? (entry.stored.split('/').pop() || displayName) : displayName);
+				}
+
+				html += `
+					<a class="dropdown-item"
+					href="/api/document/finallaporan100/download/${item.final_laporan100_id}?type=support&index=${idx}"
+					download>
+					<i class="dw dw-download"></i> ${displayName}
+					</a>`;
+				});
+			} catch (e) {
+				console.warn('Gagal parse file_pendukung_path (laporan100):', e);
+			}
+
+			return html;
+			}
+
+			// ====== Tampilkan data terfilter ======
+			function displayFilteredData() {
+			const jurusanFilter = document.getElementById('jurusanFilter').value;
+			const kelasFilter = document.getElementById('kelasFilter').value;
+
+			const filteredData = allLaporan100Data.filter(item => {
+				const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
+				const matchKelas = !kelasFilter || item.kelas === kelasFilter;
+				return matchJurusan && matchKelas;
+			});
+
+			const tableBody = document.querySelector('.data-table tbody');
+			tableBody.innerHTML = '';
+
+			filteredData.forEach(item => {
+				const row = document.createElement('tr');
+				const statusBadge = item.status
+				? `<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>`
+				: '-';
+
+				// menu file pendukung
+				const pendukungLinks = buildSupportMenuItemsLaporan100(item);
+
+				row.innerHTML = `
+				<td>${item.nama_lengkap || '-'}</td>
+				<td>${item.jurusan || '-'}</td>
+				<td>${item.kelas || '-'}</td>
+				<td>${item.topik_penelitian || '-'}</td>
+				<td>${statusBadge}</td>
+				<td>
+					${item.final_laporan100_id > 0 ? `
+					<div class="dropdown">
+						<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+						<i class="dw dw-more"></i>
+						</a>
+						<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+						<a class="dropdown-item"
+							href="/api/document/finallaporan100/download/${item.final_laporan100_id}?type=form"
+							download>
+							<i class="dw dw-download"></i> Download Form Bimbingan
+						</a>
+						<a class="dropdown-item"
+							href="/api/document/finallaporan100/download/${item.final_laporan100_id}?type=final"
+							download>
+							<i class="dw dw-download"></i> Download Final Laporan100
+						</a>
+						${pendukungLinks}
+						<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan100_id}, 'approved')">
+							<i class="dw dw-check"></i> Accept
+						</a>
+						<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan100_id}, 'rejected')">
+							<i class="dw dw-cross"></i> Reject
+						</a>
+						</div>
+					</div>` : '-'}
+				</td>
+				`;
+				tableBody.appendChild(row);
+			});
 			}
 
 			// Fungsi untuk menampilkan data yang sudah difilter
