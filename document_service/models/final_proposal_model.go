@@ -51,12 +51,12 @@ func (m *FinalProposalModel) Create(finalProposal *entities.FinalProposal) error
 // GetByUserID mengembalikan data termasuk file_pendukung_path
 func (m *FinalProposalModel) GetByUserID(userID string) ([]entities.FinalProposal, error) {
 	query := `
-		SELECT
-			id, user_id, nama_lengkap,
-			jurusan, kelas, topik_penelitian, file_path,
-			form_bimbingan_path, file_pendukung_path, keterangan, status,
+		SELECT 
+			id, user_id, nama_lengkap, 
+			jurusan, kelas, topik_penelitian, file_path, 
+			form_bimbingan_path, file_pendukung_path, keterangan, status, 
 			created_at, updated_at
-		FROM final_proposal
+		FROM final_proposal 
 		WHERE user_id = ?
 		ORDER BY created_at DESC`
 
@@ -68,26 +68,27 @@ func (m *FinalProposalModel) GetByUserID(userID string) ([]entities.FinalProposa
 
 	var finalProposals []entities.FinalProposal
 	for rows.Next() {
-		var fp entities.FinalProposal
+		var finalProposal entities.FinalProposal
 		err := rows.Scan(
-			&fp.ID,
-			&fp.UserID,
-			&fp.NamaLengkap,
-			&fp.Jurusan,
-			&fp.Kelas,
-			&fp.TopikPenelitian,
-			&fp.FilePath,
-			&fp.FormBimbinganPath,
-			&fp.FilePendukungPath, // <- ikut di-scan
-			&fp.Keterangan,
-			&fp.Status,
-			&fp.CreatedAt,
-			&fp.UpdatedAt,
+			&finalProposal.ID,
+			&finalProposal.UserID,
+			&finalProposal.NamaLengkap,
+			&finalProposal.Jurusan,
+			&finalProposal.Kelas,
+			&finalProposal.TopikPenelitian,
+			&finalProposal.FilePath,
+			&finalProposal.FormBimbinganPath,
+			&finalProposal.FilePendukungPath,
+			&finalProposal.Keterangan,
+			&finalProposal.Status,
+			&finalProposal.CreatedAt,
+			&finalProposal.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
-		finalProposals = append(finalProposals, fp)
+		finalProposals = append(finalProposals, finalProposal)
 	}
+
 	return finalProposals, nil
 }
