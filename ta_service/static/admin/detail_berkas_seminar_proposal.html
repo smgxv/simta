@@ -1136,43 +1136,41 @@
 
 			// Buat daftar link download penilaian (multi-file)
 			function renderPenilaianList(type, files) {
-			// Cari/buat container list di sel yang sama
-			const anchorRef = document.getElementById(`${type}-penilaian-download`);
-			let container = document.getElementById(`${type}-penilaian-list`);
+				// Cari/buat container list di sel yang sama
+				const anchorRef = document.getElementById(`${type}-penilaian-download`);
+				let container = document.getElementById(`${type}-penilaian-list`);
 
-			if (!container) {
-				container = document.createElement('div');
-				container.id = `${type}-penilaian-list`;
-				container.style.marginTop = '6px';
-				container.style.display = 'flex';
-				container.style.flexWrap = 'wrap';
-				container.style.gap = '6px';
+				if (!container) {
+					container = document.createElement('div');
+					container.id = `${type}-penilaian-list`;
+					container.style.marginTop = '6px';
+					container.style.display = 'flex';
+					container.style.flexDirection = 'column'; // supaya rapih ke bawah
+					container.style.gap = '4px';
 
-				// sisipkan setelah anchor bawaan (kalau ada), atau di akhir sel
-				if (anchorRef && anchorRef.parentElement) {
-				anchorRef.parentElement.appendChild(container);
+					// sisipkan setelah anchor bawaan (kalau ada), atau di akhir sel
+					if (anchorRef && anchorRef.parentElement) {
+						anchorRef.parentElement.appendChild(container);
+					}
 				}
-			}
 
-			// Bersihkan isi lama
-			container.innerHTML = '';
+				// Bersihkan isi lama
+				container.innerHTML = '';
 
-			// Render setiap file sebagai chip/link
-			files.forEach((fname, i) => {
-				const a = document.createElement('a');
-				a.href = makeDownloadUrl(fname);
-				a.className = 'btn-download';
-				a.style.display = 'inline-block';
-				a.style.padding = '2px 8px';
-				a.style.borderRadius = '12px';
-				a.style.border = '1px solid #ccc';
-				a.style.textDecoration = 'none';
-				a.title = fname;
-				// label pendek: urutan + ekstensi
-				const ext = (fname.split('.').pop() || '').toUpperCase();
-				a.textContent = `File ${i + 1} (${ext})`;
-				container.appendChild(a);
-			});
+				// Render setiap file dengan nama aslinya
+				files.forEach((fname) => {
+					const a = document.createElement('a');
+					a.href = makeDownloadUrl(fname);
+					a.className = 'btn-download';
+					a.style.display = 'inline-block';
+					a.style.padding = '2px 8px';
+					a.style.borderRadius = '12px';
+					a.style.border = '1px solid #ccc';
+					a.style.textDecoration = 'none';
+					a.title = fname; // tooltip
+					a.textContent = fname; // tampilkan nama asli file
+					container.appendChild(a);
+				});
 			}
 
 			function removePenilaianList(type) {
