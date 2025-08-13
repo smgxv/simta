@@ -628,7 +628,7 @@ func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 			"nama_dosen":            namaDosen,
 			"status_pengumpulan":    status,
 			"file_catatanperbaikan": fileCatatanPerbaikan,
-			"file_berita_acara":     filePenilaian,
+			"file_penilaian":        filePenilaian,
 		}
 	}
 
