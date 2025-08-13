@@ -5,47 +5,50 @@ import (
 	"document_service/config"
 	"document_service/entities"
 	"document_service/models"
-	"document_service/utils"
 	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 )
 
-// Handler untuk mengupload final proposal
+// Handler untuk mengupload final Proposal + file pendukung (wajib)
 func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
+	// ===== CORS =====
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	if r.ContentLength > filemanager.MaxFileSize {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	// ===== Batas total payload (opsional) =====
+	if r.ContentLength > filemanager.MaxFileSize*4 { // mis. 15MB * 4 = 60MB
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+			"message": "Total file terlalu besar. Maksimal 60MB",
 		})
 		return
 	}
 
-	err := r.ParseMultipartForm(filemanager.MaxFileSize)
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	// ===== Parse form =====
+	if err := r.ParseMultipartForm(filemanager.MaxFileSize * 4); err != nil {
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "Form terlalu besar atau rusak: " + err.Error(),
+			"message": "Gagal parsing form data",
 		})
 		return
 	}
 
+	// ===== Ambil field =====
 	userID := r.FormValue("user_id")
 	namaLengkap := r.FormValue("nama_lengkap")
 	jurusan := r.FormValue("jurusan")
@@ -53,88 +56,161 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	if userID == "" || namaLengkap == "" || topikPenelitian == "" {
-		http.Error(w, "Missing required fields", http.StatusBadRequest)
-		return
-	}
-
-	// === Upload Final Proposal File ===
-	finalFile, finalHeader, err := r.FormFile("final_proposal_file")
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	if userID == "" || namaLengkap == "" || jurusan == "" || kelas == "" || topikPenelitian == "" {
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "Gagal mengambil file Final Proposal: " + err.Error(),
+			"message": "Missing required fields",
 		})
 		return
 	}
-	defer finalFile.Close()
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "User ID tidak valid",
+		})
+		return
+	}
 
-	if err := filemanager.ValidateFileType(finalFile, finalHeader.Filename); err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	// ===== Konfigurasi validasi file =====
+	maxSize := int64(15 * 1024 * 1024) // 15MB
+	allowedFinalExt := map[string]bool{".pdf": true}
+	allowedSupportExt := map[string]bool{
+		".pdf": true, ".doc": true, ".docx": true, ".xls": true, ".xlsx": true,
+	}
+	hasAllowedExt := func(name string, allowed map[string]bool) bool {
+		ext := strings.ToLower(filepath.Ext(name))
+		return allowed[ext]
+	}
+
+	// ===== FINAL Proposal (wajib, PDF) =====
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "File final wajib diunggah: " + err.Error(),
+		})
+		return
+	}
+	defer file.Close()
+
+	// Ukuran
+	if handler.Size > maxSize {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Ukuran file final melebihi 15MB",
+		})
+		return
+	}
+	// Ekstensi
+	if !hasAllowedExt(handler.Filename, allowedFinalExt) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Tipe file final Proposal tidak diizinkan (hanya PDF)",
+		})
+		return
+	}
+	// (Opsional) Content sniffing khusus PDF (pakai util kamu)
+	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": err.Error(),
 		})
 		return
 	}
-	finalFile.Seek(0, 0)
+	_, _ = file.Seek(0, 0)
 
-	finalFilename := fmt.Sprintf("FINAL_PROPOSAL_%s_%s_%s",
-		userID,
-		time.Now().Format("20060102150405"),
-		filemanager.ValidateFileName(finalHeader.Filename))
-	finalFilePath, err := filemanager.SaveUploadedFile(finalFile, finalHeader, "uploads/finalproposal", finalFilename)
+	// Simpan final Proposal
+	safeFilename := filemanager.ValidateFileName(handler.Filename)
+	finalName := fmt.Sprintf("FINAL_Proposal_%s_%s_%s", userID, time.Now().Format("20060102150405"), safeFilename)
+	finalDir := "uploads/finalproposal"
+	filePath, err := filemanager.SaveUploadedFile(file, handler, finalDir, finalName)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": err.Error(),
 		})
 		return
 	}
+	// Kumpulan path untuk cleanup jika gagal
+	savedPaths := []string{filePath}
 
-	// === Upload Form Bimbingan File ===
-	formFile, formHeader, err := r.FormFile("form_bimbingan_file")
-	if err != nil {
-		os.Remove(finalFilePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	// ===== FILE PENDUKUNG (wajib minimal 1) =====
+	supportFiles := r.MultipartForm.File["support_files[]"]
+	if len(supportFiles) == 0 {
+		_ = os.Remove(filePath)
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "Gagal mengambil file Form Bimbingan: " + err.Error(),
-		})
-		return
-	}
-	defer formFile.Close()
-
-	if err := filemanager.ValidateFileType(formFile, formHeader.Filename); err != nil {
-		os.Remove(finalFilePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": err.Error(),
-		})
-		return
-	}
-	formFile.Seek(0, 0)
-
-	formFilename := fmt.Sprintf("FORM_BIMBINGAN_%s_%s_%s",
-		userID,
-		time.Now().Format("20060102150405"),
-		filemanager.ValidateFileName(formHeader.Filename))
-	formFilePath, err := filemanager.SaveUploadedFile(formFile, formHeader, "uploads/finalproposal", formFilename)
-	if err != nil {
-		os.Remove(finalFilePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": err.Error(),
+			"message": "Minimal 1 file pendukung wajib diunggah",
 		})
 		return
 	}
 
-	// === Simpan ke Database ===
+	var supportPaths []string
+	supportDir := "uploads/pendukungproposal"
+
+	for _, fh := range supportFiles {
+		f, err := fh.Open()
+		if err != nil {
+			_ = os.Remove(filePath)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": "Gagal membuka file pendukung: " + err.Error(),
+			})
+			return
+		}
+
+		// Ukuran
+		if fh.Size > maxSize {
+			f.Close()
+			_ = os.Remove(filePath)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": fmt.Sprintf("Ukuran file pendukung melebihi 15MB (%s)", fh.Filename),
+			})
+			return
+		}
+		// Ekstensi
+		if !hasAllowedExt(fh.Filename, allowedSupportExt) {
+			f.Close()
+			_ = os.Remove(filePath)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": fmt.Sprintf("Tipe file pendukung tidak diizinkan (%s). Hanya PDF, DOC, DOCX, XLS, XLSX.", fh.Filename),
+			})
+			return
+		}
+		// (Opsional) Sniffing — jika filemanager.ValidateFileType hanya untuk PDF,
+		// biarkan ext check untuk DOC/XLS; tetap aman karena kita sanitize nama & batasi size.
+
+		_, _ = f.Seek(0, 0)
+		safeName := filemanager.ValidateFileName(fh.Filename)
+		// Pakai timestamp high-res agar unik walau banyak file per detik
+		supportName := fmt.Sprintf("%d_%s", time.Now().Unix(), safeName)
+
+		outPath, err := filemanager.SaveUploadedFile(f, fh, supportDir, supportName)
+		f.Close()
+		if err != nil {
+			_ = os.Remove(filePath)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
+		savedPaths = append(savedPaths, outPath)
+		supportPaths = append(supportPaths, outPath)
+	}
+
+	// ===== SIMPAN DB =====
 	db, err := config.GetDB()
 	if err != nil {
-		os.Remove(finalFilePath)
-		os.Remove(formFilePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		for _, p := range savedPaths {
+			_ = os.Remove(p)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "Gagal koneksi database: " + err.Error(),
+			"message": "Error connecting to database: " + err.Error(),
 		})
 		return
 	}
@@ -142,33 +218,46 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 	finalProposalModel := models.NewFinalProposalModel(db)
 	finalProposal := &entities.FinalProposal{
-		UserID:            utils.ParseInt(userID),
-		NamaLengkap:       namaLengkap,
-		Jurusan:           jurusan,
-		Kelas:             kelas,
-		TopikPenelitian:   topikPenelitian,
-		FilePath:          finalFilePath,
-		FormBimbinganPath: formFilePath,
-		Keterangan:        keterangan,
+		UserID:          userIDInt,
+		NamaLengkap:     namaLengkap,
+		Jurusan:         jurusan,
+		Kelas:           kelas,
+		TopikPenelitian: topikPenelitian,
+		FilePath:        filePath, // simpan path relatif/absolut sesuai kebijakanmu
+		Keterangan:      keterangan,
 	}
 
-	if err := finalProposalModel.Create(finalProposal); err != nil {
-		os.Remove(finalFilePath)
-		os.Remove(formFilePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	// Set JSON array path pendukung
+	if err := finalProposal.SetProposalSupportingFiles(supportPaths); err != nil {
+		for _, p := range savedPaths {
+			_ = os.Remove(p)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "Gagal menyimpan ke database: " + err.Error(),
+			"message": "Gagal encode file pendukung: " + err.Error(),
 		})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := finalProposalModel.Create(finalProposal); err != nil {
+		for _, p := range savedPaths {
+			_ = os.Remove(p)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Error saving to database: " + err.Error(),
+		})
+		return
+	}
+
+	// ===== RESPONSE =====
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"status":  "success",
-		"message": "Final Proposal berhasil diunggah",
-		"data": map[string]interface{}{
+		"message": "Final Proposal dan file pendukung berhasil diunggah",
+		"data": map[string]any{
 			"id":                  finalProposal.ID,
-			"file_path":           finalFilePath,
-			"form_bimbingan_path": formFilePath,
+			"file_path":           filePath,
+			"file_pendukung_path": supportPaths, // array path (bukan JSON string) untuk kenyamanan klien
 		},
 	})
 }
@@ -328,9 +417,9 @@ func UpdateFinalProposalStatusHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk download file Final Proposal atau Form Bimbingan
+// Handler untuk download file Final Proposal atau file pendukung
 func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
@@ -339,14 +428,14 @@ func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil ID dan tipe file dari parameter
 	vars := mux.Vars(r)
-	proposalID := vars["id"]              // Ambil dari path: /download/{id}
-	fileType := r.URL.Query().Get("type") // Ambil dari query param: ?type=...
+	proposalID := vars["id"]
 
-	if proposalID == "" || fileType == "" {
-		http.Error(w, "id dan type wajib disediakan", http.StatusBadRequest)
-		return
+	fileType := r.URL.Query().Get("type")    // "final" atau "support"
+	supportIdx := r.URL.Query().Get("index") // index untuk file pendukung
+
+	if fileType == "" {
+		fileType = "final"
 	}
 
 	db, err := config.GetDB()
@@ -357,35 +446,63 @@ func DownloadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	var filePath string
-	switch fileType {
-	case "proposal":
-		err = db.QueryRow("SELECT file_path FROM final_proposal WHERE id = ?", proposalID).Scan(&filePath)
-	case "form_bimbingan":
-		err = db.QueryRow("SELECT form_bimbingan_path FROM final_proposal WHERE id = ?", proposalID).Scan(&filePath)
-	default:
-		http.Error(w, "type tidak valid. Gunakan 'proposal' atau 'form_bimbingan'", http.StatusBadRequest)
-		return
-	}
 
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "File tidak ditemukan", http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+	if fileType == "final" {
+		// Ambil path file final
+		query := "SELECT file_path FROM final_proposal WHERE id = ?"
+		err = db.QueryRow(query, proposalID).Scan(&filePath)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "File not found", http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
 		}
+	} else if fileType == "support" {
+		// Ambil JSON file pendukung
+		var filePendukungJSON string
+		query := "SELECT file_pendukung_path FROM final_proposal WHERE id = ?"
+		err = db.QueryRow(query, proposalID).Scan(&filePendukungJSON)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "File pendukung tidak ditemukan", http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		// Decode JSON ke slice
+		var paths []string
+		if err := json.Unmarshal([]byte(filePendukungJSON), &paths); err != nil {
+			http.Error(w, "Gagal membaca data file pendukung", http.StatusInternalServerError)
+			return
+		}
+
+		// Ambil index
+		idx, err := strconv.Atoi(supportIdx)
+		if err != nil || idx < 0 || idx >= len(paths) {
+			http.Error(w, "Index file pendukung tidak valid", http.StatusBadRequest)
+			return
+		}
+
+		filePath = paths[idx]
+	} else {
+		http.Error(w, "Tipe file tidak valid", http.StatusBadRequest)
 		return
 	}
 
-	file, err := os.Open(filePath)
-	if err != nil {
-		http.Error(w, "Gagal membuka file", http.StatusNotFound)
+	// Pastikan file ada
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
-	defer file.Close()
 
 	fileName := filepath.Base(filePath)
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
-	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Type", "application/octet-stream")
+
 	http.ServeFile(w, r, filePath)
 }
 

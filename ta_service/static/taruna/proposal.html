@@ -632,6 +632,20 @@
 								</div>
 								<div id="finalSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
+							<div class="form-group">
+								<label>File Pendukung Proposal (Document, PDF, Excell)</label>
+								<div class="custom-file">
+									<input type="file" 
+										   class="custom-file-input" 
+										   id="supportFiles" 
+										   name="support_files[]" 
+										   accept=".pdf,.doc,.docx,.xls,.xlsx" 
+										   multiple 
+										   required>
+									<label class="custom-file-label" for="supportFiles">Pilih satu atau lebih file</label>
+								</div>
+								<div id="supportSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
+							</div>
 							<button type="submit" class="btn btn-primary">Upload Final Proposal</button>
 						</form>
 
@@ -1355,7 +1369,28 @@
 				}
 			});
 
-			document.getElementById('finalProposalForm').addEventListener('submit', async function(e) {
+			// ====== UPDATE LABEL FILE PENDUKUNG ======
+			const supportInput = document.getElementById('supportFiles');
+			if (supportInput) {
+				supportInput.addEventListener('change', function (e) {
+					const files = Array.from(e.target.files || []);
+					const label = this.nextElementSibling;
+					const infoDiv = document.getElementById('supportSelectedFileName');
+
+					if (files.length === 0) {
+						label.textContent = 'Pilih file pendukung';
+						infoDiv.style.display = 'none';
+						return;
+					}
+
+					label.textContent = `${files.length} file dipilih`;
+					infoDiv.innerHTML = 'File terpilih:<br>- ' + files.map(f => f.name).join('<br>- ');
+					infoDiv.style.display = 'block';
+				});
+			}
+
+			// ====== SUBMIT FORM ======
+			document.getElementById('finalProposalForm').addEventListener('submit', async function (e) {
 				e.preventDefault();
 
 				const submitButton = this.querySelector('button[type="submit"]');
@@ -1363,32 +1398,35 @@
 				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 
 				try {
-					await isiJurusanDanKelasDariTarunaFinalProposal();
 					const formData = new FormData(this);
 					const userId = localStorage.getItem('userId');
 					const token = localStorage.getItem('token');
 
-					if (!userId || !token) throw new Error('User ID atau token tidak ditemukan');
+					if (!userId || !token) {
+						throw new Error('User ID atau token tidak ditemukan');
+					}
 
+					// Ambil data taruna
 					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
 						headers: { 'Authorization': `Bearer ${token}` }
 					});
-					if (!tarunaResponse.ok) throw new Error('Gagal mengambil data taruna');
 
-					const tarunaData = await tarunaResponse.json();
-					if (tarunaData.status !== 'success' || !Array.isArray(tarunaData.data)) {
-						throw new Error('Data taruna tidak ditemukan');
+					if (!tarunaResponse.ok) {
+						throw new Error('Gagal mengambil data taruna');
 					}
 
-					const taruna = tarunaData.data.find(t => t.user_id === parseInt(userId));
-					if (!taruna) throw new Error('Data taruna tidak ditemukan untuk user ID ini');
-					if (!taruna.nama_lengkap) throw new Error('Data taruna tidak lengkap: nama lengkap tidak ditemukan');
+					const tarunaData = await tarunaResponse.json();
+					const taruna = tarunaData.data?.find(t => t.user_id === parseInt(userId));
 
+					if (!taruna || !taruna.nama_lengkap) {
+						throw new Error('Data taruna tidak lengkap atau tidak ditemukan');
+					}
+
+					// Tambahkan user_id dan nama_lengkap ke formData
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
-					formData.append('jurusan', document.getElementById('hiddenJurusan').value);
-					formData.append('kelas', document.getElementById('hiddenKelas').value);
 
+					// Kirim ke server
 					const response = await fetch('/api/document/finalproposal/upload', {
 						method: 'POST',
 						body: formData
@@ -1397,9 +1435,9 @@
 					let data;
 					try {
 						data = await response.json();
-					} catch (err) {
-						const text = await response.text();
-						showAlert(text || 'Terjadi kesalahan pada server', 'danger');
+					} catch {
+						const rawText = await response.text();
+						showAlert(rawText || 'Terjadi kesalahan pada server', 'danger');
 						return;
 					}
 
@@ -1409,21 +1447,20 @@
 						this.reset();
 						document.querySelector('#finalProposalFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('finalSelectedFileName').style.display = 'none';
-						document.querySelector('#formBimbinganFile').nextElementSibling.textContent = 'Choose file';
-						document.getElementById('formBimbinganSelectedFileName').style.display = 'none';
-						loadFinalProposalData();
+						if (supportInput) {
+							supportInput.nextElementSibling.textContent = 'Pilih file pendukung';
+							document.getElementById('supportSelectedFileName').style.display = 'none';
+						}
+						if (typeof loadFinalProposalData === 'function') loadFinalProposalData();
 					}
 
 				} catch (error) {
-					let errorMessage = 'Terjadi kesalahan pada server';
-					if (error.message.includes('user ID')) {
-						errorMessage = 'Data taruna tidak ditemukan untuk akun Anda. Silakan hubungi administrator.';
-					} else if (error.message.includes('data taruna tidak ditemukan')) {
-						errorMessage = 'Data taruna tidak ditemukan. Silakan hubungi administrator.';
-					} else if (error.message.includes('nama lengkap')) {
-						errorMessage = 'Profil taruna belum lengkap. Silakan lengkapi nama lengkap Anda.';
-					} else if (error.message.includes('Gagal mengambil')) {
-						errorMessage = 'Gagal mengambil data taruna. Silakan coba lagi.';
+					console.error('Error saat upload final Proposal:', error);
+					let errorMessage = error.message || 'Terjadi kesalahan saat mengunggah Final Proposal';
+					if (errorMessage.includes('token')) {
+						errorMessage = 'User ID atau token tidak ditemukan. Silakan login kembali.';
+					} else if (errorMessage.includes('taruna')) {
+						errorMessage = 'Data taruna tidak lengkap atau tidak ditemukan. Silakan hubungi administrator.';
 					}
 					showAlert(errorMessage, 'danger');
 				} finally {
@@ -1431,6 +1468,106 @@
 					submitButton.innerHTML = 'Upload Final Proposal';
 				}
 			});
+
+			// Update fungsi loadFinalICPData
+			async function loadFinalProposalData() {
+				const userId = localStorage.getItem('userId');
+				if (!userId) {
+					console.error('User ID not found in localStorage');
+					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
+					return;
+				}
+
+				try {
+					console.log('Fetching Final Proposal data for user:', userId);
+					const response = await fetch(`/api/document/finalproposal/list?user_id=${userId}`);
+
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+
+					const data = await response.json();
+					console.log('Received Final Proposal data:', data);
+
+					if (data.status === 'success') {
+						const tbody = document.querySelector('#finalProposalTable tbody');
+						if (!tbody) {
+							console.error('Table body element not found');
+							return;
+						}
+
+						tbody.innerHTML = '';
+
+						if (data.data && data.data.length > 0) {
+							data.data.forEach(finalProposal => {
+								const statusClass = {
+									'pending': 'badge badge-warning',
+									'approved': 'badge badge-success',
+									'rejected': 'badge badge-danger',
+									'on review': 'badge badge-info'
+								}[finalProposal.status] || 'badge badge-secondary';
+
+								// Parsing file pendukung dari JSON string
+								let pendukungLinks = '';
+								if (finalProposal.file_pendukung_path) {
+									try {
+										const supportFiles = JSON.parse(finalProposal.file_pendukung_path);
+										supportFiles.forEach((path, idx) => {
+											const fileName = path.split('/').pop(); // Ambil nama file asli
+											pendukungLinks += `
+												<a class="dropdown-item" 
+												href="/api/document/finalproposal/download/${finalProposal.final_icp_id}?type=support&index=${idx}" 
+												download>
+													<i class="dw dw-download"></i> ${fileName}
+												</a>
+											`;
+										});
+									} catch (e) {
+										console.error('Gagal parse file_pendukung_path:', e);
+									}
+								}
+
+								tbody.innerHTML += `
+									<tr>
+										<td>${finalProposal.topik_penelitian || '-'}</td>
+										<td>${finalProposal.jurusan || '-'}</td>
+										<td>${finalProposal.kelas || '-'}</td>
+										<td><span class="${statusClass}">${finalProposal.status || 'pending'}</span></td>
+										<td>
+											<div class="dropdown">
+												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+												href="#" role="button" data-toggle="dropdown">
+													<i class="dw dw-more"></i>
+												</a>
+												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+													<a class="dropdown-item" 
+													href="/api/document/finalproposal/download/${finalProposal.final_icp_id}?type=final" 
+													download>
+														<i class="dw dw-download"></i> Final Proposal
+													</a>
+													${pendukungLinks}
+												</div>
+											</div>
+										</td>
+									</tr>
+								`;
+							});
+						} else {
+							tbody.innerHTML = `
+								<tr>
+									<td colspan="5" class="text-center">Belum ada Final Proposal yang diupload</td>
+								</tr>
+							`;
+						}
+					} else {
+						console.error('Failed to load Final Proposal data:', data.message);
+						showAlert('Gagal memuat data Final Proposal: ' + (data.message || 'Unknown error'), 'danger');
+					}
+				} catch (error) {
+					console.error('Error loading Final Proposal data:', error);
+					showAlert('Terjadi kesalahan saat memuat data Final Proposal: ' + error.message, 'danger');
+				}
+			}
 
 			// Update fungsi loadFinalProposalData
 			async function loadFinalProposalData() {
@@ -1793,7 +1930,7 @@
 					// Jika id ada → tombol download via API; kalau tidak, fallback ke file_path (kalau memang ada endpoint public)
 					const downloadHtml = revId
 						? `<a class="dropdown-item" href="#" data-download-id="${revId}">
-							<i class="dw dw-download"></i> Download
+							<i class="dw dw-download"></i> Downloadss
 						</a>`
 						: (revisiProposal.file_path
 							? `<a class="dropdown-item" href="/api/document/download?path=${encodeURIComponent(revisiProposal.file_path)}" download>

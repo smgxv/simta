@@ -19,8 +19,8 @@ func (m *FinalProposalModel) Create(finalProposal *entities.FinalProposal) error
 	query := `
 		INSERT INTO final_proposal (
 			user_id, nama_lengkap, jurusan, 
-			kelas, topik_penelitian, file_path, 
-			form_bimbingan_path, keterangan, status
+			kelas, topik_penelitian, file_path, file_pendukung_path, keterangan, 
+			status
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := m.db.Exec(query,
@@ -30,11 +30,10 @@ func (m *FinalProposalModel) Create(finalProposal *entities.FinalProposal) error
 		finalProposal.Kelas,
 		finalProposal.TopikPenelitian,
 		finalProposal.FilePath,
-		finalProposal.FormBimbinganPath,
+		finalProposal.FilePendukungPath, // << kolom baru
 		finalProposal.Keterangan,
 		"pending", // default status
 	)
-
 	if err != nil {
 		return err
 	}
@@ -43,7 +42,6 @@ func (m *FinalProposalModel) Create(finalProposal *entities.FinalProposal) error
 	if err != nil {
 		return err
 	}
-
 	finalProposal.ID = int(id)
 	return nil
 }
@@ -52,9 +50,8 @@ func (m *FinalProposalModel) GetByUserID(userID string) ([]entities.FinalProposa
 	query := `
 		SELECT 
 			id, user_id, nama_lengkap, 
-			jurusan, kelas, topik_penelitian, file_path, 
-			form_bimbingan_path, keterangan, status, 
-			created_at, updated_at
+			jurusan, kelas, topik_penelitian, file_path, file_pendukung_path, 
+			keterangan, status, created_at, updated_at
 		FROM final_proposal 
 		WHERE user_id = ?
 		ORDER BY created_at DESC`
@@ -76,7 +73,7 @@ func (m *FinalProposalModel) GetByUserID(userID string) ([]entities.FinalProposa
 			&finalProposal.Kelas,
 			&finalProposal.TopikPenelitian,
 			&finalProposal.FilePath,
-			&finalProposal.FormBimbinganPath,
+			&finalProposal.FilePendukungPath, // << kolom baru
 			&finalProposal.Keterangan,
 			&finalProposal.Status,
 			&finalProposal.CreatedAt,
