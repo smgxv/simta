@@ -300,40 +300,40 @@ jobs:
 #   #           docker run -d -p 8081:8081 --name user-service smgxv/user-service
 #   #           docker network connect simta_net user-service
 
-  # build-document-service:
-  #   # needs: running-tests
-  #   name: Build Document Service Image
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-  #     - name: Build Image
-  #       run: docker build -t smgxv/document-service -f document_service/Dockerfile document_service
-  #     - name: Login to DockerHub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - name: Push Image
-  #       run: docker push smgxv/document-service
+  build-document-service:
+    # needs: running-tests
+    name: Build Document Service Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/document-service -f document_service/Dockerfile document_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/document-service
 
-  # deploy-document-service:
-  #   needs: build-document-service
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Deploy Document Service to VPS
-  #       uses: appleboy/ssh-action@master
-  #       with:
-  #         host: ${{ secrets.VPS_HOST }}
-  #         username: ${{ secrets.VPS_USERNAME }}
-  #         password: ${{ secrets.VPS_PASSWORD }}
-  #         port: ${{ secrets.VPS_PORT }}
-  #         script: |
-  #           docker stop document-service || true && docker rm document-service || true
-  #           docker system prune -af
-  #           docker pull smgxv/document-service
-  #           docker run -d -p 8082:8082 --name document-service smgxv/document-service
-  #           docker network connect simta_net document-service
+  deploy-document-service:
+    needs: build-document-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Document Service to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop document-service || true && docker rm document-service || true
+            docker system prune -af
+            docker pull smgxv/document-service
+            docker run -d -p 8082:8082 --name document-service smgxv/document-service
+            docker network connect simta_net document-service
 
   # build-notification-service:
   #   # needs: running-tests
