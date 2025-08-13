@@ -1009,14 +1009,14 @@
 
 				// Ambil elemen/values
 				const tarunaSelect = document.getElementById('tarunaSelect');
-				const finalProposalId = document.getElementById('finalProposalId').value;
+				const finalLaporan70Id = document.getElementById('finalLaporan70Id').value;
 				const catatanperbaikanInput = document.getElementById('catatanperbaikanFile');
 				const penilaianInput = document.getElementById('penilaianFile');
 				const dosenId = localStorage.getItem('dosenID');
 
 				// Tidak ada validasi ukuran/jenis file di sini — serahkan ke backend
 				// Hanya cek wajib terisi (field non-file + ada minimal satu file)
-				if (!tarunaSelect.value || !finalProposalId || !catatanperbaikanInput.files[0] || (penilaianInput.files.length === 0) || !dosenId) {
+				if (!tarunaSelect.value || !finalLaporan70Id || !catatanperbaikanInput.files[0] || (penilaianInput.files.length === 0) || !dosenId) {
 					showAlert('Semua field harus diisi', 'warning');
 					return;
 				}
@@ -1030,7 +1030,7 @@
 
 					// Field non-file
 					formData.append('user_id', tarunaSelect.value);
-					formData.append('final_laporan70_id', finalProposalId);
+					formData.append('final_laporan70_id', finalLaporan70Id);
 					formData.append('dosen_id', dosenId);
 
 					// Single file: catatan perbaikan
@@ -1074,7 +1074,7 @@
 					if (infoEl) { infoEl.style.display = 'none'; infoEl.textContent = ''; }
 
 					// Reload data
-					loadProposalData();
+					loadLaporan70Data();
 					} else {
 					throw new Error(data.message || 'Terjadi kesalahan saat menyimpan penilaian');
 					}
