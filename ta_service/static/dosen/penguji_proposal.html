@@ -580,8 +580,15 @@
 							<div class="form-group">
 								<label>File Penilaian (Berita Acara dan File Penilaian Lainnya)</label>
 								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="penilaianFile" name="penilaian_file" accept=".pdf" required>
-									<label class="custom-file-label" for="penilaianFile">Choose file</label>
+									<!-- multiple dan name[] ditambahkan -->
+									<input type="file" 
+										   class="custom-file-input" 
+										   id="penilaianFile" 
+										   name="penilaian_file[]" 
+										   accept=".pdf,.doc,.docx,.xls,.xlsx" 
+										   multiple 
+										   required>
+									<label class="custom-file-label" for="penilaianFile">Choose files</label>
 								</div>
 								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
@@ -967,87 +974,111 @@
 				this.nextElementSibling.textContent = fileName;
 			});
 
-			// Update nama file saat file penilaian dipilih
-			document.getElementById('penilaianFile').addEventListener('change', function(e) {
-				const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
-				this.nextElementSibling.textContent = fileName;
+			// Update label & daftar nama saat file penilaian dipilih (multi-file)
+			document.getElementById('penilaianFile').addEventListener('change', function (e) {
+			const files = Array.from(e.target.files || []);
+			const labelEl = this.nextElementSibling; // .custom-file-label
+			const infoEl = document.getElementById('selectedFileName');
+
+			if (files.length === 0) {
+				labelEl.textContent = 'Choose file';
+				if (infoEl) { infoEl.style.display = 'none'; infoEl.textContent = ''; }
+				return;
+			}
+
+			// Tampilkan ringkas di label, lengkap di infoEl (jika elemen ada)
+			labelEl.textContent = files.length > 1 ? `${files.length} files selected` : files[0].name;
+
+			if (infoEl) {
+				infoEl.style.display = 'block';
+				infoEl.textContent = files.map(f => f.name).join(', ');
+			}
 			});
 
-			// Handle form submission untuk penilaian proposal
-			document.getElementById('proposalForm').addEventListener('submit', async function(e) {
-				e.preventDefault();
+			// Handle form submission untuk penilaian proposal (multi-file penilaian)
+			document.getElementById('proposalForm').addEventListener('submit', async function (e) {
+			e.preventDefault();
 
-				// Validasi form
-				const tarunaSelect = document.getElementById('tarunaSelect');
-				const finalProposalId = document.getElementById('finalProposalId').value;
-				const catatanperbaikanFile = document.getElementById('catatanperbaikanFile').files[0];
-				const penilaianFile = document.getElementById('penilaianFile').files[0];
-				const dosenId = localStorage.getItem('dosenID');
+			// Ambil elemen/values
+			const tarunaSelect = document.getElementById('tarunaSelect');
+			const finalProposalId = document.getElementById('finalProposalId').value;
+			const catatanperbaikanInput = document.getElementById('catatanperbaikanFile');
+			const penilaianInput = document.getElementById('penilaianFile');
+			const dosenId = localStorage.getItem('dosenID');
 
-				// Validasi semua field yang diperlukan
-				if (!tarunaSelect.value || !finalProposalId || !catatanperbaikanFile || !penilaianFile || !dosenId) {
-					showAlert('Semua field harus diisi', 'warning');
-					return;
+			// Tidak ada validasi ukuran/jenis file di sini — serahkan ke backend
+			// Hanya cek wajib terisi (field non-file + ada minimal satu file)
+			if (!tarunaSelect.value || !finalProposalId || !catatanperbaikanInput.files[0] || (penilaianInput.files.length === 0) || !dosenId) {
+				showAlert('Semua field harus diisi', 'warning');
+				return;
+			}
+
+			const submitButton = this.querySelector('button[type="submit"]');
+			submitButton.disabled = true;
+			submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+
+			try {
+				const formData = new FormData();
+
+				// Field non-file
+				formData.append('user_id', tarunaSelect.value);
+				formData.append('final_proposal_id', finalProposalId);
+				formData.append('dosen_id', dosenId);
+
+				// Single file: catatan perbaikan
+				formData.append('catatanperbaikan_file', catatanperbaikanInput.files[0]);
+
+				// Multi-file: penilaian
+				// Gunakan key 'penilaian_file[]' agar backend menerima array
+				Array.from(penilaianInput.files).forEach((file) => {
+				formData.append('penilaian_file[]', file);
+				});
+
+				// Debug (opsional)
+				console.log('Sending data:');
+				for (let pair of formData.entries()) {
+				console.log(pair[0] + ':', pair[1]);
 				}
 
-				// Tampilkan loading state
-				const submitButton = this.querySelector('button[type="submit"]');
-				submitButton.disabled = true;
-				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+				const response = await fetch('/api/document/penilaian/proposal', {
+				method: 'POST',
+				body: formData
+				});
 
-				try {
-					const formData = new FormData();
-					
-					// Tambahkan semua field yang diperlukan
-					formData.append('user_id', tarunaSelect.value);
-					formData.append('final_proposal_id', finalProposalId);
-					formData.append('dosen_id', dosenId);
-					formData.append('catatanperbaikan_file', catatanperbaikanFile);
-					formData.append('penilaian_file', penilaianFile);
-
-					// Log data yang akan dikirim
-					console.log('Sending data:');
-					for (let pair of formData.entries()) {
-						console.log(pair[0] + ':', pair[1]);
-					}
-
-					const response = await fetch('/api/document/penilaian/proposal', {
-						method: 'POST',
-						body: formData
-					});
-
-					// Tambahkan penanganan response yang lebih detail
-					const contentType = response.headers.get('content-type');
-					let data;
-					
-					if (contentType && contentType.includes('application/json')) {
-						data = await response.json();
-					} else {
-						throw new Error('Response dari server bukan JSON');
-					}
-
-					if (response.ok && data.status === 'success') {
-						showAlert('Penilaian proposal berhasil disimpan', 'success');
-						
-						// Reset form
-						this.reset();
-						document.querySelectorAll('.custom-file-label').forEach(label => {
-							label.textContent = 'Choose file';
-						});
-						
-						// Reload data
-						loadProposalData();
-					} else {
-						throw new Error(data.message || 'Terjadi kesalahan saat menyimpan penilaian');
-					}
-				} catch (error) {
-					console.error('Error:', error);
-					showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
-				} finally {
-					submitButton.disabled = false;
-					submitButton.innerHTML = 'Submit';
+				const contentType = response.headers.get('content-type');
+				if (!contentType || !contentType.includes('application/json')) {
+				throw new Error('Response dari server bukan JSON');
 				}
+
+				const data = await response.json();
+
+				if (response.ok && data.status === 'success') {
+				showAlert('Penilaian proposal berhasil disimpan', 'success');
+
+				// Reset form & label
+				this.reset();
+				document.querySelectorAll('.custom-file-label').forEach(label => {
+					label.textContent = 'Choose file';
+				});
+
+				// Sembunyikan daftar nama file jika ada
+				const infoEl = document.getElementById('selectedFileName');
+				if (infoEl) { infoEl.style.display = 'none'; infoEl.textContent = ''; }
+
+				// Reload data
+				loadProposalData();
+				} else {
+				throw new Error(data.message || 'Terjadi kesalahan saat menyimpan penilaian');
+				}
+			} catch (error) {
+				console.error('Error:', error);
+				showAlert(error.message || 'Terjadi kesalahan pada server', 'danger');
+			} finally {
+				submitButton.disabled = false;
+				submitButton.innerHTML = 'Submit';
+			}
 			});
+
 
 		</script>
 
