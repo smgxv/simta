@@ -229,7 +229,7 @@ func UploadFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 
 		_, _ = f.Seek(0, 0)
 		safeName := filemanager.ValidateFileName(fh.Filename)
-		supportName := fmt.Sprintf("PENDUKUNG_%s_%d_%s", userID, time.Now().Unix(), safeName)
+		supportName := fmt.Sprintf("%d_%s", time.Now().Unix(), safeName)
 
 		outPath, err := filemanager.SaveUploadedFile(f, fh, supportDir, supportName)
 		f.Close()
@@ -389,7 +389,7 @@ func GetFinalProposalHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk mengambil data gabungan taruna dan final proposal
+// Handler untuk mengambil data gabungan taruna dan final proposal (beserta file pendukung)
 func GetAllFinalProposalWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -408,19 +408,21 @@ func GetAllFinalProposalWithTarunaHandler(w http.ResponseWriter, r *http.Request
 	}
 	defer db.Close()
 
-	// Query untuk mengambil data gabungan
+	// Tambahkan kolom file_pendukung_path dari tabel final_proposal
 	query := `
 		SELECT 
-			t.user_id as taruna_id,
+			t.user_id AS taruna_id,
 			t.nama_lengkap,
 			t.jurusan,
 			t.kelas,
-			COALESCE(f.topik_penelitian, '') as topik_penelitian,
-			COALESCE(f.status, '') as status,
-			COALESCE(f.id, 0) as final_proposal_id
+			COALESCE(f.topik_penelitian, '') AS topik_penelitian,
+			COALESCE(f.status, '') AS status,
+			COALESCE(f.id, 0) AS final_proposal_id,
+			COALESCE(f.file_pendukung_path, '[]') AS file_pendukung_path
 		FROM taruna t
 		LEFT JOIN final_proposal f ON t.user_id = f.user_id
-		ORDER BY t.nama_lengkap ASC`
+		ORDER BY t.nama_lengkap ASC
+	`
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -430,19 +432,20 @@ func GetAllFinalProposalWithTarunaHandler(w http.ResponseWriter, r *http.Request
 	defer rows.Close()
 
 	type TarunaProposal struct {
-		TarunaID        int    `json:"taruna_id"`
-		NamaLengkap     string `json:"nama_lengkap"`
-		Jurusan         string `json:"jurusan"`
-		Kelas           string `json:"kelas"`
-		TopikPenelitian string `json:"topik_penelitian"`
-		Status          string `json:"status"`
-		FinalProposalID int    `json:"final_proposal_id"`
+		TarunaID         int    `json:"taruna_id"`
+		NamaLengkap      string `json:"nama_lengkap"`
+		Jurusan          string `json:"jurusan"`
+		Kelas            string `json:"kelas"`
+		TopikPenelitian  string `json:"topik_penelitian"`
+		Status           string `json:"status"`
+		FinalProposalID  int    `json:"final_proposal_id"`
+		FilePendukungRaw string `json:"file_pendukung_path"` // JSON string: ["path1","path2",...]
 	}
 
 	var results []TarunaProposal
 	for rows.Next() {
 		var data TarunaProposal
-		err := rows.Scan(
+		if err := rows.Scan(
 			&data.TarunaID,
 			&data.NamaLengkap,
 			&data.Jurusan,
@@ -450,15 +453,19 @@ func GetAllFinalProposalWithTarunaHandler(w http.ResponseWriter, r *http.Request
 			&data.TopikPenelitian,
 			&data.Status,
 			&data.FinalProposalID,
-		)
-		if err != nil {
+			&data.FilePendukungRaw,
+		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		results = append(results, data)
 	}
+	if err := rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"status": "success",
 		"data":   results,
 	})
