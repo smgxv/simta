@@ -99,7 +99,7 @@ func main() {
 	r.HandleFunc("/seminarproposal/dosen", handlers.GetSeminarProposalByDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/seminarproposal/taruna/list", handlers.GetSeminarProposalTarunaListForDosenHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/penilaian/proposal", handlers.PenilaianProposalHandler).Methods("POST", "OPTIONS")
-	r.HandleFunc("/penilaian/catatanperbaikanproposal/download", handlers.DownloadFileCatatanPerbaikanProposalHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/penilaian/proposal/download", handlers.DownloadFileCatatanPerbaikanProposalHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/monitoring/penilaian_proposal", handlers.GetMonitoringPenilaianProposalHandler).Methods("GET", "OPTIONS")
 
 	// Detail Berkas Seminar Proposal routes

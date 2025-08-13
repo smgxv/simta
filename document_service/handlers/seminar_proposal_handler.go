@@ -258,29 +258,29 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// === Berita Acara File ===
-	beritaFile, beritaHeader, err := r.FormFile("berita_acara_file")
+	// === Penilaian File ===
+	penilaianFile, penilaianHeader, err := r.FormFile("penilaian_file")
 	if err != nil {
 		os.Remove(catatanperbaikanPath)
-		sendError("Gagal mengambil file berita acara: "+err.Error(), http.StatusBadRequest)
+		sendError("Gagal mengambil file penilaian: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer beritaFile.Close()
+	defer penilaianFile.Close()
 
-	if err := filemanager.ValidateFileType(beritaFile, beritaHeader.Filename); err != nil {
+	if err := filemanager.ValidateFileType(penilaianFile, penilaianHeader.Filename); err != nil {
 		os.Remove(catatanperbaikanPath)
 		sendError(err.Error(), http.StatusBadRequest)
 		return
 	}
-	beritaFile.Seek(0, 0)
-	beritaFilename := fmt.Sprintf("Berita_Acara_%s_%s_%s",
+	penilaianFile.Seek(0, 0)
+	penilaianFilename := fmt.Sprintf("File_Penilaian_%s_%s_%s",
 		userID,
 		time.Now().Format("20060102150405"),
-		filemanager.ValidateFileName(beritaHeader.Filename))
-	beritaPath, err := filemanager.SaveUploadedFile(beritaFile, beritaHeader, "uploads/berita_acara_proposal", beritaFilename)
+		filemanager.ValidateFileName(penilaianHeader.Filename))
+	penilaianPath, err := filemanager.SaveUploadedFile(penilaianFile, penilaianHeader, "uploads/file_penilaian_proposal", penilaianFilename)
 	if err != nil {
 		os.Remove(catatanperbaikanPath)
-		sendError("Gagal menyimpan file berita acara: "+err.Error(), http.StatusInternalServerError)
+		sendError("Gagal menyimpan file penilaian: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -288,7 +288,7 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	db, err := config.GetDB()
 	if err != nil {
 		os.Remove(catatanperbaikanPath)
-		os.Remove(beritaPath)
+		os.Remove(penilaianPath)
 		sendError("Koneksi database gagal: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -297,7 +297,7 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	tx, err := db.Begin()
 	if err != nil {
 		os.Remove(catatanperbaikanPath)
-		os.Remove(beritaPath)
+		os.Remove(penilaianPath)
 		sendError("Gagal memulai transaksi: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -310,29 +310,29 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		tx.Rollback()
 		os.Remove(catatanperbaikanPath)
-		os.Remove(beritaPath)
+		os.Remove(penilaianPath)
 		sendError("Gagal cek data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if exists {
 		_, err = tx.Exec(`UPDATE seminar_proposal_penilaian 
-			SET file_catatanperbaikan_path = ?, file_berita_acara_path = ?, 
+			SET file_catatanperbaikan_path = ?, file_penilaian_path = ?, 
 				submitted_at = NOW(), status_pengumpulan = 'sudah' 
 			WHERE user_id = ? AND dosen_id = ? AND final_proposal_id = ?`,
-			catatanperbaikanPath, beritaPath, userID, dosenID, finalProposalID)
+			catatanperbaikanPath, penilaianPath, userID, dosenID, finalProposalID)
 	} else {
 		_, err = tx.Exec(`INSERT INTO seminar_proposal_penilaian (
 			user_id, final_proposal_id, dosen_id,
-			file_catatanperbaikan_path, file_berita_acara_path,
+			file_catatanperbaikan_path, file_penilaian_path,
 			status_pengumpulan, submitted_at
 		) VALUES (?, ?, ?, ?, ?, 'sudah', NOW())`,
-			userID, finalProposalID, dosenID, catatanperbaikanPath, beritaPath)
+			userID, finalProposalID, dosenID, catatanperbaikanPath, penilaianPath)
 	}
 	if err != nil {
 		tx.Rollback()
 		os.Remove(catatanperbaikanPath)
-		os.Remove(beritaPath)
+		os.Remove(penilaianPath)
 		sendError("Gagal menyimpan data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -340,7 +340,7 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	if err := tx.Commit(); err != nil {
 		tx.Rollback()
 		os.Remove(catatanperbaikanPath)
-		os.Remove(beritaPath)
+		os.Remove(penilaianPath)
 		sendError("Gagal commit data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -349,8 +349,8 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		"status":  "success",
 		"message": "Penilaian proposal berhasil disimpan",
 		"data": map[string]interface{}{
-			"penilaian_path":    catatanperbaikanPath,
-			"berita_acara_path": beritaPath,
+			"catatanperbaikan_path": catatanperbaikanPath,
+			"penilaian_path":        penilaianPath,
 		},
 	})
 }
@@ -379,8 +379,8 @@ func DownloadFileCatatanPerbaikanProposalHandler(w http.ResponseWriter, r *http.
 	var baseDir string
 	if strings.HasPrefix(fileName, "Catatan_Perbaikan_") {
 		baseDir = "uploads/catatanperbaikan_proposal"
-	} else if strings.HasPrefix(fileName, "Berita_Acara_") {
-		baseDir = "uploads/berita_acara_proposal"
+	} else if strings.HasPrefix(fileName, "File_Penilaian_") {
+		baseDir = "uploads/penilaian_proposal"
 	} else {
 		http.Error(w, "Prefix nama file tidak valid", http.StatusForbidden)
 		return
@@ -462,7 +462,7 @@ func GetMonitoringPenilaianProposalHandler(w http.ResponseWriter, r *http.Reques
 
 			-- Hitung kelengkapan berkas
 			CASE
-				WHEN COUNT(CASE WHEN spp.file_catatanperbaikan_path IS NOT NULL AND spp.file_berita_acara_path IS NOT NULL THEN 1 END) = 3 THEN 'Lengkap'
+				WHEN COUNT(CASE WHEN spp.file_catatanperbaikan_path IS NOT NULL AND spp.file_penilaian_path IS NOT NULL THEN 1 END) = 3 THEN 'Lengkap'
 				ELSE 'Belum Lengkap'
 			END AS status_kelengkapan
 
@@ -612,7 +612,7 @@ func GetFinalProposalDetailHandler(w http.ResponseWriter, r *http.Request) {
 		)
 
 		err = db.QueryRow(`
-			SELECT status_pengumpulan, file_catatanperbaikan_path, file_berita_acara_path
+			SELECT status_pengumpulan, file_catatanperbaikan_path, file_penilaian_path
 			FROM seminar_proposal_penilaian
 			WHERE final_proposal_id = ? AND dosen_id = ?
 			LIMIT 1
@@ -654,7 +654,7 @@ func getPengujiData(db *sql.DB, proposalID string, dosenID int) map[string]inter
 		SELECT 
 			d.nama_lengkap,
 			spp.file_catatanperbaikan_path,
-			spp.file_berita_acara_path,
+			spp.file_penilaian_path,
 			spp.status_pengumpulan
 		FROM dosen d
 		LEFT JOIN seminar_proposal_penilaian spp ON spp.dosen_id = d.id 
@@ -680,7 +680,7 @@ func getPengujiData(db *sql.DB, proposalID string, dosenID int) map[string]inter
 		return map[string]interface{}{
 			"nama_lengkap":               "-",
 			"file_catatanperbaikan_path": "",
-			"file_berita_acara_path":     "",
+			"file_penilaian_path":        "",
 			"status_pengumpulan":         "belum",
 		}
 	}
@@ -688,7 +688,7 @@ func getPengujiData(db *sql.DB, proposalID string, dosenID int) map[string]inter
 	return map[string]interface{}{
 		"nama_lengkap":               data.NamaLengkap,
 		"file_catatanperbaikan_path": data.FilePenilaianPath.String,
-		"file_berita_acara_path":     data.BeritaAcaraPath.String,
+		"file_penilaian_path":        data.BeritaAcaraPath.String,
 		"status_pengumpulan":         data.StatusPengumpulan.String,
 	}
 }

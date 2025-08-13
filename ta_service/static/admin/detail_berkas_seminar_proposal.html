@@ -718,10 +718,10 @@
 								<td>: <span id="ketua">-</span></td>
 							</tr>
 							<tr>
-								<td>Dokumen Penilaian</td>
+								<td>Dokumen Catatan Perbaikan</td>
 								<td>
-									<span id="ketua-penilaian-status">-</span>
-									<a href="#" id="ketua-penilaian-download" class="btn-download" style="display:none;">
+									<span id="ketua-catatanperbaikan-status">-</span>
+									<a href="#" id="ketua-catatanperbaikan-download" class="btn-download" style="display:none;">
 										<i class="dw dw-download"></i> Download
 									</a>
 								</td>
@@ -729,8 +729,8 @@
 							<tr>
 								<td>Dokumen Berita Acara</td>
 								<td>
-									<span id="ketua-berita-acara-status">-</span>
-									<a href="#" id="ketua-berita-acara-download" class="btn-download" style="display:none;">
+									<span id="ketua-penilaian-status">-</span>
+									<a href="#" id="ketua-penilaian-download" class="btn-download" style="display:none;">
 										<i class="dw dw-download"></i> Download
 									</a>
 								</td>
@@ -750,8 +750,8 @@
 							<tr>
 								<td>Dokumen Penilaian</td>
 								<td>
-									<span id="penguji1-penilaian-status">-</span>
-									<a href="#" id="penguji1-penilaian-download" class="btn-download" style="display:none;">
+									<span id="penguji1-catatanperbaikan-status">-</span>
+									<a href="#" id="penguji1-catatanperbaikan-download" class="btn-download" style="display:none;">
 										<i class="dw dw-download"></i> Download
 									</a>
 								</td>
@@ -759,8 +759,8 @@
 							<tr>
 								<td>Dokumen Berita Acara</td>
 								<td>
-									<span id="penguji1-berita-acara-status">-</span>
-									<a href="#" id="penguji1-berita-acara-download" class="btn-download" style="display:none;">
+									<span id="penguji1-penilaian-status">-</span>
+									<a href="#" id="penguji1-penilaian-download" class="btn-download" style="display:none;">
 										<i class="dw dw-download"></i> Download
 									</a>
 								</td>
@@ -779,8 +779,8 @@
 							<tr>
 								<td>Dokumen Penilaian</td>
 								<td>
-									<span id="penguji2-penilaian-status">-</span>
-									<a href="#" id="penguji2-penilaian-download" class="btn-download" style="display:none;">
+									<span id="penguji2-catatanperbaikan-status">-</span>
+									<a href="#" id="penguji2-catatanperbaikan-download" class="btn-download" style="display:none;">
 										<i class="dw dw-download"></i> Download
 									</a>
 								</td>
@@ -788,8 +788,8 @@
 							<tr>
 								<td>Dokumen Berita Acara</td>
 								<td>
-									<span id="penguji2-berita-acara-status">-</span>
-									<a href="#" id="penguji2-berita-acara-download" class="btn-download" style="display:none;">
+									<span id="penguji2-penilaian-status">-</span>
+									<a href="#" id="penguji2-penilaian-download" class="btn-download" style="display:none;">
 										<i class="dw dw-download"></i> Download
 									</a>
 								</td>
@@ -1039,7 +1039,7 @@
 					const ketuaPenguji = data.ketua_penguji || {};
 					updatePengujiSection('ketua', {
 						nama_lengkap: ketuaPenguji.nama_dosen || '-',
-						file_penilaian_path: ketuaPenguji.file_penilaian || '',
+						file_catatanperbaikan_path: ketuaPenguji.file_catatanperbaikan || '',
 						file_berita_acara_path: ketuaPenguji.file_berita_acara || '',
 						status_pengumpulan: ketuaPenguji.status_pengumpulan || 'belum'
 					});
@@ -1048,7 +1048,7 @@
 					const penguji1 = data.penguji1 || {};
 					updatePengujiSection('penguji1', {
 						nama_lengkap: penguji1.nama_dosen || '-',
-						file_penilaian_path: penguji1.file_penilaian || '',
+						file_catatanperbaikan_path: penguji1.file_catatanperbaikan || '',
 						file_berita_acara_path: penguji1.file_berita_acara || '',
 						status_pengumpulan: penguji1.status_pengumpulan || 'belum'
 					});
@@ -1057,7 +1057,7 @@
 					const penguji2 = data.penguji2 || {};
 					updatePengujiSection('penguji2', {
 						nama_lengkap: penguji2.nama_dosen || '-',
-						file_penilaian_path: penguji2.file_penilaian || '',
+						file_catatanperbaikan_path: penguji2.file_catatanperbaikan || '',
 						file_berita_acara_path: penguji2.file_berita_acara || '',
 						status_pengumpulan: penguji2.status_pengumpulan || 'belum'
 					});
@@ -1073,10 +1073,25 @@
 				const namaEl = document.getElementById(`${type}`);
 				if (namaEl) namaEl.textContent = data.nama_lengkap;
 
+				const catatanperbaikanStatus = document.getElementById(`${type}-catatanperbaikan-status`);
+				const catatanperbaikanDownload = document.getElementById(`${type}-catatanperbaikan-download`);
+				if (catatanperbaikanStatus) {
+					if (data.file_catatanperbaikan_path) {
+						catatanperbaikanStatus.innerHTML = '<span class="badge-exists">Ada</span>';
+						if (catatanperbaikanDownload) {
+							catatanperbaikanDownload.style.display = 'inline-block';
+							catatanperbaikanDownload.href = `/api/document/penilaian/proposal/download?path=${data.file_catatanperbaikan_path}`;
+						}
+					} else {
+						catatanperbaikanStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
+						if (catatanperbaikanDownload) catatanperbaikanDownload.style.display = 'none';
+					}
+				}
+
 				const penilaianStatus = document.getElementById(`${type}-penilaian-status`);
 				const penilaianDownload = document.getElementById(`${type}-penilaian-download`);
 				if (penilaianStatus) {
-					if (data.file_penilaian_path) {
+					if (data.file_berita_acara_path) {
 						penilaianStatus.innerHTML = '<span class="badge-exists">Ada</span>';
 						if (penilaianDownload) {
 							penilaianDownload.style.display = 'inline-block';
@@ -1085,21 +1100,6 @@
 					} else {
 						penilaianStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
 						if (penilaianDownload) penilaianDownload.style.display = 'none';
-					}
-				}
-
-				const beritaAcaraStatus = document.getElementById(`${type}-berita-acara-status`);
-				const beritaAcaraDownload = document.getElementById(`${type}-berita-acara-download`);
-				if (beritaAcaraStatus) {
-					if (data.file_berita_acara_path) {
-						beritaAcaraStatus.innerHTML = '<span class="badge-exists">Ada</span>';
-						if (beritaAcaraDownload) {
-							beritaAcaraDownload.style.display = 'inline-block';
-							beritaAcaraDownload.href = `/api/document/penilaian/proposal/download?path=${data.file_berita_acara_path}`;
-						}
-					} else {
-						beritaAcaraStatus.innerHTML = '<span class="badge-empty">Belum dikumpulkan</span>';
-						if (beritaAcaraDownload) beritaAcaraDownload.style.display = 'none';
 					}
 				}
 			}

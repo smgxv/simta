@@ -578,10 +578,10 @@
 								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
 							<div class="form-group">
-								<label>File Berita Acara (PDF)</label>
+								<label>File Penilaian (Berita Acara dan File Penilaian Lainnya)</label>
 								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="beritaAcaraFile" name="berita_acara_file" accept=".pdf" required>
-									<label class="custom-file-label" for="beritaAcaraFile">Choose file</label>
+									<input type="file" class="custom-file-input" id="penilaianFile" name="penilaian_file" accept=".pdf" required>
+									<label class="custom-file-label" for="penilaianFile">Choose file</label>
 								</div>
 								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
@@ -961,14 +961,14 @@
 				loadTarunaDropdown();
 			});
 
-			// Update nama file saat file penilaian dipilih
+			// Update nama file saat file catatan perbaikan dipilih
 			document.getElementById('catatanperbaikanFile').addEventListener('change', function(e) {
 				const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
 				this.nextElementSibling.textContent = fileName;
 			});
 
-			// Update nama file saat file berita acara dipilih
-			document.getElementById('beritaAcaraFile').addEventListener('change', function(e) {
+			// Update nama file saat file penilaian dipilih
+			document.getElementById('penilaianFile').addEventListener('change', function(e) {
 				const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
 				this.nextElementSibling.textContent = fileName;
 			});
@@ -981,11 +981,11 @@
 				const tarunaSelect = document.getElementById('tarunaSelect');
 				const finalProposalId = document.getElementById('finalProposalId').value;
 				const catatanperbaikanFile = document.getElementById('catatanperbaikanFile').files[0];
-				const beritaAcaraFile = document.getElementById('beritaAcaraFile').files[0];
+				const penilaianFile = document.getElementById('penilaianFile').files[0];
 				const dosenId = localStorage.getItem('dosenID');
 
 				// Validasi semua field yang diperlukan
-				if (!tarunaSelect.value || !finalProposalId || !catatanperbaikanFile || !beritaAcaraFile || !dosenId) {
+				if (!tarunaSelect.value || !finalProposalId || !catatanperbaikanFile || !penilaianFile || !dosenId) {
 					showAlert('Semua field harus diisi', 'warning');
 					return;
 				}
@@ -1003,7 +1003,7 @@
 					formData.append('final_proposal_id', finalProposalId);
 					formData.append('dosen_id', dosenId);
 					formData.append('catatanperbaikan_file', catatanperbaikanFile);
-					formData.append('berita_acara_file', beritaAcaraFile);
+					formData.append('penilaian_file', penilaianFile);
 
 					// Log data yang akan dikirim
 					console.log('Sending data:');
