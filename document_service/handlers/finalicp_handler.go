@@ -294,21 +294,47 @@ func GetFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Mapping output sesuai kebutuhan frontend taruna
 	mapped := []map[string]interface{}{}
 	for _, icp := range finalICPs {
+		// Parse daftar path pendukung dari kolom JSON (aman jika kosong/invalid)
+		var supportPaths []string
+		if paths, err := icp.GetSupportingFiles(); err == nil && len(paths) > 0 {
+			supportPaths = paths
+		}
+
+		// Buat URL download per index
+		filePendukungURL := make([]string, 0, len(supportPaths))
+		supportFiles := make([]map[string]interface{}, 0, len(supportPaths))
+		for i, p := range supportPaths {
+			url := fmt.Sprintf("/api/document/finalicp/download/%d?type=support&index=%d", icp.ID, i)
+			filePendukungURL = append(filePendukungURL, url)
+
+			name := filepath.Base(p)
+			supportFiles = append(supportFiles, map[string]interface{}{
+				"index": i,
+				"name":  name,
+				"url":   url,
+			})
+		}
+
 		mapped = append(mapped, map[string]interface{}{
-			"taruna_id":        icp.UserID,
-			"nama_lengkap":     icp.NamaLengkap,
-			"jurusan":          icp.Jurusan,
-			"kelas":            icp.Kelas,
-			"topik_penelitian": icp.TopikPenelitian,
-			"status":           icp.Status,
-			"final_icp_id":     icp.ID, // ini penting!
+			"taruna_id":          icp.UserID,
+			"nama_lengkap":       icp.NamaLengkap,
+			"jurusan":            icp.Jurusan,
+			"kelas":              icp.Kelas,
+			"topik_penelitian":   icp.TopikPenelitian,
+			"status":             icp.Status,
+			"final_icp_id":       icp.ID, // penting untuk download by id
+			"final_download_url": fmt.Sprintf("/api/document/finalicp/download/%d?type=final", icp.ID),
+
+			// Kompatibilitas + kemudahan frontend:
+			"file_pendukung_path": icp.FilePendukungPath, // string JSON asli dari DB (jika ingin)
+			"file_pendukung_url":  filePendukungURL,      // array URL download
+			"support_files":       supportFiles,          // array object {index,name,url}
 		})
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   mapped,
 	})
