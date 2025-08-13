@@ -9,45 +9,48 @@ import (
 	"document_service/utils/filemanager"
 	"encoding/json"
 	"fmt"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 )
 
-// Handler untuk mengupload final laporan 70
+// Handler untuk mengupload final laporan70 + form bimbingan + file pendukung (wajib ≥1)
 func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
+	// ===== CORS =====
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	// Cek ukuran total upload
-	if r.ContentLength > (2 * filemanager.MaxFileSize) {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	// ===== Batas total payload (opsional): 15MB * 4 = 60MB =====
+	if r.ContentLength > filemanager.MaxFileSize*4 {
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "Ukuran total file terlalu besar. Maksimal 30MB",
+			"message": "Total file terlalu besar. Maksimal 60MB",
 		})
 		return
 	}
 
-	err := r.ParseMultipartForm(2 * filemanager.MaxFileSize)
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	// ===== Parse multipart form =====
+	if err := r.ParseMultipartForm(filemanager.MaxFileSize * 4); err != nil {
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "Gagal parsing form: " + err.Error(),
+			"message": "Form terlalu besar atau rusak: " + err.Error(),
 		})
 		return
 	}
 
-	// Ambil field dari form
+	// ===== Ambil field =====
 	userID := r.FormValue("user_id")
 	namaLengkap := r.FormValue("nama_lengkap")
 	jurusan := r.FormValue("jurusan")
@@ -56,84 +59,197 @@ func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	keterangan := r.FormValue("keterangan")
 
 	if userID == "" || namaLengkap == "" || topikPenelitian == "" {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "Field wajib tidak boleh kosong",
-		})
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
+	userIDInt := utils.ParseInt(userID)
 
-	// === Final Laporan 70 ===
-	file1, handler1, err := r.FormFile("final_laporan70_file")
+	// ===== Validasi tipe/ukuran =====
+	const maxSize = int64(15 * 1024 * 1024) // 15MB
+	allowedFinalExt := map[string]bool{".pdf": true}
+	allowedSupportExt := map[string]bool{
+		".pdf": true, ".doc": true, ".docx": true, ".xls": true, ".xlsx": true,
+	}
+	hasAllowedExt := func(name string, allowed map[string]bool) bool {
+		ext := strings.ToLower(filepath.Ext(name))
+		return allowed[ext]
+	}
+
+	// Untuk cleanup massal bila ada error di tengah jalan
+	var savedPaths []string
+	cleanup := func() {
+		for _, p := range savedPaths {
+			_ = os.Remove(p)
+		}
+	}
+
+	// ===== FINAL PROPOSAL (wajib, PDF) =====
+	finalFile, finalHeader, err := r.FormFile("final_laporan70_file")
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "Gagal membaca file final laporan: " + err.Error(),
+			"message": "Gagal mengambil file Final Laporan 70%: " + err.Error(),
 		})
 		return
 	}
-	defer file1.Close()
+	defer finalFile.Close()
 
-	if err := filemanager.ValidateFileType(file1, handler1.Filename); err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	if finalHeader.Size > maxSize {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Ukuran Final Laporan 70% melebihi 15MB",
+		})
+		return
+	}
+	if !hasAllowedExt(finalHeader.Filename, allowedFinalExt) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Tipe Final Laporan 70% tidak diizinkan (hanya PDF)",
+		})
+		return
+	}
+	if err := filemanager.ValidateFileType(finalFile, finalHeader.Filename); err != nil {
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": err.Error(),
 		})
 		return
 	}
-	file1.Seek(0, 0)
+	_, _ = finalFile.Seek(0, 0)
 
-	safeName1 := filemanager.ValidateFileName(handler1.Filename)
-	finalFilename := fmt.Sprintf("FINAL_LAPORAN70_%s_%s_%s", userID, time.Now().Format("20060102150405"), safeName1)
-	finalFilePath, err := filemanager.SaveUploadedFile(file1, handler1, "uploads/final_laporan70", finalFilename)
+	finalFilename := fmt.Sprintf("FINAL_LAPORAN70_%s_%s_%s",
+		userID,
+		time.Now().Format("20060102150405"),
+		filemanager.ValidateFileName(finalHeader.Filename))
+	finalFilePath, err := filemanager.SaveUploadedFile(finalFile, finalHeader, "uploads/finallaporan70", finalFilename)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": err.Error(),
 		})
 		return
 	}
+	savedPaths = append(savedPaths, finalFilePath)
 
-	// === Form Bimbingan ===
-	file2, handler2, err := r.FormFile("form_bimbingan_file")
+	// ===== FORM BIMBINGAN (wajib, PDF) =====
+	formFile, formHeader, err := r.FormFile("form_bimbingan_file")
 	if err != nil {
-		os.Remove(finalFilePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		cleanup()
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "Gagal membaca file form bimbingan: " + err.Error(),
+			"message": "Gagal mengambil file Form Bimbingan: " + err.Error(),
 		})
 		return
 	}
-	defer file2.Close()
+	defer formFile.Close()
 
-	if err := filemanager.ValidateFileType(file2, handler2.Filename); err != nil {
-		os.Remove(finalFilePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	if formHeader.Size > maxSize {
+		cleanup()
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Ukuran Form Bimbingan melebihi 15MB",
+		})
+		return
+	}
+	if !hasAllowedExt(formHeader.Filename, allowedFinalExt) {
+		cleanup()
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Tipe Form Bimbingan tidak diizinkan (hanya PDF)",
+		})
+		return
+	}
+	if err := filemanager.ValidateFileType(formFile, formHeader.Filename); err != nil {
+		cleanup()
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": err.Error(),
 		})
 		return
 	}
-	file2.Seek(0, 0)
+	_, _ = formFile.Seek(0, 0)
 
-	safeName2 := filemanager.ValidateFileName(handler2.Filename)
-	formBimbinganFilename := fmt.Sprintf("FORM_BIMBINGAN70_%s_%s_%s", userID, time.Now().Format("20060102150405"), safeName2)
-	formBimbinganPath, err := filemanager.SaveUploadedFile(file2, handler2, "uploads/form_bimbingan70", formBimbinganFilename)
+	formFilename := fmt.Sprintf("FORM_BIMBINGAN_%s_%s_%s",
+		userID,
+		time.Now().Format("20060102150405"),
+		filemanager.ValidateFileName(formHeader.Filename))
+	formFilePath, err := filemanager.SaveUploadedFile(formFile, formHeader, "uploads/finallaporan70", formFilename)
 	if err != nil {
-		os.Remove(finalFilePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		cleanup()
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": err.Error(),
 		})
 		return
 	}
+	savedPaths = append(savedPaths, formFilePath)
 
-	// === Simpan ke database ===
+	// ===== FILE PENDUKUNG (wajib ≥1) =====
+	supportFiles := r.MultipartForm.File["support_files[]"]
+	if len(supportFiles) == 0 {
+		cleanup()
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Minimal 1 file pendukung wajib diunggah",
+		})
+		return
+	}
+
+	var supportPaths []string
+	supportDir := "uploads/pendukunglaporan70"
+	for _, fh := range supportFiles {
+		f, err := fh.Open()
+		if err != nil {
+			cleanup()
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": "Gagal membuka file pendukung: " + err.Error(),
+			})
+			return
+		}
+
+		if fh.Size > maxSize {
+			f.Close()
+			cleanup()
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": fmt.Sprintf("Ukuran file pendukung melebihi 15MB (%s)", fh.Filename),
+			})
+			return
+		}
+		if !hasAllowedExt(fh.Filename, allowedSupportExt) {
+			f.Close()
+			cleanup()
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": fmt.Sprintf("Tipe file pendukung tidak diizinkan (%s). Hanya PDF, DOC, DOCX, XLS, XLSX.", fh.Filename),
+			})
+			return
+		}
+
+		_, _ = f.Seek(0, 0)
+		safeName := filemanager.ValidateFileName(fh.Filename)
+		supportName := fmt.Sprintf("%d_%s", time.Now().Unix(), safeName)
+
+		outPath, err := filemanager.SaveUploadedFile(f, fh, supportDir, supportName)
+		f.Close()
+		if err != nil {
+			cleanup()
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
+		savedPaths = append(savedPaths, outPath)
+		supportPaths = append(supportPaths, outPath)
+	}
+
+	// ===== SIMPAN DB =====
 	db, err := config.GetDB()
 	if err != nil {
-		os.Remove(finalFilePath)
-		os.Remove(formBimbinganPath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		cleanup()
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": "Gagal koneksi database: " + err.Error(),
 		})
@@ -141,40 +257,50 @@ func UploadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	finalLaporanModel := models.NewFinalLaporan70Model(db)
-	final := &entities.FinalLaporan70{
-		UserID:            utils.ParseInt(userID),
+	finalLaporan70Model := models.NewFinalLaporan70Model(db)
+	finalLaporan70 := &entities.FinalLaporan70{
+		UserID:            userIDInt,
 		NamaLengkap:       namaLengkap,
 		Jurusan:           jurusan,
 		Kelas:             kelas,
 		TopikPenelitian:   topikPenelitian,
 		FilePath:          finalFilePath,
-		FormBimbinganPath: formBimbinganPath,
+		FormBimbinganPath: formFilePath,
 		Keterangan:        keterangan,
 	}
+	// Simpan JSON array path pendukung ke kolom TEXT file_pendukung_path
+	if err := finalLaporan70.SetLaporan70SupportingFiles(supportPaths); err != nil {
+		cleanup()
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Gagal encode file pendukung: " + err.Error(),
+		})
+		return
+	}
 
-	if err := finalLaporanModel.Create(final); err != nil {
-		os.Remove(finalFilePath)
-		os.Remove(formBimbinganPath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := finalLaporan70Model.Create(finalLaporan70); err != nil {
+		cleanup()
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": "Gagal menyimpan ke database: " + err.Error(),
 		})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	// ===== RESPONSE =====
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"status":  "success",
-		"message": "Final Laporan 70% dan Form Bimbingan berhasil diunggah",
-		"data": map[string]interface{}{
-			"id":                  final.ID,
+		"message": "Final Laporan 70% dan file pendukung berhasil diunggah",
+		"data": map[string]any{
+			"id":                  finalLaporan70.ID,
 			"file_path":           finalFilePath,
-			"form_bimbingan_path": formBimbinganPath,
+			"form_bimbingan_path": formFilePath,
+			"file_pendukung_path": supportPaths, // kirim array untuk kemudahan klien
 		},
 	})
 }
 
-// Handler untuk mengambil daftar final laporan 70 berdasarkan user_id
+// Handler untuk mengambil daftar final Laporan 70% berdasarkan user_id (lengkap dengan URL download)
 func GetFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -206,9 +332,55 @@ func GetFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	mapped := []map[string]interface{}{}
+	for _, p := range finalLaporan70s {
+		// Parse daftar path pendukung dari kolom JSON (aman jika kosong/invalid)
+		var supportPaths []string
+		if s := strings.TrimSpace(p.FilePendukungPath); s != "" {
+			_ = json.Unmarshal([]byte(s), &supportPaths) // kalau gagal, biarkan kosong
+		}
+
+		// Buat URL download per index
+		filePendukungURL := make([]string, 0, len(supportPaths))
+		supportFiles := make([]map[string]interface{}, 0, len(supportPaths))
+		for i, sp := range supportPaths {
+			url := fmt.Sprintf("/api/document/finallaporan70/download/%d?type=support&index=%d", p.ID, i)
+			filePendukungURL = append(filePendukungURL, url)
+			supportFiles = append(supportFiles, map[string]interface{}{
+				"index": i,
+				"name":  filepath.Base(sp),
+				"url":   url,
+			})
+		}
+
+		finalURL := fmt.Sprintf("/api/document/finallaporan70/download/%d?type=final", p.ID)
+		formURL := fmt.Sprintf("/api/document/finallaporan70/download/%d?type=form", p.ID)
+
+		mapped = append(mapped, map[string]interface{}{
+			"taruna_id":        p.UserID,
+			"nama_lengkap":     p.NamaLengkap,
+			"jurusan":          p.Jurusan,
+			"kelas":            p.Kelas,
+			"topik_penelitian": p.TopikPenelitian,
+			"status":           p.Status,
+
+			"final_laporan70_id":  p.ID,     // penting untuk download by id
+			"final_download_url":  finalURL, // file final laporan70
+			"form_bimbingan_path": p.FormBimbinganPath,
+			"form_bimbingan_url":  formURL, // file form bimbingan
+
+			"file_pendukung_path": p.FilePendukungPath, // raw JSON dari DB
+			"file_pendukung_url":  filePendukungURL,    // array URL download
+			"support_files":       supportFiles,        // array objek {index,name,url}
+
+			"created_at": p.CreatedAt,
+			"updated_at": p.UpdatedAt,
+		})
+	}
+
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   finalLaporan70s,
+		"data":   mapped,
 	})
 }
 
@@ -287,7 +459,7 @@ func GetAllFinalLaporan70WithTarunaHandler(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-// Handler untuk update status Final Proposal
+// Handler untuk update status Final Laporan 70%
 func UpdateFinalLaporan70StatusHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -329,9 +501,10 @@ func UpdateFinalLaporan70StatusHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk download file Final Laporan 70% atau Form Bimbingan
+// Handler untuk download file Final Laporan70, Form Bimbingan, atau File Pendukung
 func DownloadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// ===== CORS =====
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
@@ -340,53 +513,99 @@ func DownloadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ambil ID dan tipe file dari parameter
+	// ===== Param =====
 	vars := mux.Vars(r)
-	laporanID := vars["id"]               // /final_laporan70/download/{id}
-	fileType := r.URL.Query().Get("type") // ?type=laporan70 atau ?type=form_bimbingan
+	laporan70ID := vars["id"]                // /download/{id}
+	fileType := r.URL.Query().Get("type")    // "final" | "form" | "support"
+	supportIdx := r.URL.Query().Get("index") // index untuk file pendukung
 
-	if laporanID == "" || fileType == "" {
-		http.Error(w, "Parameter 'id' dan 'type' wajib disediakan", http.StatusBadRequest)
-		return
+	if fileType == "" {
+		fileType = "final"
 	}
 
+	// ===== DB =====
 	db, err := config.GetDB()
 	if err != nil {
-		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
 	var filePath string
+
 	switch fileType {
-	case "laporan70":
-		err = db.QueryRow("SELECT file_path FROM final_laporan70 WHERE id = ?", laporanID).Scan(&filePath)
-	case "form_bimbingan":
-		err = db.QueryRow("SELECT form_bimbingan_path FROM final_laporan70 WHERE id = ?", laporanID).Scan(&filePath)
-	default:
-		http.Error(w, "Parameter 'type' tidak valid. Gunakan 'laporan70' atau 'form_bimbingan'", http.StatusBadRequest)
-		return
-	}
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "File tidak ditemukan", http.StatusNotFound)
-		} else {
-			http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+	case "final":
+		// Ambil path file final laporan70
+		err = db.QueryRow("SELECT file_path FROM final_laporan70 WHERE id = ?", laporan70ID).Scan(&filePath)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "File not found", http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
 		}
+
+	case "form":
+		// Ambil path form bimbingan
+		err = db.QueryRow("SELECT form_bimbingan_path FROM final_laporan70 WHERE id = ?", laporan70ID).Scan(&filePath)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "File not found", http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
+	case "support":
+		// Ambil JSON array file pendukung
+		var supportJSON string
+		err = db.QueryRow("SELECT file_pendukung_path FROM final_laporan70 WHERE id = ?", laporan70ID).Scan(&supportJSON)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "File pendukung tidak ditemukan", http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		var paths []string
+		if err := json.Unmarshal([]byte(supportJSON), &paths); err != nil {
+			http.Error(w, "Gagal membaca data file pendukung", http.StatusInternalServerError)
+			return
+		}
+
+		idx, err := strconv.Atoi(supportIdx)
+		if err != nil || idx < 0 || idx >= len(paths) {
+			http.Error(w, "Index file pendukung tidak valid", http.StatusBadRequest)
+			return
+		}
+
+		filePath = paths[idx]
+
+	default:
+		http.Error(w, "type tidak valid. Gunakan 'final', 'form', atau 'support'", http.StatusBadRequest)
 		return
 	}
 
-	file, err := os.Open(filePath)
-	if err != nil {
-		http.Error(w, "Gagal membuka file", http.StatusNotFound)
+	// ===== Validasi file di disk =====
+	if stat, err := os.Stat(filePath); err != nil || stat.IsDir() {
+		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
-	defer file.Close()
 
+	// ===== Header download =====
 	fileName := filepath.Base(filePath)
-	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
-	w.Header().Set("Content-Type", "application/pdf")
+	ctype := mime.TypeByExtension(strings.ToLower(filepath.Ext(fileName)))
+	if ctype == "" {
+		ctype = "application/octet-stream"
+	}
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
+	w.Header().Set("Content-Type", ctype)
+
+	// ===== Kirim file =====
 	http.ServeFile(w, r, filePath)
 }
 
