@@ -57,43 +57,65 @@ func GetSeminarLaporan70ByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Ambil final laporan70 yang diuji oleh dosen_id, sertakan file_pendukung_path
 	query := `
-		SELECT fl.id, fl.user_id, fl.topik_penelitian, fl.file_path, u.nama_lengkap
-		FROM final_laporan70 fl
-		JOIN users u ON fl.user_id = u.id
-		JOIN penguji_laporan70 pl ON fl.id = pl.final_laporan70_id
-		WHERE pl.penguji_1_id = ? OR pl.penguji_2_id = ?
+		SELECT 
+			fp.id, 
+			fp.user_id, 
+			fp.topik_penelitian, 
+			fp.file_path, 
+			COALESCE(fp.file_pendukung_path, '') AS file_pendukung_path,
+			u.nama_lengkap
+		FROM final_laporan70 fp
+		JOIN users u ON fp.user_id = u.id
+		JOIN penguji_laporan70 pp ON fp.id = pp.final_laporan70_id
+		WHERE pp.ketua_penguji_id = ? 
+		   OR pp.penguji_1_id = ? 
+		   OR pp.penguji_2_id = ?
 	`
 
-	rows, err := db.Query(query, dosenIDInt, dosenIDInt)
+	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
 	if err != nil {
 		http.Error(w, "Error querying database: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	type Laporan70Data struct {
-		FinalLaporan70ID int    `json:"final_laporan70_id"`
-		UserID           int    `json:"user_id"`
-		TopikPenelitian  string `json:"topik_penelitian"`
-		FilePath         string `json:"file_path"`
-		TarunaNama       string `json:"taruna_nama"`
+	type FinalLaporan70Data struct {
+		FinalLaporan70ID  int    `json:"final_laporan70_id"`
+		UserID            int    `json:"user_id"`
+		TopikPenelitian   string `json:"topik_penelitian"`
+		FilePath          string `json:"file_path"`
+		FilePendukungPath string `json:"file_pendukung_path"` // tambahkan field ini
+		TarunaNama        string `json:"taruna_nama"`
 	}
 
-	var laporan70s []Laporan70Data
+	var data []FinalLaporan70Data
 	for rows.Next() {
-		var p Laporan70Data
-		err := rows.Scan(&p.FinalLaporan70ID, &p.UserID, &p.TopikPenelitian, &p.FilePath, &p.TarunaNama)
+		var item FinalLaporan70Data
+		err := rows.Scan(
+			&item.FinalLaporan70ID,
+			&item.UserID,
+			&item.TopikPenelitian,
+			&item.FilePath,
+			&item.FilePendukungPath,
+			&item.TarunaNama,
+		)
 		if err != nil {
-			http.Error(w, "Error scanning rows: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error scanning data: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		laporan70s = append(laporan70s, p)
+		data = append(data, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Error reading rows: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data":   laporan70s,
+		"data":   data,
 	})
 }
 

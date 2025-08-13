@@ -384,7 +384,7 @@ func GetFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk mengambil data gabungan taruna dan final laporan 70
+// Handler untuk mengambil data gabungan taruna dan final laporan70 (beserta file pendukung)
 func GetAllFinalLaporan70WithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -403,19 +403,21 @@ func GetAllFinalLaporan70WithTarunaHandler(w http.ResponseWriter, r *http.Reques
 	}
 	defer db.Close()
 
-	// Query untuk mengambil data gabungan
+	// Tambahkan kolom file_pendukung_path dari tabel final_laporan70
 	query := `
 		SELECT 
-			t.user_id as taruna_id,
+			t.user_id AS taruna_id,
 			t.nama_lengkap,
 			t.jurusan,
 			t.kelas,
-			COALESCE(f.topik_penelitian, '') as topik_penelitian,
-			COALESCE(f.status, '') as status,
-			COALESCE(f.id, 0) as final_laporan70_id
+			COALESCE(f.topik_penelitian, '') AS topik_penelitian,
+			COALESCE(f.status, '') AS status,
+			COALESCE(f.id, 0) AS final_laporan70_id,
+			COALESCE(f.file_pendukung_path, '[]') AS file_pendukung_path
 		FROM taruna t
 		LEFT JOIN final_laporan70 f ON t.user_id = f.user_id
-		ORDER BY t.nama_lengkap ASC`
+		ORDER BY t.nama_lengkap ASC
+	`
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -432,12 +434,13 @@ func GetAllFinalLaporan70WithTarunaHandler(w http.ResponseWriter, r *http.Reques
 		TopikPenelitian  string `json:"topik_penelitian"`
 		Status           string `json:"status"`
 		FinalLaporan70ID int    `json:"final_laporan70_id"`
+		FilePendukungRaw string `json:"file_pendukung_path"` // JSON string: ["path1","path2",...]
 	}
 
 	var results []TarunaLaporan70
 	for rows.Next() {
 		var data TarunaLaporan70
-		err := rows.Scan(
+		if err := rows.Scan(
 			&data.TarunaID,
 			&data.NamaLengkap,
 			&data.Jurusan,
@@ -445,15 +448,19 @@ func GetAllFinalLaporan70WithTarunaHandler(w http.ResponseWriter, r *http.Reques
 			&data.TopikPenelitian,
 			&data.Status,
 			&data.FinalLaporan70ID,
-		)
-		if err != nil {
+			&data.FilePendukungRaw,
+		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		results = append(results, data)
 	}
+	if err := rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"status": "success",
 		"data":   results,
 	})
@@ -609,6 +616,7 @@ func DownloadFinalLaporan70Handler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filePath)
 }
 
+// Handler untuk download file Final Laporan70 pada dosen
 func DownloadFinalLaporan70DosenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -619,13 +627,17 @@ func DownloadFinalLaporan70DosenHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Ambil final_laporan70_id dari parameter
 	vars := mux.Vars(r)
-	laporanID := vars["id"] // /finallaporan70/dosen/download/{id}
-
-	if laporanID == "" {
+	laporan70ID := vars["id"] // /finallaporan70/dosen/download/{id}
+	if laporan70ID == "" {
 		http.Error(w, "Parameter 'id' wajib disediakan", http.StatusBadRequest)
 		return
+	}
+
+	// Ambil parameter type (default = laporan70)
+	fileType := r.URL.Query().Get("type")
+	if fileType == "" {
+		fileType = "laporan70"
 	}
 
 	db, err := config.GetDB()
@@ -636,25 +648,64 @@ func DownloadFinalLaporan70DosenHandler(w http.ResponseWriter, r *http.Request) 
 	defer db.Close()
 
 	var filePath string
-	err = db.QueryRow("SELECT file_path FROM final_laporan70 WHERE id = ?", laporanID).Scan(&filePath)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "File tidak ditemukan", http.StatusNotFound)
-		} else {
-			http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+
+	if fileType == "laporan70" {
+		// Ambil path file final laporan70 utama
+		err = db.QueryRow(`SELECT file_path FROM final_laporan70 WHERE id = ?`, laporan70ID).Scan(&filePath)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "File tidak ditemukan", http.StatusNotFound)
+			} else {
+				http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+			}
+			return
 		}
+	} else if fileType == "support" {
+		// Ambil file pendukung
+		var raw string
+		err = db.QueryRow(`SELECT file_pendukung_path FROM final_laporan70 WHERE id = ?`, laporan70ID).Scan(&raw)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "Data tidak ditemukan", http.StatusNotFound)
+			} else {
+				http.Error(w, "Query error: "+err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		if raw == "" {
+			http.Error(w, "Tidak ada file pendukung", http.StatusNotFound)
+			return
+		}
+
+		// Parsing JSON array path
+		var paths []string
+		if err := json.Unmarshal([]byte(raw), &paths); err != nil {
+			http.Error(w, "Format file pendukung tidak valid", http.StatusInternalServerError)
+			return
+		}
+
+		// Ambil index dari query
+		indexStr := r.URL.Query().Get("index")
+		if indexStr == "" {
+			http.Error(w, "Parameter 'index' wajib untuk file pendukung", http.StatusBadRequest)
+			return
+		}
+		idx, err := strconv.Atoi(indexStr)
+		if err != nil || idx < 0 || idx >= len(paths) {
+			http.Error(w, "Index file pendukung tidak valid", http.StatusBadRequest)
+			return
+		}
+
+		filePath = paths[idx]
+	} else {
+		http.Error(w, "Tipe file tidak valid", http.StatusBadRequest)
 		return
 	}
 
-	file, err := os.Open(filePath)
-	if err != nil {
-		http.Error(w, "Gagal membuka file", http.StatusNotFound)
-		return
-	}
-	defer file.Close()
-
+	// Kirim file ke client
 	fileName := filepath.Base(filePath)
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
-	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Type", "application/octet-stream")
 	http.ServeFile(w, r, filePath)
 }
