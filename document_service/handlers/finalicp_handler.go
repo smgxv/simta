@@ -186,7 +186,7 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 		_, _ = f.Seek(0, 0)
 		safeName := filemanager.ValidateFileName(fh.Filename)
 		// Pakai timestamp high-res agar unik walau banyak file per detik
-		supportName := fmt.Sprintf("%s_%d_%s", userID, time.Now().UnixNano(), safeName)
+		supportName := fmt.Sprintf("%d_%s", time.Now().Unix(), safeName)
 
 		outPath, err := filemanager.SaveUploadedFile(f, fh, supportDir, supportName)
 		f.Close()
