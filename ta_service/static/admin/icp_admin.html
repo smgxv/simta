@@ -940,56 +940,100 @@
 					showAlert('Failed to load ICP data', 'danger');
 				}
 			}
+			
+			// Helper: bangun item menu untuk file pendukung (nama file asli)
+			function buildSupportMenuItems(item) {
+			let html = '';
+
+			// butuh final_icp_id valid
+			if (!item || !item.final_icp_id || item.final_icp_id <= 0) return html;
+
+			const raw = item.file_pendukung_path;
+			if (!raw) return html;
+
+			try {
+				const parsed = JSON.parse(raw);
+				if (!Array.isArray(parsed) || parsed.length === 0) return html;
+
+				html += `<div class="dropdown-divider"></div>`;
+
+				parsed.forEach((entry, idx) => {
+				// format lama: string path | format baru: object {original, stored}
+				let displayName = `File Pendukung ${idx + 1}`;
+				if (typeof entry === 'string') {
+					displayName = entry.split('/').pop() || displayName;
+				} else if (entry && typeof entry === 'object') {
+					displayName = entry.original || (entry.stored ? entry.stored.split('/').pop() : displayName);
+				}
+
+				html += `
+					<a class="dropdown-item" 
+					href="/api/document/finalicp/download/${item.final_icp_id}?type=support&index=${idx}" 
+					download>
+					<i class="dw dw-download"></i> ${displayName}
+					</a>`;
+				});
+			} catch (e) {
+				console.warn('Gagal parse file_pendukung_path:', e);
+			}
+
+			return html;
+			}
 
 			// Fungsi untuk menampilkan data yang sudah difilter
 			function displayFilteredData() {
-				const jurusanFilter = document.getElementById('jurusanFilter').value;
-				const kelasFilter = document.getElementById('kelasFilter').value;
+			const jurusanFilter = document.getElementById('jurusanFilter').value;
+			const kelasFilter = document.getElementById('kelasFilter').value;
 
-				const filteredData = allICPData.filter(item => {
-					const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
-					const matchKelas = !kelasFilter || item.kelas === kelasFilter;
-					return matchJurusan && matchKelas;
-				});
+			const filteredData = allICPData.filter(item => {
+				const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
+				const matchKelas = !kelasFilter || item.kelas === kelasFilter;
+				return matchJurusan && matchKelas;
+			});
 
-				const tableBody = document.querySelector('.data-table tbody');
-				tableBody.innerHTML = '';
+			const tableBody = document.querySelector('.data-table tbody');
+			tableBody.innerHTML = '';
 
-				filteredData.forEach(item => {
-					const row = document.createElement('tr');
-					row.innerHTML = `
-						<td>${item.nama_lengkap || '-'}</td>
-						<td>${item.jurusan || '-'}</td>
-						<td>${item.kelas || '-'}</td>
-						<td>${item.topik_penelitian || '-'}</td>
-						<td>
-							${item.status ? 
-								`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
-								: '-'}
-						</td>
-						<td>
-							${item.final_icp_id > 0 ? 
-								`<div class="dropdown">
-									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-										<i class="dw dw-more"></i>
-									</a>
-									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="/api/document/finalicp/download/${item.final_icp_id}" download>
-											<i class="dw dw-download"></i> Download Final ICP
-										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_icp_id}, 'approved')">
-											<i class="dw dw-check"></i> Accept
-										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_icp_id}, 'rejected')">
-											<i class="dw dw-cross"></i> Reject
-										</a>
-									</div>
-								</div>`
-								: '-'}
-						</td>
-					`;
-					tableBody.appendChild(row);
-				});
+			filteredData.forEach(item => {
+				const row = document.createElement('tr');
+				const statusBadge = item.status
+				? `<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>`
+				: '-';
+
+				// menu file pendukung
+				const pendukungLinks = buildSupportMenuItems(item);
+
+				row.innerHTML = `
+				<td>${item.nama_lengkap || '-'}</td>
+				<td>${item.jurusan || '-'}</td>
+				<td>${item.kelas || '-'}</td>
+				<td>${item.topik_penelitian || '-'}</td>
+				<td>${statusBadge}</td>
+				<td>
+					${item.final_icp_id > 0 ? `
+					<div class="dropdown">
+						<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+						<i class="dw dw-more"></i>
+						</a>
+						<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+						<a class="dropdown-item" 
+							href="/api/document/finalicp/download/${item.final_icp_id}?type=final" 
+							download>
+							<i class="dw dw-download"></i> Download Final ICP
+						</a>
+						${pendukungLinks}
+						<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_icp_id}, 'approved')">
+							<i class="dw dw-check"></i> Accept
+						</a>
+						<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_icp_id}, 'rejected')">
+							<i class="dw dw-cross"></i> Reject
+						</a>
+						</div>
+					</div>` : '-'}
+				</td>
+				`;
+				tableBody.appendChild(row);
+			});
 			}
 
 			// Fungsi untuk menerapkan filter

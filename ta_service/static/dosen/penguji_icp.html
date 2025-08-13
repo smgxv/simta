@@ -644,54 +644,93 @@
 
 			// Fungsi untuk memuat data ICP yang harus ditelaah oleh dosen
 			async function loadTelaahICPData() {
-				try {
-					const dosenId = localStorage.getItem('dosenID');
-					if (!dosenId) {
-						console.error('Dosen ID not found');
-						return;
-					}
-
-					console.log('Fetching ICP data for dosen:', dosenId);
-					const response = await fetch(`/api/document/telaah/dosen?dosen_id=${dosenId}`);
-					const data = await response.json();
-
-					const tbody = document.querySelector('.data-table tbody');
-					if (!tbody) {
-						console.error('Table body element not found');
-						return;
-					}
-
-					tbody.innerHTML = '';
-
-					if (data.status === 'success' && data.data && data.data.length > 0) {
-						data.data.forEach(icp => {
-							tbody.innerHTML += `
-								<tr>
-									<td>${icp.topik_penelitian || '-'}</td>
-									<td>${icp.taruna_nama || '-'}</td>
-									<td>
-										<div class="dropdown">
-											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												href="#" role="button" data-toggle="dropdown">
-												<i class="dw dw-more"></i>
-											</a>
-											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/api/document/finalicp/download/${icp.id}" download>
-													<i class="dw dw-download"></i> Download
-												</a>
-											</div>
-										</div>
-									</td>
-								</tr>
-							`;
-						});
-					} else {
-						tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada ICP yang ditelaah</td></tr>';
-					}
-				} catch (error) {
-					console.error('Error loading ICP data:', error);
-					showAlert('Terjadi kesalahan saat memuat data ICP', 'danger');
+			try {
+				const dosenId = localStorage.getItem('dosenID');
+				if (!dosenId) {
+				console.error('Dosen ID not found');
+				return;
 				}
+
+				console.log('Fetching ICP data for dosen:', dosenId);
+				const response = await fetch(`/api/document/telaah/dosen?dosen_id=${dosenId}`);
+				const data = await response.json();
+
+				const tbody = document.querySelector('.data-table tbody');
+				if (!tbody) {
+				console.error('Table body element not found');
+				return;
+				}
+
+				tbody.innerHTML = '';
+
+				if (data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
+				data.data.forEach(icp => {
+					// URL download final (fallback kalau field tidak ada)
+					const finalUrl = icp.final_download_url || `/api/document/finalicp/download/${icp.id}?type=final`;
+
+					// Bangun daftar link file pendukung
+					let pendukungLinks = '';
+
+					// 1) Format baru: support_files = [{index, name, url}]
+					if (Array.isArray(icp.support_files) && icp.support_files.length > 0) {
+					pendukungLinks += `<div class="dropdown-divider"></div>`;
+					icp.support_files.forEach(sf => {
+						const name = sf.name || `File Pendukung ${sf.index + 1}`;
+						const url  = sf.url  || `/api/document/finalicp/download/${icp.id}?type=support&index=${sf.index}`;
+						pendukungLinks += `
+						<a class="dropdown-item" href="${url}" download>
+							<i class="dw dw-download"></i> ${name}
+						</a>`;
+					});
+					}
+					// 2) Fallback lama: file_pendukung_path = JSON array of paths
+					else if (icp.file_pendukung_path) {
+					try {
+						const parsed = JSON.parse(icp.file_pendukung_path);
+						if (Array.isArray(parsed) && parsed.length > 0) {
+						pendukungLinks += `<div class="dropdown-divider"></div>`;
+						parsed.forEach((p, idx) => {
+							const name = (typeof p === 'string' && p.includes('/')) ? p.split('/').pop() : (`File Pendukung ${idx + 1}`);
+							const url  = `/api/document/finalicp/download/${icp.id}?type=support&index=${idx}`;
+							pendukungLinks += `
+							<a class="dropdown-item" href="${url}" download>
+								<i class="dw dw-download"></i> ${name}
+							</a>`;
+						});
+						}
+					} catch (e) {
+						console.warn('Gagal parse file_pendukung_path:', e);
+					}
+					}
+
+					tbody.innerHTML += `
+					<tr>
+						<td>${icp.topik_penelitian || '-'}</td>
+						<td>${icp.taruna_nama || '-'}</td>
+						<td>
+						<div class="dropdown">
+							<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+							href="#" role="button" data-toggle="dropdown">
+							<i class="dw dw-more"></i>
+							</a>
+							<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+							<a class="dropdown-item" href="${finalUrl}" download>
+								<i class="dw dw-download"></i> Final ICP
+							</a>
+							${pendukungLinks}
+							</div>
+						</div>
+						</td>
+					</tr>
+					`;
+				});
+				} else {
+				tbody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada ICP yang ditelaah</td></tr>';
+				}
+			} catch (error) {
+				console.error('Error loading ICP data:', error);
+				showAlert('Terjadi kesalahan saat memuat data ICP', 'danger');
+			}
 			}
 
 			// Fungsi Logout

@@ -625,7 +625,6 @@ func GetFinalICPByDosenHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Dosen ID is required", http.StatusBadRequest)
 		return
 	}
-
 	dosenIDInt, err := strconv.Atoi(dosenID)
 	if err != nil {
 		http.Error(w, "Invalid dosen ID", http.StatusBadRequest)
@@ -639,8 +638,9 @@ func GetFinalICPByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Tambahkan kolom file_pendukung_path
 	query := `
-		SELECT fl.id, fl.user_id, fl.topik_penelitian, fl.file_path, u.nama_lengkap
+		SELECT fl.id, fl.user_id, fl.topik_penelitian, fl.file_path, fl.file_pendukung_path, u.nama_lengkap
 		FROM final_icp fl
 		JOIN users u ON fl.user_id = u.id
 		JOIN penelaah_icp pl ON fl.id = pl.final_icp_id
@@ -654,26 +654,96 @@ func GetFinalICPByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
+	type SupportFile struct {
+		Index int    `json:"index"`
+		Name  string `json:"name"`
+		URL   string `json:"url"`
+	}
+
 	type FinalICPData struct {
-		ID              int    `json:"id"`
-		UserID          int    `json:"user_id"`
-		TopikPenelitian string `json:"topik_penelitian"`
-		FilePath        string `json:"file_path"`
-		TarunaNama      string `json:"taruna_nama"`
+		ID                int           `json:"id"`
+		UserID            int           `json:"user_id"`
+		TopikPenelitian   string        `json:"topik_penelitian"`
+		FilePath          string        `json:"file_path"`
+		TarunaNama        string        `json:"taruna_nama"`
+		FinalDownloadURL  string        `json:"final_download_url"`
+		FilePendukungPath string        `json:"file_pendukung_path"` // JSON string asli dari DB
+		FilePendukungURL  []string      `json:"file_pendukung_url"`  // URL unduh per index
+		SupportFiles      []SupportFile `json:"support_files"`       // dengan nama file
 	}
 
 	var finalicps []FinalICPData
 	for rows.Next() {
-		var p FinalICPData
-		err := rows.Scan(&p.ID, &p.UserID, &p.TopikPenelitian, &p.FilePath, &p.TarunaNama)
-		if err != nil {
+		var (
+			id, userID        int
+			topik, filePath   string
+			filePendukungJSON sql.NullString
+			tarunaNama        string
+		)
+		if err := rows.Scan(&id, &userID, &topik, &filePath, &filePendukungJSON, &tarunaNama); err != nil {
 			http.Error(w, "Error scanning rows: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		finalicps = append(finalicps, p)
+
+		item := FinalICPData{
+			ID:               id,
+			UserID:           userID,
+			TopikPenelitian:  topik,
+			FilePath:         filePath,
+			TarunaNama:       tarunaNama,
+			FinalDownloadURL: fmt.Sprintf("/api/document/finalicp/download/%d?type=final", id),
+		}
+
+		// Isi field file_pendukung_path (as-is) jika ada
+		if filePendukungJSON.Valid {
+			item.FilePendukungPath = filePendukungJSON.String
+		}
+
+		// Bangun daftar URL + nama file
+		var filePendukungURL []string
+		var supportFiles []SupportFile
+
+		if filePendukungJSON.Valid && filePendukungJSON.String != "" {
+			// Bisa format lama: []string
+			var arrStr []string
+			if err := json.Unmarshal([]byte(filePendukungJSON.String), &arrStr); err == nil && len(arrStr) > 0 {
+				for i, p := range arrStr {
+					url := fmt.Sprintf("/api/document/finalicp/download/%d?type=support&index=%d", id, i)
+					filePendukungURL = append(filePendukungURL, url)
+					name := filepath.Base(p)
+					supportFiles = append(supportFiles, SupportFile{Index: i, Name: name, URL: url})
+				}
+			} else {
+				// Bisa format baru: []{original, stored}
+				var arrObj []struct {
+					Original string `json:"original"`
+					Stored   string `json:"stored"`
+				}
+				if err := json.Unmarshal([]byte(filePendukungJSON.String), &arrObj); err == nil && len(arrObj) > 0 {
+					for i, o := range arrObj {
+						url := fmt.Sprintf("/api/document/finalicp/download/%d?type=support&index=%d", id, i)
+						filePendukungURL = append(filePendukungURL, url)
+						name := o.Original
+						if name == "" {
+							name = filepath.Base(o.Stored)
+						}
+						supportFiles = append(supportFiles, SupportFile{Index: i, Name: name, URL: url})
+					}
+				}
+			}
+		}
+
+		item.FilePendukungURL = filePendukungURL
+		item.SupportFiles = supportFiles
+		finalicps = append(finalicps, item)
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Row iteration error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   finalicps,
 	})

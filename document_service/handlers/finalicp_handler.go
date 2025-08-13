@@ -366,7 +366,7 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Query untuk mengambil data gabungan
+	// Tambahkan kolom file_pendukung_path dari tabel final_icp
 	query := `
 		SELECT 
 			t.user_id as taruna_id,
@@ -375,10 +375,12 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			t.kelas,
 			COALESCE(f.topik_penelitian, '') as topik_penelitian,
 			COALESCE(f.status, '') as status,
-			COALESCE(f.id, 0) as final_icp_id
+			COALESCE(f.id, 0) as final_icp_id,
+			COALESCE(f.file_pendukung_path, '') as file_pendukung_path
 		FROM taruna t
 		LEFT JOIN final_icp f ON t.user_id = f.user_id
-		ORDER BY t.nama_lengkap ASC`
+		ORDER BY t.nama_lengkap ASC
+	`
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -388,19 +390,20 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type TarunaICP struct {
-		TarunaID        int    `json:"taruna_id"`
-		NamaLengkap     string `json:"nama_lengkap"`
-		Jurusan         string `json:"jurusan"`
-		Kelas           string `json:"kelas"`
-		TopikPenelitian string `json:"topik_penelitian"`
-		Status          string `json:"status"`
-		FinalICPID      int    `json:"final_icp_id"`
+		TarunaID         int    `json:"taruna_id"`
+		NamaLengkap      string `json:"nama_lengkap"`
+		Jurusan          string `json:"jurusan"`
+		Kelas            string `json:"kelas"`
+		TopikPenelitian  string `json:"topik_penelitian"`
+		Status           string `json:"status"`
+		FinalICPID       int    `json:"final_icp_id"`
+		FilePendukungRaw string `json:"file_pendukung_path"`
 	}
 
 	var results []TarunaICP
 	for rows.Next() {
 		var data TarunaICP
-		err := rows.Scan(
+		if err := rows.Scan(
 			&data.TarunaID,
 			&data.NamaLengkap,
 			&data.Jurusan,
@@ -408,15 +411,20 @@ func GetAllFinalICPWithTarunaHandler(w http.ResponseWriter, r *http.Request) {
 			&data.TopikPenelitian,
 			&data.Status,
 			&data.FinalICPID,
-		)
-		if err != nil {
+			&data.FilePendukungRaw,
+		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		results = append(results, data)
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   results,
 	})
