@@ -57,16 +57,17 @@ func GetSeminarLaporan70ByDosenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Ambil final laporan70 yang diuji oleh dosen_id, sertakan file_pendukung_path
+	// Tambahkan file_pendukung_path di SELECT
 	query := `
-		SELECT fl.id, fl.user_id, fl.topik_penelitian, fl.file_path, u.nama_lengkap
+		SELECT fl.id, fl.user_id, fl.topik_penelitian, fl.file_path, fl.file_pendukung_path, u.nama_lengkap
 		FROM final_laporan70 fl
 		JOIN users u ON fl.user_id = u.id
 		JOIN penguji_laporan70 pl ON fl.id = pl.final_laporan70_id
 		WHERE pl.penguji_1_id = ? OR pl.penguji_2_id = ?
 	`
 
-	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
+	// Kirim hanya 2 parameter sesuai jumlah placeholder
+	rows, err := db.Query(query, dosenIDInt, dosenIDInt)
 	if err != nil {
 		http.Error(w, "Error querying database: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -78,7 +79,7 @@ func GetSeminarLaporan70ByDosenHandler(w http.ResponseWriter, r *http.Request) {
 		UserID            int    `json:"user_id"`
 		TopikPenelitian   string `json:"topik_penelitian"`
 		FilePath          string `json:"file_path"`
-		FilePendukungPath string `json:"file_pendukung_path"` // tambahkan field ini
+		FilePendukungPath string `json:"file_pendukung_path"`
 		TarunaNama        string `json:"taruna_nama"`
 	}
 
