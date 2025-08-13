@@ -12,43 +12,43 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 )
 
-// Handler untuk mengupload final ICP
+// Handler untuk mengupload final ICP + file pendukung (wajib)
 func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
+	// ===== CORS =====
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	// Check Content-Length
-	if r.ContentLength > filemanager.MaxFileSize {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	// ===== Batas total payload (opsional) =====
+	if r.ContentLength > filemanager.MaxFileSize*4 { // mis. 15MB * 4 = 60MB
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+			"message": "Total file terlalu besar. Maksimal 60MB",
 		})
 		return
 	}
 
-	err := r.ParseMultipartForm(filemanager.MaxFileSize)
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+	// ===== Parse form =====
+	if err := r.ParseMultipartForm(filemanager.MaxFileSize * 4); err != nil {
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "File terlalu besar. Maksimal ukuran file adalah 15MB",
+			"message": "Gagal parsing form data",
 		})
 		return
 	}
 
-	// Get form values
+	// ===== Ambil field =====
 	userID := r.FormValue("user_id")
 	namaLengkap := r.FormValue("nama_lengkap")
 	jurusan := r.FormValue("jurusan")
@@ -56,59 +56,159 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	topikPenelitian := r.FormValue("topik_penelitian")
 	keterangan := r.FormValue("keterangan")
 
-	// Validate required fields
 	if userID == "" || namaLengkap == "" || jurusan == "" || kelas == "" || topikPenelitian == "" {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": "Missing required fields",
 		})
 		return
 	}
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "User ID tidak valid",
+		})
+		return
+	}
 
-	// Get the file from form
+	// ===== Konfigurasi validasi file =====
+	maxSize := int64(15 * 1024 * 1024) // 15MB
+	allowedFinalExt := map[string]bool{".pdf": true}
+	allowedSupportExt := map[string]bool{
+		".pdf": true, ".doc": true, ".docx": true, ".xls": true, ".xlsx": true,
+	}
+	hasAllowedExt := func(name string, allowed map[string]bool) bool {
+		ext := strings.ToLower(filepath.Ext(name))
+		return allowed[ext]
+	}
+
+	// ===== FINAL ICP (wajib, PDF) =====
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
-			"message": "Error retrieving file: " + err.Error(),
+			"message": "File final wajib diunggah: " + err.Error(),
 		})
 		return
 	}
 	defer file.Close()
 
-	// Validate file type
+	// Ukuran
+	if handler.Size > maxSize {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Ukuran file final melebihi 15MB",
+		})
+		return
+	}
+	// Ekstensi
+	if !hasAllowedExt(handler.Filename, allowedFinalExt) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Tipe file final ICP tidak diizinkan (hanya PDF)",
+		})
+		return
+	}
+	// (Opsional) Content sniffing khusus PDF (pakai util kamu)
 	if err := filemanager.ValidateFileType(file, handler.Filename); err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": err.Error(),
 		})
 		return
 	}
-	file.Seek(0, 0)
+	_, _ = file.Seek(0, 0)
 
-	// Sanitize filename and build final filename
+	// Simpan final ICP
 	safeFilename := filemanager.ValidateFileName(handler.Filename)
-	filename := fmt.Sprintf("FINAL_ICP_%s_%s_%s",
-		userID,
-		time.Now().Format("20060102150405"),
-		safeFilename)
-	uploadDir := "uploads/finalicp"
-
-	// Save securely
-	filePath, err := filemanager.SaveUploadedFile(file, handler, uploadDir, filename)
+	finalName := fmt.Sprintf("FINAL_ICP_%s_%s_%s", userID, time.Now().Format("20060102150405"), safeFilename)
+	finalDir := "uploads/finalicp"
+	filePath, err := filemanager.SaveUploadedFile(file, handler, finalDir, finalName)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": err.Error(),
 		})
 		return
 	}
+	// Kumpulan path untuk cleanup jika gagal
+	savedPaths := []string{filePath}
 
-	// Connect to database
+	// ===== FILE PENDUKUNG (wajib minimal 1) =====
+	supportFiles := r.MultipartForm.File["support_files[]"]
+	if len(supportFiles) == 0 {
+		_ = os.Remove(filePath)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Minimal 1 file pendukung wajib diunggah",
+		})
+		return
+	}
+
+	var supportPaths []string
+	supportDir := "uploads/pendukungicp"
+
+	for _, fh := range supportFiles {
+		f, err := fh.Open()
+		if err != nil {
+			_ = os.Remove(filePath)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": "Gagal membuka file pendukung: " + err.Error(),
+			})
+			return
+		}
+
+		// Ukuran
+		if fh.Size > maxSize {
+			f.Close()
+			_ = os.Remove(filePath)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": fmt.Sprintf("Ukuran file pendukung melebihi 15MB (%s)", fh.Filename),
+			})
+			return
+		}
+		// Ekstensi
+		if !hasAllowedExt(fh.Filename, allowedSupportExt) {
+			f.Close()
+			_ = os.Remove(filePath)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": fmt.Sprintf("Tipe file pendukung tidak diizinkan (%s). Hanya PDF, DOC, DOCX, XLS, XLSX.", fh.Filename),
+			})
+			return
+		}
+		// (Opsional) Sniffing — jika filemanager.ValidateFileType hanya untuk PDF,
+		// biarkan ext check untuk DOC/XLS; tetap aman karena kita sanitize nama & batasi size.
+
+		_, _ = f.Seek(0, 0)
+		safeName := filemanager.ValidateFileName(fh.Filename)
+		// Pakai timestamp high-res agar unik walau banyak file per detik
+		supportName := fmt.Sprintf("%s_%d_%s", userID, time.Now().UnixNano(), safeName)
+
+		outPath, err := filemanager.SaveUploadedFile(f, fh, supportDir, supportName)
+		f.Close()
+		if err != nil {
+			_ = os.Remove(filePath)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"status":  "error",
+				"message": err.Error(),
+			})
+			return
+		}
+		savedPaths = append(savedPaths, outPath)
+		supportPaths = append(supportPaths, outPath)
+	}
+
+	// ===== SIMPAN DB =====
 	db, err := config.GetDB()
 	if err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		for _, p := range savedPaths {
+			_ = os.Remove(p)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": "Error connecting to database: " + err.Error(),
 		})
@@ -116,18 +216,6 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Parse user_id to int
-	userIDInt, err := strconv.Atoi(userID)
-	if err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  "error",
-			"message": "User ID tidak valid",
-		})
-		return
-	}
-
-	// Create Final ICP record
 	finalICPModel := models.NewFinalICPModel(db)
 	finalICP := &entities.FinalICP{
 		UserID:          userIDInt,
@@ -135,25 +223,41 @@ func UploadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 		Jurusan:         jurusan,
 		Kelas:           kelas,
 		TopikPenelitian: topikPenelitian,
-		FilePath:        filePath,
+		FilePath:        filePath, // simpan path relatif/absolut sesuai kebijakanmu
 		Keterangan:      keterangan,
 	}
 
+	// Set JSON array path pendukung
+	if err := finalICP.SetSupportingFiles(supportPaths); err != nil {
+		for _, p := range savedPaths {
+			_ = os.Remove(p)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Gagal encode file pendukung: " + err.Error(),
+		})
+		return
+	}
+
 	if err := finalICPModel.Create(finalICP); err != nil {
-		os.Remove(filePath)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		for _, p := range savedPaths {
+			_ = os.Remove(p)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  "error",
 			"message": "Error saving to database: " + err.Error(),
 		})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	// ===== RESPONSE =====
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"status":  "success",
-		"message": "Final ICP berhasil diunggah",
-		"data": map[string]interface{}{
-			"id":        finalICP.ID,
-			"file_path": filePath,
+		"message": "Final ICP dan file pendukung berhasil diunggah",
+		"data": map[string]any{
+			"id":                  finalICP.ID,
+			"file_path":           filePath,
+			"file_pendukung_path": supportPaths, // array path (bukan JSON string) untuk kenyamanan klien
 		},
 	})
 }
@@ -334,7 +438,7 @@ func UpdateFinalICPStatusHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler untuk download file Final ICP
+// Handler untuk download file Final ICP atau file pendukung
 func DownloadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -348,6 +452,13 @@ func DownloadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	icpID := vars["id"]
 
+	fileType := r.URL.Query().Get("type")    // "final" atau "support"
+	supportIdx := r.URL.Query().Get("index") // index untuk file pendukung
+
+	if fileType == "" {
+		fileType = "final"
+	}
+
 	db, err := config.GetDB()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -356,27 +467,62 @@ func DownloadFinalICPHandler(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	var filePath string
-	query := "SELECT file_path FROM final_icp WHERE id = ?"
-	err = db.QueryRow(query, icpID).Scan(&filePath)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "File not found", http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	if fileType == "final" {
+		// Ambil path file final
+		query := "SELECT file_path FROM final_icp WHERE id = ?"
+		err = db.QueryRow(query, icpID).Scan(&filePath)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "File not found", http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
 		}
+	} else if fileType == "support" {
+		// Ambil JSON file pendukung
+		var filePendukungJSON string
+		query := "SELECT file_pendukung_path FROM final_icp WHERE id = ?"
+		err = db.QueryRow(query, icpID).Scan(&filePendukungJSON)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "File pendukung tidak ditemukan", http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		// Decode JSON ke slice
+		var paths []string
+		if err := json.Unmarshal([]byte(filePendukungJSON), &paths); err != nil {
+			http.Error(w, "Gagal membaca data file pendukung", http.StatusInternalServerError)
+			return
+		}
+
+		// Ambil index
+		idx, err := strconv.Atoi(supportIdx)
+		if err != nil || idx < 0 || idx >= len(paths) {
+			http.Error(w, "Index file pendukung tidak valid", http.StatusBadRequest)
+			return
+		}
+
+		filePath = paths[idx]
+	} else {
+		http.Error(w, "Tipe file tidak valid", http.StatusBadRequest)
 		return
 	}
 
-	file, err := os.Open(filePath)
-	if err != nil {
+	// Pastikan file ada
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
-	defer file.Close()
 
 	fileName := filepath.Base(filePath)
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
-	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Type", "application/octet-stream")
 
 	http.ServeFile(w, r, filePath)
 }

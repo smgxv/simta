@@ -19,9 +19,9 @@ func (m *FinalICPModel) Create(finalICP *entities.FinalICP) error {
 	query := `
 		INSERT INTO final_icp (
 			user_id, nama_lengkap, jurusan, 
-			kelas, topik_penelitian, file_path, keterangan, 
+			kelas, topik_penelitian, file_path, file_pendukung_path, keterangan, 
 			status
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := m.db.Exec(query,
 		finalICP.UserID,
@@ -30,10 +30,10 @@ func (m *FinalICPModel) Create(finalICP *entities.FinalICP) error {
 		finalICP.Kelas,
 		finalICP.TopikPenelitian,
 		finalICP.FilePath,
+		finalICP.FilePendukungPath, // << kolom baru
 		finalICP.Keterangan,
 		"pending", // default status
 	)
-
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,6 @@ func (m *FinalICPModel) Create(finalICP *entities.FinalICP) error {
 	if err != nil {
 		return err
 	}
-
 	finalICP.ID = int(id)
 	return nil
 }
@@ -51,7 +50,7 @@ func (m *FinalICPModel) GetByUserID(userID string) ([]entities.FinalICP, error) 
 	query := `
 		SELECT 
 			id, user_id, nama_lengkap, 
-			jurusan, kelas, topik_penelitian, file_path, 
+			jurusan, kelas, topik_penelitian, file_path, file_pendukung_path, 
 			keterangan, status, created_at, updated_at
 		FROM final_icp 
 		WHERE user_id = ?
@@ -74,6 +73,7 @@ func (m *FinalICPModel) GetByUserID(userID string) ([]entities.FinalICP, error) 
 			&finalICP.Kelas,
 			&finalICP.TopikPenelitian,
 			&finalICP.FilePath,
+			&finalICP.FilePendukungPath, // << kolom baru
 			&finalICP.Keterangan,
 			&finalICP.Status,
 			&finalICP.CreatedAt,

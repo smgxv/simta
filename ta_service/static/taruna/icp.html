@@ -598,7 +598,7 @@
 					<!-- Simple Datatable End -->
 
 					<!-- Default Basic Forms Start -->
-					 <!-- Final ICP -->
+					<!-- Final ICP -->
 					<div class="pd-20 card-box mb-30">
 
 						<div class="clearfix">
@@ -638,6 +638,20 @@
 									<label class="custom-file-label" for="finalIcpFile">Choose file</label>
 								</div>
 								<div id="finalSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
+							</div>
+							<div class="form-group">
+								<label>File Pendukung ICP (PDF)</label>
+								<div class="custom-file">
+									<input type="file" 
+										   class="custom-file-input" 
+										   id="supportFiles" 
+										   name="support_files[]" 
+										   accept=".pdf,.doc,.docx,.xls,.xlsx" 
+										   multiple 
+										   required>
+									<label class="custom-file-label" for="supportFiles">Pilih satu atau lebih file</label>
+								</div>
+								<div id="supportSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
 							<button type="submit" class="btn btn-primary">Upload Final ICP</button>
 						</form>
@@ -1336,23 +1350,45 @@
 				isiJurusanDanKelasDariTarunaRevisiICP();
 			});
 
-			// Update nama file saat file dipilih untuk Final ICP
-			document.getElementById('finalIcpFile').addEventListener('change', function(e) {
-				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
-				var label = this.nextElementSibling;
-				label.textContent = fileName;
-				
-				var selectedFileDiv = document.getElementById('finalSelectedFileName');
-				if (e.target.files[0]) {
-					selectedFileDiv.textContent = 'File terpilih: ' + fileName;
-					selectedFileDiv.style.display = 'block';
-				} else {
-					selectedFileDiv.style.display = 'none';
+			// ====== UPDATE LABEL FINAL ICP ======
+			document.getElementById('finalIcpFile').addEventListener('change', function (e) {
+				const file = e.target.files[0];
+				const label = this.nextElementSibling;
+				const infoDiv = document.getElementById('finalSelectedFileName');
+
+				if (!file) {
+					label.textContent = 'Choose file';
+					infoDiv.style.display = 'none';
+					return;
 				}
+
+				label.textContent = file.name;
+				infoDiv.textContent = 'File terpilih: ' + file.name;
+				infoDiv.style.display = 'block';
 			});
 
-			// Handle form submission untuk Final ICP
-			document.getElementById('finalIcpForm').addEventListener('submit', async function(e) {
+			// ====== UPDATE LABEL FILE PENDUKUNG ======
+			const supportInput = document.getElementById('supportFiles');
+			if (supportInput) {
+				supportInput.addEventListener('change', function (e) {
+					const files = Array.from(e.target.files || []);
+					const label = this.nextElementSibling;
+					const infoDiv = document.getElementById('supportSelectedFileName');
+
+					if (files.length === 0) {
+						label.textContent = 'Pilih file pendukung';
+						infoDiv.style.display = 'none';
+						return;
+					}
+
+					label.textContent = `${files.length} file dipilih`;
+					infoDiv.innerHTML = 'File terpilih:<br>- ' + files.map(f => f.name).join('<br>- ');
+					infoDiv.style.display = 'block';
+				});
+			}
+
+			// ====== SUBMIT FORM ======
+			document.getElementById('finalIcpForm').addEventListener('submit', async function (e) {
 				e.preventDefault();
 
 				const submitButton = this.querySelector('button[type="submit"]');
@@ -1370,9 +1406,7 @@
 
 					// Ambil data taruna
 					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
+						headers: { 'Authorization': `Bearer ${token}` }
 					});
 
 					if (!tarunaResponse.ok) {
@@ -1390,6 +1424,7 @@
 					formData.append('user_id', userId);
 					formData.append('nama_lengkap', taruna.nama_lengkap);
 
+					// Kirim ke server
 					const response = await fetch('/api/document/finalicp/upload', {
 						method: 'POST',
 						body: formData
@@ -1398,7 +1433,7 @@
 					let data;
 					try {
 						data = await response.json();
-					} catch (err) {
+					} catch {
 						const rawText = await response.text();
 						showAlert(rawText || 'Terjadi kesalahan pada server', 'danger');
 						return;
@@ -1410,19 +1445,21 @@
 						this.reset();
 						document.querySelector('#finalIcpFile').nextElementSibling.textContent = 'Choose file';
 						document.getElementById('finalSelectedFileName').style.display = 'none';
-						loadFinalICPData();
+						if (supportInput) {
+							supportInput.nextElementSibling.textContent = 'Pilih file pendukung';
+							document.getElementById('supportSelectedFileName').style.display = 'none';
+						}
+						if (typeof loadFinalICPData === 'function') loadFinalICPData();
 					}
 
 				} catch (error) {
 					console.error('Error saat upload final ICP:', error);
-					let errorMessage = 'Terjadi kesalahan saat mengunggah Final ICP';
-
-					if (error.message.includes('token')) {
+					let errorMessage = error.message || 'Terjadi kesalahan saat mengunggah Final ICP';
+					if (errorMessage.includes('token')) {
 						errorMessage = 'User ID atau token tidak ditemukan. Silakan login kembali.';
-					} else if (error.message.includes('data taruna')) {
+					} else if (errorMessage.includes('taruna')) {
 						errorMessage = 'Data taruna tidak lengkap atau tidak ditemukan. Silakan hubungi administrator.';
 					}
-
 					showAlert(errorMessage, 'danger');
 				} finally {
 					submitButton.disabled = false;
@@ -1438,27 +1475,27 @@
 					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
 					return;
 				}
-				
+
 				try {
 					console.log('Fetching Final ICP data for user:', userId);
 					const response = await fetch(`/api/document/finalicp/list?user_id=${userId}`);
-					
+
 					if (!response.ok) {
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
-					
+
 					const data = await response.json();
 					console.log('Received Final ICP data:', data);
-					
+
 					if (data.status === 'success') {
 						const tbody = document.querySelector('#finalIcpTable tbody');
 						if (!tbody) {
 							console.error('Table body element not found');
 							return;
 						}
-						
+
 						tbody.innerHTML = '';
-						
+
 						if (data.data && data.data.length > 0) {
 							data.data.forEach(finalIcp => {
 								const statusClass = {
@@ -1467,6 +1504,25 @@
 									'rejected': 'badge badge-danger',
 									'on review': 'badge badge-info'
 								}[finalIcp.status] || 'badge badge-secondary';
+
+								// Parsing file pendukung dari JSON string
+								let pendukungLinks = '';
+								if (finalIcp.file_pendukung_path) {
+									try {
+										const supportFiles = JSON.parse(finalIcp.file_pendukung_path);
+										supportFiles.forEach((_, idx) => {
+											pendukungLinks += `
+												<a class="dropdown-item" 
+												href="/api/document/finalicp/download/${finalIcp.final_icp_id}?type=support&index=${idx}" 
+												download>
+													<i class="dw dw-download"></i> File Pendukung ${idx + 1}
+												</a>
+											`;
+										});
+									} catch (e) {
+										console.error('Gagal parse file_pendukung_path:', e);
+									}
+								}
 
 								tbody.innerHTML += `
 									<tr>
@@ -1477,13 +1533,16 @@
 										<td>
 											<div class="dropdown">
 												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												   href="#" role="button" data-toggle="dropdown">
+												href="#" role="button" data-toggle="dropdown">
 													<i class="dw dw-more"></i>
 												</a>
 												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="/api/document/finalicp/download/${finalIcp.final_icp_id}" download>
-														<i class="dw dw-download"></i> Download
+													<a class="dropdown-item" 
+													href="/api/document/finalicp/download/${finalIcp.final_icp_id}?type=final" 
+													download>
+														<i class="dw dw-download"></i> Final ICP
 													</a>
+													${pendukungLinks}
 												</div>
 											</div>
 										</td>
