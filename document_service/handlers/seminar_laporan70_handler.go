@@ -567,24 +567,19 @@ func GetMonitoringPenilaianLaporan70Handler(w http.ResponseWriter, r *http.Reque
 			u.nama_lengkap AS nama_taruna,
 			t.jurusan,
 			fp.topik_penelitian,
-
-			d1.id AS penguji1_id,
 			d1.nama_lengkap AS penguji1,
-			d2.id AS penguji2_id,
 			d2.nama_lengkap AS penguji2,
-
 			CASE
 				WHEN COUNT(DISTINCT
 					CASE
 					WHEN spp.dosen_id IN (pp.penguji_1_id, pp.penguji_2_id)
-						AND spp.file_penilaian_path IS NOT NULL
-						AND spp.status_pengumpulan = 'sudah'
+					AND spp.file_penilaian_path IS NOT NULL
+					AND spp.status_pengumpulan = 'sudah'
 					THEN spp.dosen_id
 					END
 				) = 2 THEN 'Lengkap'
 				ELSE 'Belum Lengkap'
 			END AS status_kelengkapan
-
 		FROM penguji_laporan70 pp
 		JOIN final_laporan70 fp ON fp.id = pp.final_laporan70_id
 		JOIN users u ON u.id = pp.user_id
@@ -593,10 +588,10 @@ func GetMonitoringPenilaianLaporan70Handler(w http.ResponseWriter, r *http.Reque
 		JOIN dosen d2 ON d2.id = pp.penguji_2_id
 		LEFT JOIN seminar_laporan70_penilaian spp
 			ON spp.final_laporan70_id = pp.final_laporan70_id
-
 		GROUP BY
 			fp.id, u.nama_lengkap, t.jurusan, fp.topik_penelitian,
-			d1.id, d1.nama_lengkap, d2.id, d2.nama_lengkap;
+			d1.nama_lengkap, d2.nama_lengkap;
+
 	`
 
 	rows, err := db.Query(query)
