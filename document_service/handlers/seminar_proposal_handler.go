@@ -218,13 +218,13 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Izinkan total payload lebih besar untuk multi-file (tetap batasi 15MB per file di bawah)
-	if r.ContentLength > filemanager.MaxFileSize*10 { // contoh: total ≤ 150MB
+	if r.ContentLength > filemanager.MaxFileSize { // contoh: total ≤ 150MB
 		sendError("Total upload terlalu besar. Batas 15MB per file.", http.StatusBadRequest)
 		return
 	}
 
 	// Parse multipart dengan kuota lebih besar agar memadai untuk multi-file
-	if err := r.ParseMultipartForm(filemanager.MaxFileSize * 10); err != nil {
+	if err := r.ParseMultipartForm(filemanager.MaxFileSize); err != nil {
 		sendError("Error parsing form: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -277,8 +277,7 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		if files, ok := r.MultipartForm.File["penilaian_file[]"]; ok {
 			penilaianHeaders = files
 		} else if files, ok := r.MultipartForm.File["penilaian_file"]; ok {
-			// dukung nama lama jika masih digunakan
-			penilaianHeaders = files
+			penilaianHeaders = files // dukung nama lama jika masih digunakan
 		}
 	}
 	if len(penilaianHeaders) == 0 {
@@ -287,7 +286,7 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validasi dan simpan setiap file penilaian
+	// Validasi dan simpan setiap file penilaian (tanpa filemanager.ValidateFileType)
 	allowedExt := map[string]bool{
 		".pdf": true, ".doc": true, ".docx": true, ".xls": true, ".xlsx": true,
 	}
@@ -299,7 +298,6 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 	for idx, hdr := range penilaianHeaders {
 		// Batas ukuran per-file 15MB
 		if hdr.Size > filemanager.MaxFileSize {
-			// cleanup
 			_ = os.Remove(catatanperbaikanPath)
 			for _, p := range savedFiles {
 				_ = os.Remove(p)
@@ -308,7 +306,7 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Validasi ekstensi
+		// Validasi ekstensi (tanpa filemanager)
 		ext := strings.ToLower(filepath.Ext(hdr.Filename))
 		if !allowedExt[ext] {
 			_ = os.Remove(catatanperbaikanPath)
@@ -330,18 +328,11 @@ func PenilaianProposalHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// (Opsional) Jika ingin tetap pakai pemeriksaan MIME dari filemanager:
-		// gunakan nama file orisinal saat validasi
-		if err := filemanager.ValidateFileType(f, hdr.Filename); err != nil {
-			f.Close()
-			_ = os.Remove(catatanperbaikanPath)
-			for _, p := range savedFiles {
-				_ = os.Remove(p)
-			}
-			sendError(err.Error(), http.StatusBadRequest)
-			return
-		}
-		_, _ = f.Seek(0, 0)
+		// (Opsional) Anda bisa menambahkan sniff ringan sendiri jika ingin:
+		// buf := make([]byte, 512)
+		// n, _ := f.Read(buf)
+		// mimeGuess := http.DetectContentType(buf[:n])
+		// _, _ = f.Seek(0, io.SeekStart)
 
 		// Buat nama file unik (tambahkan index untuk beda file dalam batch)
 		penilaianFilename := fmt.Sprintf(
