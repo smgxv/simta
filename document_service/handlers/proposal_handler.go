@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -207,64 +206,46 @@ func GetProposalHandler(w http.ResponseWriter, r *http.Request) {
 // DownloadFileProposalHandler digunakan untuk mengunduh file proposal
 func DownloadFileProposalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
-	log.Println("🔽 [Download] Mulai proses download")
 
-	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
+	// Direktori file laporan 70
+	baseDir := "uploads/proposal"
 
+	// Ambil nama file dari query
 	rawPath := r.URL.Query().Get("path")
 	if rawPath == "" {
 		http.Error(w, "File path is required", http.StatusBadRequest)
 		return
 	}
+	fileName := filepath.Base(rawPath) // Hanya ambil nama file-nya
 
-	// Validasi dasar untuk cegah traversal & path absolut
-	if strings.Contains(rawPath, "..") || filepath.IsAbs(rawPath) {
-		http.Error(w, "Invalid file path", http.StatusBadRequest)
-		return
-	}
-
-	// Direktori dasar
-	baseDir := "uploads/proposal"
-
-	// Gabungkan dan normalisasi path
-	fullPath := filepath.Join(baseDir, rawPath)
-	absFullPath, err := filepath.Abs(fullPath)
+	// Bangun path lengkap
+	joinedPath := filepath.Join(baseDir, fileName)
+	absPath, err := filepath.Abs(joinedPath)
 	if err != nil {
 		http.Error(w, "Invalid file path", http.StatusBadRequest)
 		return
 	}
 
-	// Normalisasi baseDir
-	absBaseDir, err := filepath.Abs(baseDir)
-	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
-		return
-	}
-
-	// Validasi bahwa file berada di dalam direktori yang diizinkan
-	if !strings.HasPrefix(absFullPath, absBaseDir+string(os.PathSeparator)) {
+	// Pastikan masih dalam direktori yang diizinkan
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil || !strings.HasPrefix(absPath, baseAbs) {
 		http.Error(w, "Unauthorized file path", http.StatusForbidden)
 		return
 	}
 
-	file, err := os.Open(absFullPath)
+	// Buka file
+	file, err := os.Open(absPath)
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
 	defer file.Close()
 
-	fileName := filepath.Base(absFullPath)
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
+	// Header download
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
 	w.Header().Set("Content-Type", "application/pdf")
 
-	if r.Method == http.MethodHead {
-		return
-	}
-
+	// Kirim isi file
 	_, err = io.Copy(w, file)
 	if err != nil {
 		http.Error(w, "Error downloading file", http.StatusInternalServerError)
