@@ -1665,9 +1665,9 @@
 												<i class="dw dw-more"></i>
 											</a>
 											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												${fileName.startsWith('PENILAIAN_') ? `
+												${fileName.startsWith('Catatan_Perbaikan_') ? `
 													<a class="dropdown-item" href="/api/document/penilaian/laporan100/download?path=${fileName}" download>
-														<i class="dw dw-download"></i> Unduh Catatan Perbaikan
+														<i class="dw dw-download"></i> Unduh Catatan
 													</a>
 												` : `
 													<span class="dropdown-item text-muted">
@@ -1698,7 +1698,7 @@
 						`;
 					}
 				}
-			}
+			}		
 			
 			// Panggil fungsi saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', function() {

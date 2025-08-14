@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -197,26 +198,33 @@ func GetSeminarLaporan100TarunaListForDosenHandler(w http.ResponseWriter, r *htt
 	})
 }
 
-// PenilaianLaporan100Handler menangani request untuk menyimpan penilaian laporan100
+// PenilaianLaporan100Handler menangani request untuk menyimpan penilaian laporan100 (multi-file untuk penilaian)
 func PenilaianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
 	sendError := func(message string, statusCode int) {
 		w.WriteHeader(statusCode)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "error",
 			"message": message,
 		})
 	}
 
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Izinkan total payload lebih besar untuk multi-file (tetap batasi 15MB per file di bawah)
+	if r.ContentLength > filemanager.MaxFileSize { // contoh: total ≤ 150MB
+		sendError("Total upload terlalu besar. Batas 15MB per file.", http.StatusBadRequest)
+		return
+	}
+
+	// Parse multipart dengan kuota lebih besar agar memadai untuk multi-file
 	if err := r.ParseMultipartForm(filemanager.MaxFileSize); err != nil {
 		sendError("Error parsing form: "+err.Error(), http.StatusBadRequest)
 		return
@@ -231,127 +239,224 @@ func PenilaianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// === Penilaian file ===
-	penilaianFile, penilaianHeader, err := r.FormFile("penilaian_file")
+	// ====================== TIDAK DIUBAH: Upload Catatan Perbaikan (single file) ======================
+	catatanperbaikanFile, catatanperbaikanHeader, err := r.FormFile("catatanperbaikan_file")
 	if err != nil {
-		sendError("File penilaian tidak ditemukan: "+err.Error(), http.StatusBadRequest)
+		sendError("Gagal mengambil file Catatan Perbaikan: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer penilaianFile.Close()
+	defer catatanperbaikanFile.Close()
 
-	if err := filemanager.ValidateFileType(penilaianFile, penilaianHeader.Filename); err != nil {
-		sendError("Tipe file penilaian tidak didukung: "+err.Error(), http.StatusBadRequest)
+	if err := filemanager.ValidateFileType(catatanperbaikanFile, catatanperbaikanHeader.Filename); err != nil {
+		sendError(err.Error(), http.StatusBadRequest)
 		return
 	}
-	penilaianFile.Seek(0, 0)
-	penilaianFilename := fmt.Sprintf("PENILAIAN_%s_%s_%s", userID, time.Now().Format("20060102150405"), filemanager.ValidateFileName(penilaianHeader.Filename))
-	penilaianPath, err := filemanager.SaveUploadedFile(penilaianFile, penilaianHeader, "uploads/penilaian_laporan100", penilaianFilename)
-	if err != nil {
-		sendError("Gagal menyimpan file penilaian: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	_, _ = catatanperbaikanFile.Seek(0, 0)
 
-	// === Berita Acara file ===
-	beritaAcaraFile, beritaAcaraHeader, err := r.FormFile("berita_acara_file")
-	if err != nil {
-		os.Remove(penilaianPath)
-		sendError("File berita acara tidak ditemukan: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-	defer beritaAcaraFile.Close()
+	catatanperbaikanFilename := fmt.Sprintf(
+		"Catatan_Perbaikan_%s_%s_%s",
+		userID,
+		time.Now().Format("20060102150405"),
+		filemanager.ValidateFileName(catatanperbaikanHeader.Filename),
+	)
 
-	if err := filemanager.ValidateFileType(beritaAcaraFile, beritaAcaraHeader.Filename); err != nil {
-		os.Remove(penilaianPath)
-		sendError("Tipe file berita acara tidak didukung: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-	beritaAcaraFile.Seek(0, 0)
-	beritaAcaraFilename := fmt.Sprintf("BERITAACARA_%s_%s_%s", userID, time.Now().Format("20060102150405"), filemanager.ValidateFileName(beritaAcaraHeader.Filename))
-	beritaAcaraPath, err := filemanager.SaveUploadedFile(beritaAcaraFile, beritaAcaraHeader, "uploads/berita_acara_laporan100", beritaAcaraFilename)
+	catatanperbaikanPath, err := filemanager.SaveUploadedFile(
+		catatanperbaikanFile,
+		catatanperbaikanHeader,
+		"uploads/catatanperbaikan_laporan100",
+		catatanperbaikanFilename,
+	)
 	if err != nil {
-		os.Remove(penilaianPath)
-		sendError("Gagal menyimpan file berita acara: "+err.Error(), http.StatusInternalServerError)
+		sendError("Gagal menyimpan file catatan perbaikan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// ====================== DIUBAH: Upload File Penilaian (multi-file) ======================
+	// Ambil daftar file dari key "penilaian_file[]" (fallback ke "penilaian_file" jika perlu)
+	var penilaianHeaders []*multipart.FileHeader
+	if r.MultipartForm != nil && r.MultipartForm.File != nil {
+		if files, ok := r.MultipartForm.File["penilaian_file[]"]; ok {
+			penilaianHeaders = files
+		} else if files, ok := r.MultipartForm.File["penilaian_file"]; ok {
+			penilaianHeaders = files // dukung nama lama jika masih digunakan
+		}
+	}
+	if len(penilaianHeaders) == 0 {
+		_ = os.Remove(catatanperbaikanPath)
+		sendError("Gagal mengambil file penilaian: tidak ada file yang diunggah", http.StatusBadRequest)
+		return
+	}
+
+	// Validasi dan simpan setiap file penilaian (tanpa filemanager.ValidateFileType)
+	allowedExt := map[string]bool{
+		".pdf": true, ".doc": true, ".docx": true, ".xls": true, ".xlsx": true,
+	}
+	var penilaianPaths []string
+	var savedFiles []string // untuk cleanup jika gagal di tengah
+
+	nowStr := time.Now().Format("20060102150405")
+
+	for idx, hdr := range penilaianHeaders {
+		// Batas ukuran per-file 15MB
+		if hdr.Size > filemanager.MaxFileSize {
+			_ = os.Remove(catatanperbaikanPath)
+			for _, p := range savedFiles {
+				_ = os.Remove(p)
+			}
+			sendError(fmt.Sprintf("Ukuran file '%s' melebihi 15MB", hdr.Filename), http.StatusBadRequest)
+			return
+		}
+
+		// Validasi ekstensi (tanpa filemanager)
+		ext := strings.ToLower(filepath.Ext(hdr.Filename))
+		if !allowedExt[ext] {
+			_ = os.Remove(catatanperbaikanPath)
+			for _, p := range savedFiles {
+				_ = os.Remove(p)
+			}
+			sendError(fmt.Sprintf("Tipe file tidak didukung untuk '%s'. Hanya pdf, doc, docx, xls, xlsx.", hdr.Filename), http.StatusBadRequest)
+			return
+		}
+
+		// Buka file
+		f, err := hdr.Open()
+		if err != nil {
+			_ = os.Remove(catatanperbaikanPath)
+			for _, p := range savedFiles {
+				_ = os.Remove(p)
+			}
+			sendError("Gagal membuka file penilaian: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// (Opsional) Anda bisa menambahkan sniff ringan sendiri jika ingin:
+		// buf := make([]byte, 512)
+		// n, _ := f.Read(buf)
+		// mimeGuess := http.DetectContentType(buf[:n])
+		// _, _ = f.Seek(0, io.SeekStart)
+
+		// Buat nama file unik (tambahkan index untuk beda file dalam batch)
+		penilaianFilename := fmt.Sprintf(
+			"File_Penilaian_%s_%s_%02d_%s",
+			userID,
+			nowStr,
+			idx+1,
+			filemanager.ValidateFileName(hdr.Filename),
+		)
+
+		savedPath, err := filemanager.SaveUploadedFile(
+			f,
+			hdr,
+			"uploads/file_penilaian_laporan100",
+			penilaianFilename,
+		)
+		f.Close()
+		if err != nil {
+			_ = os.Remove(catatanperbaikanPath)
+			for _, p := range savedFiles {
+				_ = os.Remove(p)
+			}
+			sendError("Gagal menyimpan salah satu file penilaian: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		penilaianPaths = append(penilaianPaths, savedPath)
+		savedFiles = append(savedFiles, savedPath)
+	}
+
+	// JSON-encode daftar path agar bisa disimpan ke kolom string tanpa ubah skema
+	penilaianPathsJSON, err := json.Marshal(penilaianPaths)
+	if err != nil {
+		_ = os.Remove(catatanperbaikanPath)
+		for _, p := range savedFiles {
+			_ = os.Remove(p)
+		}
+		sendError("Gagal menyiapkan data file penilaian: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// ====================== Database ======================
 	db, err := config.GetDB()
 	if err != nil {
-		os.Remove(penilaianPath)
-		os.Remove(beritaAcaraPath)
-		sendError("Database error: "+err.Error(), http.StatusInternalServerError)
+		_ = os.Remove(catatanperbaikanPath)
+		for _, p := range savedFiles {
+			_ = os.Remove(p)
+		}
+		sendError("Koneksi database gagal: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
 	tx, err := db.Begin()
 	if err != nil {
-		os.Remove(penilaianPath)
-		os.Remove(beritaAcaraPath)
+		_ = os.Remove(catatanperbaikanPath)
+		for _, p := range savedFiles {
+			_ = os.Remove(p)
+		}
 		sendError("Gagal memulai transaksi: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	var exists bool
-	err = tx.QueryRow(`
-		SELECT EXISTS(
-			SELECT 1 
-			FROM seminar_laporan100_penilaian 
-			WHERE user_id = ? AND dosen_id = ? AND final_laporan100_id = ?
-		)`, userID, dosenID, finalLaporan100ID).Scan(&exists)
+	err = tx.QueryRow(`SELECT EXISTS(
+		SELECT 1 FROM seminar_laporan100_penilaian 
+		WHERE user_id = ? AND dosen_id = ? AND final_laporan100_id = ?
+	)`, userID, dosenID, finalLaporan100ID).Scan(&exists)
 	if err != nil {
 		tx.Rollback()
-		os.Remove(penilaianPath)
-		os.Remove(beritaAcaraPath)
-		sendError("Gagal mengecek data sebelumnya: "+err.Error(), http.StatusInternalServerError)
+		_ = os.Remove(catatanperbaikanPath)
+		for _, p := range savedFiles {
+			_ = os.Remove(p)
+		}
+		sendError("Gagal cek data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if exists {
-		_, err = tx.Exec(`
-			UPDATE seminar_laporan100_penilaian 
-			SET file_penilaian_path = ?, 
-				file_berita_acara_path = ?, 
-				submitted_at = NOW(), 
-				status_pengumpulan = 'sudah'
+		_, err = tx.Exec(`UPDATE seminar_laporan100_penilaian 
+			SET file_catatanperbaikan_path = ?, file_penilaian_path = ?, 
+				submitted_at = NOW(), status_pengumpulan = 'sudah' 
 			WHERE user_id = ? AND dosen_id = ? AND final_laporan100_id = ?`,
-			penilaianPath, beritaAcaraPath, userID, dosenID, finalLaporan100ID)
+			catatanperbaikanPath, string(penilaianPathsJSON), userID, dosenID, finalLaporan100ID)
 	} else {
-		_, err = tx.Exec(`
-			INSERT INTO seminar_laporan100_penilaian (
-				user_id, final_laporan100_id, dosen_id,
-				file_penilaian_path, file_berita_acara_path,
-				status_pengumpulan, submitted_at
-			) VALUES (?, ?, ?, ?, ?, 'sudah', NOW())`,
-			userID, finalLaporan100ID, dosenID, penilaianPath, beritaAcaraPath)
+		_, err = tx.Exec(`INSERT INTO seminar_laporan100_penilaian (
+			user_id, final_laporan100_id, dosen_id,
+			file_catatanperbaikan_path, file_penilaian_path,
+			status_pengumpulan, submitted_at
+		) VALUES (?, ?, ?, ?, ?, 'sudah', NOW())`,
+			userID, finalLaporan100ID, dosenID, catatanperbaikanPath, string(penilaianPathsJSON))
 	}
-
 	if err != nil {
 		tx.Rollback()
-		os.Remove(penilaianPath)
-		os.Remove(beritaAcaraPath)
-		sendError("Gagal menyimpan ke database: "+err.Error(), http.StatusInternalServerError)
+		_ = os.Remove(catatanperbaikanPath)
+		for _, p := range savedFiles {
+			_ = os.Remove(p)
+		}
+		sendError("Gagal menyimpan data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err := tx.Commit(); err != nil {
 		tx.Rollback()
-		os.Remove(penilaianPath)
-		os.Remove(beritaAcaraPath)
-		sendError("Gagal commit transaksi: "+err.Error(), http.StatusInternalServerError)
+		_ = os.Remove(catatanperbaikanPath)
+		for _, p := range savedFiles {
+			_ = os.Remove(p)
+		}
+		sendError("Gagal commit data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": "Penilaian laporan100 berhasil disimpan",
+		"message": "Penilaian laporan 100% berhasil disimpan",
 		"data": map[string]interface{}{
-			"penilaian_path":    penilaianPath,
-			"berita_acara_path": beritaAcaraPath,
+			"catatanperbaikan_path": catatanperbaikanPath,
+			"penilaian_paths":       penilaianPaths, // kirim array agar mudah dipakai di frontend
 		},
 	})
 }
 
-// DownloadFilePenilaianLaporan100Handler digunakan untuk mengunduh file penilaian atau berita acara laporan 100%
+// DownloadFilePenilaianLaporan100Handler digunakan untuk mengunduh file Catatan Perbaikan atau Penilaian Lainnya Laporan100
 func DownloadFilePenilaianLaporan100Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -369,20 +474,25 @@ func DownloadFilePenilaianLaporan100Handler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	fileName := filepath.Base(rawPath) // Mencegah path traversal
+	fileName := filepath.Base(rawPath) // cegah path traversal
 
-	// Tentukan direktori berdasarkan jenis file
+	// Tentukan direktori berdasarkan prefix nama file
 	var baseDir string
-	if strings.HasPrefix(fileName, "PENILAIAN_") {
-		baseDir = "uploads/penilaian_laporan100"
-	} else if strings.HasPrefix(fileName, "BERITAACARA_") {
-		baseDir = "uploads/berita_acara_laporan100"
-	} else {
+	switch {
+	case strings.HasPrefix(fileName, "Catatan_Perbaikan_"):
+		// (TETAP) dipakai oleh taruna untuk unduh catatan perbaikan
+		baseDir = "uploads/catatanperbaikan_laporan100"
+
+	case strings.HasPrefix(fileName, "File_Penilaian_"):
+		// (DISESUAIKAN) lokasi multi-file penilaian sesuai handler upload
+		baseDir = "uploads/file_penilaian_laporan100"
+
+	default:
 		http.Error(w, "Prefix nama file tidak valid", http.StatusForbidden)
 		return
 	}
 
-	// Bangun path absolut
+	// Bangun path absolut yang aman
 	joinedPath := filepath.Join(baseDir, fileName)
 	absPath, err := filepath.Abs(joinedPath)
 	if err != nil {
@@ -397,19 +507,34 @@ func DownloadFilePenilaianLaporan100Handler(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Buka file
-	file, err := os.Open(absPath)
+	f, err := os.Open(absPath)
 	if err != nil {
 		http.Error(w, "File tidak ditemukan", http.StatusNotFound)
 		return
 	}
-	defer file.Close()
+	defer f.Close()
 
-	// Set header untuk download
-	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
-	w.Header().Set("Content-Type", "application/pdf")
+	// Tentukan content-type berdasarkan ekstensi
+	ext := strings.ToLower(filepath.Ext(fileName))
+	contentType := "application/octet-stream"
+	switch ext {
+	case ".pdf":
+		contentType = "application/pdf"
+	case ".doc":
+		contentType = "application/msword"
+	case ".docx":
+		contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+	case ".xls":
+		contentType = "application/vnd.ms-excel"
+	case ".xlsx":
+		contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	}
 
-	_, err = io.Copy(w, file)
-	if err != nil {
+	// Header untuk download
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
+
+	if _, err := io.Copy(w, f); err != nil {
 		http.Error(w, "Gagal mengirim file", http.StatusInternalServerError)
 		return
 	}
@@ -458,7 +583,16 @@ func GetMonitoringPenilaianLaporan100Handler(w http.ResponseWriter, r *http.Requ
 
 			-- Hitung kelengkapan berkas
 			CASE
-				WHEN COUNT(CASE WHEN spp.file_penilaian_path IS NOT NULL AND spp.file_berita_acara_path IS NOT NULL THEN 1 END) = 3 THEN 'Lengkap'
+				WHEN COUNT(
+					CASE
+						WHEN spp.file_catatanperbaikan_path IS NOT NULL
+						AND spp.file_catatanperbaikan_path <> ''
+						AND spp.file_penilaian_path IS NOT NULL
+						AND spp.file_penilaian_path <> ''
+						AND spp.file_penilaian_path <> '[]'
+						THEN 1
+					END
+				) = 3 THEN 'Lengkap'
 				ELSE 'Belum Lengkap'
 			END AS status_kelengkapan
 
@@ -561,7 +695,7 @@ func GetFinalLaporan100DetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Query laporan100 dan taruna
+	// --- Ambil info laporan100 + taruna ---
 	queryLaporan100 := `
 		SELECT fp.id, u.nama_lengkap, u.jurusan, u.kelas, fp.topik_penelitian
 		FROM final_laporan100 fp
@@ -581,7 +715,7 @@ func GetFinalLaporan100DetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Query penguji
+	// --- Ambil id para penguji ---
 	queryPenguji := `
 		SELECT ketua_penguji_id, penguji_1_id, penguji_2_id
 		FROM penguji_laporan100
@@ -595,40 +729,69 @@ func GetFinalLaporan100DetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fungsi ambil penilaian
-	getPenilaian := func(dosenID int) map[string]string {
-		var namaDosen string
-		err := db.QueryRow(`SELECT nama_lengkap FROM dosen WHERE id = ?`, dosenID).Scan(&namaDosen)
-		if err != nil {
-			namaDosen = "-"
+	type PenilaianDetail struct {
+		NamaDosen            string   `json:"nama_dosen"`
+		StatusPengumpulan    string   `json:"status_pengumpulan"`
+		FileCatatanPerbaikan string   `json:"file_catatanperbaikan"`
+		PenilaianPaths       []string `json:"penilaian_paths"` // hasil parse JSON
+	}
+
+	// Ambil nama dosen
+	getNamaDosen := func(dosenID int) string {
+		var nama string
+		if err := db.QueryRow(`SELECT nama_lengkap FROM dosen WHERE id = ?`, dosenID).Scan(&nama); err != nil {
+			return "-"
 		}
+		return nama
+	}
+
+	// Ambil detail penilaian per dosen (file_penilaian_path = JSON string pada kolom TEXT)
+	getPenilaian := func(dosenID int) PenilaianDetail {
+		namaDosen := getNamaDosen(dosenID)
 
 		var (
-			status, filePenilaian, fileBA string
+			status                 sql.NullString
+			fileCatatanPerbaikanNS sql.NullString
+			filePenilaianNS        sql.NullString
 		)
 
-		err = db.QueryRow(`
-			SELECT status_pengumpulan, file_penilaian_path, file_berita_acara_path
+		err := db.QueryRow(`
+			SELECT status_pengumpulan, file_catatanperbaikan_path, file_penilaian_path
 			FROM seminar_laporan100_penilaian
 			WHERE final_laporan100_id = ? AND dosen_id = ?
 			LIMIT 1
-		`, finalLaporan100ID, dosenID).Scan(&status, &filePenilaian, &fileBA)
+		`, finalLaporan100ID, dosenID).Scan(&status, &fileCatatanPerbaikanNS, &filePenilaianNS)
 
+		// Default jika belum ada record
 		if err != nil {
-			status = "belum"
-			filePenilaian = ""
-			fileBA = ""
+			return PenilaianDetail{
+				NamaDosen:            namaDosen,
+				StatusPengumpulan:    "belum",
+				FileCatatanPerbaikan: "",
+				PenilaianPaths:       []string{},
+			}
 		}
 
-		return map[string]string{
-			"nama_dosen":         namaDosen,
-			"status_pengumpulan": status,
-			"file_penilaian":     filePenilaian,
-			"file_berita_acara":  fileBA,
+		// Parse JSON array dari kolom TEXT; fallback: jika bukan JSON tapi ada string non-kosong, jadikan single item
+		var paths []string
+		if filePenilaianNS.Valid && strings.TrimSpace(filePenilaianNS.String) != "" && strings.TrimSpace(filePenilaianNS.String) != "[]" {
+			if err := json.Unmarshal([]byte(filePenilaianNS.String), &paths); err != nil {
+				// fallback: treat as single path string
+				paths = []string{filePenilaianNS.String}
+			}
+		} else {
+			paths = []string{}
+		}
+
+		return PenilaianDetail{
+			NamaDosen:            namaDosen,
+			StatusPengumpulan:    ternaryLaporan100(status.Valid && status.String != "", status.String, "belum"),
+			FileCatatanPerbaikan: ternaryLaporan100(fileCatatanPerbaikanNS.Valid, fileCatatanPerbaikanNS.String, ""),
+			PenilaianPaths:       paths,
 		}
 	}
 
-	response := map[string]interface{}{
+	resp := map[string]interface{}{
 		"status": "success",
 		"data": map[string]interface{}{
 			"nama_taruna":      namaTaruna,
@@ -640,8 +803,15 @@ func GetFinalLaporan100DetailHandler(w http.ResponseWriter, r *http.Request) {
 			"penguji2":         getPenilaian(penguji2ID),
 		},
 	}
+	_ = json.NewEncoder(w).Encode(resp)
+}
 
-	json.NewEncoder(w).Encode(response)
+// helper kecil biar rapi (ternaryLaporan100-like)
+func ternaryLaporan100[T any](cond bool, a, b T) T {
+	if cond {
+		return a
+	}
+	return b
 }
 
 // Helper function untuk mendapatkan data penilaian dosen
@@ -690,8 +860,7 @@ func getPengujiLaporan100Data(db *sql.DB, laporan100ID string, dosenID int) map[
 }
 
 func GetCatatanPerbaikanTarunaLaporan100Handler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
@@ -724,7 +893,7 @@ func GetCatatanPerbaikanTarunaLaporan100Handler(w http.ResponseWriter, r *http.R
 
 	// Query ambil catatan perbaikan
 	query := `
-		SELECT spp.id, d.nama_lengkap, fp.topik_penelitian, spp.file_penilaian_path, spp.submitted_at
+		SELECT spp.id, d.nama_lengkap, fp.topik_penelitian, spp.file_catatanperbaikan_path, spp.submitted_at
 		FROM seminar_laporan100_penilaian spp
 		JOIN dosen d ON spp.dosen_id = d.id
 		LEFT JOIN final_laporan100 fp ON spp.final_laporan100_id = fp.id
@@ -742,9 +911,9 @@ func GetCatatanPerbaikanTarunaLaporan100Handler(w http.ResponseWriter, r *http.R
 	}
 	defer rows.Close()
 
-	var results []CatatanPerbaikanLaporan100
+	var results []CatatanPerbaikan
 	for rows.Next() {
-		var c CatatanPerbaikanLaporan100
+		var c CatatanPerbaikan
 		err := rows.Scan(&c.ID, &c.NamaDosen, &c.TopikPenelitian, &c.FilePath, &c.SubmittedAt)
 		if err != nil {
 			continue // skip baris yang gagal diparse
