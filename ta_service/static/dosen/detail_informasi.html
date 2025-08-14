@@ -670,319 +670,53 @@
 			}
 		}
 
-		// JS untuk data user
-		document.addEventListener('DOMContentLoaded', function () {
-			const token = localStorage.getItem('token');
-			const userId = localStorage.getItem('userId');
-
-			if (!token || !userId) {
-				window.location.replace('/loginusers');
-				return;
-			}
-
-			// Fetch data dashboard utama (nama, jurusan, icp)
-			fetch(`/api/user/dosen/dashboard?userId=${userId}`, {
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			})
-			.then(response => {
-				if (!response.ok) throw new Error('Gagal mengambil data dosen');
-				return response.json();
-			})
-			.then(data => {
-				document.getElementById('nama-dosen-header').textContent = data.nama_lengkap || 'Dosen';
-				document.getElementById('nama-dosen').textContent = data.nama_lengkap || '-';
-				document.getElementById('jurusan').textContent = data.jurusan || '-';
-
-				const usernameElement = document.getElementById('username');
-				if (usernameElement) {
-					usernameElement.textContent = data.nama_lengkap || 'User';
+			// JS untuk data user
+			// Tambahkan pengecekan autentikasi dan mapping dosenID saat halaman dimuat
+			document.addEventListener('DOMContentLoaded', function() {
+				console.log('DOM Content Loaded'); // Debug log
+				
+				// Cek token dan ambil dosenID
+				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+				if (!token) {
+					console.warn('No token found');
+					window.location.replace('/loginusers');
+					return;
 				}
 
-				// Tampilkan ICP Ditelaah
-				const icpListElement = document.getElementById('icp-list');
-				icpListElement.innerHTML = '';
+				const userId = localStorage.getItem('userId');
+				console.log('UserID:', userId); // Debug log
 
-				if (Array.isArray(data.icp_ditelaah) && data.icp_ditelaah.length > 0) {
-					data.icp_ditelaah.forEach(icp => {
-						const row = document.createElement('tr');
-
-						const namaCell = document.createElement('td');
-						namaCell.textContent = icp.nama_taruna || '-';
-
-						const topikCell = document.createElement('td');
-						topikCell.textContent = icp.topik_penelitian || '-';
-
-						const statusCell = document.createElement('td');
-						statusCell.textContent = icp.status || '-';
-						if (icp.status === "Sudah Ditelaah") {
-							statusCell.classList.add("text-success", "fw-bold");
-						} else {
-							statusCell.classList.add("text-danger", "fw-bold");
+				// Ambil data dosen dan set dosenID
+					fetch('/api/user/dosen', {
+						headers: {
+							'Authorization': `Bearer ${token}`
 						}
-
-						row.appendChild(namaCell);
-						row.appendChild(topikCell);
-						row.appendChild(statusCell);
-						icpListElement.appendChild(row);
-					});
-				} else {
-					const row = document.createElement('tr');
-					const cell = document.createElement('td');
-					cell.colSpan = 3;
-					cell.textContent = 'Tidak ada data ICP yang ditelaah';
-					cell.classList.add('text-center');
-					row.appendChild(cell);
-					icpListElement.appendChild(row);
-				}
-			})
-			.catch(err => {
-				console.error('Gagal memuat data dosen:', err);
-				document.getElementById('nama-dosen').textContent = '-';
-				document.getElementById('jurusan').textContent = '-';
-			});
-
-			// Fetch Mahasiswa Bimbingan
-			const bimbinganListElement = document.getElementById('bimbingan-list');
-			bimbinganListElement.innerHTML = '';
-
-			fetch(`/api/user/dosen/dashboard/bimbingan?userId=${userId}`, {
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			})
-			.then(response => {
-				if (!response.ok) throw new Error('Gagal mengambil data bimbingan');
-				return response.json();
-			})
-			.then(data => {
-				if (Array.isArray(data) && data.length > 0) {
-					data.forEach(item => {
-						const row = document.createElement('tr');
-
-						const namaCell = document.createElement('td');
-						namaCell.textContent = item.nama_taruna || '-';
-
-						const jurusanCell = document.createElement('td');
-						jurusanCell.textContent = item.jurusan || '-';
-
-						row.appendChild(namaCell);
-						row.appendChild(jurusanCell);
-						bimbinganListElement.appendChild(row);
-					});
-				} else {
-					const row = document.createElement('tr');
-					const cell = document.createElement('td');
-					cell.colSpan = 2;
-					cell.textContent = 'Tidak ada mahasiswa bimbingan';
-					cell.classList.add('text-center');
-					row.appendChild(cell);
-					bimbinganListElement.appendChild(row);
-				}
-			})
-			.catch(err => {
-				console.error('Gagal memuat data bimbingan:', err);
-				const row = document.createElement('tr');
-				const cell = document.createElement('td');
-				cell.colSpan = 4;
-				cell.textContent = 'Gagal memuat data';
-				cell.classList.add('text-center', 'text-danger');
-				row.appendChild(cell);
-				bimbinganListElement.appendChild(row);
-			});
-
-			const pengujianListElement = document.getElementById('pengujian-list');
-			pengujianListElement.innerHTML = '';
-
-			fetch(`/api/user/dosen/dashboard/pengujianproposal?userId=${userId}`, {
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			})
-			.then(response => {
-				if (!response.ok) throw new Error('Gagal mengambil data pengujian proposal');
-				return response.json();
-			})
-			.then(data => {
-				if (Array.isArray(data) && data.length > 0) {
-					data.forEach(item => {
-						const row = document.createElement('tr');
-
-						const namaCell = document.createElement('td');
-						namaCell.textContent = item.nama_taruna || '-';
-
-						const topikCell = document.createElement('td');
-						topikCell.textContent = item.topik || '-';
-
-						const pengujiKeCell = document.createElement('td');
-						pengujiKeCell.textContent = item.penguji_ke || '-';
-
-						const statusCell = document.createElement('td');
-						statusCell.textContent = item.status_pengumpulan || '-';
-						if (item.status_pengumpulan === 'sudah') {
-							statusCell.classList.add('text-success', 'fw-bold');
+					})
+					.then(response => response.json())
+					.then(data => {
+						if (data.status === 'success' && Array.isArray(data.data)) {
+							const dosen = data.data.find(d => String(d.user_id) === String(userId));
+							if (dosen) {
+							localStorage.setItem('dosenID', dosen.id);
+							localStorage.setItem('dosenName', dosen.nama_lengkap);
+							// fetchTarunaTopics(dosen.id);
+							console.log('DosenID set:', dosen.id); // Debug log
+							
+							// Update nama dosen di header
+					const usernameElement = document.getElementById('username');
+					if (usernameElement) {
+								usernameElement.textContent = dosen.nama_lengkap;
+							}
 						} else {
-							statusCell.classList.add('text-danger', 'fw-bold');
+							console.warn('Dosen with user_id', userId, 'not found');
 						}
-
-						row.appendChild(namaCell);
-						row.appendChild(topikCell);
-						row.appendChild(pengujiKeCell);
-						row.appendChild(statusCell);
-
-						pengujianListElement.appendChild(row);
-					});
-				} else {
-					const row = document.createElement('tr');
-					const cell = document.createElement('td');
-					cell.colSpan = 4;
-					cell.textContent = 'Tidak ada data pengujian proposal';
-					cell.classList.add('text-center');
-					row.appendChild(cell);
-					pengujianListElement.appendChild(row);
-				}
-			})
-			.catch(err => {
-				console.error('Gagal memuat data pengujian proposal:', err);
-				const row = document.createElement('tr');
-				const cell = document.createElement('td');
-				cell.colSpan = 4;
-				cell.textContent = 'Gagal memuat data';
-				cell.classList.add('text-center', 'text-danger');
-				row.appendChild(cell);
-				pengujianListElement.appendChild(row);
+					}
+				})
+				.catch(error => {
+					console.error('Failed to fetch dosen data:', error);
+				});
 			});
-
-			// Fetch Pengujian Laporan 70%
-			const ta70ListElement = document.getElementById('ta70-list');
-			ta70ListElement.innerHTML = '';
-
-			fetch(`/api/user/dosen/dashboard/pengujianlaporan70?userId=${userId}`, {
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			})
-			.then(response => {
-				if (!response.ok) throw new Error('Gagal mengambil data pengujian laporan 70%');
-				return response.json();
-			})
-			.then(data => {
-				if (Array.isArray(data) && data.length > 0) {
-					data.forEach(item => {
-						const row = document.createElement('tr');
-
-						const namaCell = document.createElement('td');
-						namaCell.textContent = item.nama_taruna || '-';
-
-						const topikCell = document.createElement('td');
-						topikCell.textContent = item.topik || '-';
-
-						const pengujiKeCell = document.createElement('td');
-						pengujiKeCell.textContent = item.penguji_ke || '-';
-
-						const statusCell = document.createElement('td');
-						statusCell.textContent = item.status_pengumpulan || '-';
-
-						if (item.status_pengumpulan === 'sudah') {
-							statusCell.classList.add('text-success', 'fw-bold');
-						} else {
-							statusCell.classList.add('text-danger', 'fw-bold');
-						}
-
-						row.appendChild(namaCell);
-						row.appendChild(topikCell);
-						row.appendChild(pengujiKeCell);
-						row.appendChild(statusCell);
-						ta70ListElement.appendChild(row);
-					});
-				} else {
-					const row = document.createElement('tr');
-					const cell = document.createElement('td');
-					cell.colSpan = 4;
-					cell.textContent = 'Tidak ada data pengujian laporan 70%';
-					cell.classList.add('text-center');
-					row.appendChild(cell);
-					ta70ListElement.appendChild(row);
-				}
-			})
-			.catch(err => {
-				console.error('Gagal memuat data pengujian laporan 70%:', err);
-				const row = document.createElement('tr');
-				const cell = document.createElement('td');
-				cell.colSpan = 4;
-				cell.textContent = 'Gagal memuat data';
-				cell.classList.add('text-center', 'text-danger');
-				row.appendChild(cell);
-				ta70ListElement.appendChild(row);
-			});
-
-
-			// Fetch Review Laporan 100%
-			const ta100ListElement = document.getElementById('ta100-list');
-			ta100ListElement.innerHTML = '';
-
-			fetch(`/api/user/dosen/dashboard/pengujianlaporan100?userId=${userId}`, {
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			})
-			.then(response => {
-				if (!response.ok) throw new Error('Gagal mengambil data laporan 100%');
-				return response.json();
-			})
-			.then(data => {
-				if (Array.isArray(data) && data.length > 0) {
-					data.forEach(item => {
-						const row = document.createElement('tr');
-
-						const namaCell = document.createElement('td');
-						namaCell.textContent = item.nama_taruna || '-';
-
-						const topikCell = document.createElement('td');
-						topikCell.textContent = item.topik || '-';
-
-						const pengujiKeCell = document.createElement('td');
-						pengujiKeCell.textContent = item.penguji_ke || '-';
-
-						const statusCell = document.createElement('td');
-						statusCell.textContent = item.status || '-';
-
-						if (item.status === 'sudah') {
-							statusCell.classList.add('text-success', 'fw-bold');
-						} else {
-							statusCell.classList.add('text-danger', 'fw-bold');
-						}
-
-						row.appendChild(namaCell);
-						row.appendChild(topikCell);
-						row.appendChild(pengujiKeCell);
-						row.appendChild(statusCell);
-						ta100ListElement.appendChild(row);
-					});
-				} else {
-					const row = document.createElement('tr');
-					const cell = document.createElement('td');
-					cell.colSpan = 4;
-					cell.textContent = 'Tidak ada data laporan 100%';
-					cell.classList.add('text-center');
-					row.appendChild(cell);
-					ta100ListElement.appendChild(row);
-				}
-			})
-			.catch(err => {
-				console.error('Gagal memuat data laporan 100%:', err);
-				const row = document.createElement('tr');
-				const cell = document.createElement('td');
-				cell.colSpan = 4;
-				cell.textContent = 'Gagal memuat data';
-				cell.classList.add('text-center', 'text-danger');
-				row.appendChild(cell);
-				ta100ListElement.appendChild(row);
-			});
-
-		});
-
+			
 		// Event listener untuk tombol logout
 		document.addEventListener('DOMContentLoaded', function() {
 			const logoutButton = document.querySelector('a[onclick="logout()"]');
