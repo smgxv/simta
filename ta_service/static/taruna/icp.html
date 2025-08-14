@@ -1387,119 +1387,140 @@
 				});
 			}
 
-			// ====== SUBMIT FORM FINAL PROPOSAL ======
-			document.getElementById('finalProposalForm').addEventListener('submit', async function (e) {
-			e.preventDefault();
+			// ====== SUBMIT FORM FINAL ICP ======
+			const fpForm = document.getElementById('finalIcpForm'); // <- disamakan dengan HTML
+			if (fpForm) {
+			fpForm.addEventListener('submit', async function (e) {
+				e.preventDefault();
 
-			const submitButton = this.querySelector('button[type="submit"]');
-			submitButton.disabled = true;
-			submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+				const submitButton = this.querySelector('button[type="submit"]');
+				submitButton.disabled = true;
+				submitButton.innerHTML =
+				'<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
 
-			// referensi elemen input file (untuk reset label nanti)
-			const finalInput   = document.getElementById('finalProposalFile');
-			const formInput    = document.getElementById('formBimbinganFile');
-			const supportInput = document.getElementById('supportFiles');
+				// referensi elemen input file (untuk reset label nanti)
+				const finalInput   = document.getElementById('finalIcpFile'); // <- disamakan
+				const supportInput = document.getElementById('supportFiles');
 
-			try {
-				// (opsional) jika kamu memang isi jurusan & kelas dari backend
+				try {
+				// (opsional) isi jurusan & kelas dari backend
 				if (typeof isiJurusanDanKelasDariTarunaFinalProposal === 'function') {
-				await isiJurusanDanKelasDariTarunaFinalProposal();
+					await isiJurusanDanKelasDariTarunaFinalProposal();
 				}
 
 				const formData = new FormData(this);
 				const userId = localStorage.getItem('userId');
 				const token  = localStorage.getItem('token');
-
-				if (!userId || !token) {
-				throw new Error('User ID atau token tidak ditemukan');
-				}
+				if (!userId || !token) throw new Error('User ID atau token tidak ditemukan');
 
 				// Ambil data taruna (untuk nama_lengkap)
 				const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
-				headers: { 'Authorization': `Bearer ${token}` }
+					headers: { 'Authorization': `Bearer ${token}` }
 				});
-
-				if (!tarunaResponse.ok) {
-				throw new Error('Gagal mengambil data taruna');
-				}
+				if (!tarunaResponse.ok) throw new Error('Gagal mengambil data taruna');
 
 				const tarunaData = await tarunaResponse.json();
 				const taruna = tarunaData.data?.find(t => t.user_id === parseInt(userId, 10));
+				if (!taruna || !taruna.nama_lengkap) throw new Error('Data taruna tidak lengkap atau tidak ditemukan');
 
-				if (!taruna || !taruna.nama_lengkap) {
-				throw new Error('Data taruna tidak lengkap atau tidak ditemukan');
-				}
-
-				// Tambahkan user_id & nama_lengkap ke formData (menyerupai mekanisme ICP)
 				formData.append('user_id', userId);
 				formData.append('nama_lengkap', taruna.nama_lengkap);
 
-				// Jika di form ada hidden jurusan & kelas, ikutkan juga
+				// ikutkan jurusan & kelas jika ada hidden field
 				const jurusan = document.getElementById('hiddenJurusan')?.value;
 				const kelas   = document.getElementById('hiddenKelas')?.value;
 				if (jurusan) formData.set('jurusan', jurusan);
 				if (kelas)   formData.set('kelas', kelas);
 
-				// Kirim ke server (biarkan browser set multipart boundary; jangan set Content-Type manual)
 				const response = await fetch('/api/document/finalproposal/upload', {
-				method: 'POST',
-				body: formData
+					method: 'POST',
+					body: formData
 				});
 
 				let data;
-				try {
-				data = await response.json();
-				} catch {
-				const rawText = await response.text();
-				showAlert(rawText || 'Terjadi kesalahan pada server', 'danger');
-				return;
+				try { data = await response.json(); }
+				catch {
+					const rawText = await response.text();
+					showAlert(rawText || 'Terjadi kesalahan pada server', 'danger');
+					return;
 				}
 
 				showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
 
 				if (data.status === 'success') {
-				// Reset form & label seperti di ICP
-				this.reset();
+					this.reset();
 
-				if (finalInput) {
+					if (finalInput) {
 					const lbl = finalInput.nextElementSibling;
 					if (lbl) lbl.textContent = 'Choose file';
 					const info = document.getElementById('finalSelectedFileName');
 					if (info) info.style.display = 'none';
-				}
+					}
 
-				if (formInput) {
-					const lbl = formInput.nextElementSibling;
-					if (lbl) lbl.textContent = 'Choose file';
-					const info = document.getElementById('formBimbinganSelectedFileName');
-					if (info) info.style.display = 'none';
-				}
-
-				if (supportInput) {
+					if (supportInput) {
 					const lbl = supportInput.nextElementSibling;
 					if (lbl) lbl.textContent = 'Pilih satu atau lebih file';
 					const info = document.getElementById('supportSelectedFileName');
 					if (info) info.style.display = 'none';
-				}
+					}
 
-				// Reload daftar final proposal
-				if (typeof loadFinalProposalData === 'function') loadFinalProposalData();
+					if (typeof loadFinalProposalData === 'function') loadFinalProposalData();
 				}
-
-			} catch (error) {
+				} catch (error) {
 				console.error('Error saat upload Final Proposal:', error);
-				let errorMessage = error.message || 'Terjadi kesalahan saat mengunggah Final Proposal';
-				if (errorMessage.toLowerCase().includes('token')) {
-				errorMessage = 'User ID atau token tidak ditemukan. Silakan login kembali.';
-				} else if (errorMessage.toLowerCase().includes('taruna')) {
-				errorMessage = 'Data taruna tidak lengkap atau tidak ditemukan. Silakan hubungi administrator.';
+				let msg = error.message || 'Terjadi kesalahan saat mengunggah Final Proposal';
+				if (msg.toLowerCase().includes('token')) {
+					msg = 'User ID atau token tidak ditemukan. Silakan login kembali.';
+				} else if (msg.toLowerCase().includes('taruna')) {
+					msg = 'Data taruna tidak lengkap atau tidak ditemukan. Silakan hubungi administrator.';
 				}
-				showAlert(errorMessage, 'danger');
-
-			} finally {
+				showAlert(msg, 'danger');
+				} finally {
 				submitButton.disabled = false;
 				submitButton.innerHTML = 'Upload Final Proposal';
+				}
+			});
 			}
+
+			// Definisi kelas per jurusan
+			const kelasPerJurusan = {
+				'Keamanan Siber': [
+					'IV Rekayasa Keamanan Siber Echo',
+					'IV Rekayasa Keamanan Siber Trace',
+					'IV Rekayasa Keamanan Siber Route'
+				],
+				'Kriptografi': [
+					'IV Rekayasa Perangkat Lunak Kripto',
+					'IV Rekayasa Perangkat Keras Kriptografi',
+					'IV Rekayasa Sistem Kriptografi'
+				]
+			};
+
+			// Fungsi untuk mengupdate dropdown kelas berdasarkan jurusan yang dipilih
+			function updateFinalKelas() {
+				const jurusanSelect = document.getElementById('finalJurusan');
+				const kelasSelect = document.getElementById('finalKelas');
+				const selectedJurusan = jurusanSelect.value;
+				
+				// Reset kelas dropdown
+				kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
+				
+				if (selectedJurusan && kelasPerJurusan[selectedJurusan]) {
+					kelasPerJurusan[selectedJurusan].forEach(kelas => {
+						const option = document.createElement('option');
+						option.value = kelas;
+						option.textContent = kelas;
+						kelasSelect.appendChild(option);
+					});
+					kelasSelect.disabled = false;
+				} else {
+					kelasSelect.disabled = true;
+				}
+			}
+
+			// Pastikan dropdown kelas ter-update saat halaman siap
+			document.addEventListener('DOMContentLoaded', () => {
+			updateFinalKelas();       // <- inisialisasi awal (opsional, bagus)     // sudah ada di kode kamu
 			});
 
 			// Update fungsi loadFinalICPData
@@ -1606,42 +1627,6 @@
 			document.addEventListener('DOMContentLoaded', () => {
 				loadFinalICPData();
 			});
-
-			// Definisi kelas per jurusan
-			const kelasPerJurusan = {
-				'Keamanan Siber': [
-					'IV Rekayasa Keamanan Siber Echo',
-					'IV Rekayasa Keamanan Siber Trace',
-					'IV Rekayasa Keamanan Siber Route'
-				],
-				'Kriptografi': [
-					'IV Rekayasa Perangkat Lunak Kripto',
-					'IV Rekayasa Perangkat Keras Kriptografi',
-					'IV Rekayasa Sistem Kriptografi'
-				]
-			};
-
-			// Fungsi untuk mengupdate dropdown kelas berdasarkan jurusan yang dipilih
-			function updateFinalKelas() {
-				const jurusanSelect = document.getElementById('finalJurusan');
-				const kelasSelect = document.getElementById('finalKelas');
-				const selectedJurusan = jurusanSelect.value;
-				
-				// Reset kelas dropdown
-				kelasSelect.innerHTML = '<option value="" disabled selected>Pilih Kelas</option>';
-				
-				if (selectedJurusan && kelasPerJurusan[selectedJurusan]) {
-					kelasPerJurusan[selectedJurusan].forEach(kelas => {
-						const option = document.createElement('option');
-						option.value = kelas;
-						option.textContent = kelas;
-						kelasSelect.appendChild(option);
-					});
-					kelasSelect.disabled = false;
-				} else {
-					kelasSelect.disabled = true;
-				}
-			}
 
 			// Add this function to get user data
 			async function getUserData() {
