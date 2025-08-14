@@ -1432,7 +1432,7 @@
 				if (jurusan) formData.set('jurusan', jurusan);
 				if (kelas)   formData.set('kelas', kelas);
 
-				const response = await fetch('/api/document/finalproposal/upload', {
+				const response = await fetch('/api/document/finalicp/upload', {
 					method: 'POST',
 					body: formData
 				});
