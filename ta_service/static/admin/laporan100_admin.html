@@ -1036,60 +1036,6 @@
 			});
 			}
 
-			// Fungsi untuk menampilkan data yang sudah difilter
-			function displayFilteredData() {
-				const jurusanFilter = document.getElementById('jurusanFilter').value;
-				const kelasFilter = document.getElementById('kelasFilter').value;
-
-				const filteredData = allLaporan100Data.filter(item => {
-					const matchJurusan = !jurusanFilter || item.jurusan === jurusanFilter;
-					const matchKelas = !kelasFilter || item.kelas === kelasFilter;
-					return matchJurusan && matchKelas;
-				});
-
-				const tableBody = document.querySelector('.data-table tbody');
-				tableBody.innerHTML = '';
-
-				filteredData.forEach(item => {
-					const row = document.createElement('tr');
-					row.innerHTML = `
-						<td>${item.nama_lengkap || '-'}</td>
-						<td>${item.jurusan || '-'}</td>
-						<td>${item.kelas || '-'}</td>
-						<td>${item.topik_penelitian || '-'}</td>
-						<td>
-							${item.status ? 
-								`<span class="badge badge-${getStatusBadgeClass(item.status)}">${item.status}</span>` 
-								: '-'}
-						</td>
-						<td>
-							${item.final_laporan100_id > 0 ? 
-								`<div class="dropdown">
-									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-										<i class="dw dw-more"></i>
-									</a>
-									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-										<a class="dropdown-item" href="/api/document/finallaporan100/download/${item.final_laporan100_id}?type=form_bimbingan" download>
-											<i class="dw dw-download"></i> Download Form Bimbingan
-										</a>
-										<a class="dropdown-item" href="/api/document/finallaporan100/download/${item.final_laporan100_id}?type=laporan100" download>
-											<i class="dw dw-download"></i> Download Final Laporan 100%
-										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan100_id}, 'approved')">
-											<i class="dw dw-check"></i> Accept
-										</a>
-										<a class="dropdown-item" href="#" onclick="updateStatus(${item.final_laporan100_id}, 'rejected')">
-											<i class="dw dw-delete-3"></i> Reject
-										</a>
-									</div>
-								</div>`
-								: '-'}
-						</td>
-					`;
-					tableBody.appendChild(row);
-				});
-			}
-
 			// Fungsi untuk menerapkan filter
 			function applyFilters() {
 				displayFilteredData();

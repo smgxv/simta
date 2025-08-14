@@ -74,8 +74,8 @@ func GetSeminarLaporan100ByDosenHandler(w http.ResponseWriter, r *http.Request) 
 		   OR pp.penguji_2_id = ?
 	`
 
-	// Kirim hanya 2 parameter sesuai jumlah placeholder
-	rows, err := db.Query(query, dosenIDInt, dosenIDInt)
+	// Kirim hanya 3 parameter sesuai jumlah placeholder
+	rows, err := db.Query(query, dosenIDInt, dosenIDInt, dosenIDInt)
 	if err != nil {
 		http.Error(w, "Error querying database: "+err.Error(), http.StatusInternalServerError)
 		return
