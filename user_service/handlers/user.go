@@ -190,9 +190,9 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Fungsi Edit user
+// fungsi edit user
 func EditUser(w http.ResponseWriter, r *http.Request) {
-	// Header CORS
+	// CORS
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, PUT, OPTIONS")
@@ -204,49 +204,57 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get token from Authorization header
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "No token provided", http.StatusUnauthorized)
+	// Authorization header presence (opsional: validasi token sebenarnya)
+	if r.Header.Get("Authorization") == "" {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{
+			"status": "error", "message": "No token provided",
+		})
 		return
 	}
 
-	// Inisialisasi userModel
 	userModel, err := models.NewUserModel()
 	if err != nil {
-		log.Printf("Database connection error: %v", err)
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		log.Printf("DB error: %v", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"status": "error", "message": "Database connection error",
+		})
 		return
 	}
 
-	if r.Method == http.MethodGet {
-		// Ambil ID user dari parameter URL
+	switch r.Method {
+	case http.MethodGet:
 		userIDStr := r.URL.Query().Get("id")
 		if userIDStr == "" {
-			http.Error(w, "ID User tidak ditemukan", http.StatusBadRequest)
+			writeJSON(w, http.StatusBadRequest, map[string]any{
+				"status": "error", "message": "ID User tidak ditemukan",
+			})
 			return
 		}
-
-		// Konversi ID string ke int
 		userID, err := strconv.Atoi(userIDStr)
 		if err != nil {
-			http.Error(w, "ID User tidak valid", http.StatusBadRequest)
+			writeJSON(w, http.StatusBadRequest, map[string]any{
+				"status": "error", "message": "ID User tidak valid",
+			})
 			return
 		}
 
-		// Ambil data user yang akan diedit
 		user, err := userModel.GetUserByID(userID)
 		if err != nil {
-			http.Error(w, "User tidak ditemukan", http.StatusNotFound)
+			log.Printf("GetUserByID: %v", err)
+			writeJSON(w, http.StatusNotFound, map[string]any{
+				"status": "error", "message": "User tidak ditemukan",
+			})
 			return
 		}
 
-		// Kirim response dalam format JSON
-		json.NewEncoder(w).Encode(user)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status": "success",
+			"data":   user,
+		})
+		return
 
-	} else if r.Method == http.MethodPut {
-		// Parse request body
-		var userData struct {
+	case http.MethodPut:
+		var req struct {
 			UserID          int    `json:"id"`
 			FullName        string `json:"nama_lengkap"`
 			Email           string `json:"email"`
@@ -258,73 +266,98 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 			Password        string `json:"password"`
 			ConfirmPassword string `json:"confirm_password"`
 		}
-
-		if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
-			log.Printf("Error decoding request body: %v", err)
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Printf("Decode body: %v", err)
+			writeJSON(w, http.StatusBadRequest, map[string]any{
+				"status": "error", "message": "Invalid request body",
+			})
 			return
 		}
 
-		// Validasi data yang diperlukan
-		if userData.UserID == 0 || userData.FullName == "" || userData.Email == "" || userData.Username == "" || userData.Role == "" {
-			http.Error(w, "Semua field harus diisi", http.StatusBadRequest)
+		if req.UserID == 0 || req.FullName == "" || req.Email == "" || req.Username == "" || req.Role == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]any{
+				"status": "error", "message": "Semua field harus diisi",
+			})
 			return
 		}
 
-		// Validasi password (jika ingin ganti password)
 		var hashedPassword []byte
-		if userData.Password != "" {
-			if userData.Password != userData.ConfirmPassword {
-				http.Error(w, "Password dan konfirmasi tidak cocok", http.StatusBadRequest)
+		if req.Password != "" {
+			if req.Password != req.ConfirmPassword {
+				writeJSON(w, http.StatusBadRequest, map[string]any{
+					"status": "error", "message": "Password dan konfirmasi tidak cocok",
+				})
 				return
 			}
-			if !utils.IsValidPassword(userData.Password) {
-				http.Error(w, "Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol", http.StatusBadRequest)
+			if !utils.IsValidPassword(req.Password) {
+				writeJSON(w, http.StatusBadRequest, map[string]any{
+					"status":  "error",
+					"message": "Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol",
+				})
 				return
 			}
-			hashedPassword, err = bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
+			var err error
+			hashedPassword, err = bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 			if err != nil {
-				log.Printf("Gagal hash password: %v", err)
-				http.Error(w, "Gagal memproses password", http.StatusInternalServerError)
+				log.Printf("Hash pwd: %v", err)
+				writeJSON(w, http.StatusInternalServerError, map[string]any{
+					"status": "error", "message": "Gagal memproses password",
+				})
 				return
 			}
 		}
 
-		// Cek apakah email sudah digunakan oleh user lain
-		var existingUser entities.User
-		err = userModel.Where(&existingUser, "email", userData.Email)
-		if err == nil && existingUser.ID != userData.UserID && existingUser.Email != "" {
-			http.Error(w, "Email sudah digunakan", http.StatusConflict)
+		// Cek email unik
+		var existing entities.User
+		if err := userModel.Where(&existing, "email", req.Email); err == nil &&
+			existing.ID != 0 && existing.ID != req.UserID {
+			writeJSON(w, http.StatusConflict, map[string]any{
+				"status": "error", "message": "Email sudah digunakan",
+			})
 			return
 		}
 
-		// Parse NPM jika tidak kosong
+		// Parse NPM (opsional)
 		var npm *int
-		if userData.NPM != "" {
-			npmInt, err := strconv.Atoi(userData.NPM)
+		if strings.TrimSpace(req.NPM) != "" {
+			n, err := strconv.Atoi(req.NPM)
 			if err != nil {
-				http.Error(w, "NPM harus berupa angka", http.StatusBadRequest)
+				writeJSON(w, http.StatusBadRequest, map[string]any{
+					"status": "error", "message": "NPM harus berupa angka",
+				})
 				return
 			}
-			npm = &npmInt
+			npm = &n
 		}
 
-		// Update data user
-		err := userModel.UpdateUser(userData.UserID, userData.FullName, userData.Email, userData.Username, userData.Role, userData.Jurusan, userData.Kelas, npm, hashedPassword)
-		if err != nil {
-			log.Printf("Failed to update user: %v", err)
-			http.Error(w, "Gagal mengupdate user", http.StatusInternalServerError)
+		if err := userModel.UpdateUser(
+			req.UserID, req.FullName, req.Email, req.Username,
+			req.Role, req.Jurusan, req.Kelas, npm, hashedPassword,
+		); err != nil {
+			log.Printf("UpdateUser: %v", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]any{
+				"status": "error", "message": "Gagal mengupdate user",
+			})
 			return
 		}
 
-		// Kirim response sukses
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "User berhasil diupdate",
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status": "success", "message": "User berhasil diupdate",
 		})
-	} else {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+
+	default:
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
+			"status": "error", "message": "Method not allowed",
+		})
 	}
+}
+
+// helper.go (atau di file yang sama)
+func writeJSON(w http.ResponseWriter, status int, payload any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(payload)
 }
 
 // Fungsi Get user detail

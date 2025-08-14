@@ -22,18 +22,47 @@ func NewUserModel() (*UserModel, error) {
 }
 
 func (u UserModel) Where(user *entities.User, fieldName, fieldValue string) error {
-	row, err := u.db.Query("SELECT id, nama_lengkap, email, username, password, role, jurusan, kelas, npm FROM users WHERE "+fieldName+" = ? LIMIT 1", fieldValue)
+	// Whitelist kolom agar aman dari SQL injection pada fieldName
+	allowed := map[string]bool{"email": true, "username": true, "id": true}
+	if !allowed[strings.ToLower(fieldName)] {
+		return fmt.Errorf("field tidak diizinkan")
+	}
 
+	row, err := u.db.Query(
+		"SELECT id, nama_lengkap, email, username, password, role, jurusan, kelas, npm FROM users WHERE "+fieldName+" = ? LIMIT 1",
+		fieldValue,
+	)
 	if err != nil {
 		return err
 	}
-
 	defer row.Close()
 
-	for row.Next() {
-		row.Scan(&user.ID, &user.NamaLengkap, &user.Email, &user.Username, &user.Password, &user.Role, &user.Jurusan, &user.Kelas, &user.NPM)
-	}
+	var jurusan sql.NullString
+	var kelas sql.NullString
+	var npm sql.NullInt64
 
+	if row.Next() {
+		if err := row.Scan(&user.ID, &user.NamaLengkap, &user.Email, &user.Username,
+			&user.Password, &user.Role, &jurusan, &kelas, &npm); err != nil {
+			return err
+		}
+		if jurusan.Valid {
+			user.Jurusan = jurusan.String
+		} else {
+			user.Jurusan = ""
+		}
+		if kelas.Valid {
+			user.Kelas = kelas.String
+		} else {
+			user.Kelas = ""
+		}
+		if npm.Valid {
+			v := int(npm.Int64)
+			user.NPM = &v
+		} else {
+			user.NPM = nil
+		}
+	}
 	return nil
 }
 
@@ -300,14 +329,35 @@ func (u UserModel) UpdateUser(userID int, fullName, email, username, role, jurus
 }
 
 func (u UserModel) GetUserByID(userID int) (*entities.User, error) {
+	var (
+		jurusan sql.NullString
+		kelas   sql.NullString
+		npm     sql.NullInt64
+	)
 	user := &entities.User{}
 	err := u.db.QueryRow(`
 		SELECT id, nama_lengkap, email, username, role, jurusan, kelas, npm
 		FROM users WHERE id = ?`, userID).
 		Scan(&user.ID, &user.NamaLengkap, &user.Email, &user.Username,
-			&user.Role, &user.Jurusan, &user.Kelas, &user.NPM)
+			&user.Role, &jurusan, &kelas, &npm)
 	if err != nil {
 		return nil, err
+	}
+	if jurusan.Valid {
+		user.Jurusan = jurusan.String
+	} else {
+		user.Jurusan = ""
+	}
+	if kelas.Valid {
+		user.Kelas = kelas.String
+	} else {
+		user.Kelas = ""
+	}
+	if npm.Valid {
+		v := int(npm.Int64)
+		user.NPM = &v
+	} else {
+		user.NPM = nil
 	}
 	return user, nil
 }
