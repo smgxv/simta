@@ -131,64 +131,6 @@
 					class="search-toggle-icon bi bi-search"
 					data-toggle="header_search"
 				></div>
-				<div class="header-search">
-					<form>
-						<div class="form-group mb-0">
-							<i class="dw dw-search2 search-icon"></i>
-							<input
-								type="text"
-								class="form-control search-input"
-								placeholder="Search Here"
-							/>
-							<div class="dropdown">
-								<a
-									class="dropdown-toggle no-arrow"
-									href="#"
-									role="button"
-									data-toggle="dropdown"
-								>
-									<i class="ion-arrow-down-c"></i>
-								</a>
-								<div class="dropdown-menu dropdown-menu-right">
-									<div class="form-group row">
-										<label class="col-sm-12 col-md-2 col-form-label"
-											>From</label
-										>
-										<div class="col-sm-12 col-md-10">
-											<input
-												class="form-control form-control-sm form-control-line"
-												type="text"
-											/>
-										</div>
-									</div>
-									<div class="form-group row">
-										<label class="col-sm-12 col-md-2 col-form-label">To</label>
-										<div class="col-sm-12 col-md-10">
-											<input
-												class="form-control form-control-sm form-control-line"
-												type="text"
-											/>
-										</div>
-									</div>
-									<div class="form-group row">
-										<label class="col-sm-12 col-md-2 col-form-label"
-											>Subject</label
-										>
-										<div class="col-sm-12 col-md-10">
-											<input
-												class="form-control form-control-sm form-control-line"
-												type="text"
-											/>
-										</div>
-									</div>
-									<div class="text-right">
-										<button class="btn btn-primary">Search</button>
-									</div>
-								</div>
-							</div>
-						</div>
-					</form>
-				</div>
 			</div>
 
 			<div class="header-right">
@@ -232,10 +174,8 @@
 							href="#"
 							role="button"
 							data-toggle="dropdown"
+							style="display: flex; align-items: center; padding-top: 15px;"
 						>
-							<span class="user-icon">
-								<img src="vendors/images/photo1.jpg" alt="" />
-							</span>
 							<span class="user-name" id="username"></span>
 						</a>
 						<div
@@ -528,6 +468,7 @@
 					<div class="card-box mb-30">
 						<div class="pd-20">
 							<h4 class="text-blue h4">List ICP</h4>
+							<p class="mb-30">Berikut adalah daftar ICP yang harus di review. Silahkan lakukan review ICP dan unggah jika Anda berkenan. Jika tidak, pilih reject pada ICP</p>
 						</div>
 						<div class="pb-20">
 							<table class="data-table table stripe hover nowrap">
@@ -551,6 +492,7 @@
 					<div class="card-box mb-30">
 						<div class="pd-20">
 							<h4 class="text-blue h4">Tabel Hasil Revisi Taruna</h4>
+							<p class="mb-30">Berikut adalah daftar ICP yang telah diperbaiki taruna sesuai dengan review Anda. Silahkan unggah kembali review jika perbaikan belum sesuai. Jika sudah sesuai, pilih accept ICP</p>
 							</div>
 						<div class="pb-20">
 							<table id="revisiTable" class="data-table table stripe hover nowrap">
@@ -996,9 +938,6 @@
 													</a>
 													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'approved')">
 														<i class="dw dw-check"></i> Approve ICP
-													</a>
-													<a class="dropdown-item" href="#" onclick="updateICPStatus(${review.icp_id}, 'rejected')">
-														<i class="dw dw-cancel"></i> Reject ICP
 													</a>
 												</div>
 											</div>
