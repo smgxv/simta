@@ -608,109 +608,126 @@
         
         document.getElementById('role').addEventListener('change', toggleJurusanKelas);
         
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const userId = urlParams.get('id');
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        
-            if (!token) {
-                window.location.replace('/loginusers');
-                return;
+        document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+        const token  = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+        if (!token) {
+            window.location.replace('/loginusers');
+            return;
+        }
+        if (!userId) {
+            alert('ID user tidak ditemukan di URL');
+            return;
+        }
+
+        // ------- Helper fetch JSON yang robust -------
+        async function fetchJSON(url, opts = {}) {
+            const res = await fetch(url, opts);
+            const text = await res.text(); // baca sekali (bisa JSON / non-JSON)
+            let data = null;
+            try { data = text ? JSON.parse(text) : null; } catch { /* bukan JSON */ }
+
+            if (!res.ok) {
+            const msg = (data && (data.message || data.error)) || text || `HTTP ${res.status}`;
+            throw new Error(msg);
             }
-        
-            fetch(`/api/user/users/edit?id=${userId}`, {
+            // kembalikan payload JSON atau null kalau body kosong
+            return data;
+        }
+
+        // ------- Muat data user -------
+        (async () => {
+            try {
+            const payload = await fetchJSON(`/api/user/users/edit?id=${encodeURIComponent(userId)}`, {
                 method: 'GET',
                 headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
                 }
-            })
-            .then(response => response.json())
-            .then(user => {
-                if (!user) {
-                    throw new Error('Data user tidak ditemukan');
-                }
-        
-                document.getElementById('nama_lengkap').value = user.nama_lengkap || '';
-                document.getElementById('email').value = user.email || '';
-                document.getElementById('username').value = user.username || '';
-                document.getElementById('role').value = (user.role || '').toLowerCase();
-        
-                if (user.jurusan) {
-                    document.getElementById('jurusan').value = user.jurusan;
-                }
-        
-                toggleJurusanKelas();
-        
-                if (user.role.toLowerCase() === 'taruna' && user.jurusan) {
-                    updateKelas();
-                    setTimeout(() => {
-                        document.getElementById('kelas').value = user.kelas || '';
-                        document.getElementById('npm').value = user.npm || '';
-                    }, 100);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Gagal mengambil data user: ' + error.message);
             });
-        
-            document.getElementById('editUserForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-        
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirm_password').value;
-        
-                if (password && password !== confirmPassword) {
-                    alert('Password dan konfirmasi password tidak cocok!');
-                    return;
-                }
-        
-                const userData = {
-                    id: parseInt(userId),
-                    nama_lengkap: document.getElementById('nama_lengkap').value,
-                    email: document.getElementById('email').value,
-                    username: document.getElementById('username').value,
-                    jurusan: document.getElementById('jurusan').value || null,
-                    role: document.getElementById('role').value,
-                    password: password,
-                    confirm_password: confirmPassword // ← tambahkan ini!
-                };
-        
-                if (userData.role.toLowerCase() === 'taruna') {
-                    userData.kelas = document.getElementById('kelas').value;
-                    userData.npm = document.getElementById('npm').value;
-                }
-        
-                console.log('Sending data:', userData);
-        
-                fetch(`/api/user/users/edit`, {
-                    method: 'PUT',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                    body: JSON.stringify(userData)
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            throw new Error(text || 'Gagal mengupdate user');
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    alert('User berhasil diupdate');
-                    window.location.href = '/admin/listuser';
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert(error.message || 'Terjadi kesalahan saat mengupdate user');
-                });
+
+            // dukung dua format: {status,data} atau langsung objek user
+            const user = payload?.data ?? payload;
+            if (!user || typeof user !== 'object') throw new Error('Data user tidak ditemukan');
+
+            // Normalisasi role ke lower-case
+            const roleLc = (user.role || '').toLowerCase();
+
+            // Isi form dasar
+            document.getElementById('nama_lengkap').value = user.nama_lengkap || '';
+            document.getElementById('email').value        = user.email || '';
+            document.getElementById('username').value     = user.username || '';
+            document.getElementById('role').value         = roleLc || ''; // pastikan opsi select cocok: dosen/taruna/admin
+
+            if (user.jurusan) document.getElementById('jurusan').value = user.jurusan;
+
+            // Tampilkan/sembunyikan field berdasarkan role
+            if (typeof toggleJurusanKelas === 'function') toggleJurusanKelas();
+
+            // Khusus Taruna: set kelas & npm
+            if (roleLc === 'taruna' && user.jurusan) {
+                if (typeof updateKelas === 'function') updateKelas();
+                setTimeout(() => {
+                document.getElementById('kelas').value = user.kelas || '';
+                document.getElementById('npm').value   = user.npm ?? ''; // backend bisa kirim null / number / string
+                }, 100);
+            }
+            } catch (err) {
+            console.error(err);
+            alert('Gagal mengambil data user: ' + (err?.message || err));
+            }
+        })();
+
+        // ------- Submit update -------
+        document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const password        = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const roleValLc       = (document.getElementById('role').value || '').toLowerCase();
+
+            if (password && password !== confirmPassword) {
+            alert('Password dan konfirmasi password tidak cocok!');
+            return;
+            }
+
+            const userData = {
+            id: parseInt(userId, 10),
+            nama_lengkap: document.getElementById('nama_lengkap').value,
+            email:        document.getElementById('email').value,
+            username:     document.getElementById('username').value,
+            jurusan:      document.getElementById('jurusan').value || null,
+            role:         roleValLc,
+            password:     password || '',
+            confirm_password: confirmPassword || ''
+            };
+
+            if (roleValLc === 'taruna') {
+            userData.kelas = document.getElementById('kelas').value || '';
+            userData.npm   = document.getElementById('npm').value || '';
+            }
+
+            try {
+            const payload = await fetchJSON('/api/user/users/edit', {
+                method: 'PUT',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(userData)
             });
+
+            // sukses (abaikan bentuk payload; cukup tampilkan pesan umum)
+            alert('User berhasil diupdate');
+            window.location.href = '/admin/listuser';
+            } catch (err) {
+            console.error(err);
+            alert(err?.message || 'Terjadi kesalahan saat mengupdate user');
+            }
+        });
         });
     </script>
         
