@@ -1696,7 +1696,7 @@
 
 					if (data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
 						data.data.forEach(item => {
-							const formattedDate = new Date(item.submitted_at).toLocaleString('id-ID', {
+							const formattedDate = new Date(item.tanggal_telaah).toLocaleString('id-ID', {
 								dateStyle: 'medium',
 								timeStyle: 'short'
 							});
