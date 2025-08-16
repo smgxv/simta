@@ -568,41 +568,71 @@
 		document.addEventListener("DOMContentLoaded", function () {
 			const urlParams = new URLSearchParams(window.location.search);
 			const id = urlParams.get("id");
-
 			const role = "Taruna";
-			fetch(`/api/notification/notification/${id}?role=${role}`)
+
+			// helper: aman terhadap double-encoding
+			function safeEncodePathSegment(s) {
+				try { s = decodeURIComponent(s); } catch (_) {}
+				return encodeURIComponent(s);
+			}
+
+			fetch(`/api/notification/notification/${id}?role=${encodeURIComponent(role)}`)
 				.then(res => {
-					if (!res.ok) {
-						throw new Error("Notifikasi tidak ditemukan");
-					}
-					return res.json();
+				if (!res.ok) throw new Error("Notifikasi tidak ditemukan");
+				return res.json();
 				})
 				.then(notif => {
-					document.getElementById("judul-notif").textContent = notif.Judul;
-					document.getElementById("tanggal-notif").textContent = new Date(notif.CreatedAt).toLocaleString("id-ID", {
-						dateStyle: 'full', timeStyle: 'short'
-					});
-					document.getElementById("deskripsi-notif").textContent = notif.Deskripsi;
+				document.getElementById("judul-notif").textContent = notif.Judul || "-";
+				document.getElementById("tanggal-notif").textContent =
+					notif.CreatedAt
+					? new Date(notif.CreatedAt).toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short" })
+					: "-";
+				document.getElementById("deskripsi-notif").textContent = notif.Deskripsi || "-";
 
-					if (notif.FileURLs && notif.FileURLs !== "") {
-						const files = JSON.parse(notif.FileURLs);
-						const container = document.getElementById("file-links");
+				const container = document.getElementById("file-links");
+				container.innerHTML = "";
 
-						files.forEach(url => {
-							const fileName = url.split("/").pop(); // Ambil nama file dari URL
-							const link = document.createElement("a");
-							link.href = `/api/notification/download/${fileName}`;
-							link.innerHTML = `📎 ${fileName}`;
-							link.className = "btn btn-outline-primary d-block mb-2 text-left";
-							link.target = "_blank";
-							container.appendChild(link);
-						});
+				if (!notif.FileURLs) return;
+
+				let files = [];
+				try {
+					// backend Anda mengirim JSON string (array URL) → parse
+					files = JSON.parse(notif.FileURLs);
+				} catch {
+					// fallback: jika ternyata backend mengirim string biasa, jadikan array 1 elemen
+					files = [notif.FileURLs];
+				}
+
+				files.filter(Boolean).forEach(rawUrl => {
+					// Ambil nama file dari URL sumber (bisa full URL atau path)
+					let fileName = "";
+					try {
+					// gunakan URL parser agar aman saat ada query/fragment
+					const u = rawUrl.startsWith("http") ? new URL(rawUrl) : new URL(rawUrl, location.origin);
+					fileName = u.pathname.split("/").pop() || "";
+					} catch {
+					// fallback regex sederhana
+					fileName = String(rawUrl).split("?")[0].split("#")[0].split("/").pop() || "";
 					}
+
+					if (!fileName) return;
+
+					// Encode hanya segmen nama file
+					const encoded = safeEncodePathSegment(fileName);
+
+					const link = document.createElement("a");
+					link.href = `/api/notification/download/${encoded}`;
+					link.textContent = `📎 ${fileName}`; // tampilkan nama aslinya
+					link.className = "btn btn-outline-primary d-block mb-2 text-left";
+					link.target = "_blank";
+					link.rel = "noopener";
+					container.appendChild(link);
+				});
 				})
 				.catch(err => {
-					document.getElementById("judul-notif").textContent = "Notifikasi tidak ditemukan.";
-					console.error(err);
-				});
+				document.getElementById("judul-notif").textContent = "Notifikasi tidak ditemukan.";
+				console.error(err);
+			});
 		});
 
 		function redirectToProfile() {
