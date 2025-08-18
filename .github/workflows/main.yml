@@ -113,23 +113,23 @@ jobs:
           hide-progress: true
           timeout: 10m
 
- # Build Image ()
-  build-ta-service:
-    needs: image-scan
-    name: Build Image
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build Image
-        run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Push Image
-        run: docker push smgxv/ta-service
+#  # Build Image ()
+#   build-ta-service:
+#     needs: image-scan
+#     name: Build Image
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v2
+#       - name: Build Image
+#         run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
+#       - name: Login to DockerHub
+#         uses: docker/login-action@v1
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+#       - name: Push Image
+#         run: docker push smgxv/ta-service
 
 #   build-user-service:
 #     needs: image-scan
