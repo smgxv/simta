@@ -10,35 +10,38 @@ import (
 )
 
 const (
-	MaxProdukSize = 5 << 30 // 5 GB
+	// Maksimal 2GB
+	MaxProdukSize = 2 << 30 // 2 GB
 	MinProdukSize = 1 << 10 // 1 KB
 )
 
-// AllowedExtensions defines allowed file extensions for produk TA
-var AllowedExtensions = []string{
-	".zip", ".rar", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ova",
+// Daftar ekstensi/sufiks kompresi/arsip yang diizinkan.
+// Gunakan suffix agar mendukung ekstensi majemuk (mis. .tar.gz)
+var AllowedCompressedSuffixes = []string{
+	".zip",
+	".rar",
 }
 
-// IsAllowedExtension checks whether the file has an allowed extension
-func IsAllowedExtension(filename string) bool {
-	ext := strings.ToLower(filepath.Ext(filename))
-	for _, allowed := range AllowedExtensions {
-		if ext == allowed {
+// IsAllowedCompressed memeriksa apakah nama file berakhiran salah satu sufiks kompresi yang diizinkan
+func IsAllowedCompressed(filename string) bool {
+	lower := strings.ToLower(filename)
+	for _, suf := range AllowedCompressedSuffixes {
+		if strings.HasSuffix(lower, suf) {
 			return true
 		}
 	}
 	return false
 }
 
-// ValidateProdukFileType checks file extension and avoids dangerous file types
+// ValidateProdukFileType memastikan hanya file arsip/kompresi yang diterima dan menolak tipe berbahaya
 func ValidateProdukFileType(filename string) error {
-	if !IsAllowedExtension(filename) {
-		return fmt.Errorf("ekstensi file tidak diizinkan untuk produk TA")
+	if !IsAllowedCompressed(filename) {
+		return fmt.Errorf("hanya file arsip/kompresi yang diizinkan (ZIP dan RAR)")
 	}
 
+	// Opsional: blokir tipe eksekusi umum berdasarkan ekstensi terakhir
 	ext := strings.ToLower(filepath.Ext(filename))
-	// Optional: reject potentially dangerous executables
-	blocked := []string{".exe", ".bat", ".sh", ".msi", ".js", ".php", ".py"}
+	blocked := []string{".exe", ".bat", ".sh", ".msi", ".js", ".php", ".py", ".dll", ".so"}
 	for _, b := range blocked {
 		if ext == b {
 			return fmt.Errorf("file executable tidak diizinkan")
@@ -48,7 +51,7 @@ func ValidateProdukFileType(filename string) error {
 	return nil
 }
 
-// ValidateProdukFileName sanitizes nama file produk TA
+// ValidateProdukFileName melakukan sanitasi nama file produk TA
 func ValidateProdukFileName(filename string) string {
 	filename = filepath.Base(filename)
 	return strings.Map(func(r rune) rune {
@@ -86,21 +89,22 @@ func SanitizeProdukPath(baseDir, filename string) (string, error) {
 	return fullPath, nil
 }
 
-// SaveProdukFile safely saves the uploaded file
+// SaveProdukFile menyimpan file upload dengan aman
 func SaveProdukFile(file multipart.File, handler *multipart.FileHeader, uploadDir, newFilename string) (string, error) {
-	// Size validation
+	// Validasi ukuran (menggunakan size dari header jika tersedia)
 	if handler.Size > MaxProdukSize {
-		return "", fmt.Errorf("ukuran file melebihi 5GB")
+		return "", fmt.Errorf("ukuran file melebihi 2GB")
 	}
-	if handler.Size < MinProdukSize {
+	if handler.Size >= 0 && handler.Size < MinProdukSize {
 		return "", fmt.Errorf("ukuran file terlalu kecil (<1KB)")
 	}
 
+	// Validasi tipe file (berdasarkan nama/ekstensi)
 	if err := ValidateProdukFileType(handler.Filename); err != nil {
 		return "", err
 	}
 
-	if err := os.MkdirAll(uploadDir, 0750); err != nil {
+	if err := os.MkdirAll(uploadDir, 0o750); err != nil {
 		return "", fmt.Errorf("gagal membuat direktori upload: %v", err)
 	}
 
@@ -109,20 +113,26 @@ func SaveProdukFile(file multipart.File, handler *multipart.FileHeader, uploadDi
 		return "", err
 	}
 
-	dst, err := os.OpenFile(finalPath, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0640)
+	// Gunakan O_EXCL untuk mencegah overwrite
+	dst, err := os.OpenFile(finalPath, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o640)
 	if err != nil {
 		return "", fmt.Errorf("gagal membuat file: %v", err)
 	}
 	defer dst.Close()
 
+	// Batasi copy hingga MaxProdukSize+1 untuk deteksi oversize saat streaming
 	written, err := io.Copy(dst, io.LimitReader(file, MaxProdukSize+1))
 	if err != nil {
-		os.Remove(finalPath)
+		_ = os.Remove(finalPath)
 		return "", fmt.Errorf("gagal menyimpan file: %v", err)
 	}
 	if written > MaxProdukSize {
-		os.Remove(finalPath)
-		return "", fmt.Errorf("file terlalu besar (limit 5GB)")
+		_ = os.Remove(finalPath)
+		return "", fmt.Errorf("file terlalu besar (limit 2GB)")
+	}
+	if written < MinProdukSize {
+		_ = os.Remove(finalPath)
+		return "", fmt.Errorf("ukuran file terlalu kecil (<1KB)")
 	}
 
 	return finalPath, nil

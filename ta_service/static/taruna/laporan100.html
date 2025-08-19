@@ -762,9 +762,9 @@
 
 							<!-- Upload Produk TA (ZIP, RAR, VM, dll.) -->
 							<div class="form-group">
-								<label>Upload File Produk Tugas Akhir <small class="text-muted">(ZIP, RAR, VM, dokumen teknis, dll)</small></label>
+								<label>Upload File Produk Tugas Akhir <small class="text-muted">(ZIP, dan RAR)</small></label>
 								<div class="custom-file">
-									<input type="file" class="custom-file-input" name="file_produk_ta" accept=".zip,.rar,.7z,.pdf,.docx,.ova,.vmdk">
+									<input type="file" class="custom-file-input" name="file_produk_ta" accept=".zip,.rar">
 									<label class="custom-file-label">Pilih file produk TA</label>
 								</div>
 							</div>
@@ -1783,71 +1783,135 @@
 				}
 			});
 
-			// Load data revisi laporan (sama seperti sebelumnya)
+			  // Load data revisi laporan 100%
 			async function loadRevisiLaporan100Data() {
 				const userId = localStorage.getItem('userId');
 				if (!userId) {
-					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
-					return;
+				showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
+				return;
 				}
+
+				const table = document.querySelector('#revisiLaporan100Table');
+				const tbody = table ? table.querySelector('tbody') : null;
+				if (!tbody) {
+				console.warn('Elemen #revisiLaporan100Table tbody tidak ditemukan.');
+				return;
+				}
+
+				// Kosongkan isi tabel terlebih dahulu
+				tbody.innerHTML = '';
 
 				try {
-					const response = await fetch(`/api/document/revisilaporan100/list?user_id=${userId}`);
-					if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+				const url = `/api/document/revisilaporan100/list?user_id=${encodeURIComponent(userId)}`;
+				const response = await fetch(url, { credentials: 'include' });
+				if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-					const data = await response.json();
-					const tbody = document.querySelector('#revisiLaporan100Table tbody');
-					tbody.innerHTML = '';
-
-					if (data.status === 'success' && data.data.length > 0) {
-						data.data.forEach(row => {
-							const statusClass = {
-								'pending': 'badge badge-warning',
-								'approved': 'badge badge-success',
-								'rejected': 'badge badge-danger',
-								'on review': 'badge badge-info'
-							}[row.status] || 'badge badge-secondary';
-
-							tbody.innerHTML += `
-								<tr>
-									<td>${row.topik_penelitian || '-'}</td>
-									<td>${row.jurusan || '-'}</td>
-									<td>${row.kelas || '-'}</td>
-									<td><span class="${statusClass}">${row.status}</span></td>
-									<td>
-										<div class="dropdown">
-											<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-											href="#" role="button" data-toggle="dropdown">
-												<i class="dw dw-more"></i>
-											</a>
-											<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-												<a class="dropdown-item" href="/api/document/revisilaporan100/download/${row.id}?type=form_bimbingan" download>
-													<i class="dw dw-download"></i> Download Laporan
-												</a>
-												${row.file_produk_path ? `
-													<a class="dropdown-item" href="/api/document/revisilaporan100/download?path=${row.file_produk_path}" download>
-														<i class="dw dw-download"></i> Download Produk TA
-													</a>` : ''}
-												${row.file_bap_path ? `
-													<a class="dropdown-item" href="/api/document/revisilaporan100/download?path=${row.file_bap_path}" download>
-														<i class="dw dw-download"></i> Download BAP
-													</a>` : ''}
-											</div>
-										</div>
-									</td>
-								</tr>
-							`;
-						});
-					} else {
-						tbody.innerHTML = `
-							<tr>
-								<td colspan="5" class="text-center">Belum ada Revisi Laporan 100% yang diupload</td>
-							</tr>`;
-					}
-				} catch (error) {
-					console.error('Error loading data:', error);
-					showAlert('Gagal memuat data: ' + error.message, 'danger');
+				// Pastikan parsing JSON aman
+				let payload = {};
+				try {
+					payload = await response.json();
+				} catch (e) {
+					throw new Error('Respons bukan JSON yang valid');
 				}
+
+				// Normalisasi data baris
+				const rows = Array.isArray(payload?.data) ? payload.data : [];
+
+				if (payload?.status === 'success' && rows.length > 0) {
+					// Render tiap baris
+					const html = rows.map((row) => {
+					const status = (row?.status || '').toLowerCase();
+					const statusClass =
+						status === 'pending'   ? 'badge badge-warning' :
+						status === 'approved'  ? 'badge badge-success' :
+						status === 'rejected'  ? 'badge badge-danger'  :
+						status === 'on review' ? 'badge badge-info'    :
+												'badge badge-secondary';
+
+					const topik  = sanitize(row?.topik_penelitian) || '-';
+					const jur    = sanitize(row?.jurusan) || '-';
+					const kls    = sanitize(row?.kelas) || '-';
+					const id     = row?.id ?? '';
+
+					// Tautan unduhan opsional (hanya muncul jika path tersedia)
+					const linkProduk = row?.file_produk_path
+						? `
+						<a class="dropdown-item"
+							href="/api/document/revisilaporan100/download?path=${encodeURIComponent(row.file_produk_path)}"
+							download>
+							<i class="dw dw-download"></i> Download Produk TA
+						</a>`
+						: '';
+
+					const linkBap = row?.file_bap_path
+						? `
+						<a class="dropdown-item"
+							href="/api/document/revisilaporan100/download?path=${encodeURIComponent(row.file_bap_path)}"
+							download>
+							<i class="dw dw-download"></i> Download BAP
+						</a>`
+						: '';
+
+					return `
+						<tr>
+						<td>${topik}</td>
+						<td>${jur}</td>
+						<td>${kls}</td>
+						<td><span class="${statusClass}">${sanitize(row?.status) || '-'}</span></td>
+						<td>
+							<div class="dropdown">
+							<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
+								href="#"
+								role="button"
+								data-toggle="dropdown"
+								aria-haspopup="true"
+								aria-expanded="false">
+								<i class="dw dw-more"></i>
+							</a>
+							<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+								<a class="dropdown-item"
+								href="/api/document/revisilaporan100/download/${encodeURIComponent(id)}?type=form_bimbingan"
+								download>
+								<i class="dw dw-download"></i> Download Laporan
+								</a>
+								${linkProduk}
+								${linkBap}
+							</div>
+							</div>
+						</td>
+						</tr>
+					`;
+					}).join('');
+
+					tbody.innerHTML = html;
+				} else {
+					// Empty state
+					tbody.innerHTML = `
+					<tr>
+						<td colspan="5" class="text-center">Belum ada Revisi Laporan 100% yang diupload</td>
+					</tr>`;
+				}
+				} catch (error) {
+				console.error('Error loading data:', error);
+				showAlert('Gagal memuat data: ' + (error?.message || error), 'danger');
+
+				// Tampilkan empty state agar UI tetap informatif
+				tbody.innerHTML = `
+					<tr>
+					<td colspan="5" class="text-center text-danger">
+						Terjadi kesalahan memuat data
+					</td>
+					</tr>`;
+				}
+			}
+
+			// Sanitizer sederhana untuk mencegah injeksi HTML saat menyisipkan string ke innerHTML
+			function sanitize(value) {
+				if (value == null) return '';
+				return String(value)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
 			}
 
 			document.addEventListener('DOMContentLoaded', loadRevisiLaporan100Data);
