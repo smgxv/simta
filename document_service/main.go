@@ -23,7 +23,6 @@ func main() {
 	r.HandleFunc("/icp", handlers.GetICPHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/icp/download", handlers.DownloadFileICPHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/icp/{id}", handlers.GetICPByIDHandler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/icp/edit", handlers.EditICPHandler).Methods("PUT", "OPTIONS")
 
 	// Route untuk review ICP
 	r.HandleFunc("/reviewicp", handlers.GetICPByDosenIDHandler).Methods("GET", "OPTIONS")
@@ -71,7 +70,6 @@ func main() {
 	r.HandleFunc("/upload/proposal", handlers.UploadProposalHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/download/proposal", handlers.DownloadFileProposalHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/proposal/{id}", handlers.GetProposalByIDHandler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/proposal/edit", handlers.EditProposalHandler).Methods("PUT", "OPTIONS")
 
 	// Review Proposal routes
 	r.HandleFunc("/reviewproposal", handlers.GetProposalByDosenIDHandler).Methods("GET", "OPTIONS")
@@ -119,7 +117,6 @@ func main() {
 	r.HandleFunc("/download/laporan70", handlers.DownloadFileLaporan70Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan70", handlers.GetLaporan70Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan70/{id}", handlers.GetLaporan70ByIDHandler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/laporan70/edit", handlers.EditLaporan70Handler).Methods("PUT", "OPTIONS")
 
 	// Review Laporan70 routes
 	r.HandleFunc("/reviewlaporan70", handlers.GetLaporan70ByDosenIDHandler).Methods("GET", "OPTIONS")
@@ -167,7 +164,6 @@ func main() {
 	r.HandleFunc("/download/laporan100", handlers.DownloadFileLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan100", handlers.GetLaporan100Handler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/laporan100/{id}", handlers.GetLaporan100ByIDHandler).Methods("GET", "OPTIONS")
-	r.HandleFunc("/laporan100/edit", handlers.EditLaporan100Handler).Methods("PUT", "OPTIONS")
 
 	// Review Laporan100 routes
 	r.HandleFunc("/reviewlaporan100", handlers.GetLaporan100ByDosenIDHandler).Methods("GET", "OPTIONS")

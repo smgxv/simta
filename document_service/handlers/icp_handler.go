@@ -10,9 +10,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -199,71 +201,91 @@ func GetICPHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Hanya huruf/angka, titik, dash, underscore.
+var safeFilenameRE = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
+
 // DownloadFileICPHandler digunakan untuk mengunduh file ICP
 func DownloadFileICPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	log.Println("🔽 [Download] Mulai proses download")
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Ambil nama file dari query parameter
+	// === 1) TRANSFORM: ambil input ===
 	filename := r.URL.Query().Get("filename")
 	if filename == "" {
 		http.Error(w, "Parameter 'filename' dibutuhkan", http.StatusBadRequest)
 		return
 	}
 
-	// Validasi nama file: hanya izinkan karakter alfanumerik, underscore, dash, dan titik
-	if strings.Contains(filename, "..") || strings.ContainsAny(filename, "/\\") {
+	// === 2) SANITIZE (awal): validasi nama file ===
+	// - Tolak jika mengandung path separator atau pola aneh
+	if !safeFilenameRE.MatchString(filename) ||
+		filepath.Base(filename) != filename {
 		http.Error(w, "Nama file tidak valid", http.StatusBadRequest)
 		return
 	}
 
-	// Direktori tempat file ICP disimpan
+	// Root upload yang diizinkan
 	uploadDir := "uploads/icp"
-	fullPath := filepath.Join(uploadDir, filename)
 
-	// Validasi bahwa path final masih dalam direktori yang diizinkan
-	absUploadDir, err := filepath.Abs(uploadDir)
+	// === 3) NORMALIZE: kanonisasi path root & target ===
+	absRoot, err := filepath.Abs(filepath.Clean(uploadDir))
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}
-	absFullPath, err := filepath.Abs(fullPath)
-	if err != nil || !strings.HasPrefix(absFullPath, absUploadDir+string(os.PathSeparator)) {
+	// Gabungkan KE root yang sudah dikunci
+	target := filepath.Join(absRoot, filename)
+	absTarget, err := filepath.Abs(filepath.Clean(target))
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+
+	// === 4) SANITIZE (akhir): verifikasi berada di dalam root ===
+	// Rel akan mulai dengan ".." jika di luar root
+	rel, err := filepath.Rel(absRoot, absTarget)
+	if err != nil || strings.HasPrefix(rel, "..") || rel == "." {
 		http.Error(w, "Akses file tidak sah", http.StatusForbidden)
 		return
 	}
 
-	// Buka file
-	file, err := os.Open(absFullPath)
+	// === 5) USE: buka file yang sudah tervalidasi ===
+	f, err := os.Open(absTarget)
 	if err != nil {
 		http.Error(w, "File tidak ditemukan", http.StatusNotFound)
 		return
 	}
-	defer file.Close()
+	defer f.Close()
 
-	// Set header response
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
-	w.Header().Set("Content-Type", "application/pdf")
+	// Set header respons dengan aman
+	// Content-Type berdasarkan ekstensi; fallback ke application/octet-stream
+	ct := mime.TypeByExtension(strings.ToLower(filepath.Ext(filename)))
+	if ct == "" {
+		ct = "application/octet-stream"
+	}
+	w.Header().Set("Content-Type", ct)
+	// Hindari header injection: filename sudah disaring safeFilenameRE
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 
 	if r.Method == http.MethodHead {
 		return
 	}
 
-	// Kirim isi file
-	if _, err := io.Copy(w, file); err != nil {
+	if _, err := io.Copy(w, f); err != nil {
 		http.Error(w, "Gagal mengunduh file", http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -387,90 +409,5 @@ func GetICPByIDHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   response,
-	})
-}
-
-func EditICPHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "https://securesimta.my.id")
-	w.Header().Set("Access-Control-Allow-Methods", "PUT, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	// Parse multipart form
-	err := r.ParseMultipartForm(10 << 20)
-	if err != nil {
-		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	id := r.FormValue("id")
-	dosenID := r.FormValue("dosen_id")
-	topikPenelitian := r.FormValue("topik_penelitian")
-	keterangan := r.FormValue("keterangan")
-
-	db, err := config.GetDB()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
-	icpModel := models.NewICPModel(db)
-	icp, err := icpModel.GetByID(id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Update fields
-	icp.DosenID, _ = strconv.Atoi(dosenID)
-	icp.TopikPenelitian = topikPenelitian
-	icp.Keterangan = keterangan
-
-	// Handle file upload if new file is provided
-	file, handler, err := r.FormFile("file")
-	if err == nil {
-		defer file.Close()
-
-		uploadDir := "uploads/icp"
-		filename := fmt.Sprintf("ICP_%d_%s_%s",
-			icp.UserID,
-			time.Now().Format("20060102150405"),
-			handler.Filename)
-
-		filePath := filepath.Join(uploadDir, filename)
-
-		dst, err := os.Create(filePath)
-		if err != nil {
-			http.Error(w, "Error creating file: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer dst.Close()
-
-		if _, err := io.Copy(dst, file); err != nil {
-			http.Error(w, "Error saving file: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		// Delete old file if exists
-		if icp.FilePath != "" {
-			os.Remove(icp.FilePath)
-		}
-
-		icp.FilePath = filePath
-	}
-
-	if err := icpModel.Update(icp); err != nil {
-		http.Error(w, "Error updating ICP: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  "success",
-		"message": "ICP berhasil diupdate",
 	})
 }
