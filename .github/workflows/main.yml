@@ -258,11 +258,11 @@ jobs:
   # SAST - SONARCLOUD
   sast-analysis:
     name: SAST dengan SonarCloud
-    needs: 
-      - deploy-ta-service
-      - deploy-user-service
-      - deploy-document-service
-      - deploy-notification-service
+    # needs: 
+    #   - deploy-ta-service
+    #   - deploy-user-service
+    #   - deploy-document-service
+    #   - deploy-notification-service
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
