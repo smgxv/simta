@@ -99,7 +99,7 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, MaxUploadBytes+1) // +1 untuk deteksi over
 	// Parse form multipart (nilai di sini adalah ambang penggunaan RAM untuk parts)
 	if err := r.ParseMultipartForm(MaxUploadBytes + (1 << 20)); err != nil {
-		http.Error(w, `Gagal parsing form data atau ukuran melebihi 15MB`, http.StatusBadRequest)
+		http.Error(w, `ukuran melebihi 15MB`, http.StatusBadRequest)
 		return
 	}
 
