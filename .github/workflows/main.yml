@@ -37,7 +37,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
-  DEPENDENCY SCAN (govulncheck)
+  # DEPENDENCY SCAN (govulncheck)
   dep-scan:
     needs: sast-codeql
     name: Govulncheck (${{ matrix.service.name }})
@@ -75,7 +75,6 @@ jobs:
         with:
           name: govulncheck-${{ matrix.service.name }}
           path: ${{ matrix.service.name }}-govulncheck.txt
-
 
   # IMAGE SCAN (trivy)
   image-scan:
