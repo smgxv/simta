@@ -114,7 +114,7 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 
 	// Pastikan folder ada
 	if err := os.MkdirAll(uploadDir, 0o750); err != nil {
-		http.Error(w, `{"error":"Gagal membuat direktori upload"}`, http.StatusInternalServerError)
+		http.Error(w, `Gagal membuat direktori upload`, http.StatusInternalServerError)
 		return
 	}
 
@@ -129,7 +129,7 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 
 		src, err := fh.Open()
 		if err != nil {
-			http.Error(w, `{"error":"Gagal membuka file"}`, http.StatusInternalServerError)
+			http.Error(w, `Gagal membuka file`, http.StatusInternalServerError)
 			return
 		}
 		// Pastikan bisa seek untuk sniff MIME
@@ -139,7 +139,7 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 			var buf strings.Builder
 			if _, err := io.CopyN(&buf, src, MaxUploadBytes+1); err != nil && err != io.EOF {
 				src.Close()
-				http.Error(w, `{"error":"Gagal membaca file"}`, http.StatusInternalServerError)
+				http.Error(w, `Gagal membaca file`, http.StatusInternalServerError)
 				return
 			}
 			src.Close()
@@ -158,11 +158,11 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 		// Sniff MIME
 		ct, err := sniffMIME(rs)
 		if err != nil {
-			http.Error(w, `{"error":"Gagal mendeteksi tipe file"}`, http.StatusBadRequest)
+			http.Error(w, `Gagal mendeteksi tipe file`, http.StatusBadRequest)
 			return
 		}
 		if !allowedMIME[ct] {
-			http.Error(w, `{"error":"Tipe file tidak diizinkan (PDF/DOC/DOCX/XLS/XLSX)"}`, http.StatusBadRequest)
+			http.Error(w, `Tipe file tidak diizinkan (PDF/DOC/DOCX/XLS/XLSX)`, http.StatusBadRequest)
 			return
 		}
 
@@ -176,7 +176,7 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 		// Buat file tujuan dengan O_EXCL (hindari overwrite)
 		dst, err := os.OpenFile(finalPath, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o640)
 		if err != nil {
-			http.Error(w, `{"error":"Gagal menyimpan file"}`, http.StatusInternalServerError)
+			http.Error(w, `Gagal menyimpan file`, http.StatusInternalServerError)
 			return
 		}
 
@@ -185,12 +185,12 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 		_ = dst.Close()
 		if err != nil {
 			_ = os.Remove(finalPath)
-			http.Error(w, `{"error":"Gagal menyimpan file"}`, http.StatusInternalServerError)
+			http.Error(w, `Gagal menyimpan file`, http.StatusInternalServerError)
 			return
 		}
 		if written > MaxUploadBytes {
 			_ = os.Remove(finalPath)
-			http.Error(w, `{"error":"Ukuran file melebihi 15MB"}`, http.StatusBadRequest)
+			http.Error(w, `Ukuran file melebihi 15MB`, http.StatusBadRequest)
 			return
 		}
 
@@ -210,7 +210,7 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 	// Simpan notifikasi ke DB
 	db, err := config.GetDB()
 	if err != nil {
-		http.Error(w, `{"error":"Database error"}`, http.StatusInternalServerError)
+		http.Error(w, `Database error`, http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
