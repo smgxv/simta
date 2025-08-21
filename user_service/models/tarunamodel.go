@@ -23,13 +23,14 @@ func (d *TarunaModel) CreateTaruna(userID int, namaLengkap, email, jurusan, kela
 	return err
 }
 
-func (d *TarunaModel) GetAllTaruna() ([]map[string]interface{}, error) {
-	rows, err := d.db.Query(`
-        SELECT t.id, t.user_id, t.nama_lengkap, t.jurusan, t.kelas, t.npm
-        FROM taruna t
-        JOIN users u ON t.user_id = u.id
-        WHERE u.role = 'Taruna'
-    `)
+// GetAllTaruna: aman terhadap NULL di npm, kembalikan sebagai int atau nil.
+func (m *TarunaModel) GetAllTaruna() ([]map[string]interface{}, error) {
+	rows, err := m.db.Query(`
+		SELECT t.id, t.user_id, t.nama_lengkap, t.jurusan, t.kelas, t.npm
+		FROM taruna t
+		JOIN users u ON t.user_id = u.id
+		WHERE u.role = 'Taruna'
+	`)
 	if err != nil {
 		return nil, err
 	}
@@ -37,25 +38,33 @@ func (d *TarunaModel) GetAllTaruna() ([]map[string]interface{}, error) {
 
 	var tarunas []map[string]interface{}
 	for rows.Next() {
-		var id, userID int
-		var namaLengkap, jurusan, kelas, npm string
-
-		err := rows.Scan(&id, &userID, &namaLengkap, &jurusan, &kelas, &npm)
-		if err != nil {
+		var (
+			id, userID                  int
+			namaLengkap, jurusan, kelas string
+			npm                         sql.NullInt64
+		)
+		if err := rows.Scan(&id, &userID, &namaLengkap, &jurusan, &kelas, &npm); err != nil {
 			return nil, err
 		}
 
-		taruna := map[string]interface{}{
+		item := map[string]interface{}{
 			"id":           id,
 			"user_id":      userID,
 			"nama_lengkap": namaLengkap,
 			"jurusan":      jurusan,
 			"kelas":        kelas,
-			"npm":          npm,
 		}
-		tarunas = append(tarunas, taruna)
-	}
+		if npm.Valid {
+			item["npm"] = int(npm.Int64)
+		} else {
+			item["npm"] = nil // atau gunakan "-" jika ingin string default
+		}
 
+		tarunas = append(tarunas, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	return tarunas, nil
 }
 
@@ -65,22 +74,38 @@ func (d *TarunaModel) UpdateTarunaPassword(userID int, hashedPassword string) er
 	return err
 }
 
+// GetTarunaByUserID: sekarang ikut select npm (INT, bisa NULL).
 func (m *TarunaModel) GetTarunaByUserID(userID int) (map[string]interface{}, error) {
-	row := m.db.QueryRow("SELECT id, user_id, nama_lengkap, email, jurusan, kelas FROM taruna WHERE user_id = ?", userID)
-	var id, uid int
-	var nama, email, jurusan, kelas string
-	err := row.Scan(&id, &uid, &nama, &email, &jurusan, &kelas)
-	if err != nil {
+	row := m.db.QueryRow(`
+		SELECT id, user_id, nama_lengkap, email, jurusan, kelas, npm
+		FROM taruna
+		WHERE user_id = ?`, userID)
+
+	var (
+		id, uid        int
+		nama, email    string
+		jurusan, kelas string
+		npm            sql.NullInt64
+	)
+	if err := row.Scan(&id, &uid, &nama, &email, &jurusan, &kelas, &npm); err != nil {
 		return nil, err
 	}
-	return map[string]interface{}{
+
+	data := map[string]interface{}{
 		"id":           id,
 		"user_id":      uid,
 		"nama_lengkap": nama,
 		"email":        email,
 		"jurusan":      jurusan,
 		"kelas":        kelas,
-	}, nil
+	}
+	if npm.Valid {
+		data["npm"] = int(npm.Int64)
+	} else {
+		data["npm"] = nil // atau "-" jika ingin string default
+	}
+
+	return data, nil
 }
 
 func (m *TarunaModel) GetDB() *sql.DB {
