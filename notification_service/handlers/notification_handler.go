@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes" // + tambah
 	"encoding/json"
 	"fmt"
 	"io"
@@ -38,6 +39,26 @@ var allowedMIME = map[string]bool{
 	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": true, // .docx
 	"application/vnd.ms-excel": true, // .xls
 	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": true, // .xlsx
+}
+
+func mimeAllowedForExt(ext, ct string) bool {
+	ext = strings.ToLower(ext)
+	if allowedMIME[ct] {
+		return true
+	}
+	// OOXML (docx/xlsx) sering terdeteksi sebagai application/zip
+	if ct == "application/zip" {
+		if ext == ".docx" || ext == ".xlsx" {
+			return true
+		}
+	}
+	// Beberapa environment mengembalikan octet-stream
+	if ct == "application/octet-stream" {
+		if allowedExt[ext] {
+			return true
+		}
+	}
+	return false
 }
 
 func sanitizeFilename(name string) string {
@@ -121,7 +142,7 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 	var fileURLs []string
 
 	for _, fh := range files {
-		// Validasi awal berdasar header (ekstensi & size dari header)
+		// Validasi awal (ekstensi & size dari header)
 		if err := validateFileHeader(fh); err != nil {
 			http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
 			return
@@ -132,28 +153,27 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, `Gagal membuka file`, http.StatusInternalServerError)
 			return
 		}
-		// Pastikan bisa seek untuk sniff MIME
-		rs, ok := src.(io.ReadSeeker)
-		if !ok {
-			// jika bukan ReadSeeker, bungkus ke memori sementara (ukuran max sudah dibatasi)
-			var buf strings.Builder
+
+		// Pastikan ada ReadSeeker untuk sniff + copy
+		var rs io.ReadSeeker
+		if rseeker, ok := src.(io.ReadSeeker); ok {
+			rs = rseeker
+		} else {
+			var buf bytes.Buffer
 			if _, err := io.CopyN(&buf, src, MaxUploadBytes+1); err != nil && err != io.EOF {
 				src.Close()
 				http.Error(w, `Gagal membaca file`, http.StatusInternalServerError)
 				return
 			}
-			src.Close()
-			// ukuran runtime check
 			if buf.Len() > MaxUploadBytes {
+				src.Close()
 				http.Error(w, `Ukuran file melebihi 15MB`, http.StatusBadRequest)
 				return
 			}
-			// buat ReadSeeker dari bytes
-			rs = strings.NewReader(buf.String())
+			rs = bytes.NewReader(buf.Bytes())
 		}
-		defer func(c io.Closer) {
-			_ = c.Close()
-		}(io.NopCloser(rs))
+		// selesai dipakai, tutup src
+		src.Close()
 
 		// Sniff MIME
 		ct, err := sniffMIME(rs)
@@ -161,36 +181,52 @@ func BroadcastNotification(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, `Gagal mendeteksi tipe file`, http.StatusBadRequest)
 			return
 		}
-		if !allowedMIME[ct] {
+		ext := strings.ToLower(filepath.Ext(fh.Filename))
+		if !mimeAllowedForExt(ext, ct) {
 			http.Error(w, `Tipe file tidak diizinkan (PDF/DOC/DOCX/XLS/XLSX)`, http.StatusBadRequest)
 			return
 		}
 
-		// Siapkan nama file yang aman + timestamp
-		ext := strings.ToLower(filepath.Ext(fh.Filename))
+		// Nama file aman
 		base := strings.TrimSuffix(fh.Filename, ext)
 		base = sanitizeFilename(base)
 		fileName := fmt.Sprintf("%s_%s%s", base, time.Now().Format("20060102_150405"), ext)
 		finalPath := filepath.Join(uploadDir, fileName)
 
-		// Buat file tujuan dengan O_EXCL (hindari overwrite)
+		// Buat file tujuan
 		dst, err := os.OpenFile(finalPath, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o640)
 		if err != nil {
 			http.Error(w, `Gagal menyimpan file`, http.StatusInternalServerError)
 			return
 		}
 
-		// Copy dengan limiter (<= 15MB). Jika lebih, hapus file dan error.
+		// Pastikan cursor di awal sebelum copy (sniffMIME sudah Seek(0), tapi aman diulang)
+		if _, err := rs.Seek(0, io.SeekStart); err != nil {
+			dst.Close()
+			_ = os.Remove(finalPath)
+			http.Error(w, `Gagal membaca file`, http.StatusInternalServerError)
+			return
+		}
+
+		// Copy dengan limiter
 		written, err := io.Copy(dst, io.LimitReader(rs, MaxUploadBytes+1))
-		_ = dst.Close()
 		if err != nil {
+			dst.Close()
 			_ = os.Remove(finalPath)
 			http.Error(w, `Gagal menyimpan file`, http.StatusInternalServerError)
 			return
 		}
 		if written > MaxUploadBytes {
+			dst.Close()
 			_ = os.Remove(finalPath)
 			http.Error(w, `Ukuran file melebihi 15MB`, http.StatusBadRequest)
+			return
+		}
+
+		// selesai sukses, baru tutup
+		if err := dst.Close(); err != nil {
+			_ = os.Remove(finalPath)
+			http.Error(w, `Gagal menutup file`, http.StatusInternalServerError)
 			return
 		}
 
