@@ -50,6 +50,12 @@ jobs:
           else
             echo "No Critical vulnerabilities found."
           fi
+      
+      - name: Upload SARIF as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif-results
+          path: codeql-results/*.sarif
 
   # 2. Job setelah SAST (hanya jalan kalau gate lolos)
   after-sast:
