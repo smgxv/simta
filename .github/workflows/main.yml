@@ -44,18 +44,20 @@ jobs:
       - name: Block NEW High/Critical CodeQL alerts
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { owner, repo } = context.repo;
-            const pr = context.payload.pull_request;
-            const refPR   = `refs/pull/${pr.number}/merge`;
+            const pr = context.payload.pull_request; // aman, pasti ada
+
+            const refCur  = `refs/pull/${pr.number}/merge`;
             const refBase = `refs/heads/${pr.base.ref}`;
 
             const getAll = async (ref) => {
-              let page = 1, out = [];
+              let page=1, out=[];
               for (;;) {
                 const { data } = await github.request(
                   'GET /repos/{owner}/{repo}/code-scanning/alerts',
-                  { owner, repo, state: 'open', ref, tool_name: 'CodeQL', per_page: 100, page }
+                  { owner, repo, state:'open', ref, tool_name:'CodeQL', per_page:100, page }
                 );
                 out.push(...data);
                 if (data.length < 100) break;
@@ -64,16 +66,16 @@ jobs:
               return out;
             };
 
-            const [cur, base] = await Promise.all([getAll(refPR), getAll(refBase)]);
-            const sev = a => a.rule?.security_severity_level || 'unknown';
-            const rank = { critical:4, high:3, medium:2, low:1, unknown:0 };
+            const [cur, base] = await Promise.all([getAll(refCur), getAll(refBase)]);
+            const sev  = a => a.rule?.security_severity_level || 'unknown';
+            const rank = {critical:4, high:3, medium:2, low:1, unknown:0};
             const key  = a => [
               a.rule?.id || '',
               a.most_recent_instance?.location?.path || '',
               a.most_recent_instance?.location?.start_line || ''
             ].join('|');
 
-            const baseSet = new Set(base.map(key));
+            const baseSet   = new Set(base.map(key));
             const offenders = cur.filter(a => !baseSet.has(key(a)) && rank[sev(a)] >= 3);
 
             if (offenders.length) {
