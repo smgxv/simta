@@ -3,6 +3,8 @@ name: CI/CD SIMTA
 on:
   push:
     branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch: {}
 
 permissions:
@@ -40,40 +42,30 @@ jobs:
         with:
           output: codeql-results
 
-      # === Gate Severity Critical ===
+      # === Gate: blokir alert BARU High/Critical (PR saja) ===
       - name: Block NEW High/Critical CodeQL alerts
+        if: ${{ github.event_name == 'pull_request' }}   # ← hindari error saat push
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { owner, repo } = context.repo;
-            const pr = context.payload.pull_request; // aman, pasti ada
+            const pr = context.payload.pull_request;
+            if (!pr) { core.info('Skip: not a PR'); return; }
 
             const refCur  = `refs/pull/${pr.number}/merge`;
             const refBase = `refs/heads/${pr.base.ref}`;
 
-            const getAll = async (ref) => {
-              let page=1, out=[];
-              for (;;) {
-                const { data } = await github.request(
-                  'GET /repos/{owner}/{repo}/code-scanning/alerts',
-                  { owner, repo, state:'open', ref, tool_name:'CodeQL', per_page:100, page }
-                );
-                out.push(...data);
-                if (data.length < 100) break;
-                page++;
-              }
-              return out;
-            };
+            const getAll = (ref) =>
+              github.paginate('GET /repos/{owner}/{repo}/code-scanning/alerts', {
+                owner, repo, state: 'open', ref, tool_name: 'CodeQL', per_page: 100
+              });
 
             const [cur, base] = await Promise.all([getAll(refCur), getAll(refBase)]);
-            const sev  = a => a.rule?.security_severity_level || 'unknown';
-            const rank = {critical:4, high:3, medium:2, low:1, unknown:0};
-            const key  = a => [
-              a.rule?.id || '',
-              a.most_recent_instance?.location?.path || '',
-              a.most_recent_instance?.location?.start_line || ''
-            ].join('|');
+
+            const sev  = a => a.rule?.security_severity_level ?? 'unknown';
+            const rank = { critical:4, high:3, medium:2, low:1, unknown:0 };
+            const key  = a => `${a.rule?.id||''}|${a.most_recent_instance?.location?.path||''}|${a.most_recent_instance?.location?.start_line||''}`;
 
             const baseSet   = new Set(base.map(key));
             const offenders = cur.filter(a => !baseSet.has(key(a)) && rank[sev(a)] >= 3);
@@ -81,7 +73,7 @@ jobs:
             if (offenders.length) {
               const lines = offenders.slice(0, 20).map(a => {
                 const loc = a.most_recent_instance?.location || {};
-                return `- ${a.rule?.id} ${loc.path || ''}:${loc.start_line || ''} (${sev(a)})`;
+                return `- ${a.rule?.id} ${loc.path||''}:${loc.start_line||''} (${sev(a)})`;
               }).join('\n');
               core.setFailed(`Blocking: ${offenders.length} NEW High/Critical alert(s).\n${lines}`);
             } else {
