@@ -40,25 +40,42 @@ jobs:
           output: codeql-results
 
       # === Gate Severity Critical ===
-      - name: Fail on Critical findings
-        run: |
-          echo "Checking for Critical vulnerabilities..."
-          # Grep file SARIF untuk severity=CRITICAL
-          if grep -q '"level": "HIGH"' codeql-results/*.sarif; then
-            echo "Found Critical vulnerabilities in CodeQL scan!"
-            exit 1
-          else
-            echo "No Critical vulnerabilities found."
-          fi
-      
-      - name: Format SARIF
-        run: jq . codeql-results/go.sarif > codeql-results/go-pretty.sarif
-
-      - name: Upload SARIF as artifact
-        uses: actions/upload-artifact@v4
+      - name: Gate on CodeQL alerts (High/Critical)
+        if: ${{ always() }}
+        uses: actions/github-script@v7
         with:
-          name: codeql-sarif-results
-          path: codeql-results/*-pretty.sarif
+          script: |
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            // Pakai SHA head untuk PR, atau commit saat ini untuk push
+            const refSha = context.eventName === 'pull_request'
+              ? context.payload.pull_request.head.sha
+              : context.sha;
+
+            // Ambil semua alert "open" untuk ref/commit ini dari Code Scanning
+            let page = 1, per_page = 100, alerts = [];
+            while (true) {
+              const { data } = await github.request(
+                'GET /repos/{owner}/{repo}/code-scanning/alerts',
+                { owner, repo, per_page, page, state: 'open', ref: refSha, tool_name: 'CodeQL' }
+              );
+              alerts = alerts.concat(data);
+              if (data.length < per_page) break;
+              page++;
+            }
+
+            // Filter High/Critical (fallback unknown -> lolos)
+            const sevRank = { critical: 4, high: 3, medium: 2, low: 1, unknown: 0 };
+            const bad = alerts.filter(a =>
+              sevRank[(a.rule && a.rule.security_severity_level) || 'unknown'] >= sevRank.high
+            );
+
+            if (bad.length > 0) {
+              core.setFailed(`Blocking: ${bad.length} High/Critical CodeQL alert(s) on this ref.`);
+            } else {
+              core.info('OK: no High/Critical CodeQL alerts on this ref.');
+            }
+
 
   # 2. Job setelah SAST (hanya jalan kalau gate lolos)
   after-sast:
