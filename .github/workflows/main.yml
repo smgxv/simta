@@ -21,7 +21,6 @@ jobs:
   # SAST - CodeQL (GitHub Native)
   sast-codeql:
     name: SAST dengan CodeQL (Go + JS)
-    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -45,7 +44,6 @@ jobs:
 
       # === Gate: blokir alert BARU High/Critical (PR saja) ===
       - name: Block NEW High/Critical CodeQL alerts
-        if: ${{ github.event_name == 'pull_request' }}   # ← hindari error saat push
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
