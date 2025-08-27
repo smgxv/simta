@@ -21,6 +21,7 @@ jobs:
   # SAST - CodeQL (GitHub Native)
   sast-codeql:
     name: SAST dengan CodeQL (Go + JS)
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
 
     steps:
