@@ -68,15 +68,15 @@ jobs:
             const counts = alerts.reduce((m,a)=>{ m[level(a)] = (m[level(a)]||0)+1; return m; }, {});
             core.info('Open alerts by level: ' + JSON.stringify(counts));
             const sevRank = { critical: 4, high: 3, medium: 2, low: 1, unknown: 0 };
-            const offenders = alerts.filter(a => sevRank[level(a)] >= sevRank.critical);
+            const offenders = alerts.filter(a => sevRank[level(a)] >= sevRank.medium);
             if (offenders.length) {
               const lines = offenders.slice(0, 15).map(a => {
                 const loc = a.most_recent_instance?.location || {};
                 return `- ${a.rule?.id} ${loc.path || ''}:${loc.start_line || ''} (${level(a)})`;
               }).join('\n');
-              core.setFailed(`Blocking: ${offenders.length} High/Critical CodeQL alert(s).\n${lines}`);
+              core.setFailed(`Blocking: ${offenders.length} Medium CodeQL alert(s).\n${lines}`);
             } else {
-              core.info('OK: no High/Critical CodeQL alerts on this ref.');
+              core.info('OK: no Medium CodeQL alerts on this ref.');
             }
 
 
