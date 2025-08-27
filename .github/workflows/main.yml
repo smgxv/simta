@@ -3,8 +3,6 @@ name: CI/CD SIMTA
 on:
   push:
     branches: [main]
-  pull_request:
-    types: [opened, synchronize, reopened]
   workflow_dispatch: {}
 
 permissions:
@@ -12,7 +10,6 @@ permissions:
   actions: write
   issues: write
   security-events: write
-  pull-requests: read
 
 env:
   GO_VERSION: "1.23"
@@ -24,61 +21,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.23
+      - uses: actions/setup-go@v5
+        with: { go-version: ${{ env.GO_VERSION }} }
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v3
         with:
           languages: go, javascript
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v3
         with:
           output: codeql-results
 
-      # === Gate: blokir alert BARU High/Critical (PR saja) ===
-      - name: Block NEW High/Critical CodeQL alerts
+      # Gate saat PUSH: bandingkan alert di commit terbaru vs commit "before"
+      - name: Gate NEW High/Critical on push
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { owner, repo } = context.repo;
-            const pr = context.payload.pull_request;
-            if (!pr) { core.info('Skip: not a PR'); return; }
+            const afterSha  = context.sha;                  // commit hasil push ini
+            const beforeSha = context.payload.before || ''; // commit sebelum push (bisa kosong di initial push)
 
-            const refCur  = `refs/pull/${pr.number}/merge`;
-            const refBase = `refs/heads/${pr.base.ref}`;
+            const getAll = (ref) => github.paginate(
+              'GET /repos/{owner}/{repo}/code-scanning/alerts',
+              { owner, repo, state:'open', ref, tool_name:'CodeQL', per_page:100 }
+            );
 
-            const getAll = (ref) =>
-              github.paginate('GET /repos/{owner}/{repo}/code-scanning/alerts', {
-                owner, repo, state: 'open', ref, tool_name: 'CodeQL', per_page: 100
-              });
-
-            const [cur, base] = await Promise.all([getAll(refCur), getAll(refBase)]);
+            // Ambil alert utk after dan before (kalau before kosong → baseline = [])
+            const [cur, prev] = await Promise.all([
+              getAll(afterSha),
+              beforeSha ? getAll(beforeSha) : Promise.resolve([])
+            ]);
 
             const sev  = a => a.rule?.security_severity_level ?? 'unknown';
-            const rank = { critical:4, high:3, medium:2, low:1, unknown:0 };
+            const rank = {critical:4, high:3, medium:2, low:1, unknown:0};
             const key  = a => `${a.rule?.id||''}|${a.most_recent_instance?.location?.path||''}|${a.most_recent_instance?.location?.start_line||''}`;
 
-            const baseSet   = new Set(base.map(key));
-            const offenders = cur.filter(a => !baseSet.has(key(a)) && rank[sev(a)] >= 3);
+            const prevSet = new Set(prev.map(key));
+            const offenders = cur.filter(a => rank[sev(a)] >= 3 && !prevSet.has(key(a)));
 
             if (offenders.length) {
               const lines = offenders.slice(0, 20).map(a => {
                 const loc = a.most_recent_instance?.location || {};
                 return `- ${a.rule?.id} ${loc.path||''}:${loc.start_line||''} (${sev(a)})`;
               }).join('\n');
-              core.setFailed(`Blocking: ${offenders.length} NEW High/Critical alert(s).\n${lines}`);
+              core.setFailed(`Blocking: ${offenders.length} NEW High/Critical alert(s) on this push.\n${lines}`);
             } else {
-              core.info('OK: no NEW High/Critical alerts in this PR.');
+              core.info('OK: no NEW High/Critical alerts on this push.');
             }
-
 
   # 2. Job setelah SAST (hanya jalan kalau gate lolos)
   after-sast:
