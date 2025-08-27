@@ -9,7 +9,7 @@ permissions:
   contents: read
   actions: write
   issues: write
-  security-events: read, write
+  security-events: write
   pull-requests: read
 
 env:
