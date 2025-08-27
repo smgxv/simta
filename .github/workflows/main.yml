@@ -9,7 +9,8 @@ permissions:
   contents: read
   actions: write
   issues: write
-  security-events: write
+  security-events: read, write
+  pull-requests: read
 
 env:
   GO_VERSION: "1.23"
@@ -40,38 +41,50 @@ jobs:
           output: codeql-results
 
       # === Gate Severity Critical ===
-      - name: Gate on CodeQL alerts (High/Critical)
-        if: ${{ always() }}
+      - name: Gate on CodeQL alerts (High/Critical) by ref
         uses: actions/github-script@v7
         with:
           script: |
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
-            // Pakai SHA head untuk PR, atau commit saat ini untuk push
-            const refSha = context.eventName === 'pull_request'
-              ? context.payload.pull_request.head.sha
-              : context.sha;
 
-            // Ambil semua alert "open" untuk ref/commit ini dari Code Scanning
-            let page = 1, per_page = 100, alerts = [];
-            while (true) {
-              const { data } = await github.request(
-                'GET /repos/{owner}/{repo}/code-scanning/alerts',
-                { owner, repo, per_page, page, state: 'open', ref: refSha, tool_name: 'CodeQL' }
-              );
-              alerts = alerts.concat(data);
-              if (data.length < per_page) break;
-              page++;
+            // Gunakan ref yang benar: branch untuk push, PR merge-ref untuk PR
+            let ref = context.ref; // contoh: refs/heads/main
+            if (context.eventName === 'pull_request') {
+              ref = `refs/pull/${context.payload.pull_request.number}/merge`;
+            }
+            core.info(`Querying alerts for ref: ${ref}`);
+
+            async function fetchAll(ref) {
+              let page = 1, per_page = 100, out = [];
+              while (true) {
+                const { data } = await github.request(
+                  'GET /repos/{owner}/{repo}/code-scanning/alerts',
+                  { owner, repo, state: 'open', ref, tool_name: 'CodeQL', per_page, page }
+                );
+                out.push(...data);
+                if (data.length < per_page) break;
+                page++;
+              }
+              return out;
             }
 
-            // Filter High/Critical (fallback unknown -> lolos)
-            const sevRank = { critical: 4, high: 3, medium: 2, low: 1, unknown: 0 };
-            const bad = alerts.filter(a =>
-              sevRank[(a.rule && a.rule.security_severity_level) || 'unknown'] >= sevRank.high
-            );
+            const alerts = await fetchAll(ref);
 
-            if (bad.length > 0) {
-              core.setFailed(`Blocking: ${bad.length} High/Critical CodeQL alert(s) on this ref.`);
+            // Ringkas per level untuk debug
+            const level = a => (a.rule && a.rule.security_severity_level) || 'unknown';
+            const counts = alerts.reduce((m,a)=>{ m[level(a)] = (m[level(a)]||0)+1; return m; }, {});
+            core.info('Open alerts by level: ' + JSON.stringify(counts));
+
+            const sevRank = { critical: 4, high: 3, medium: 2, low: 1, unknown: 0 };
+            const offenders = alerts.filter(a => sevRank[level(a)] >= sevRank.high);
+
+            if (offenders.length) {
+              const lines = offenders.slice(0, 15).map(a => {
+                const loc = a.most_recent_instance?.location || {};
+                return `- ${a.rule?.id} ${loc.path || ''}:${loc.start_line || ''} (${level(a)})`;
+              }).join('\n');
+              core.setFailed(`Blocking: ${offenders.length} High/Critical CodeQL alert(s).\n${lines}`);
             } else {
               core.info('OK: no High/Critical CodeQL alerts on this ref.');
             }
