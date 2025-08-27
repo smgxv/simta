@@ -51,11 +51,14 @@ jobs:
             echo "No Critical vulnerabilities found."
           fi
       
+      - name: Format SARIF
+        run: jq . codeql-results/go.sarif > codeql-results/go-pretty.sarif
+
       - name: Upload SARIF as artifact
         uses: actions/upload-artifact@v4
         with:
           name: codeql-sarif-results
-          path: codeql-results/*.sarif
+          path: codeql-results/*-pretty.sarif
 
   # 2. Job setelah SAST (hanya jalan kalau gate lolos)
   after-sast:
