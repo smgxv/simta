@@ -79,387 +79,377 @@ jobs:
               core.info('OK: no Critical CodeQL alerts on this ref.');
             }
 
-
-  # 2. Job setelah SAST (hanya jalan kalau gate lolos)
-  after-sast:
-    name: Job Setelah SAST
+  # DEPENDENCY SCAN (govulncheck)
+  dep-scan:
+    needs: sast-codeql
+    name: Govulncheck (${{ matrix.service.name }})
     runs-on: ubuntu-latest
-    needs: sast-codeql   # <-- hanya jalan kalau job di atas sukses
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - { name: ta-service,           path: ta_service }
+          - { name: user-service,         path: user_service }
+          - { name: document-service,     path: document_service }
+          - { name: notification-service, path: notification_service }
+
     steps:
-      - name: Echo hasil
-        run: echo "🎉 Pengecekan berhasil - tidak ada kerentanan kritis"
+      - name: Checkout
+        uses: actions/checkout@v4
 
-#   # DEPENDENCY SCAN (govulncheck)
-#   dep-scan:
-#     needs: sast-codeql
-#     name: Govulncheck (${{ matrix.service.name }})
-#     runs-on: ubuntu-latest
-#     strategy:
-#       fail-fast: false
-#       matrix:
-#         service:
-#           - { name: ta-service,           path: ta_service }
-#           - { name: user-service,         path: user_service }
-#           - { name: document-service,     path: document_service }
-#           - { name: notification-service, path: notification_service }
+      # Gate + simpan laporan TEXT
+      - name: Govulncheck (gate + save text report)
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-input: ${{ env.GO_VERSION }}         
+          work-dir: ${{ matrix.service.path }}             
+          go-package: ./...                                
+          output-format: text                              
+          output-file: ${{ matrix.service.name }}-govulncheck.txt
+          repo-checkout: false
+          cache: true
+          cache-dependency-path: ${{ matrix.service.path }}/go.sum
 
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v4
+      # Arsipkan laporan TEXT
+      - name: Upload govulncheck report (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: govulncheck-${{ matrix.service.name }}
+          path: ${{ matrix.service.name }}-govulncheck.txt
 
-#       # Gate + simpan laporan TEXT
-#       - name: Govulncheck (gate + save text report)
-#         uses: golang/govulncheck-action@v1
-#         with:
-#           go-version-input: ${{ env.GO_VERSION }}         
-#           work-dir: ${{ matrix.service.path }}             
-#           go-package: ./...                                
-#           output-format: text                              
-#           output-file: ${{ matrix.service.name }}-govulncheck.txt
-#           repo-checkout: false
-#           cache: true
-#           cache-dependency-path: ${{ matrix.service.path }}/go.sum
+  # IMAGE SCAN (trivy)
+  image-scan:
+    needs: dep-scan
+    name: Image Scan (${{ matrix.service.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - { name: ta-service,           path: ta_service,           dockerfile: ta_service/Dockerfile }
+          - { name: user-service,         path: user_service,         dockerfile: user_service/Dockerfile }
+          - { name: document-service,     path: document_service,     dockerfile: document_service/Dockerfile }
+          - { name: notification-service, path: notification_service, dockerfile: notification_service/Dockerfile }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-#       # Arsipkan laporan TEXT
-#       - name: Upload govulncheck report (artifact)
-#         if: always()
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: govulncheck-${{ matrix.service.name }}
-#           path: ${{ matrix.service.name }}-govulncheck.txt
+      - name: Build image (local daemon)
+        run: |
+          docker build \
+            -f "${{ matrix.service.dockerfile }}" \
+            -t "${{ matrix.service.name }}:scan" \
+            "${{ matrix.service.path }}"
 
-#   # IMAGE SCAN (trivy)
-#   image-scan:
-#     needs: dep-scan
-#     name: Image Scan (${{ matrix.service.name }})
-#     runs-on: ubuntu-latest
-#     strategy:
-#       fail-fast: false
-#       matrix:
-#         service:
-#           - { name: ta-service,           path: ta_service,           dockerfile: ta_service/Dockerfile }
-#           - { name: user-service,         path: user_service,         dockerfile: user_service/Dockerfile }
-#           - { name: document-service,     path: document_service,     dockerfile: document_service/Dockerfile }
-#           - { name: notification-service, path: notification_service, dockerfile: notification_service/Dockerfile }
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v4
+      - name: Trivy Image scan (gate)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ matrix.service.name }}:scan
+          format: table
+          vuln-type: os,library
+          ignore-unfixed: true
+          severity: CRITICAL      
+          exit-code: '1'          
+          hide-progress: true
+          timeout: 10m
 
-#       - name: Build image (local daemon)
-#         run: |
-#           docker build \
-#             -f "${{ matrix.service.dockerfile }}" \
-#             -t "${{ matrix.service.name }}:scan" \
-#             "${{ matrix.service.path }}"
+  # Build Image ()
+  build-ta-service:
+    needs: image-scan
+    name: Build Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/ta-service
 
-#       - name: Trivy Image scan (gate)
-#         uses: aquasecurity/trivy-action@0.28.0
-#         with:
-#           image-ref: ${{ matrix.service.name }}:scan
-#           format: table
-#           vuln-type: os,library
-#           ignore-unfixed: true
-#           severity: CRITICAL      
-#           exit-code: '1'          
-#           hide-progress: true
-#           timeout: 10m
+  build-user-service:
+    needs: image-scan
+    name: Build User Service Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/user-service -f user_service/Dockerfile user_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/user-service
 
-#   # Build Image ()
-#   build-ta-service:
-#     needs: image-scan
-#     name: Build Image
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v2
-#       - name: Build Image
-#         run: docker build -t smgxv/ta-service -f ta_service/Dockerfile ta_service
-#       - name: Login to DockerHub
-#         uses: docker/login-action@v1
-#         with:
-#           username: ${{ secrets.DOCKERHUB_USERNAME }}
-#           password: ${{ secrets.DOCKERHUB_TOKEN }}
-#       - name: Push Image
-#         run: docker push smgxv/ta-service
+  build-document-service:
+    needs: image-scan
+    name: Build Document Service Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/document-service -f document_service/Dockerfile document_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/document-service
 
-  # build-user-service:
+  build-notification-service:
     # needs: image-scan
-  #   name: Build User Service Image
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-  #     - name: Build Image
-  #       run: docker build -t smgxv/user-service -f user_service/Dockerfile user_service
-  #     - name: Login to DockerHub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - name: Push Image
-  #       run: docker push smgxv/user-service
+    name: Build Notification Service Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t smgxv/notification-service -f notification_service/Dockerfile notification_service
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push Image
+        run: docker push smgxv/notification-service
 
-#   build-document-service:
-#     needs: image-scan
-#     name: Build Document Service Image
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v2
-#       - name: Build Image
-#         run: docker build -t smgxv/document-service -f document_service/Dockerfile document_service
-#       - name: Login to DockerHub
-#         uses: docker/login-action@v1
-#         with:
-#           username: ${{ secrets.DOCKERHUB_USERNAME }}
-#           password: ${{ secrets.DOCKERHUB_TOKEN }}
-#       - name: Push Image
-#         run: docker push smgxv/document-service
+  # Deploy ke lingkungan sementara
+  deploy-ta-service:
+    needs: build-ta-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop ta-service || true && docker rm ta-service || true
+            docker system prune -af
+            docker pull smgxv/ta-service
+            docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+            docker network connect simta_net ta-service
 
-  # build-notification-service:
-  #   # needs: image-scan
-  #   name: Build Notification Service Image
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-  #     - name: Build Image
-  #       run: docker build -t smgxv/notification-service -f notification_service/Dockerfile notification_service
-  #     - name: Login to DockerHub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - name: Push Image
-  #       run: docker push smgxv/notification-service
+  deploy-user-service:
+    needs: build-user-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy User Service to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop user-service || true && docker rm user-service || true
+            docker system prune -af
+            docker pull smgxv/user-service
+            docker run -d -p 8081:8081 --name user-service smgxv/user-service
+            docker network connect simta_net user-service
 
-#   # Deploy ke lingkungan sementara
-#   deploy-ta-service:
-#     needs: build-ta-service
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Deploy to VPS
-#         uses: appleboy/ssh-action@master
-#         with:
-#           host: ${{ secrets.VPS_HOST }}
-#           username: ${{ secrets.VPS_USERNAME }}
-#           password: ${{ secrets.VPS_PASSWORD }}
-#           port: ${{ secrets.VPS_PORT }}
-#           script: |
-#             docker stop ta-service || true && docker rm ta-service || true
-#             docker system prune -af
-#             docker pull smgxv/ta-service
-#             docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
-#             docker network connect simta_net ta-service
+  deploy-document-service:
+    needs: build-document-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Document Service to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop document-service || true && docker rm document-service || true
+            docker system prune -af
+            docker pull smgxv/document-service
+            docker run -d -p 8082:8082 --name document-service smgxv/document-service
+            docker network connect simta_net document-service
 
-  # deploy-user-service:
-  #   needs: build-user-service
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Deploy User Service to VPS
-  #       uses: appleboy/ssh-action@master
-  #       with:
-  #         host: ${{ secrets.VPS_HOST }}
-  #         username: ${{ secrets.VPS_USERNAME }}
-  #         password: ${{ secrets.VPS_PASSWORD }}
-  #         port: ${{ secrets.VPS_PORT }}
-  #         script: |
-  #           docker stop user-service || true && docker rm user-service || true
-  #           docker system prune -af
-  #           docker pull smgxv/user-service
-  #           docker run -d -p 8081:8081 --name user-service smgxv/user-service
-  #           docker network connect simta_net user-service
+  deploy-notification-service:
+    needs: build-notification-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Notification Service to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            docker stop notification-service || true && docker rm notification-service || true
+            docker system prune -af
+            docker pull smgxv/notification-service
+            docker run -d -p 8083:8083 --name notification-service -v /home/youruser/uploads:/app/uploads smgxv/notification-service
+            docker network connect simta_net notification-service
 
-#   deploy-document-service:
-#     needs: build-document-service
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Deploy Document Service to VPS
-#         uses: appleboy/ssh-action@master
-#         with:
-#           host: ${{ secrets.VPS_HOST }}
-#           username: ${{ secrets.VPS_USERNAME }}
-#           password: ${{ secrets.VPS_PASSWORD }}
-#           port: ${{ secrets.VPS_PORT }}
-#           script: |
-#             docker stop document-service || true && docker rm document-service || true
-#             docker system prune -af
-#             docker pull smgxv/document-service
-#             docker run -d -p 8082:8082 --name document-service smgxv/document-service
-#             docker network connect simta_net document-service
+  # SAST - SONARCLOUD
+  sast-analysis:
+    name: SAST dengan SonarCloud
+    needs: 
+      - deploy-ta-service
+      - deploy-user-service
+      - deploy-document-service
+      - deploy-notification-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-  # deploy-notification-service:
-  #   needs: build-notification-service
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Deploy Notification Service to VPS
-  #       uses: appleboy/ssh-action@master
-  #       with:
-  #         host: ${{ secrets.VPS_HOST }}
-  #         username: ${{ secrets.VPS_USERNAME }}
-  #         password: ${{ secrets.VPS_PASSWORD }}
-  #         port: ${{ secrets.VPS_PORT }}
-  #         script: |
-  #           docker stop notification-service || true && docker rm notification-service || true
-  #           docker system prune -af
-  #           docker pull smgxv/notification-service
-  #           docker run -d -p 8083:8083 --name notification-service -v /home/youruser/uploads:/app/uploads smgxv/notification-service
-  #           docker network connect simta_net notification-service
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-#   # SAST - SONARCLOUD
-#   sast-analysis:
-#     name: SAST dengan SonarCloud
-#     needs: 
-#       - deploy-ta-service
-#       - deploy-user-service
-#       - deploy-document-service
-#       - deploy-notification-service
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout source code
-#         uses: actions/checkout@v4
-
-#       - name: Set up Java 17
-#         uses: actions/setup-java@v4
-#         with:
-#           distribution: 'temurin'
-#           java-version: '17'
-
-#       - name: SonarCloud Scan
-#         uses: SonarSource/sonarcloud-github-action@v2
-#         with:
-#           projectBaseDir: .
-#         env:
-#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: .
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   
-#  # DAST - OWASP ZAP untuk /taruna/dashboard
-#   zap-dast-taruna:
-#     needs: sast-analysis
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Pull ZAP image (GHCR)
-#         run: docker pull ghcr.io/zaproxy/zaproxy:stable
+ # DAST - OWASP ZAP untuk /taruna/dashboard
+  zap-dast-taruna:
+    needs: sast-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull ZAP image (GHCR)
+        run: docker pull ghcr.io/zaproxy/zaproxy:stable
 
-#       - name: Run ZAP Quick Scan and generate HTML report
-#         run: |
-#           set -euo pipefail
-#           mkdir -p zap-out
+      - name: Run ZAP Quick Scan and generate HTML report
+        run: |
+          set -euo pipefail
+          mkdir -p zap-out
 
-#           # Jalankan tanpa --rm agar bisa docker cp reportnya
-#           docker rm -f zaprun 2>/dev/null || true
-#           docker run --name zaprun \
-#             ghcr.io/zaproxy/zaproxy:stable \
-#               zap.sh -cmd \
-#                 -addonupdate \
-#                 -addoninstall quickstart,report \
-#                 -config log.level=DEBUG \
-#                 -quickurl "https://securesimta.my.id/taruna/dashboard" \
-#                 -quickprogress \
-#                 -quickout "/home/zap/.ZAP/reports/zap-report.html"
+          # Jalankan tanpa --rm agar bisa docker cp reportnya
+          docker rm -f zaprun 2>/dev/null || true
+          docker run --name zaprun \
+            ghcr.io/zaproxy/zaproxy:stable \
+              zap.sh -cmd \
+                -addonupdate \
+                -addoninstall quickstart,report \
+                -config log.level=DEBUG \
+                -quickurl "http://104.43.89.154:8085/taruna/dashboard" \
+                -quickprogress \
+                -quickout "/home/zap/.ZAP/reports/zap-report.html"
 
-#           # Simpan log & ambil report dari dalam container
-#           docker logs zaprun > zap-out/zap.log || true
-#           docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html zap-out/zap-report.html || true
+          # Simpan log & ambil report dari dalam container
+          docker logs zaprun > zap-out/zap.log || true
+          docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html zap-out/zap-report.html || true
 
-#           echo "== Files in zap-out =="
-#           ls -lah zap-out
+          echo "== Files in zap-out =="
+          ls -lah zap-out
 
-#           # Bersihkan container
-#           docker rm -f zaprun || true
+          # Bersihkan container
+          docker rm -f zaprun || true
 
-#       - name: Upload HTML report
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: zaptaruna${{ github.run_id }}   # lowercase + angka saja
-#           path: |
-#             zap-out/zap-report.html
-#             zap-out/zap.log
-#           if-no-files-found: error
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zaptaruna${{ github.run_id }}   # lowercase + angka saja
+          path: |
+            zap-out/zap-report.html
+            zap-out/zap.log
+          if-no-files-found: error
 
-#   # DAST - OWASP ZAP untuk /dosen/dashboard
-#   zap-dast-dosen:
-#     needs: sast-analysis
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Pull ZAP image (GHCR)
-#         run: docker pull ghcr.io/zaproxy/zaproxy:stable
+  # DAST - OWASP ZAP untuk /dosen/dashboard
+  zap-dast-dosen:
+    needs: sast-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull ZAP image (GHCR)
+        run: docker pull ghcr.io/zaproxy/zaproxy:stable
 
-#       - name: Run ZAP Quick Scan and generate HTML report
-#         run: |
-#           set -euo pipefail
-#           mkdir -p zap-out
+      - name: Run ZAP Quick Scan and generate HTML report
+        run: |
+          set -euo pipefail
+          mkdir -p zap-out
 
-#           # Jalankan tanpa --rm agar bisa docker cp reportnya
-#           docker rm -f zaprun 2>/dev/null || true
-#           docker run --name zaprun \
-#             ghcr.io/zaproxy/zaproxy:stable \
-#               zap.sh -cmd \
-#                 -addonupdate \
-#                 -addoninstall quickstart,report \
-#                 -config log.level=DEBUG \
-#                 -quickurl "https://securesimta.my.id/dosen/dashboard" \
-#                 -quickprogress \
-#                 -quickout "/home/zap/.ZAP/reports/zap-report.html"
+          # Jalankan tanpa --rm agar bisa docker cp reportnya
+          docker rm -f zaprun 2>/dev/null || true
+          docker run --name zaprun \
+            ghcr.io/zaproxy/zaproxy:stable \
+              zap.sh -cmd \
+                -addonupdate \
+                -addoninstall quickstart,report \
+                -config log.level=DEBUG \
+                -quickurl "http://104.43.89.154:8085/dosen/dashboard" \
+                -quickprogress \
+                -quickout "/home/zap/.ZAP/reports/zap-report.html"
 
-#           # Simpan log & ambil report dari dalam container
-#           docker logs zaprun > zap-out/zap.log || true
-#           docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html zap-out/zap-report.html || true
+          # Simpan log & ambil report dari dalam container
+          docker logs zaprun > zap-out/zap.log || true
+          docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html zap-out/zap-report.html || true
 
-#           echo "== Files in zap-out =="
-#           ls -lah zap-out
+          echo "== Files in zap-out =="
+          ls -lah zap-out
 
-#           # Bersihkan container
-#           docker rm -f zaprun || true
+          # Bersihkan container
+          docker rm -f zaprun || true
 
-#       - name: Upload HTML report
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: zapdosen${{ github.run_id }}
-#           path: |
-#             zap-out/zap-report.html
-#             zap-out/zap.log
-#           if-no-files-found: error
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zapdosen${{ github.run_id }}
+          path: |
+            zap-out/zap-report.html
+            zap-out/zap.log
+          if-no-files-found: error
 
-#   # DAST - OWASP ZAP untuk /admin/dashboard
-#   zap-dast-admin:
-#     needs: sast-analysis
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Pull ZAP image (GHCR)
-#         run: docker pull ghcr.io/zaproxy/zaproxy:stable
+  # DAST - OWASP ZAP untuk /admin/dashboard
+  zap-dast-admin:
+    needs: sast-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull ZAP image (GHCR)
+        run: docker pull ghcr.io/zaproxy/zaproxy:stable
 
-#       - name: Run ZAP Quick Scan and generate HTML report
-#         run: |
-#           set -euo pipefail
-#           mkdir -p zap-out
+      - name: Run ZAP Quick Scan and generate HTML report
+        run: |
+          set -euo pipefail
+          mkdir -p zap-out
 
-#           # Jalankan tanpa --rm agar bisa docker cp reportnya
-#           docker rm -f zaprun 2>/dev/null || true
-#           docker run --name zaprun \
-#             ghcr.io/zaproxy/zaproxy:stable \
-#               zap.sh -cmd \
-#                 -addonupdate \
-#                 -addoninstall quickstart,report \
-#                 -config log.level=DEBUG \
-#                 -quickurl "https://securesimta.my.id/admin/dashboard" \
-#                 -quickprogress \
-#                 -quickout "/home/zap/.ZAP/reports/zap-report.html"
+          # Jalankan tanpa --rm agar bisa docker cp reportnya
+          docker rm -f zaprun 2>/dev/null || true
+          docker run --name zaprun \
+            ghcr.io/zaproxy/zaproxy:stable \
+              zap.sh -cmd \
+                -addonupdate \
+                -addoninstall quickstart,report \
+                -config log.level=DEBUG \
+                -quickurl "http://104.43.89.154:8085/admin/dashboard" \
+                -quickprogress \
+                -quickout "/home/zap/.ZAP/reports/zap-report.html"
 
-#           # Simpan log & ambil report dari dalam container
-#           docker logs zaprun > zap-out/zap.log || true
-#           docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html zap-out/zap-report.html || true
+          # Simpan log & ambil report dari dalam container
+          docker logs zaprun > zap-out/zap.log || true
+          docker cp zaprun:/home/zap/.ZAP/reports/zap-report.html zap-out/zap-report.html || true
 
-#           echo "== Files in zap-out =="
-#           ls -lah zap-out
+          echo "== Files in zap-out =="
+          ls -lah zap-out
 
-#           # Bersihkan container
-#           docker rm -f zaprun || true
+          # Bersihkan container
+          docker rm -f zaprun || true
 
-#       - name: Upload HTML report
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: zapadmin${{ github.run_id }}
-#           path: |
-#             zap-out/zap-report.html
-#             zap-out/zap.log
-#           if-no-files-found: error
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zapadmin${{ github.run_id }}
+          path: |
+            zap-out/zap-report.html
+            zap-out/zap.log
+          if-no-files-found: error
