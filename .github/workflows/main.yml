@@ -207,7 +207,7 @@ jobs:
         run: docker push smgxv/document-service
 
   build-notification-service:
-    # needs: image-scan
+    needs: image-scan
     name: Build Notification Service Image
     runs-on: ubuntu-latest
     steps:
