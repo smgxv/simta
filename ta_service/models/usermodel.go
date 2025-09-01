@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"ta_service/config"
@@ -23,26 +24,25 @@ func NewUserModel() *UserModel {
 	}
 }
 
-// Ambil data user berdasarkan field name
-func (u UserModel) Where(user *entities.User, fieldName, fieldValue string) error {
-	// Validasi field name untuk cegah SQL Injection
-	validFields := map[string]bool{
-		"email":    true,
-		"username": true,
-	}
-	if !validFields[fieldName] {
+func (u UserModel) Where(ctx context.Context, user *entities.User, fieldName, fieldValue string) error {
+	// Validasi input ke himpunan kecil nilai yang diperbolehkan
+	switch fieldName {
+	case "email", "username":
+	default:
 		return errors.New("invalid field name")
 	}
 
-	// Gunakan QueryRow karena hanya satu baris
-	query := `
+	const q = `
 		SELECT id, nama_lengkap, email, username, password, role, jurusan, kelas
 		FROM users
-		WHERE ` + fieldName + ` = ?
-		LIMIT 1
-	`
+		WHERE
+		  ( ? = 'email'    AND email    = ? )
+		  OR
+		  ( ? = 'username' AND username = ? )
+		LIMIT 1`
 
-	return u.db.QueryRow(query, fieldValue).Scan(
+	row := u.db.QueryRowContext(ctx, q, fieldName, fieldValue, fieldName, fieldValue)
+	return row.Scan(
 		&user.ID,
 		&user.NamaLengkap,
 		&user.Email,

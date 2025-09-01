@@ -80,7 +80,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	userModel := models.NewUserModel()
 	var user entities.User
 
-	if err := userModel.Where(&user, "email", req.Email); err != nil {
+	if err := userModel.Where(r.Context(), &user, "email", req.Email); err != nil {
 		log.Println("⚠️ Email tidak ditemukan")
 		json.NewEncoder(w).Encode(map[string]string{"error": "Email atau password salah"})
 		return
