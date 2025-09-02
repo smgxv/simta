@@ -750,55 +750,91 @@
 			}
 
 			// Tambahkan pengecekan autentikasi dan mapping dosenID saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', function() {
-				console.log('DOM Content Loaded'); // Debug log
-				
-				// Cek token dan ambil dosenID
-				const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-				if (!token) {
-					console.warn('No token found');
-					window.location.replace('/loginusers');
+			// === [1] Definisi fungsi yang diperbarui ===
+			// Terima parameter opsional dosenId; jika tidak ada, fallback ke localStorage.
+			function fetchTarunaTopics(dosenId = localStorage.getItem('dosenID')) {
+			if (!dosenId) {
+				console.warn('fetchTarunaTopics: dosenId tidak tersedia');
+				return;
+			}
+
+			// Contoh request: sesuaikan endpoint & payload sesuai API Anda
+			fetch(`/api/taruna/topics?dosen_id=${encodeURIComponent(dosenId)}`, {
+				headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}` }
+			})
+				.then(r => {
+				if (!r.ok) throw new Error(`HTTP ${r.status}`);
+				return r.json();
+				})
+				.then(res => {
+				// TODO: render data topik ke UI
+				console.log('Topik taruna:', res);
+				})
+				.catch(err => console.error('Gagal memuat topik taruna:', err));
+			}
+
+			// (Opsional) Jika perlu juga mengonsumsi dosenId, buat kontraknya jelas seperti ini:
+			function loadTelaahICPData(dosenId = localStorage.getItem('dosenID')) {
+			if (!dosenId) {
+				console.warn('loadTelaahICPData: dosenId tidak tersedia');
+				return;
+			}
+			// TODO: fetch & render data telaah ICP sesuai API Anda
+			// fetch(`/api/telaah-icp?dosen_id=${encodeURIComponent(dosenId)}`, { ... })
+			}
+
+			// === [2] Inisialisasi saat DOM siap ===
+			document.addEventListener('DOMContentLoaded', function () {
+			console.log('DOM Content Loaded');
+
+			// Cek token login
+			const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+			if (!token) {
+				console.warn('No token found');
+				window.location.replace('/loginusers');
+				return;
+			}
+
+			const userId = localStorage.getItem('userId');
+			console.log('UserID:', userId);
+
+			// Ambil data dosen untuk memetakan user_id -> dosen.id
+			fetch('/api/user/dosen', {
+				headers: { 'Authorization': `Bearer ${token}` }
+			})
+				.then(response => response.json())
+				.then(data => {
+				if (data.status !== 'success' || !Array.isArray(data.data)) {
+					console.warn('Response dosen tidak sesuai ekspektasi:', data);
 					return;
 				}
 
-				const userId = localStorage.getItem('userId');
-				console.log('UserID:', userId); // Debug log
+				const dosen = data.data.find(d => String(d.user_id) === String(userId));
+				if (!dosen) {
+					console.warn('Dosen dengan user_id', userId, 'tidak ditemukan');
+					return;
+				}
 
-				// Ambil data dosen dan set dosenID
-					fetch('/api/user/dosen', {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					})
-					.then(response => response.json())
-					.then(data => {
-						if (data.status === 'success' && Array.isArray(data.data)) {
-							const dosen = data.data.find(d => String(d.user_id) === String(userId));
-							if (dosen) {
-							localStorage.setItem('dosenID', dosen.id);
-							localStorage.setItem('dosenName', dosen.nama_lengkap);
-							fetchTarunaTopics(dosen.id);
-							console.log('DosenID set:', dosen.id); // Debug log
-							
-							// Update nama dosen di header
-					const usernameElement = document.getElementById('username');
-					if (usernameElement) {
-								usernameElement.textContent = dosen.nama_lengkap;
-							}
-							
-							// Setelah dosenID tersedia, panggil fungsi-fungsi yang membutuhkannya
-							fetchTarunaTopics(dosen.id);
-							loadTelaahICPData();
-						} else {
-							console.warn('Dosen with user_id', userId, 'not found');
-						}
-					}
+				// Simpan konteks dosen
+				localStorage.setItem('dosenID', dosen.id);
+				localStorage.setItem('dosenName', dosen.nama_lengkap);
+				console.log('DosenID set:', dosen.id);
+
+				// Update header (jika ada)
+				const usernameElement = document.getElementById('username');
+				if (usernameElement) usernameElement.textContent = dosen.nama_lengkap;
+
+				// PANGGIL SEKALI dengan argumen yang benar (menghindari S930)
+				fetchTarunaTopics(dosen.id);
+
+				// Panggil fungsi lain yang butuh konteks dosen
+				// Sesuaikan: gunakan loadTelaahICPData(dosen.id) jika fungsinya menerima parameter
+				loadTelaahICPData(dosen.id);
 				})
 				.catch(error => {
-					console.error('Failed to fetch dosen data:', error);
+				console.error('Failed to fetch dosen data:', error);
 				});
 			});
-
 			// Panggil loadTelaahICPData saat halaman dimuat
 			document.addEventListener('DOMContentLoaded', loadTelaahICPData);
 
