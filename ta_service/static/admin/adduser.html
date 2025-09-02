@@ -530,126 +530,129 @@
 
 						<form id="addUserForm" onsubmit="submitForm(event)">
 							<div class="form-group row">
-								<label class="col-sm-12 col-md-2 col-form-label">Nama</label>
+								<label for="nama_lengkap" class="col-sm-12 col-md-2 col-form-label">Nama</label>
 								<div class="col-sm-12 col-md-10">
-									<input
-										class="form-control"
-										type="text"
-										placeholder="Nama Panjang"
-										name="nama_lengkap"
-										required
-									/>
+								<input
+									id="nama_lengkap"
+									class="form-control"
+									type="text"
+									placeholder="Nama Panjang"
+									name="nama_lengkap"
+									required
+								/>
 								</div>
 							</div>
 
 							<div class="form-group row">
-								<label class="col-sm-12 col-md-2 col-form-label">Email</label>
+								<label for="email" class="col-sm-12 col-md-2 col-form-label">Email</label>
 								<div class="col-sm-12 col-md-10">
-									<input
-										class="form-control"
-										placeholder="example@example.com"
-										type="email"
-										name="email"
-										required
-									/>
+								<input
+									id="email"
+									class="form-control"
+									placeholder="example@example.com"
+									type="email"
+									name="email"
+									required
+								/>
 								</div>
 							</div>
 
 							<div class="form-group row">
-								<label class="col-sm-12 col-md-2 col-form-label">Username</label>
+								<label for="username_input" class="col-sm-12 col-md-2 col-form-label">Username</label>
 								<div class="col-sm-12 col-md-10">
-									<input
-										class="form-control"
-										type="text"
-										placeholder="Username"
-										name="username"
-										required
-										/>
+								<input
+									id="username_input"
+									class="form-control"
+									type="text"
+									placeholder="Username"
+									name="username"
+									required
+								/>
 								</div>
 							</div>
 
 							<div class="form-group row">
-								<label class="col-sm-12 col-md-2 col-form-label">Select</label>
+								<label for="role" class="col-sm-12 col-md-2 col-form-label">Role</label>
 								<div class="col-sm-12 col-md-10">
-									<select class="custom-select col-12" name="role" id="role" onchange="toggleJurusanKelas()" required>
-										<option value="" disabled selected>Pilih Role</option>
-										<option value="Dosen">Dosen</option>
-										<option value="Taruna">Taruna</option>
-										<option value="Admin">Admin</option>
-									</select>
+								<select class="custom-select col-12" name="role" id="role" onchange="toggleJurusanKelas()" required>
+									<option value="" disabled selected>Pilih Role</option>
+									<option value="Dosen">Dosen</option>
+									<option value="Taruna">Taruna</option>
+									<option value="Admin">Admin</option>
+								</select>
 								</div>
 							</div>
 
-							<!-- Input NPM (Nomor Pokok Mahasiswa), hanya muncul jika role = Taruna -->
+							<!-- NPM (khusus Taruna) -->
 							<div class="form-group row" id="npmGroup" style="display: none;">
-								<label class="col-sm-12 col-md-2 col-form-label">NPM</label>
+								<label for="npm" class="col-sm-12 col-md-2 col-form-label">NPM</label>
 								<div class="col-sm-12 col-md-10">
-									<input
-										class="form-control"
-										type="number"
-										placeholder="Masukkan NPM (10 digit)"
-										name="npm"
-										min="1000000000"
-										max="9999999999"
-										oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"
-										required
-									/>
+								<input
+									id="npm"
+									class="form-control"
+									type="text"
+									inputmode="numeric"
+									placeholder="Masukkan NPM (10 digit)"
+									name="npm"
+									minlength="10"
+									maxlength="10"
+								/>
 								</div>
 							</div>
-							
-							<!-- Dropdown Jurusan (awalnya tersembunyi) -->
+
+							<!-- Jurusan -->
 							<div class="form-group row" id="jurusanGroup" style="display: none;">
-								<label class="col-sm-12 col-md-2 col-form-label">Jurusan</label>
+								<label for="jurusan" class="col-sm-12 col-md-2 col-form-label">Jurusan</label>
 								<div class="col-sm-12 col-md-10">
-									<select class="custom-select col-12" name="jurusan" id="jurusan" onchange="updateKelas()">
-										<option value="" disabled selected>Pilih Jurusan</option>
-										<option value="Keamanan Siber">Keamanan Siber</option>
-										<option value="Kriptografi">Kriptografi</option>
-									</select>
+								<select class="custom-select col-12" name="jurusan" id="jurusan" onchange="updateKelas()">
+									<option value="" disabled selected>Pilih Jurusan</option>
+									<option value="Keamanan Siber">Keamanan Siber</option>
+									<option value="Kriptografi">Kriptografi</option>
+								</select>
 								</div>
 							</div>
-							
-							<!-- Dropdown Kelas (awalnya tersembunyi) -->
+
+							<!-- Kelas -->
 							<div class="form-group row" id="kelasGroup" style="display: none;">
-								<label class="col-sm-12 col-md-2 col-form-label">Kelas</label>
+								<label for="kelas" class="col-sm-12 col-md-2 col-form-label">Kelas</label>
 								<div class="col-sm-12 col-md-10">
-									<select class="custom-select col-12" name="kelas" id="kelas">
-										<option value="" disabled selected>Pilih Kelas</option>
-									</select>
+								<select class="custom-select col-12" name="kelas" id="kelas">
+									<option value="" disabled selected>Pilih Kelas</option>
+								</select>
 								</div>
 							</div>
 
 							<div class="form-group row">
-								<label class="col-sm-12 col-md-2 col-form-label"
-									>Password</label
-								>
+								<label for="password" class="col-sm-12 col-md-2 col-form-label">Password</label>
 								<div class="col-sm-12 col-md-10">
-									<input
-										class="form-control"
-										placeholder="Password"
-										type="password"
-										name="password"
-										required
-										/>
+								<input
+									id="password"
+									class="form-control"
+									placeholder="Password"
+									type="password"
+									name="password"
+									required
+								/>
 								</div>
 							</div>
 
 							<div class="form-group row">
-								<label class="col-sm-12 col-md-2 col-form-label"
-									>Konfirmasi Passsword</label
-								>
+								<label for="confirm_password" class="col-sm-12 col-md-2 col-form-label">Konfirmasi Password</label>
 								<div class="col-sm-12 col-md-10">
-									<input
-										class="form-control"
-										placeholder="Konfirmasi Passsword"
-										type="password"
-										name="confirm_password"
-										required
-										/>
-								</div>
+								<input
+									id="confirm_password"
+									class="form-control"
+									placeholder="Konfirmasi Password"
+									type="password"
+									name="confirm_password"
+									required
+								/>
 							</div>
+							</div>
+
 							<button type="submit" class="btn btn-primary">Tambah User</button>
 						</form>
+
 
 					</div>
 					<!-- Default Basic Forms End -->
