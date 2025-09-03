@@ -32,14 +32,24 @@
             color: #333;
         }
 
+        .sr-only {
+				position: absolute;
+				width: 1px; height: 1px;
+				padding: 0; margin: -1px;
+				overflow: hidden;
+				clip: rect(0,0,1px,1px);
+				white-space: nowrap; border: 0;
+			}
     </style>
 </head>
+
 <body>
 <div class="header">
     <div class="header-left">
         <div class="menu-icon bi bi-list"></div>
     </div>
 </div>
+
 <div class="left-side-bar">
     <div class="brand-logo">
         <a href="/taruna/dashboard">
@@ -61,6 +71,7 @@
         </div>
     </div>
 </div>
+
 <div class="mobile-menu-overlay"></div>
 <div class="main-container">
     <div class="pd-ltr-20 xs-pd-20-10">
@@ -88,23 +99,23 @@
                 </div>
                 <form id="editProfileForm">
                     <div class="form-group row">
-                        <label class="col-sm-12 col-md-2 col-form-label">Nama Lengkap</label>
+                        <label for="nama_lengkap" class="col-sm-12 col-md-2 col-form-label">Nama Lengkap</label>
                         <div class="col-sm-12 col-md-10"><input class="form-control" type="text" id="nama_lengkap" required></div>
                     </div>
                     <div class="form-group row">
-                        <label class="col-sm-12 col-md-2 col-form-label">Email</label>
+                        <label for="email" class="col-sm-12 col-md-2 col-form-label">Email</label>
                         <div class="col-sm-12 col-md-10"><input class="form-control" type="email" id="email" required></div>
                     </div>
                     <div class="form-group row">
-                        <label class="col-sm-12 col-md-2 col-form-label">Username</label>
+                        <label for="username" class="col-sm-12 col-md-2 col-form-label">Username</label>
                         <div class="col-sm-12 col-md-10"><input class="form-control" type="text" id="username" required></div>
                     </div>
                     <div class="form-group row">
-                        <label class="col-sm-12 col-md-2 col-form-label">NPM</label>
+                        <label for="npm" class="col-sm-12 col-md-2 col-form-label">NPM</label>
                         <div class="col-sm-12 col-md-10"><input class="form-control" type="number" id="npm" required></div>
                     </div>
                     <div class="form-group row">
-                        <label class="col-sm-12 col-md-2 col-form-label">Jurusan</label>
+                        <label for="jurusan" class="col-sm-12 col-md-2 col-form-label">Jurusan</label>
                         <div class="col-sm-12 col-md-10">
                             <select class="custom-select col-12" id="jurusan" required>
                                 <option value="" disabled selected>Pilih Jurusan</option>
@@ -114,7 +125,7 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label class="col-sm-12 col-md-2 col-form-label">Kelas</label>
+                        <label for="kelas" class="col-sm-12 col-md-2 col-form-label">Kelas</label>
                         <div class="col-sm-12 col-md-10">
                             <select class="custom-select col-12" id="kelas" required>
                                 <option value="" disabled selected>Pilih Kelas</option>
@@ -122,7 +133,7 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label class="col-sm-12 col-md-2 col-form-label">Password Baru</label>
+                        <label for="password_baru" class="col-sm-12 col-md-2 col-form-label">Password Baru</label>
                         <div class="col-sm-12 col-md-10 position-relative">
                             <input class="form-control password-input" type="password" id="password" name="password" placeholder="Kosongkan jika tidak ingin mengubah password">
                             <span toggle="#password" class="toggle-password">
@@ -132,7 +143,7 @@
                     </div>
                     
                     <div class="form-group row">
-                        <label class="col-sm-12 col-md-2 col-form-label">Konfirmasi Password</label>
+                        <label for="konfirmasi_password" class="col-sm-12 col-md-2 col-form-label">Konfirmasi Password</label>
                         <div class="col-sm-12 col-md-10 position-relative">
                             <input class="form-control password-input" type="password" id="confirm_password" name="confirm_password" placeholder="Ulangi password baru">
                             <span toggle="#confirm_password" class="toggle-password">

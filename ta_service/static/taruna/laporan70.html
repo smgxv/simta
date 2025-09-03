@@ -73,6 +73,15 @@
 				border-color: #f5c2c7;
 				color: #842029;
 			}
+
+			.sr-only {
+				position: absolute;
+				width: 1px; height: 1px;
+				padding: 0; margin: -1px;
+				overflow: hidden;
+				clip: rect(0,0,1px,1px);
+				white-space: nowrap; border: 0;
+			}
 		</style>
 
 		<!-- Global site tag (gtag.js) - Google Analytics -->
@@ -266,7 +275,9 @@
 					<i class="icon-copy ion-close-round"></i>
 				</div>
 			</div>
+
 			<div class="right-sidebar-body customscroll">
+
 				<div class="right-sidebar-body-content">
 					<h4 class="weight-600 font-18 pb-10">Header Background</h4>
 					<div class="sidebar-btn-group pb-30 mb-10">
@@ -297,123 +308,143 @@
 					</div>
 
 					<h4 class="weight-600 font-18 pb-10">Menu Dropdown Icon</h4>
-					<div class="sidebar-radio-group pb-10 mb-10">
+					<fieldset class="sidebar-radio-group pb-10 mb-10">
+						<legend class="sr-only">Pilih ikon dropdown menu</legend>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebaricon-1"
-								name="menu-dropdown-icon"
-								class="custom-control-input"
-								value="icon-style-1"
-								checked=""
+							type="radio"
+							id="sidebaricon-1"
+							name="menu-dropdown-icon"
+							class="custom-control-input"
+							value="icon-style-1"
+							checked
 							/>
-							<label class="custom-control-label" for="sidebaricon-1"
-								><i class="fa fa-angle-down"></i
-							></label>
+							<label class="custom-control-label" for="sidebaricon-1">
+							<i class="fa fa-angle-down" aria-hidden="true"></i>
+							<span class="sr-only">Chevron bawah</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebaricon-2"
-								name="menu-dropdown-icon"
-								class="custom-control-input"
-								value="icon-style-2"
+							type="radio"
+							id="sidebaricon-2"
+							name="menu-dropdown-icon"
+							class="custom-control-input"
+							value="icon-style-2"
 							/>
-							<label class="custom-control-label" for="sidebaricon-2"
-								><i class="ion-plus-round"></i
-							></label>
+							<label class="custom-control-label" for="sidebaricon-2">
+							<i class="ion-plus-round" aria-hidden="true"></i>
+							<span class="sr-only">Tanda tambah</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebaricon-3"
-								name="menu-dropdown-icon"
-								class="custom-control-input"
-								value="icon-style-3"
+							type="radio"
+							id="sidebaricon-3"
+							name="menu-dropdown-icon"
+							class="custom-control-input"
+							value="icon-style-3"
 							/>
-							<label class="custom-control-label" for="sidebaricon-3"
-								><i class="fa fa-angle-double-right"></i
-							></label>
+							<label class="custom-control-label" for="sidebaricon-3">
+							<i class="fa fa-angle-double-right" aria-hidden="true"></i>
+							<span class="sr-only">Chevron ganda kanan</span>
+							</label>
 						</div>
-					</div>
+					</fieldset>
 
 					<h4 class="weight-600 font-18 pb-10">Menu List Icon</h4>
-					<div class="sidebar-radio-group pb-30 mb-10">
+					<fieldset class="sidebar-radio-group pb-30 mb-10">
+						<legend class="sr-only">Pilih ikon daftar menu</legend>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-1"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-1"
-								checked=""
+							type="radio"
+							id="sidebariconlist-1"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-1"
+							checked
 							/>
-							<label class="custom-control-label" for="sidebariconlist-1"
-								><i class="ion-minus-round"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-1">
+							<i class="ion-minus-round" aria-hidden="true"></i>
+							<span class="sr-only">Minus</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-2"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-2"
+							type="radio"
+							id="sidebariconlist-2"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-2"
 							/>
-							<label class="custom-control-label" for="sidebariconlist-2"
-								><i class="fa fa-circle-o" aria-hidden="true"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-2">
+							<i class="fa fa-circle-o" aria-hidden="true"></i>
+							<span class="sr-only">Lingkaran</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-3"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-3"
+							type="radio"
+							id="sidebariconlist-3"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-3"
 							/>
-							<label class="custom-control-label" for="sidebariconlist-3"
-								><i class="dw dw-check"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-3">
+							<i class="dw dw-check" aria-hidden="true"></i>
+							<span class="sr-only">Centang</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-4"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-4"
-								checked=""
+							type="radio"
+							id="sidebariconlist-4"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-4"
+							checked
 							/>
-							<label class="custom-control-label" for="sidebariconlist-4"
-								><i class="icon-copy dw dw-next-2"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-4">
+							<i class="icon-copy dw dw-next-2" aria-hidden="true"></i>
+							<span class="sr-only">Panah kanan 2</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-5"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-5"
+							type="radio"
+							id="sidebariconlist-5"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-5"
 							/>
-							<label class="custom-control-label" for="sidebariconlist-5"
-								><i class="dw dw-fast-forward-1"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-5">
+							<i class="dw dw-fast-forward-1" aria-hidden="true"></i>
+							<span class="sr-only">Fast forward</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-6"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-6"
+							type="radio"
+							id="sidebariconlist-6"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-6"
 							/>
-							<label class="custom-control-label" for="sidebariconlist-6"
-								><i class="dw dw-next"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-6">
+							<i class="dw dw-next" aria-hidden="true"></i>
+							<span class="sr-only">Panah kanan</span>
+							</label>
 						</div>
-					</div>
+					</fieldset>
 
 					<div class="reset-options pt-30 text-center">
 						<button class="btn btn-danger" id="reset-settings">
@@ -422,6 +453,7 @@
 					</div>
 				</div>
 			</div>
+
 		</div>
 
 		<div class="left-side-bar">
@@ -519,25 +551,25 @@
 
 						<form id="laporan70Form" enctype="multipart/form-data">
 							<div class="form-group">
-								<label>Dosen Pembimbing</label>
+								<label for="dosen_pembimbing">Dosen Pembimbing</label>
 								<div id="dosbingInfo">
 									<p class="text-muted">Memuat data dosbing...</p>
 								</div>
 								<input type="hidden" id="dosenIdInput" name="dosen_id" />
 							</div>
 							<div class="form-group">
-								<label>Topik Penelitian</label>
+								<label for="topik_penelitian">Topik Penelitian</label>
 								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
 							</div>
 							<div class="form-group">
-								<label>Keterangan</label>
+								<label for="keterangan">Keterangan</label>
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
-								<label>File Laporan 70% (PDF)</label>
+								<label for="file_laporan_70">File Laporan 70% (PDF)</label>
 								<div class="custom-file">
 									<input type="file" class="custom-file-input" id="laporan70File" name="file" accept=".pdf" required>
-									<label class="custom-file-label" for="laporan70File">Choose file</label>
+									<label for="pilih_file_laporan_70" class="custom-file-label" for="laporan70File">Choose file</label>
 								</div>
 								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
@@ -609,31 +641,31 @@
 							<input type="hidden" name="jurusan" id="hiddenJurusan">
 							<input type="hidden" name="kelas" id="hiddenKelas">
 							<div class="form-group">
-								<label>Topik Penelitian</label>
+								<label for="topik_penelitian">Topik Penelitian</label>
 								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
 							</div>
 							<div class="form-group">
-								<label>Keterangan</label>
+								<label for="keterangan">Keterangan</label>
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
-								<label>Form Bimbingan (PDF)</label>
+								<label for="form_bimbingn">Form Bimbingan (PDF)</label>
 								<div class="custom-file">
 									<input type="file" class="custom-file-input" id="formBimbinganFile" name="form_bimbingan_file" accept=".pdf" required>
-									<label class="custom-file-label" for="formBimbinganFile">Choose file</label>
+									<label for="pilih_form_bimbingan" class="custom-file-label" for="formBimbinganFile">Choose file</label>
 								</div>
 								<div id="formBimbinganSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
 							<div class="form-group">
-								<label>Final File Laporan 70% (PDF)</label>
+								<label for="file_final_laporan_70">Final File Laporan 70% (PDF)</label>
 								<div class="custom-file">
 									<input type="file" class="custom-file-input" id="finalLaporan70File" name="final_laporan70_file" accept=".pdf" required>
-									<label class="custom-file-label" for="finalLaporan70File">Choose file</label>
+									<label for="pilih_file_final_laporan_70" class="custom-file-label" for="finalLaporan70File">Choose file</label>
 								</div>
 								<div id="finalSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
 							<div class="form-group">
-								<label>File Pendukung Laporan 70% (Document, PDF, Excell)</label>
+								<label for="file_pendukung_laporan_70">File Pendukung Laporan 70% (Document, PDF, Excell)</label>
 								<div class="custom-file">
 									<input type="file" 
 										   class="custom-file-input" 
@@ -642,7 +674,7 @@
 										   accept=".pdf,.doc,.docx,.xls,.xlsx" 
 										   multiple 
 										   required>
-									<label class="custom-file-label" for="supportFiles">Pilih satu atau lebih file</label>
+									<label for="pilih_file_pendukung_laporan_70" class="custom-file-label" for="supportFiles">Pilih satu atau lebih file</label>
 								</div>
 								<div id="supportSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
@@ -702,69 +734,6 @@
 						</div>
 					</div>
 					<!-- Tabel Hasil Telaah Dosen End -->
-					
-					<!-- Form Revisi Laporan 70% -->
-					<div class="pd-20 card-box mb-30">
-
-						<div class="clearfix">
-							<div class="pull-left">
-								<h4 class="text-blue h4">Revisi Laporan 70%</h4>
-								<p class="mb-30">Sudah memperbaiki laporan 70% sesuai dengan catatan perbaikan dosen? Segera upload Revisi Laporan 70% anda !!</p>
-							</div>
-						</div>
-
-						<form id="revisiLaporan70Form" enctype="multipart/form-data">
-							<input type="hidden" name="jurusan" id="hiddenJurusanRevisi">
-							<input type="hidden" name="kelas" id="hiddenKelasRevisi">
-							<div class="form-group">
-								<label>Topik Penelitian</label>
-								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
-							</div>
-							<div class="form-group">
-								<label>Keterangan</label>
-								<textarea class="form-control" name="keterangan" required></textarea>
-							</div>
-							<div class="form-group">
-								<label>Revisi File Laporan 70% (PDF)</label>
-								<div class="custom-file">
-									<input type="file" class="custom-file-input" id="revisiLaporan70File" name="file" accept=".pdf" required>
-									<label class="custom-file-label" for="revisiLaporan70File">Choose file</label>
-								</div>
-								<div id="revisiSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
-							</div>
-							<button type="submit" class="btn btn-primary">Upload Revisi Laporan 70%</button>
-						</form>
-
-					</div>
-					<!-- Form Revisi Laporan 70% End -->
-
-					<!-- Tabel Revisi Laporan 70%  -->
-					<div class="pd-20 card-box mb-30">
-						<div class="clearfix">
-							<div class="pull-left">
-								<h4 class="text-blue h4">Daftar Revisi Laporan 70%</h4>
-							</div>
-						</div>
-						<div class="pb-20">
-							<table class="table stripe hover nowrap" id="revisiLaporan70Table">
-								<thead>
-									<tr>
-										<th>Topik Penelitian</th>
-										<th>Jurusan</th>
-										<th>Kelas</th>
-										<th>Status</th>
-										<th>Action</th>
-									</tr>
-								</thead>
-								<tbody>
-
-								</tbody>
-							</table>
-						</div>
-					</div>
-					<!-- Tabel Final Laporan 70% End -->
-
-
 				</div>
 
 			</div>
@@ -805,11 +774,11 @@
 							<input type="hidden" id="revisionTopikPenelitian" name="topik_penelitian">
 							
 							<div class="form-group">
-								<label>Keterangan Revisi</label>
+								<label for="keterangan_revisi">Keterangan Revisi</label>
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
-								<label>File Revisi Laporan 70% (PDF)</label>
+								<label for="file_perbaikan_laporan_70">File Revisi Laporan 70% (PDF)</label>
 								<input type="file" class="form-control" name="file" accept=".pdf" required>
 							</div>
 						</form>
@@ -1651,164 +1620,6 @@
 			document.addEventListener('DOMContentLoaded', function() {
 				loadCatatanPerbaikanTaruna();
 			});
-		
-			// Update nama file saat file dipilih untuk Revisi Laporan 70%
-			document.getElementById('revisiLaporan70File').addEventListener('change', function(e) {
-				var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
-				var label = this.nextElementSibling;
-				label.textContent = fileName;
-				
-				var selectedFileDiv = document.getElementById('revisiSelectedFileName');
-				if (e.target.files[0]) {
-					selectedFileDiv.textContent = 'File terpilih: ' + fileName;
-					selectedFileDiv.style.display = 'block';
-				} else {
-					selectedFileDiv.style.display = 'none';
-				}
-			});
-
-			// Handle form submission untuk Revisi Laporan 70%
-			document.getElementById('revisiLaporan70Form').addEventListener('submit', async function(e) {
-				e.preventDefault();
-
-				const submitButton = this.querySelector('button[type="submit"]');
-				submitButton.disabled = true;
-				submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-
-				try {
-					const formData = new FormData(this);
-					const userId = localStorage.getItem('userId');
-					const token = localStorage.getItem('token');
-					if (!userId || !token) throw new Error('User ID atau token tidak ditemukan');
-
-					const tarunaResponse = await fetch(`/api/user/taruna?user_id=${userId}`, {
-						headers: { 'Authorization': `Bearer ${token}` }
-					});
-					if (!tarunaResponse.ok) throw new Error('Gagal mengambil data taruna');
-
-					const tarunaData = await tarunaResponse.json();
-					const taruna = tarunaData.data?.find(t => t.user_id === parseInt(userId));
-					if (!taruna || !taruna.nama_lengkap) throw new Error('Data taruna tidak lengkap atau tidak ditemukan');
-
-					formData.append('user_id', userId);
-					formData.append('nama_lengkap', taruna.nama_lengkap);
-
-					const response = await fetch('/api/document/revisilaporan70/upload', {
-						method: 'POST',
-						body: formData
-					});
-
-					let data;
-					try {
-						data = await response.json();
-					} catch (err) {
-						const text = await response.text();
-						showAlert(text || 'Terjadi kesalahan pada server', 'danger');
-						return;
-					}
-
-					showAlert(data.message, data.status === 'success' ? 'success' : 'danger');
-
-					if (data.status === 'success') {
-						this.reset();
-						document.querySelector('#revisiLaporan70File').nextElementSibling.textContent = 'Choose file';
-						document.getElementById('revisiSelectedFileName').style.display = 'none';
-						loadRevisiLaporan70Data();
-					}
-				} catch (error) {
-					let msg = 'Terjadi kesalahan pada server';
-					if (error.message.includes('tidak ditemukan')) {
-						msg = 'Data taruna tidak ditemukan atau belum lengkap. Silakan hubungi admin.';
-					}
-					showAlert(msg, 'danger');
-				} finally {
-					submitButton.disabled = false;
-					submitButton.innerHTML = 'Upload Revisi Laporan 70%';
-				}
-			});
-
-			// Update fungsi loadRevisiLaporan70Data
-			async function loadRevisiLaporan70Data() {
-				const userId = localStorage.getItem('userId');
-				if (!userId) {
-					console.error('User ID not found in localStorage');
-					showAlert('User ID tidak ditemukan. Silakan login ulang.', 'danger');
-					return;
-				}
-				
-				try {
-					console.log('Fetching Revisi Laporan 70% data for user:', userId);
-					const response = await fetch(`/api/document/revisilaporan70/list?user_id=${userId}`);
-					
-					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
-					}
-					
-					const data = await response.json();
-					console.log('Received Revisi Laporan 70% data:', data);
-					
-					if (data.status === 'success') {
-						const tbody = document.querySelector('#revisiLaporan70Table tbody');
-						if (!tbody) {
-							console.error('Table body element not found');
-							return;
-						}
-						
-						tbody.innerHTML = '';
-						
-						if (data.data && data.data.length > 0) {
-							data.data.forEach(revisiLaporan70 => {
-								const statusClass = {
-									'pending': 'badge badge-warning',
-									'approved': 'badge badge-success',
-									'rejected': 'badge badge-danger',
-									'on review': 'badge badge-info'
-								}[revisiLaporan70.status] || 'badge badge-secondary';
-
-								tbody.innerHTML += `
-									<tr>
-										<td>${revisiLaporan70.topik_penelitian || '-'}</td>
-										<td>${revisiLaporan70.jurusan || '-'}</td>
-										<td>${revisiLaporan70.kelas || '-'}</td>
-										<td><span class="${statusClass}">${revisiLaporan70.status || 'pending'}</span></td>
-										<td>
-											<div class="dropdown">
-												<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle"
-												   href="#" role="button" data-toggle="dropdown">
-													<i class="dw dw-more"></i>
-												</a>
-												<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-													<a class="dropdown-item" href="/api/document/revisilaporan70/download?path=${revisiLaporan70.file_path}" download>
-														<i class="dw dw-download"></i> Download
-													</a>
-												</div>
-											</div>
-										</td>
-									</tr>
-								`;
-							});
-						} else {
-							tbody.innerHTML = `
-								<tr>
-									<td colspan="5" class="text-center">Belum ada Revisi Laporan 70% yang diupload</td>
-								</tr>
-							`;
-						}
-					} else {
-						console.error('Failed to load Revisi Laporan 70% data:', data.message);
-						showAlert('Gagal memuat data Revisi Laporan 70%: ' + (data.message || 'Unknown error'), 'danger');
-					}
-				} catch (error) {
-					console.error('Error loading Revisi Laporan 70% data:', error);
-					showAlert('Terjadi kesalahan saat memuat data Revisi Laporan 70%: ' + error.message, 'danger');
-				}
-			}
-
-			// Load Revisi Laporan 70% data saat halaman dimuat
-			document.addEventListener('DOMContentLoaded', () => {
-				loadRevisiLaporan70Data();
-			});
-
 		</script>
 
 		<style>

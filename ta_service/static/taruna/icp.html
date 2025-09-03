@@ -73,6 +73,15 @@
 				border-color: #f5c2c7;
 				color: #842029;
 			}
+
+			.sr-only {
+				position: absolute;
+				width: 1px; height: 1px;
+				padding: 0; margin: -1px;
+				overflow: hidden;
+				clip: rect(0,0,1px,1px);
+				white-space: nowrap; border: 0;
+			}
 		</style>
 
 		<!-- Global site tag (gtag.js) - Google Analytics -->
@@ -266,7 +275,9 @@
 					<i class="icon-copy ion-close-round"></i>
 				</div>
 			</div>
+
 			<div class="right-sidebar-body customscroll">
+
 				<div class="right-sidebar-body-content">
 					<h4 class="weight-600 font-18 pb-10">Header Background</h4>
 					<div class="sidebar-btn-group pb-30 mb-10">
@@ -297,123 +308,143 @@
 					</div>
 
 					<h4 class="weight-600 font-18 pb-10">Menu Dropdown Icon</h4>
-					<div class="sidebar-radio-group pb-10 mb-10">
+					<fieldset class="sidebar-radio-group pb-10 mb-10">
+						<legend class="sr-only">Pilih ikon dropdown menu</legend>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebaricon-1"
-								name="menu-dropdown-icon"
-								class="custom-control-input"
-								value="icon-style-1"
-								checked=""
+							type="radio"
+							id="sidebaricon-1"
+							name="menu-dropdown-icon"
+							class="custom-control-input"
+							value="icon-style-1"
+							checked
 							/>
-							<label class="custom-control-label" for="sidebaricon-1"
-								><i class="fa fa-angle-down"></i
-							></label>
+							<label class="custom-control-label" for="sidebaricon-1">
+							<i class="fa fa-angle-down" aria-hidden="true"></i>
+							<span class="sr-only">Chevron bawah</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebaricon-2"
-								name="menu-dropdown-icon"
-								class="custom-control-input"
-								value="icon-style-2"
+							type="radio"
+							id="sidebaricon-2"
+							name="menu-dropdown-icon"
+							class="custom-control-input"
+							value="icon-style-2"
 							/>
-							<label class="custom-control-label" for="sidebaricon-2"
-								><i class="ion-plus-round"></i
-							></label>
+							<label class="custom-control-label" for="sidebaricon-2">
+							<i class="ion-plus-round" aria-hidden="true"></i>
+							<span class="sr-only">Tanda tambah</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebaricon-3"
-								name="menu-dropdown-icon"
-								class="custom-control-input"
-								value="icon-style-3"
+							type="radio"
+							id="sidebaricon-3"
+							name="menu-dropdown-icon"
+							class="custom-control-input"
+							value="icon-style-3"
 							/>
-							<label class="custom-control-label" for="sidebaricon-3"
-								><i class="fa fa-angle-double-right"></i
-							></label>
+							<label class="custom-control-label" for="sidebaricon-3">
+							<i class="fa fa-angle-double-right" aria-hidden="true"></i>
+							<span class="sr-only">Chevron ganda kanan</span>
+							</label>
 						</div>
-					</div>
+					</fieldset>
 
 					<h4 class="weight-600 font-18 pb-10">Menu List Icon</h4>
-					<div class="sidebar-radio-group pb-30 mb-10">
+					<fieldset class="sidebar-radio-group pb-30 mb-10">
+						<legend class="sr-only">Pilih ikon daftar menu</legend>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-1"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-1"
-								checked=""
+							type="radio"
+							id="sidebariconlist-1"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-1"
+							checked
 							/>
-							<label class="custom-control-label" for="sidebariconlist-1"
-								><i class="ion-minus-round"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-1">
+							<i class="ion-minus-round" aria-hidden="true"></i>
+							<span class="sr-only">Minus</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-2"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-2"
+							type="radio"
+							id="sidebariconlist-2"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-2"
 							/>
-							<label class="custom-control-label" for="sidebariconlist-2"
-								><i class="fa fa-circle-o" aria-hidden="true"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-2">
+							<i class="fa fa-circle-o" aria-hidden="true"></i>
+							<span class="sr-only">Lingkaran</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-3"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-3"
+							type="radio"
+							id="sidebariconlist-3"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-3"
 							/>
-							<label class="custom-control-label" for="sidebariconlist-3"
-								><i class="dw dw-check"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-3">
+							<i class="dw dw-check" aria-hidden="true"></i>
+							<span class="sr-only">Centang</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-4"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-4"
-								checked=""
+							type="radio"
+							id="sidebariconlist-4"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-4"
+							checked
 							/>
-							<label class="custom-control-label" for="sidebariconlist-4"
-								><i class="icon-copy dw dw-next-2"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-4">
+							<i class="icon-copy dw dw-next-2" aria-hidden="true"></i>
+							<span class="sr-only">Panah kanan 2</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-5"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-5"
+							type="radio"
+							id="sidebariconlist-5"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-5"
 							/>
-							<label class="custom-control-label" for="sidebariconlist-5"
-								><i class="dw dw-fast-forward-1"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-5">
+							<i class="dw dw-fast-forward-1" aria-hidden="true"></i>
+							<span class="sr-only">Fast forward</span>
+							</label>
 						</div>
+
 						<div class="custom-control custom-radio custom-control-inline">
 							<input
-								type="radio"
-								id="sidebariconlist-6"
-								name="menu-list-icon"
-								class="custom-control-input"
-								value="icon-list-style-6"
+							type="radio"
+							id="sidebariconlist-6"
+							name="menu-list-icon"
+							class="custom-control-input"
+							value="icon-list-style-6"
 							/>
-							<label class="custom-control-label" for="sidebariconlist-6"
-								><i class="dw dw-next"></i
-							></label>
+							<label class="custom-control-label" for="sidebariconlist-6">
+							<i class="dw dw-next" aria-hidden="true"></i>
+							<span class="sr-only">Panah kanan</span>
+							</label>
 						</div>
-					</div>
+					</fieldset>
 
 					<div class="reset-options pt-30 text-center">
 						<button class="btn btn-danger" id="reset-settings">
@@ -422,6 +453,7 @@
 					</div>
 				</div>
 			</div>
+
 		</div>
 
 		<div class="left-side-bar">
@@ -520,24 +552,24 @@
 
 						<form id="icpForm" enctype="multipart/form-data">
 							<div class="form-group">
-								<label>Dosen Pembimbing</label>
+								<label for="dosen_pembimbing">Dosen Pembimbing</label>
 								<select class="form-control" id="dosenSelect" name="dosen_id">
 									<option value="" disabled selected>Pilih Dosen Pembimbing</option>
 								</select>
 							</div>
 							<div class="form-group">
-								<label>Topik Penelitian</label>
+								<label for="topik_penelitian"Topik Penelitian</label>
 								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
 							</div>
 							<div class="form-group">
-								<label>Keterangan</label>
+								<label for="keterangan">Keterangan</label>
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
-								<label>File ICP (PDF)</label>
+								<label for="file_icp">File ICP (PDF)</label>
 								<div class="custom-file">
 									<input type="file" class="custom-file-input" id="icpFile" name="file" accept=".pdf" required>
-									<label class="custom-file-label" for="icpFile">Choose file</label>
+									<label for="pilih_file" class="custom-file-label" for="icpFile">Choose file</label>
 								</div>
 								<div id="selectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
@@ -610,7 +642,7 @@
 
 						<form id="finalIcpForm" enctype="multipart/form-data">
 							<div class="form-group">
-								<label>Jurusan</label>
+								<label for="jurusan">Jurusan</label>
 								<select class="custom-select" name="jurusan" id="finalJurusan" required onchange="updateFinalKelas()">
 									<option value="" disabled selected>Pilih Jurusan</option>
 									<option value="Keamanan Siber">Keamanan Siber</option>
@@ -618,29 +650,29 @@
 								</select>
 							</div>
 							<div class="form-group">
-								<label>Kelas</label>
+								<label for="kelas">Kelas</label>
 								<select class="custom-select" name="kelas" id="finalKelas" required>
 									<option value="" disabled selected>Pilih Kelas</option>
 								</select>
 							</div>
 							<div class="form-group">
-								<label>Topik Penelitian</label>
+								<label for="topik_penelitian">Topik Penelitian</label>
 								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
 							</div>
 							<div class="form-group">
-								<label>Keterangan</label>
+								<label for="keterangan">Keterangan</label>
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
-								<label>Final File ICP (PDF)</label>
+								<label for="final_icp">Final File ICP (PDF)</label>
 								<div class="custom-file">
 									<input type="file" class="custom-file-input" id="finalIcpFile" name="file" accept=".pdf" required>
-									<label class="custom-file-label" for="finalIcpFile">Choose file</label>
+									<label for="" class="custom-file-label" for="finalIcpFile">Choose file</label>
 								</div>
 								<div id="finalSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
 							<div class="form-group">
-								<label>File Pendukung ICP (Doc, PDF, Excell)</label>
+								<label for="file_pendukung">File Pendukung ICP (Doc, PDF, Excell)</label>
 								<div class="custom-file">
 									<input type="file" 
 										   class="custom-file-input" 
@@ -649,7 +681,7 @@
 										   accept=".pdf,.doc,.docx,.xls,.xlsx" 
 										   multiple 
 										   required>
-									<label class="custom-file-label" for="supportFiles">Pilih satu atau lebih file</label>
+									<label for="pilih_file_pendukung" class="custom-file-label" for="supportFiles">Pilih satu atau lebih file</label>
 								</div>
 								<div id="supportSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
@@ -722,18 +754,18 @@
 							<input type="hidden" name="jurusan" id="hiddenJurusanRevisi">
 							<input type="hidden" name="kelas" id="hiddenKelasRevisi">
 							<div class="form-group">
-								<label>Topik Penelitian</label>
+								<label for="topik_penelitian">Topik Penelitian</label>
 								<input class="form-control" type="text" name="topik_penelitian" placeholder="Masukkan Topik Penelitian Anda" required>
 							</div>
 							<div class="form-group">
-								<label>Keterangan</label>
+								<label for="keterangan">Keterangan</label>
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
-								<label>Revisi File ICP (PDF)</label>
+								<label for="file_revisi_icp">Revisi File ICP (PDF)</label>
 								<div class="custom-file">
 									<input type="file" class="custom-file-input" id="revisiICPFile" name="file" accept=".pdf" required>
-									<label class="custom-file-label" for="revisiICPFile">Choose file</label>
+									<label for="pilih_file_revisi_icp" class="custom-file-label" for="revisiICPFile">Choose file</label>
 								</div>
 								<div id="revisiSelectedFileName" class="mt-2 text-info" style="display: none;"></div>
 							</div>
@@ -808,11 +840,11 @@
 							<input type="hidden" id="revisionTopikPenelitian" name="topik_penelitian">
 							
 							<div class="form-group">
-								<label>Keterangan Revisi</label>
+								<label for="keterangan_revisi">Keterangan Revisi</label>
 								<textarea class="form-control" name="keterangan" required></textarea>
 							</div>
 							<div class="form-group">
-								<label>File Revisi ICP (PDF)</label>
+								<label for="file_perbaikan_icp">File Revisi ICP (PDF)</label>
 								<input type="file" class="form-control" name="file" accept=".pdf" required>
 							</div>
 						</form>
