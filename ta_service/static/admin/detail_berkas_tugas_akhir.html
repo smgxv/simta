@@ -900,10 +900,26 @@
 					const linkRepoEl = document.getElementById('link-repo');
 					const repo = data.link_repo;
 
-					if (repo && repo.startsWith('http' || 'https')) {
-						linkRepoEl.innerHTML = `<a href="${repo}" target="_blank" rel="noopener noreferrer">${repo}</a>`;
+					const isHttpUrl = (u) => {
+					try {
+						const url = new URL(u);
+						return url.protocol === 'http:' || url.protocol === 'https:';
+					} catch {
+						return false;
+					}
+					};
+
+					if (repo && isHttpUrl(repo)) {
+					// bangun elemen <a> tanpa innerHTML untuk hindari injeksi
+					linkRepoEl.replaceChildren();
+					const a = document.createElement('a');
+					a.href = repo;
+					a.target = '_blank';
+					a.rel = 'noopener noreferrer';
+					a.textContent = repo; // aman, tidak dieksekusi sebagai HTML
+					linkRepoEl.appendChild(a);
 					} else {
-						linkRepoEl.textContent = '-';
+					linkRepoEl.textContent = '-';
 					}
 					
 					function renderDownloadButton(filePath, id, type) {
