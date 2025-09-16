@@ -239,7 +239,7 @@ jobs:
             docker stop ta-service || true && docker rm ta-service || true
             docker system prune -af
             docker pull smgxv/ta-service
-            docker run -d -p 8080:8080 --name ta-service smgxv/ta-service
+            docker run -d -p 8084:8084 --name ta-service smgxv/ta-service
             docker network connect simta_net ta-service
 
   deploy-user-service:

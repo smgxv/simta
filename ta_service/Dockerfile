@@ -19,8 +19,8 @@ COPY . .
 # Build aplikasi
 RUN go build -o main .
 
-# Expose port 8080
-EXPOSE 8080
+# Expose port 8084
+EXPOSE 8084
 
 # Command untuk menjalankan aplikasi
 CMD ["./main"]

@@ -127,10 +127,10 @@ func main() {
 	dosen.HandleFunc("/detailinformasidosen", controllers.DetailInformasiDosen).Methods("GET", "OPTIONS")
 
 	// ✅ Jalankan server
-	log.Println("TA Service running on port 8080")
+	log.Println("TA Service running on port 8084")
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":8080",
+		Addr:         ":8084",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
