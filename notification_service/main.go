@@ -27,7 +27,7 @@ func main() {
 
 	// Setup CORS agar frontend (port 8080) bisa akses
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://104.43.89.154:8080"}, // sesuaikan jika pakai domain lain
+		AllowedOrigins:   []string{"http://172.210.59.9:8080"}, // sesuaikan jika pakai domain lain
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
