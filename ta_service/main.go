@@ -28,9 +28,31 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func securityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Content Security Policy kompromi
+		w.Header().Set("Content-Security-Policy",
+			"default-src 'self' https: data: blob:; "+
+				"script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "+
+				"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "+
+				"font-src 'self' https://fonts.gstatic.com; "+
+				"img-src 'self' data: blob: https:; "+
+				"connect-src 'self' https://securesimta.my.id; "+
+				"frame-ancestors 'self';")
+
+		// Tambahan header keamanan dasar
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	router := mux.NewRouter()
 	router.Use(corsMiddleware)
+	router.Use(securityHeadersMiddleware)
 
 	// ✅ STATIC FILES
 	staticDirs := map[string]string{
